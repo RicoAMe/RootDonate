@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Root Donate • Lost &amp; Found</title>
+    <title>Root Donate • Lost & Found</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -12,13 +12,26 @@
         body { font-family: 'Inter', system_ui, sans-serif; }
         .logo-font { font-family: 'Playfair Display', Georgia, serif; font-weight: 700; }
         
-        .report-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .report-card:hover { transform: translateY(-8px); box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15); }
-        
-        .modal { animation: modalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
-        @keyframes modalPop { 
-            from { opacity: 0; transform: scale(0.92) translateY(30px); } 
-            to { opacity: 1; transform: scale(1) translateY(0); } 
+        .report-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .report-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15);
+        }
+
+        .modal {
+            animation: modalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.92) translateY(30px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .filter-btn.active {
+            background-color: #14b8a6;
+            color: white;
+            border-color: #14b8a6;
         }
     </style>
 </head>
@@ -55,7 +68,7 @@
 
                 <div onclick="showUserMenu()" id="profile-section" 
                      class="hidden items-center gap-x-3 cursor-pointer hover:opacity-80 transition-opacity">
-                    <img id="nav-avatar" class="w-9 h-9 rounded-2xl object-cover ring-2 ring-teal-200" src="" alt="Profile">
+                    <img id="nav-avatar" class="w-9 h-9 rounded-2xl object-cover ring-2 ring-teal-200" src="https://i.pravatar.cc/128" alt="Profile">
                     <div>
                         <div id="nav-name" class="font-semibold text-sm"></div>
                         <div id="nav-handle" class="text-teal-600 text-xs"></div>
@@ -158,25 +171,146 @@
         </div>
     </div>
 
-    <!-- Existing Modals (Login, Detail) remain the same -->
-    <!-- ... (Login modal and Detail modal from your original code) ... -->
+    <!-- Login Modal -->
+    <div id="login-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xl z-[200] flex items-center justify-center p-4">
+        <div onclick="event.stopImmediatePropagation()" 
+             class="modal bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-8 shadow-2xl">
+            <h2 class="text-2xl font-semibold mb-6">Welcome back</h2>
+            <div class="space-y-4">
+                <input id="login-email" type="email" placeholder="Email" class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700">
+                <input id="login-password" type="password" placeholder="Password" class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700">
+                <button onclick="login()" class="w-full py-4 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-3xl">Log in</button>
+                <p class="text-center text-sm text-slate-500">Don't have an account? 
+                    <button onclick="switchToRegister()" class="text-teal-600 hover:underline">Sign up</button>
+                </p>
+            </div>
+            <button onclick="closeLoginModal()" class="absolute top-4 right-4 text-3xl text-slate-400 hover:text-slate-600">&times;</button>
+        </div>
+    </div>
+
+    <!-- Report Detail Modal -->
+    <div id="detail-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xl z-[200] flex items-center justify-center p-4">
+        <div onclick="event.stopImmediatePropagation()" 
+             class="modal bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl p-8 shadow-2xl max-h-[90vh] overflow-auto">
+            <button onclick="closeDetailModal()" class="float-right text-4xl text-slate-400 hover:text-slate-600">&times;</button>
+            
+            <div id="detail-content" class="mt-8"></div>
+            
+            <div class="mt-6 flex items-center gap-3">
+                <button onclick="copyShareLink()" 
+                        class="flex-1 py-3 border border-slate-300 dark:border-slate-700 rounded-3xl font-medium">
+                    📋 Copy Share Link
+                </button>
+                <button onclick="closeDetailModal()" 
+                        class="flex-1 py-3 bg-teal-600 text-white rounded-3xl font-medium">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        // === DATA STORAGE ===
+        // === DATA ===
         let users = [];
         let reports = [];
         let currentUser = null;
-
-        function loadData() { /* ... same as before ... */ }
-        function saveData() { /* ... same as before ... */ }
-
-        // Render reports (unchanged)
-        function renderReports(filtered = reports) { /* ... same as before ... */ }
-        function filterReports(type = 'all') { /* ... same as before ... */ }
-
-        // === NEW REPORT MODAL ===
         let selectedType = 'lost';
 
+        // Sample Data
+        function loadSampleData() {
+            reports = [
+                {
+                    id: 1,
+                    type: "lost",
+                    category: "money",
+                    title: "Black Leather Wallet",
+                    description: "Lost near Covent Garden. Contains ID, cards and some cash. Reward offered.",
+                    location: "Covent Garden, London",
+                    date: "2025-06-24",
+                    account: "@sarah_k"
+                },
+                {
+                    id: 2,
+                    type: "found",
+                    category: "phone",
+                    title: "iPhone 15 Pro - Blue",
+                    description: "Found on the Northern Line. Battery at 23%. Still locked.",
+                    location: "Northern Line, London",
+                    date: "2025-06-25",
+                    account: "@londoncommuter"
+                }
+            ];
+        }
+
+        function loadData() {
+            const savedReports = localStorage.getItem('reports');
+            if (savedReports) reports = JSON.parse(savedReports);
+            else loadSampleData();
+
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                updateUIForLoggedInUser();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('reports', JSON.stringify(reports));
+        }
+
+        // === RENDER ===
+        function renderReports(filteredReports = reports) {
+            const grid = document.getElementById('reports-grid');
+            grid.innerHTML = '';
+
+            filteredReports.forEach(report => {
+                const card = document.createElement('div');
+                card.className = `report-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 cursor-pointer`;
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="px-3 py-1 text-xs font-medium rounded-full ${report.type === 'lost' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300'}">
+                            ${report.type.toUpperCase()}
+                        </span>
+                        <span class="text-xs text-slate-500">${report.date}</span>
+                    </div>
+                    <h3 class="font-semibold text-lg mb-2">${report.title}</h3>
+                    <p class="text-slate-600 dark:text-slate-400 text-sm line-clamp-3 mb-4">${report.description}</p>
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-location-dot text-teal-500"></i>
+                            <span>${report.location}</span>
+                        </div>
+                        <div class="text-teal-600 text-xs font-medium">${report.account}</div>
+                    </div>
+                `;
+                card.onclick = () => showDetailModal(report.id);
+                grid.appendChild(card);
+            });
+        }
+
+        function filterReports(type = 'all') {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            let filtered = reports;
+
+            if (type === 'lost') filtered = reports.filter(r => r.type === 'lost');
+            if (type === 'found') filtered = reports.filter(r => r.type === 'found');
+            if (type === 'money') filtered = reports.filter(r => r.category === 'money');
+
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            if (searchTerm) {
+                filtered = filtered.filter(r => 
+                    r.title.toLowerCase().includes(searchTerm) ||
+                    r.description.toLowerCase().includes(searchTerm) ||
+                    r.location.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            renderReports(filtered);
+        }
+
+        // === NEW REPORT ===
         function showNewReportModal() {
             if (!currentUser) {
                 showToast("Please log in to create a report");
@@ -185,7 +319,6 @@
             }
             document.getElementById('new-report-modal').classList.remove('hidden');
             document.getElementById('new-report-modal').classList.add('flex');
-            // Reset form
             document.getElementById('new-report-form').reset();
             selectType(document.querySelector('.type-btn[data-type="lost"]'));
         }
@@ -216,33 +349,112 @@
                 account: currentUser.handle
             };
 
-            reports.unshift(newReport); // Add to top
+            reports.unshift(newReport);
             saveData();
             renderReports();
             closeNewReportModal();
-            
             showToast("✅ Report posted successfully!");
         }
 
-        // === AUTH & DETAIL MODALS (unchanged) ===
-        // Paste your original login, register, detail modal functions here...
+        // === AUTH ===
+        function showLoginModal() {
+            document.getElementById('login-modal').classList.remove('hidden');
+            document.getElementById('login-modal').classList.add('flex');
+        }
 
+        function closeLoginModal() {
+            const modal = document.getElementById('login-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function login() {
+            // Demo login
+            currentUser = {
+                name: "Alex Morgan",
+                handle: "@alexmorgan",
+                avatar: "https://i.pravatar.cc/128"
+            };
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            updateUIForLoggedInUser();
+            closeLoginModal();
+            showToast("✅ Logged in successfully");
+        }
+
+        function updateUIForLoggedInUser() {
+            document.getElementById('login-btn').classList.add('hidden');
+            document.getElementById('new-report-btn').classList.remove('hidden');
+            document.getElementById('profile-section').classList.remove('hidden');
+            
+            document.getElementById('nav-name').textContent = currentUser.name;
+            document.getElementById('nav-handle').textContent = currentUser.handle;
+            document.getElementById('nav-avatar').src = currentUser.avatar;
+        }
+
+        function showUserMenu() {
+            if (confirm("Logout?")) {
+                currentUser = null;
+                localStorage.removeItem('currentUser');
+                location.reload();
+            }
+        }
+
+        // === DETAIL MODAL ===
         function showDetailModal(id) {
             const report = reports.find(r => r.id === id);
             if (!report) return;
 
-            // ... your existing code ...
+            const html = `
+                <div class="flex justify-between items-center">
+                    <span class="px-4 py-1 text-sm font-medium rounded-full ${report.type === 'lost' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">
+                        ${report.type.toUpperCase()}
+                    </span>
+                    <span class="text-sm text-slate-500">${report.date}</span>
+                </div>
+                <h2 class="text-3xl font-semibold mt-4 mb-2">${report.title}</h2>
+                <p class="text-slate-600 dark:text-slate-400">${report.description}</p>
+                <div class="mt-6 flex items-center gap-4 text-sm">
+                    <div><i class="fa-solid fa-location-dot text-teal-500"></i> ${report.location}</div>
+                    <div>Posted by <span class="text-teal-600">${report.account}</span></div>
+                </div>
+            `;
 
-            const shareUrl = `https://rootdonate.co.uk/report/${report.id}`;
-            document.getElementById('share-url').textContent = shareUrl;
-            document.getElementById('share-url').dataset.url = shareUrl; // for copying
+            document.getElementById('detail-content').innerHTML = html;
+            document.getElementById('detail-modal').classList.remove('hidden');
+            document.getElementById('detail-modal').classList.add('flex');
+        }
+
+        function closeDetailModal() {
+            const modal = document.getElementById('detail-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
         }
 
         function copyShareLink() {
-            const url = document.getElementById('share-url').dataset.url || document.getElementById('share-url').textContent;
+            const url = `https://rootdonate.co.uk/report/${Date.now()}`;
             navigator.clipboard.writeText(url).then(() => {
-                showToast("✅ Share link copied!");
+                showToast("✅ Share link copied to clipboard!");
             });
+        }
+
+        // === UTILITIES ===
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+                background: #14b8a6; color: white; padding: 16px 24px; border-radius: 9999px;
+                box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); z-index: 9999;
+            `;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            const icon = document.getElementById('theme-icon');
+            icon.classList.toggle('fa-moon');
+            icon.classList.toggle('fa-sun');
         }
 
         // Initialize
