@@ -8,773 +8,380 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=Playfair+Display:wght@700&amp;display=swap');
-        
-        :root {
-            --primary: #0f766e;
-        }
-        
-        body {
-            font-family: 'Inter', system_ui, sans-serif;
-        }
-        
-        .logo-font {
-            font-family: 'Playfair Display', Georgia, serif;
-            font-weight: 700;
-        }
-
-        .report-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .report-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-        }
-
-        .modal {
-            animation: modalPop 0.3s ease-out forwards;
-        }
-
-        @keyframes modalPop {
-            from {
-                opacity: 0;
-                transform: scale(0.95) translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-
-        .comment {
-            transition: all 0.2s ease;
-        }
-
-        .section-header {
-            font-size: 1.1rem;
-            letter-spacing: -0.025em;
-        }
-
-        .nav-active {
-            color: #0f766e;
-            font-weight: 600;
-        }
-
-        .tag {
-            font-size: 0.75rem;
-            padding: 2px 10px;
-            border-radius: 9999px;
-        }
+        body { font-family: 'Inter', system_ui, sans-serif; }
+        .logo-font { font-family: 'Playfair Display', Georgia, serif; font-weight: 700; }
+        .report-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .report-card:hover { transform: translateY(-8px); box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15); }
+        .modal { animation: modalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes modalPop { from { opacity: 0; transform: scale(0.92) translateY(30px); } to { opacity: 1; transform: scale(1) translateY(0); } }
     </style>
 </head>
-<body class="bg-slate-50">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
+
     <!-- Navbar -->
-    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div class="max-w-screen-xl mx-auto">
-            <div class="px-8 py-5 flex items-center justify-between">
-                <div class="flex items-center gap-x-3">
-                    <!-- Logo -->
-                    <div class="flex items-center gap-x-2">
-                        <div class="w-10 h-10 bg-teal-700 rounded-2xl flex items-center justify-center">
-                            <i class="fa-solid fa-handshake text-white text-3xl"></i>
-                        </div>
-                        <div>
-                            <span class="logo-font text-3xl font-bold tracking-tighter text-slate-900">Root</span>
-                            <span class="logo-font text-3xl font-bold tracking-tighter text-teal-700">Donate</span>
-                        </div>
-                    </div>
-                    <div class="hidden md:block text-sm text-slate-500 font-medium pl-1">Lost &amp; Found</div>
+    <nav class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50">
+        <div class="max-w-screen-2xl mx-auto px-6 py-5 flex items-center justify-between">
+            <div class="flex items-center gap-x-3">
+                <div class="w-10 h-10 bg-teal-600 rounded-2xl flex items-center justify-center text-white text-3xl">
+                    <i class="fa-solid fa-handshake"></i>
                 </div>
-
-                <div class="hidden md:flex items-center gap-x-8 text-sm">
-                    <a href="#" class="font-medium text-slate-600 hover:text-slate-900 transition-colors">Discover</a>
-                    <a href="#" class="font-medium text-slate-600 hover:text-slate-900 transition-colors">Community</a>
-                    <a href="#" class="font-medium text-slate-600 hover:text-slate-900 transition-colors">How it Works</a>
+                <div>
+                    <span class="logo-font text-4xl font-bold tracking-tighter">Root</span>
+                    <span class="logo-font text-4xl font-bold tracking-tighter text-teal-600">Donate</span>
                 </div>
+            </div>
 
-                <div class="flex items-center gap-x-4">
-                    <!-- Report New Button -->
-                    <button onclick="showReportModal()"
-                            class="px-5 py-2.5 bg-teal-700 hover:bg-teal-800 transition-colors text-white text-sm font-semibold rounded-2xl flex items-center gap-x-2 shadow-sm">
-                        <i class="fa-solid fa-plus"></i>
-                        <span class="hidden sm:inline">Report New</span>
-                    </button>
+            <div class="flex items-center gap-x-6">
+                <button onclick="toggleDarkMode()" class="w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800">
+                    <i id="theme-icon" class="fa-solid fa-moon text-xl"></i>
+                </button>
 
-                    <!-- Account -->
-                    <div class="flex items-center gap-x-3 cursor-pointer" onclick="showAccountMenu()">
-                        <div class="text-right hidden md:block">
-                            <div class="text-sm font-semibold text-slate-800">@emily_london</div>
-                            <div class="text-[10px] text-emerald-600 font-medium">Verified Account</div>
-                        </div>
-                        <div class="w-9 h-9 bg-slate-200 rounded-2xl overflow-hidden ring-2 ring-white shadow-sm">
-                            <img src="https://picsum.photos/id/1005/36/36" alt="Your avatar" class="w-full h-full object-cover">
-                        </div>
+                <button onclick="showLoginModal()" id="login-btn"
+                        class="px-6 py-2.5 font-medium rounded-3xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800">
+                    Log in
+                </button>
+
+                <button onclick="showReportModal()" id="new-report-btn"
+                        class="hidden px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-3xl flex items-center gap-x-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>New Report</span>
+                </button>
+
+                <div onclick="showUserMenu()" id="profile-section" class="hidden items-center gap-x-3 cursor-pointer">
+                    <img id="nav-avatar" class="w-9 h-9 rounded-2xl object-cover ring-2 ring-teal-200" src="">
+                    <div>
+                        <div id="nav-name" class="font-semibold text-sm"></div>
+                        <div id="nav-handle" class="text-emerald-600 text-xs"></div>
                     </div>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- Hero -->
-    <div class="max-w-screen-xl mx-auto px-8 pt-10 pb-8">
-        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-y-4">
-            <div>
-                <div class="inline-flex items-center gap-x-2 bg-white px-4 py-1.5 rounded-3xl shadow-sm border border-slate-100 mb-4">
-                    <div class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-                    <span class="text-sm font-medium text-slate-600">Local • Private • Instant</span>
-                </div>
-                <h1 class="text-5xl md:text-6xl font-bold tracking-tighter text-slate-900 leading-none">Find what’s<br>been lost.<br>Return what’s found.</h1>
-                <p class="mt-4 max-w-md text-lg text-slate-600">A trusted community platform for lost &amp; found items across the UK.</p>
-            </div>
-            
-            <div class="flex flex-col sm:flex-row gap-3">
-                <button onclick="document.getElementById('search-input').focus()"
-                        class="px-8 py-4 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-3xl flex items-center justify-center gap-x-3 transition-all active:scale-[0.985]">
-                    <i class="fa-solid fa-search"></i>
-                    <span>Browse Reports</span>
-                </button>
-                <button onclick="showReportModal()"
-                        class="px-8 py-4 bg-teal-700 hover:bg-teal-800 text-white font-semibold rounded-3xl flex items-center justify-center gap-x-3 transition-all active:scale-[0.985] shadow-lg shadow-teal-700/30">
-                    <i class="fa-solid fa-plus"></i>
-                    <span>Report an Item</span>
-                </button>
-            </div>
-        </div>
-    </div>
+    <!-- Main Content -->
+    <div class="max-w-screen-2xl mx-auto px-6 pt-10">
+        <h1 class="text-5xl md:text-6xl font-bold tracking-tighter">Reuniting people with what matters.</h1>
+        <p class="text-slate-600 dark:text-slate-400 mt-2">Lost &amp; Found • UK • Verified Accounts</p>
 
-    <!-- Filters & Search -->
-    <div class="max-w-screen-xl mx-auto px-8 pb-6">
-        <div class="bg-white border border-slate-200 rounded-3xl p-2 shadow-sm flex flex-col md:flex-row gap-3 items-center">
-            <!-- Search -->
-            <div class="flex-1 relative w-full">
-                <i class="fa-solid fa-search absolute left-5 top-4 text-slate-400"></i>
-                <input id="search-input" type="text" placeholder="Search reports, locations, or items (e.g. wallet, iPhone, money)..." 
-                       class="w-full pl-12 pr-5 py-3.5 bg-slate-50 border border-transparent focus:border-teal-200 rounded-3xl text-sm outline-none"
+        <!-- Filters -->
+        <div class="mt-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl p-2 flex flex-col md:flex-row gap-3">
+            <div class="flex-1 relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-5 top-4 text-slate-400"></i>
+                <input id="search-input" type="text" placeholder="Search reports, items, locations..." 
+                       class="w-full pl-12 py-4 bg-slate-100 dark:bg-slate-800 rounded-3xl outline-none"
                        onkeyup="filterReports()">
             </div>
-            
-            <!-- Filter Buttons -->
-            <div class="flex flex-wrap gap-2 px-1">
-                <button onclick="filterReports('all')" class="filter-btn active px-5 py-2 text-sm font-medium rounded-2xl bg-teal-700 text-white" data-filter="all">All</button>
-                <button onclick="filterReports('lost')" class="filter-btn px-5 py-2 text-sm font-medium rounded-2xl hover:bg-slate-100 border border-slate-200" data-filter="lost">Lost</button>
-                <button onclick="filterReports('found')" class="filter-btn px-5 py-2 text-sm font-medium rounded-2xl hover:bg-slate-100 border border-slate-200" data-filter="found">Found</button>
-                <button onclick="filterReports('money')" class="filter-btn px-5 py-2 text-sm font-medium rounded-2xl hover:bg-slate-100 border border-slate-200 flex items-center gap-x-1.5" data-filter="money">
-                    <i class="fa-solid fa-pound-sign"></i> <span>Money</span>
-                </button>
-                <button onclick="filterReports('item')" class="filter-btn px-5 py-2 text-sm font-medium rounded-2xl hover:bg-slate-100 border border-slate-200" data-filter="item">Items</button>
+            <div class="flex gap-2">
+                <button onclick="filterReports('all')" class="filter-btn active px-6 py-3 rounded-3xl text-sm">All</button>
+                <button onclick="filterReports('lost')" class="filter-btn px-6 py-3 rounded-3xl text-sm">Lost</button>
+                <button onclick="filterReports('found')" class="filter-btn px-6 py-3 rounded-3xl text-sm">Found</button>
+                <button onclick="filterReports('money')" class="filter-btn px-6 py-3 rounded-3xl text-sm">💷 Money</button>
+            </div>
+        </div>
+
+        <div id="reports-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-8"></div>
+    </div>
+
+    <!-- Login / Register Modal -->
+    <div id="auth-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xl z-[200] flex items-center justify-center p-4">
+        <div onclick="event.stopImmediatePropagation()" class="bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="auth-title" class="text-2xl font-semibold">Welcome back</h2>
+                <button onclick="closeAuthModal()" class="text-3xl text-slate-400">&times;</button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login-form">
+                <input id="login-email" type="email" placeholder="Email address" class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 mb-3">
+                <input id="login-password" type="password" placeholder="Password" class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 mb-6">
+                <button onclick="performLogin()" class="w-full py-4 bg-teal-600 text-white font-semibold rounded-3xl">Log in</button>
+                <p class="text-center text-sm text-slate-500 mt-6">
+                    Don't have an account? 
+                    <span onclick="switchToRegister()" class="text-teal-600 cursor-pointer hover:underline">Create one</span>
+                </p>
+            </div>
+
+            <!-- Register Form -->
+            <div id="register-form" class="hidden">
+                <input id="reg-name" type="text" placeholder="Full name" class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 mb-3">
+                <input id="reg-handle" type="text" placeholder="Username (e.g. @johnlondon)" class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 mb-3">
+                <input id="reg-email" type="email" placeholder="Email address" class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 mb-3">
+                <input id="reg-password" type="password" placeholder="Password" class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 mb-6">
+                <button onclick="performRegister()" class="w-full py-4 bg-teal-600 text-white font-semibold rounded-3xl">Create Account</button>
+                <p class="text-center text-sm text-slate-500 mt-6">
+                    Already have an account? 
+                    <span onclick="switchToLogin()" class="text-teal-600 cursor-pointer hover:underline">Log in</span>
+                </p>
             </div>
         </div>
     </div>
 
-    <!-- Reports Grid -->
-    <div class="max-w-screen-xl mx-auto px-8 pb-16">
-        <div class="flex items-center justify-between mb-5 px-1">
-            <div>
-                <span class="font-semibold text-slate-800">Recent Reports</span>
-                <span id="results-count" class="ml-2 text-sm text-slate-500">42 reports</span>
+    <!-- Report Detail Modal (with share link) -->
+    <div id="detail-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
+        <div onclick="event.stopImmediatePropagation()" class="modal bg-white dark:bg-slate-900 w-full max-w-3xl rounded-3xl overflow-hidden">
+            <div class="px-8 py-6 border-b flex justify-between">
+                <div>
+                    <div id="modal-status" class="inline-block px-5 py-1 text-xs font-bold rounded-3xl"></div>
+                    <div id="modal-title" class="text-2xl font-semibold mt-2"></div>
+                </div>
+                <button onclick="closeModal()" class="text-4xl text-slate-400">&times;</button>
             </div>
-            <div class="text-xs text-slate-500 hidden md:block">Sorted by newest first • All from verified accounts</div>
-        </div>
-
-        <div id="reports-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <!-- Report Cards populated by JS -->
-        </div>
-    </div>
-
-    <!-- Detail Modal -->
-    <div id="detail-modal" onclick="if (event.target.id === 'detail-modal') closeModal()" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-        <div onclick="event.stopImmediatePropagation()" class="modal bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] overflow-hidden shadow-2xl flex flex-col">
-            
-            <!-- Modal Header -->
-            <div class="px-8 pt-6 pb-4 border-b flex items-center justify-between">
-                <div class="flex items-center gap-x-3">
-                    <div id="modal-status-badge" class="px-4 py-1 text-xs font-bold rounded-2xl"></div>
+            <div class="p-8">
+                <div id="modal-description" class="leading-relaxed"></div>
+                
+                <div class="mt-8 flex gap-8">
                     <div>
-                        <div id="modal-title" class="font-semibold text-2xl tracking-tight text-slate-900"></div>
-                        <div id="modal-meta" class="text-sm text-slate-500 flex items-center gap-x-2 mt-0.5"></div>
+                        <div class="text-xs uppercase text-slate-500">Location</div>
+                        <div id="modal-location" class="font-medium"></div>
                     </div>
-                </div>
-                <button onclick="closeModal()" class="w-10 h-10 flex items-center justify-center text-3xl text-slate-400 hover:text-slate-600 transition-colors">&times;</button>
-            </div>
-
-            <div class="flex-1 overflow-auto p-8">
-                <!-- Details -->
-                <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                    <!-- Left content -->
-                    <div class="lg:col-span-3">
-                        <div id="modal-description" class="text-[15px] leading-relaxed text-slate-700"></div>
-                        
-                        <div class="mt-6">
-                            <div class="text-xs uppercase tracking-widest font-semibold text-slate-500 mb-2">Location</div>
-                            <div id="modal-location" class="flex items-center gap-x-2 text-slate-700 font-medium"></div>
-                        </div>
-                        
-                        <div class="mt-6 flex items-center gap-x-4">
-                            <div>
-                                <div class="text-xs uppercase tracking-widest font-semibold text-slate-500 mb-1">Posted by</div>
-                                <div id="modal-account" class="flex items-center gap-x-2"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Right side images -->
-                    <div class="lg:col-span-2">
-                        <div class="aspect-video bg-slate-100 rounded-2xl overflow-hidden mb-3 relative">
-                            <img id="modal-image" class="w-full h-full object-cover" alt="Item photo">
-                            <div class="absolute bottom-3 right-3 bg-white/90 text-xs px-3 py-1 rounded-xl font-medium shadow">Photo uploaded by reporter</div>
-                        </div>
-                        
-                        <div class="flex gap-2">
-                            <div class="flex-1 aspect-video bg-slate-100 rounded-2xl overflow-hidden">
-                                <img src="https://picsum.photos/id/1015/300/200" class="w-full h-full object-cover" alt="Additional photo">
-                            </div>
-                            <div class="flex-1 aspect-video bg-slate-100 rounded-2xl overflow-hidden">
-                                <img src="https://picsum.photos/id/160/300/200" class="w-full h-full object-cover" alt="Additional photo">
-                            </div>
-                        </div>
+                    <div>
+                        <div class="text-xs uppercase text-slate-500">Posted</div>
+                        <div id="modal-date" class="font-medium"></div>
                     </div>
                 </div>
 
-                <!-- Comments Section -->
-                <div class="mt-10 border-t pt-8">
-                    <div class="flex items-center justify-between mb-5">
-                        <div>
-                            <span class="font-semibold text-xl">Community Comments</span>
-                            <span id="comment-count" class="ml-2 px-3 py-0.5 text-xs font-medium bg-teal-100 text-teal-700 rounded-full"></span>
-                        </div>
-                        <div class="text-xs text-emerald-600 flex items-center gap-x-1">
-                            <i class="fa-solid fa-check-circle"></i> 
-                            <span class="font-medium">Only verified accounts can comment</span>
-                        </div>
-                    </div>
-
-                    <!-- Comments List -->
-                    <div id="comments-list" class="space-y-5 max-h-[280px] overflow-auto pr-2 custom-scroll">
-                        <!-- Populated dynamically by JS -->
-                    </div>
-
-                    <!-- Add Comment Form -->
-                    <div class="mt-6 bg-slate-50 border border-slate-200 rounded-3xl p-5">
-                        <div class="flex items-center gap-x-3 mb-3">
-                            <div class="w-8 h-8 bg-teal-100 rounded-full overflow-hidden flex-shrink-0">
-                                <img src="https://picsum.photos/id/1005/32/32" alt="Your avatar" class="w-full h-full object-cover">
-                            </div>
-                            <div>
-                                <span class="font-semibold text-sm">@emily_london</span>
-                                <span class="text-emerald-600 text-xs ml-1.5">• Verified</span>
-                            </div>
-                        </div>
-                        
-                        <div class="flex gap-3">
-                            <textarea id="comment-input" rows="2" placeholder="Share details, ask a question, or offer to help return the item..." 
-                                      class="flex-1 resize-y min-h-[60px] border border-slate-300 focus:border-teal-400 rounded-2xl p-4 text-sm outline-none"></textarea>
-                            
-                            <button onclick="postComment()" 
-                                    class="self-end px-6 h-[52px] bg-teal-700 hover:bg-teal-800 active:bg-teal-900 transition-colors text-white font-semibold rounded-2xl text-sm flex items-center gap-x-2 whitespace-nowrap">
-                                <span>Post</span>
-                                <i class="fa-solid fa-paper-plane"></i>
-                            </button>
-                        </div>
-                        <div class="text-[10px] text-slate-400 mt-2 ml-1">Comments are public and help reunite items with owners.</div>
+                <div class="mt-8 flex items-center gap-3">
+                    <img id="modal-avatar" class="w-10 h-10 rounded-2xl">
+                    <div>
+                        <div id="modal-name" class="font-semibold"></div>
+                        <div id="modal-handle" class="text-emerald-600"></div>
                     </div>
                 </div>
-            </div>
 
-            <div class="border-t px-8 py-4 bg-slate-50 flex items-center justify-between text-sm">
-                <div class="flex items-center gap-x-4">
-                    <button onclick="likeReport()" class="flex items-center gap-x-2 text-slate-600 hover:text-rose-500 transition-colors">
-                        <i class="fa-regular fa-heart"></i>
-                        <span id="like-count">124</span>
+                <div class="mt-10 pt-6 border-t">
+                    <button onclick="copyShareLink()" class="flex items-center gap-2 text-sm font-medium px-5 py-3 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+                        <i class="fa-solid fa-link"></i> Copy Share Link
                     </button>
-                    <button class="flex items-center gap-x-2 text-slate-600 hover:text-teal-600 transition-colors">
-                        <i class="fa-solid fa-share-alt"></i>
-                        <span>Share</span>
-                    </button>
+                    <div id="share-url" class="mt-3 text-xs font-mono bg-slate-100 dark:bg-slate-800 p-4 rounded-2xl break-all"></div>
                 </div>
-                <button onclick="closeModal()" class="px-6 py-2 text-sm font-medium text-slate-600 hover:text-slate-800">Close</button>
             </div>
         </div>
     </div>
-
-    <footer class="border-t bg-white py-8 text-center text-xs text-slate-500">
-        <div class="max-w-screen-xl mx-auto px-8">
-            Root Donate • Private &amp; local lost &amp; found for the UK • All reports from verified accounts<br>
-            <span class="text-[10px]">Built as a beautiful prototype • Contact support@rootdonate.co.uk</span>
-        </div>
-    </footer>
 
     <script>
-        // Tailwind script
-        function initializeTailwind() {
-            document.documentElement.style.setProperty('--accent', '#0f766e');
+        // === DATA STORAGE ===
+        let users = [];
+        let reports = [];
+        let currentUser = null;
+
+        function loadData() {
+            // Users
+            if (localStorage.getItem('rootUsers')) {
+                users = JSON.parse(localStorage.getItem('rootUsers'));
+            } else {
+                users = [
+                    { id: 1, name: "Emily Thompson", handle: "@emily_london", email: "emily@rootdonate.co.uk", avatar: "https://picsum.photos/id/1005/128/128" }
+                ];
+                localStorage.setItem('rootUsers', JSON.stringify(users));
+            }
+
+            // Reports
+            if (localStorage.getItem('rootReports')) {
+                reports = JSON.parse(localStorage.getItem('rootReports'));
+            } else {
+                reports = [
+                    { id: 174120001, type: "lost", category: "money", title: "Black leather wallet with cash", description: "Lost near Oxford Street. Contains £85 cash.", location: "Oxford Street, London", date: "2026-06-24", account: "@emily_london" },
+                    { id: 174120002, type: "found", category: "item", title: "iPhone 15 Pro (Blue)", description: "Found at King's Cross Station.", location: "King's Cross, London", date: "2026-06-25", account: "@emily_london" }
+                ];
+                localStorage.setItem('rootReports', JSON.stringify(reports));
+            }
         }
 
-        // Sample Reports Data
-        let reports = [
-            {
-                id: 1,
-                type: "lost",
-                category: "money",
-                title: "Black leather wallet with cash & cards",
-                description: "Lost my black leather wallet yesterday afternoon. Contains £85 in cash, Monzo card, driver's licence, and some receipts. Last seen near Oxford Street / Tottenham Court Road area.",
-                location: "Oxford Street, London",
-                date: "2026-01-24",
-                account: "@london_explorer",
-                accountVerified: true,
-                likes: 87,
-                comments: [
-                    { id: 1, user: "@honest_sam", text: "I think I saw a similar wallet near the Pret on Oxford Street this morning. Was there any distinctive keyring?", time: "2h ago", verified: true },
-                    { id: 2, user: "@city_helper", text: "Hope you get it back soon. The cash amount helps narrow it down for people who might have found it.", time: "4h ago", verified: true }
-                ]
-            },
-            {
-                id: 2,
-                type: "found",
-                category: "item",
-                title: "iPhone 15 Pro in blue case",
-                description: "Found this iPhone near King's Cross station platform 4 this evening. Screen is locked. Has a nice blue case with a small scratch on the back. Trying to reunite with owner.",
-                location: "King's Cross Station, London",
-                date: "2026-01-25",
-                account: "@train_commuter",
-                accountVerified: true,
-                likes: 156,
-                comments: [
-                    { id: 1, user: "@tech_guy", text: "Any chance you can check for medical ID or emergency contacts?", time: "1h ago", verified: true }
-                ]
-            },
-            {
-                id: 3,
-                type: "lost",
-                category: "item",
-                title: "Toyota car keys with red keychain",
-                description: "Lost my car keys with a distinctive red Toyota fob and house keys attached. Probably dropped somewhere in Westfield White City.",
-                location: "Westfield London, Shepherd's Bush",
-                date: "2026-01-23",
-                account: "@westfield_shopper",
-                accountVerified: true,
-                likes: 42,
-                comments: []
-            },
-            {
-                id: 4,
-                type: "found",
-                category: "money",
-                title: "Brown envelope with £120 cash",
-                description: "Found a brown envelope containing cash (£120) on a bench in Hyde Park. No ID or note inside. Hoping to return it to the rightful owner.",
-                location: "Hyde Park, London",
-                date: "2026-01-25",
-                account: "@park_walker",
-                accountVerified: true,
-                likes: 203,
-                comments: [
-                    { id: 1, user: "@kind_stranger", text: "You're a legend for trying to return it. Any markings on the envelope?", time: "45m ago", verified: true }
-                ]
-            }
-        ]
+        function saveData() {
+            localStorage.setItem('rootUsers', JSON.stringify(users));
+            localStorage.setItem('rootReports', JSON.stringify(reports));
+        }
 
-        let currentReportId = null;
-
-        // Render Reports Grid
-        function renderReports(filteredReports = reports) {
+        // Render reports
+        function renderReports(filtered = reports) {
             const grid = document.getElementById('reports-grid');
             grid.innerHTML = '';
 
-            filteredReports.forEach(report => {
+            filtered.forEach(r => {
                 const card = document.createElement('div');
-                card.className = `report-card bg-white border border-slate-200 rounded-3xl p-5 cursor-pointer hover:border-teal-300`;
+                card.className = "report-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 cursor-pointer";
                 card.innerHTML = `
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <span class="tag ${report.type === 'lost' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">
-                                ${report.type.toUpperCase()}
-                            </span>
-                            ${report.category === 'money' ? 
-                                `<span class="tag ml-1.5 bg-amber-100 text-amber-700"><i class="fa-solid fa-pound-sign mr-0.5"></i> Money</span>` : 
-                                `<span class="tag ml-1.5 bg-sky-100 text-sky-700">Item</span>`}
-                        </div>
-                        <div class="text-xs text-slate-400">${report.date}</div>
+                    <div class="flex justify-between">
+                        <span class="px-4 py-1 text-xs font-bold rounded-3xl ${r.type === 'lost' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">
+                            ${r.type.toUpperCase()}
+                        </span>
+                        ${r.category === 'money' ? `<span class="px-4 py-1 text-xs font-bold bg-amber-100 text-amber-700 rounded-3xl">💷 MONEY</span>` : ''}
                     </div>
-                    
-                    <h3 class="font-semibold text-lg leading-tight tracking-tight mb-2 line-clamp-2">${report.title}</h3>
-                    
-                    <p class="text-sm text-slate-600 line-clamp-3 mb-4">${report.description}</p>
-                    
-                    <div class="flex items-center justify-between text-xs">
-                        <div>
-                            <div class="flex items-center gap-x-1.5 text-slate-500">
-                                <i class="fa-solid fa-map-marker-alt"></i>
-                                <span class="font-medium">${report.location.split(',')[0]}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center gap-x-1 text-emerald-600">
-                            <i class="fa-solid fa-user-check text-xs"></i>
-                            <span class="font-medium text-xs">${report.account}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-5 pt-4 border-t flex items-center justify-between">
-                        <div class="flex items-center gap-x-4 text-sm">
-                            <div class="flex items-center gap-x-1 text-slate-500">
-                                <i class="fa-regular fa-heart"></i>
-                                <span>${report.likes}</span>
-                            </div>
-                            <div class="flex items-center gap-x-1 text-slate-500">
-                                <i class="fa-regular fa-comment"></i>
-                                <span>${report.comments.length}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="flex gap-x-2">
-                            <button onclick="event.stopImmediatePropagation(); showDetailModal(${report.id})" 
-                                    class="px-4 py-1.5 text-xs font-semibold bg-white border border-slate-300 hover:bg-slate-50 rounded-2xl transition-colors">
-                                View Details
-                            </button>
-                            <button onclick="event.stopImmediatePropagation(); quickComment(${report.id})" 
-                                    class="px-4 py-1.5 text-xs font-semibold bg-teal-50 text-teal-700 hover:bg-teal-100 rounded-2xl transition-colors flex items-center gap-x-1">
-                                <i class="fa-regular fa-comment-dots"></i>
-                                <span class="hidden sm:inline">Comment</span>
-                            </button>
-                        </div>
-                    </div>
+                    <h3 class="font-semibold mt-4">${r.title}</h3>
+                    <p class="text-sm text-slate-600 dark:text-slate-400 line-clamp-3 mt-2">${r.description}</p>
+                    <div class="mt-5 text-xs text-emerald-600">${r.account}</div>
                 `;
-                
-                card.onclick = () => showDetailModal(report.id);
+                card.onclick = () => showDetailModal(r.id);
                 grid.appendChild(card);
             });
-            
-            document.getElementById('results-count').textContent = `${filteredReports.length} reports`;
         }
 
-        // Filter reports
-        function filterReports(filterType = 'all') {
-            const searchTerm = document.getElementById('search-input').value.toLowerCase();
-            
+        function filterReports(type = 'all') {
+            const term = document.getElementById('search-input').value.toLowerCase();
             let filtered = reports;
-            
-            // Apply category filter
-            if (filterType !== 'all') {
-                if (filterType === 'lost' || filterType === 'found') {
-                    filtered = filtered.filter(r => r.type === filterType);
-                } else if (filterType === 'money') {
-                    filtered = filtered.filter(r => r.category === 'money');
-                } else if (filterType === 'item') {
-                    filtered = filtered.filter(r => r.category === 'item');
-                }
+
+            if (type !== 'all') {
+                filtered = filtered.filter(r => type === 'money' ? r.category === 'money' : r.type === type);
             }
-            
-            // Apply search
-            if (searchTerm) {
-                filtered = filtered.filter(r => 
-                    r.title.toLowerCase().includes(searchTerm) || 
-                    r.description.toLowerCase().includes(searchTerm) ||
-                    r.location.toLowerCase().includes(searchTerm) ||
-                    r.account.toLowerCase().includes(searchTerm)
-                );
+            if (term) {
+                filtered = filtered.filter(r => r.title.toLowerCase().includes(term) || r.description.toLowerCase().includes(term));
             }
-            
-            // Update active button styles
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active', 'bg-teal-700', 'text-white');
-                btn.classList.add('hover:bg-slate-100', 'border', 'border-slate-200');
-                
-                if ((filterType === 'all' && btn.dataset.filter === 'all') ||
-                    (filterType === btn.dataset.filter)) {
-                    btn.classList.add('active', 'bg-teal-700', 'text-white');
-                    btn.classList.remove('hover:bg-slate-100', 'border', 'border-slate-200');
-                }
-            });
-            
             renderReports(filtered);
         }
 
-        // Show detail modal
-        function showDetailModal(reportId) {
-            const report = reports.find(r => r.id === reportId);
+        // === AUTHENTICATION ===
+        function showLoginModal() {
+            document.getElementById('auth-modal').classList.remove('hidden');
+            document.getElementById('auth-modal').classList.add('flex');
+            switchToLogin();
+        }
+
+        function closeAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
+            document.getElementById('auth-modal').classList.remove('flex');
+        }
+
+        function switchToRegister() {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('register-form').classList.remove('hidden');
+            document.getElementById('auth-title').textContent = "Create account";
+        }
+
+        function switchToLogin() {
+            document.getElementById('register-form').classList.add('hidden');
+            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('auth-title').textContent = "Welcome back";
+        }
+
+        function performLogin() {
+            const email = document.getElementById('login-email').value.trim();
+            const user = users.find(u => u.email === email);
+            
+            if (user) {
+                currentUser = user;
+                updateUIAfterLogin();
+                closeAuthModal();
+                showToast(`Welcome back, ${user.name}!`);
+            } else {
+                showToast("Account not found. Try registering.");
+            }
+        }
+
+        function performRegister() {
+            const name = document.getElementById('reg-name').value.trim();
+            const handle = document.getElementById('reg-handle').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+
+            if (!name || !handle || !email) {
+                showToast("Please fill all fields");
+                return;
+            }
+
+            if (users.find(u => u.email === email)) {
+                showToast("Email already registered");
+                return;
+            }
+
+            const newUser = {
+                id: Date.now(),
+                name: name,
+                handle: handle.startsWith('@') ? handle : '@' + handle,
+                email: email,
+                avatar: `https://picsum.photos/id/${Math.floor(Math.random()*1000)}/128/128`
+            };
+
+            users.push(newUser);
+            saveData();
+
+            currentUser = newUser;
+            updateUIAfterLogin();
+            closeAuthModal();
+            showToast(`Account created successfully! Welcome, ${name}`);
+        }
+
+        function updateUIAfterLogin() {
+            document.getElementById('login-btn').classList.add('hidden');
+            document.getElementById('new-report-btn').classList.remove('hidden');
+            document.getElementById('profile-section').classList.remove('hidden');
+
+            document.getElementById('nav-avatar').src = currentUser.avatar;
+            document.getElementById('nav-name').textContent = currentUser.name;
+            document.getElementById('nav-handle').textContent = currentUser.handle;
+        }
+
+        function showUserMenu() {
+            if (confirm("Logout?")) {
+                currentUser = null;
+                document.getElementById('login-btn').classList.remove('hidden');
+                document.getElementById('new-report-btn').classList.add('hidden');
+                document.getElementById('profile-section').classList.add('hidden');
+                showToast("Logged out successfully");
+            }
+        }
+
+        function showReportModal() {
+            if (!currentUser) {
+                showToast("Please log in to create a report");
+                showLoginModal();
+                return;
+            }
+            alert(`New Report Form opened as ${currentUser.handle}\n\n(You can extend this with full form like before)`);
+        }
+
+        function showDetailModal(id) {
+            const report = reports.find(r => r.id === id);
             if (!report) return;
-            
-            currentReportId = reportId;
-            
-            // Populate modal content
+
             document.getElementById('modal-title').textContent = report.title;
-            
-            const statusBadge = document.getElementById('modal-status-badge');
-            statusBadge.innerHTML = report.type === 'lost' ? 
-                `<span class="px-4 py-1 bg-rose-100 text-rose-700 text-xs font-bold rounded-2xl">LOST</span>` : 
-                `<span class="px-4 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-2xl">FOUND</span>`;
-            
-            document.getElementById('modal-description').innerHTML = report.description;
-            document.getElementById('modal-location').innerHTML = `<i class="fa-solid fa-map-marker-alt mr-2 text-teal-600"></i> ${report.location}`;
-            document.getElementById('modal-meta').innerHTML = `${report.date} • <span class="font-medium">${report.type.toUpperCase()}</span>`;
-            
-            // Account info
-            const accountEl = document.getElementById('modal-account');
-            accountEl.innerHTML = `
-                <div class="flex items-center gap-x-2">
-                    <div class="w-7 h-7 bg-slate-200 rounded-full overflow-hidden">
-                        <img src="https://picsum.photos/id/1005/28/28" class="w-full h-full object-cover">
-                    </div>
-                    <div>
-                        <span class="font-semibold">${report.account}</span>
-                        ${report.accountVerified ? `<span class="ml-1 text-emerald-600"><i class="fa-solid fa-check-circle text-xs"></i></span>` : ''}
-                        <div class="text-[10px] text-emerald-600 -mt-0.5">Verified Account</div>
-                    </div>
-                </div>
-            `;
-            
-            // Image
-            document.getElementById('modal-image').src = report.category === 'money' ? 
-                'https://picsum.photos/id/201/600/400' : 'https://picsum.photos/id/160/600/400';
-            
-            // Comments
-            renderComments(report);
-            document.getElementById('like-count').textContent = report.likes;
-            
-            // Show modal
+            document.getElementById('modal-description').textContent = report.description;
+            document.getElementById('modal-location').textContent = report.location;
+            document.getElementById('modal-date').textContent = report.date;
+
+            const user = users.find(u => u.handle === report.account) || currentUser || { name: "Unknown", handle: report.account, avatar: "https://picsum.photos/id/1005/128/128" };
+
+            document.getElementById('modal-avatar').src = user.avatar;
+            document.getElementById('modal-name').textContent = user.name;
+            document.getElementById('modal-handle').textContent = user.handle;
+
+            const shareUrl = `https://rootdonate.co.uk/report/${report.id}`;
+            document.getElementById('share-url').textContent = shareUrl;
+
             document.getElementById('detail-modal').classList.remove('hidden');
             document.getElementById('detail-modal').classList.add('flex');
         }
 
-        function renderComments(report) {
-            const container = document.getElementById('comments-list');
-            container.innerHTML = '';
-            
-            document.getElementById('comment-count').textContent = `${report.comments.length} comments`;
-            
-            if (report.comments.length === 0) {
-                const empty = document.createElement('div');
-                empty.className = 'text-center py-6 text-slate-400 text-sm';
-                empty.innerHTML = `No comments yet. Be the first from a verified account to comment!`;
-                container.appendChild(empty);
-                return;
-            }
-            
-            report.comments.forEach(comment => {
-                const commentEl = document.createElement('div');
-                commentEl.className = `comment flex gap-3 p-4 bg-white border border-slate-100 rounded-2xl`;
-                commentEl.innerHTML = `
-                    <div class="flex-shrink-0">
-                        <div class="w-8 h-8 bg-slate-200 rounded-full overflow-hidden">
-                            <img src="https://picsum.photos/id/1009/32/32" class="w-full h-full object-cover">
-                        </div>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-x-2">
-                            <span class="font-semibold text-sm">${comment.user}</span>
-                            ${comment.verified ? `<span class="text-emerald-600"><i class="fa-solid fa-check-circle text-xs"></i></span>` : ''}
-                            <span class="text-xs text-slate-400 ml-auto">${comment.time}</span>
-                        </div>
-                        <p class="text-sm text-slate-700 mt-1 leading-snug">${comment.text}</p>
-                    </div>
-                `;
-                container.appendChild(commentEl);
-            });
+        function copyShareLink() {
+            const url = document.getElementById('share-url').textContent;
+            navigator.clipboard.writeText(url);
+            showToast("✅ Share link copied!");
         }
 
-        // Post new comment
-        function postComment() {
-            const input = document.getElementById('comment-input');
-            const text = input.value.trim();
-            if (!text || !currentReportId) return;
-            
-            const report = reports.find(r => r.id === currentReportId);
-            if (!report) return;
-            
-            // Add new comment
-            const newComment = {
-                id: Date.now(),
-                user: "@emily_london",
-                text: text,
-                time: "Just now",
-                verified: true
-            };
-            
-            report.comments.unshift(newComment);
-            
-            // Re-render comments
-            renderComments(report);
-            
-            // Update the card in the grid (comment count)
+        function closeModal() {
+            document.getElementById('detail-modal').classList.add('hidden');
+            document.getElementById('detail-modal').classList.remove('flex');
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            const icon = document.getElementById('theme-icon');
+            icon.classList.toggle('fa-moon');
+            icon.classList.toggle('fa-sun');
+        }
+
+        function showToast(msg) {
+            const t = document.createElement('div');
+            t.style.cssText = "position:fixed;bottom:24px;right:24px;background:#111827;color:white;padding:16px 24px;border-radius:9999px;box-shadow:0 10px 15px -3px rgb(0 0 0 / 0.3);z-index:9999;display:flex;align-items:center;gap:12px;";
+            t.innerHTML = `<i class="fa-solid fa-check-circle text-teal-400"></i> ${msg}`;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 3000);
+        }
+
+        // Initialize
+        window.onload = () => {
+            loadData();
             renderReports();
-            
-            // Clear input
-            input.value = '';
-            
-            // Optional success feedback
-            const btns = document.querySelectorAll('#detail-modal button');
-            // Simple toast
-            showToast("Comment posted successfully from your verified account!");
-        }
-
-        function quickComment(reportId) {
-            showDetailModal(reportId);
-            setTimeout(() => {
-                document.getElementById('comment-input').focus();
-            }, 400);
-        }
-
-        function likeReport() {
-            if (!currentReportId) return;
-            const report = reports.find(r => r.id === currentReportId);
-            if (!report) return;
-            
-            report.likes++;
-            document.getElementById('like-count').textContent = report.likes;
-            renderReports(); // update grid
-        }
-
-        function showToast(message) {
-            const toast = document.createElement('div');
-            toast.className = `fixed bottom-6 right-6 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-x-3 z-[200]`;
-            toast.innerHTML = `
-                <i class="fa-solid fa-check-circle text-emerald-400"></i>
-                <span>${message}</span>
-            `;
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.style.transition = 'all 0.3s ease';
-                toast.style.opacity = '0';
-                setTimeout(() => toast.remove(), 300);
-            }, 2200);
-        }
-
-        function showReportModal() {
-            const modalHTML = `
-                <div id="report-modal" onclick="document.getElementById('report-modal').remove()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
-                    <div onclick="event.stopImmediatePropagation()" class="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl">
-                        <div class="flex justify-between mb-6">
-                            <div>
-                                <h3 class="text-2xl font-semibold">Report New Item</h3>
-                                <p class="text-sm text-slate-500">Help reunite someone with their belongings</p>
-                            </div>
-                            <button onclick="document.getElementById('report-modal').remove()" class="text-3xl leading-none text-slate-400 hover:text-slate-600">&times;</button>
-                        </div>
-                        
-                        <div class="space-y-5">
-                            <div>
-                                <label class="text-xs font-semibold text-slate-500">Type</label>
-                                <div class="flex gap-2 mt-1.5">
-                                    <div class="flex-1"><input type="radio" name="type" value="lost" checked> <span class="font-medium">Lost</span></div>
-                                    <div class="flex-1"><input type="radio" name="type" value="found"> <span class="font-medium">Found</span></div>
-                                </div>
-                            </div>
-                            
-                            <div>
-                                <label class="text-xs font-semibold text-slate-500 block mb-1.5">Title</label>
-                                <input type="text" value="Lost brown wallet with cash" class="w-full border border-slate-300 rounded-2xl px-4 py-3 text-sm">
-                            </div>
-                            
-                            <div>
-                                <label class="text-xs font-semibold text-slate-500 block mb-1.5">Description (include money amount or item details if relevant)</label>
-                                <textarea class="w-full border border-slate-300 rounded-2xl px-4 py-3 text-sm h-24" placeholder="Describe the item, any money inside, distinctive features..."></textarea>
-                            </div>
-                            
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="text-xs font-semibold text-slate-500 block mb-1.5">Location</label>
-                                    <input type="text" value="Oxford Street, London" class="w-full border border-slate-300 rounded-2xl px-4 py-3 text-sm">
-                                </div>
-                                <div>
-                                    <label class="text-xs font-semibold text-slate-500 block mb-1.5">Date</label>
-                                    <input type="date" value="2026-01-25" class="w-full border border-slate-300 rounded-2xl px-4 py-3 text-sm">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-8 flex gap-3">
-                            <button onclick="document.getElementById('report-modal').remove()" class="flex-1 py-3.5 border border-slate-300 text-sm font-semibold rounded-2xl">Cancel</button>
-                            <button onclick="submitNewReport(this)" class="flex-1 py-3.5 bg-teal-700 text-white text-sm font-semibold rounded-2xl">Submit Report</button>
-                        </div>
-                        
-                        <div class="text-center mt-4 text-[10px] text-slate-400">Your report will be visible to verified accounts only</div>
-                    </div>
-                </div>
-            `;
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
-        }
-
-        function submitNewReport(button) {
-            button.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Submitting...`;
-            
-            setTimeout(() => {
-                // Add new report (demo)
-                const newReport = {
-                    id: Date.now(),
-                    type: "lost",
-                    category: "money",
-                    title: "Lost brown wallet with cash",
-                    description: "Lost my brown leather wallet containing approximately £75 in cash and cards.",
-                    location: "Oxford Street, London",
-                    date: "2026-01-25",
-                    account: "@emily_london",
-                    accountVerified: true,
-                    likes: 0,
-                    comments: []
-                };
-                
-                reports.unshift(newReport);
-                document.getElementById('report-modal').remove();
-                
-                renderReports();
-                showToast("Report submitted successfully! Thank you for helping the community.");
-                
-                // Auto open the new report
-                setTimeout(() => {
-                    showDetailModal(newReport.id);
-                }, 800);
-            }, 1200);
-        }
-
-        function showAccountMenu() {
-            alert("Account menu would open here (profile, my reports, settings, logout). This is a prototype.");
-        }
-
-        function initializeFilters() {
-            // Make filter buttons work even without clicking
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    // already handled in onclick
-                });
-            });
-            
-            // Initial active state
-            const allBtn = document.querySelector('.filter-btn[data-filter="all"]');
-            if (allBtn) allBtn.classList.add('active', 'bg-teal-700', 'text-white');
-        }
-
-        function initializeSearch() {
-            const searchInput = document.getElementById('search-input');
-            searchInput.addEventListener('input', () => {
-                filterReports('all'); // re-apply current filters + search
-            });
-        }
-
-        // Main initialization
-        function initializeApp() {
-            initializeTailwind();
-            renderReports();
-            initializeFilters();
-            initializeSearch();
-            
-            // Demo: Show first report with money after 1.5s (optional)
-            // setTimeout(() => {
-            //     // showDetailModal(1);
-            // }, 1500);
-            
-            // Keyboard support for search
-            document.addEventListener('keydown', function(e) {
-                if (e.key === "/" && document.activeElement.tagName === "BODY") {
-                    e.preventDefault();
-                    document.getElementById('search-input').focus();
-                }
-            });
-            
-            console.log('%c[Root Donate] Masterpiece HTML prototype initialized successfully.', 'color:#14b8a6');
-        }
-
-        // Boot the app
-        window.onload = initializeApp;
+            console.log('%c✅ Root Donate - Login + Real Accounts Ready', 'color:#14b8a6; font-weight:600');
+        };
     </script>
 </body>
 </html>
