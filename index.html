@@ -171,20 +171,60 @@
         </div>
     </div>
 
-    <!-- Login Modal -->
-    <div id="login-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xl z-[200] flex items-center justify-center p-4">
+    <!-- Auth Modal (Login + Sign Up) -->
+    <div id="auth-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xl z-[200] flex items-center justify-center p-4">
         <div onclick="event.stopImmediatePropagation()" 
              class="modal bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-8 shadow-2xl">
-            <h2 class="text-2xl font-semibold mb-6">Welcome back</h2>
-            <div class="space-y-4">
-                <input id="login-email" type="email" placeholder="Email" class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700">
-                <input id="login-password" type="password" placeholder="Password" class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700">
-                <button onclick="login()" class="w-full py-4 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-3xl">Log in</button>
-                <p class="text-center text-sm text-slate-500">Don't have an account? 
-                    <button onclick="switchToRegister()" class="text-teal-600 hover:underline">Sign up</button>
-                </p>
+            
+            <!-- Tab Switch -->
+            <div class="flex border-b border-slate-200 dark:border-slate-700 mb-6">
+                <button onclick="switchAuthTab(0)" id="tab-login"
+                        class="flex-1 pb-4 text-center font-semibold border-b-2 border-teal-600 text-teal-600">Log in</button>
+                <button onclick="switchAuthTab(1)" id="tab-register"
+                        class="flex-1 pb-4 text-center font-semibold text-slate-400">Sign up</button>
             </div>
-            <button onclick="closeLoginModal()" class="absolute top-4 right-4 text-3xl text-slate-400 hover:text-slate-600">&times;</button>
+
+            <!-- Login Form -->
+            <div id="login-form">
+                <h2 class="text-2xl font-semibold mb-6">Welcome back</h2>
+                <div class="space-y-4">
+                    <input id="login-email" type="email" placeholder="Email address" 
+                           class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500">
+                    <input id="login-password" type="password" placeholder="Password" 
+                           class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500">
+                    <button onclick="login()" 
+                            class="w-full py-4 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-3xl transition-colors">
+                        Log in
+                    </button>
+                </div>
+            </div>
+
+            <!-- Register Form -->
+            <div id="register-form" class="hidden">
+                <h2 class="text-2xl font-semibold mb-6">Create your account</h2>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <input id="reg-firstname" type="text" placeholder="First name" 
+                               class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500">
+                        <input id="reg-lastname" type="text" placeholder="Last name" 
+                               class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500">
+                    </div>
+                    <input id="reg-email" type="email" placeholder="Email address" 
+                           class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500">
+                    <input id="reg-handle" type="text" placeholder="@username" 
+                           class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500">
+                    <input id="reg-password" type="password" placeholder="Create password" 
+                           class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500">
+                    
+                    <button onclick="register()" 
+                            class="w-full py-4 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-3xl transition-colors">
+                        Create account
+                    </button>
+                </div>
+            </div>
+
+            <button onclick="closeAuthModal()" 
+                    class="absolute top-4 right-4 text-3xl text-slate-400 hover:text-slate-600">&times;</button>
         </div>
     </div>
 
@@ -215,6 +255,7 @@
         let reports = [];
         let currentUser = null;
         let selectedType = 'lost';
+        let currentAuthTab = 0; // 0 = login, 1 = register
 
         // Sample Data
         function loadSampleData() {
@@ -290,7 +331,7 @@
 
         function filterReports(type = 'all') {
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            if (event && event.target) event.target.classList.add('active');
 
             let filtered = reports;
 
@@ -313,7 +354,7 @@
         // === NEW REPORT ===
         function showNewReportModal() {
             if (!currentUser) {
-                showToast("Please log in to create a report");
+                showToast("Please log in or sign up to create a report");
                 showLoginModal();
                 return;
             }
@@ -358,27 +399,75 @@
 
         // === AUTH ===
         function showLoginModal() {
-            document.getElementById('login-modal').classList.remove('hidden');
-            document.getElementById('login-modal').classList.add('flex');
+            document.getElementById('auth-modal').classList.remove('hidden');
+            document.getElementById('auth-modal').classList.add('flex');
+            switchAuthTab(0);
         }
 
-        function closeLoginModal() {
-            const modal = document.getElementById('login-modal');
+        function closeAuthModal() {
+            const modal = document.getElementById('auth-modal');
             modal.classList.add('hidden');
             modal.classList.remove('flex');
         }
 
+        function switchAuthTab(tab) {
+            currentAuthTab = tab;
+            document.getElementById('login-form').classList.toggle('hidden', tab === 1);
+            document.getElementById('register-form').classList.toggle('hidden', tab === 0);
+            
+            const loginTab = document.getElementById('tab-login');
+            const regTab = document.getElementById('tab-register');
+            
+            if (tab === 0) {
+                loginTab.classList.add('border-b-2', 'border-teal-600', 'text-teal-600');
+                regTab.classList.remove('border-b-2', 'border-teal-600', 'text-teal-600');
+            } else {
+                regTab.classList.add('border-b-2', 'border-teal-600', 'text-teal-600');
+                loginTab.classList.remove('border-b-2', 'border-teal-600', 'text-teal-600');
+            }
+        }
+
         function login() {
+            const email = document.getElementById('login-email').value.trim();
+            if (!email) {
+                showToast("Please enter your email");
+                return;
+            }
+            
             // Demo login
             currentUser = {
                 name: "Alex Morgan",
                 handle: "@alexmorgan",
-                avatar: "https://i.pravatar.cc/128"
+                avatar: "https://i.pravatar.cc/128?u=alex"
             };
             localStorage.setItem('currentUser', JSON.stringify(currentUser));
             updateUIForLoggedInUser();
-            closeLoginModal();
+            closeAuthModal();
             showToast("✅ Logged in successfully");
+        }
+
+        function register() {
+            const firstname = document.getElementById('reg-firstname').value.trim();
+            const lastname = document.getElementById('reg-lastname').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const handle = document.getElementById('reg-handle').value.trim();
+            const password = document.getElementById('reg-password').value.trim();
+
+            if (!firstname || !email || !handle) {
+                showToast("Please fill in all required fields");
+                return;
+            }
+
+            currentUser = {
+                name: `${firstname} ${lastname || ''}`.trim(),
+                handle: handle.startsWith('@') ? handle : '@' + handle,
+                avatar: `https://i.pravatar.cc/128?u=${email}`
+            };
+
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            updateUIForLoggedInUser();
+            closeAuthModal();
+            showToast("✅ Account created successfully! Welcome to Root Donate.");
         }
 
         function updateUIForLoggedInUser() {
