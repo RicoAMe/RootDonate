@@ -3,91 +3,111 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Node Monitor - Best Effort Online</title>
+  <title>Node Monitor - Python Style</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #0a0a0a; color: #00ff00; margin: 0; padding: 20px; }
-    .container { max-width: 1100px; margin: auto; }
-    h1 { text-align: center; }
-    .node { background: #111; padding: 15px; margin: 15px 0; border-radius: 8px; border: 1px solid #00ff00; }
-    input { width: 100%; padding: 12px; background: #222; color: #0f0; border: 1px solid #0f0; border-radius: 5px; font-size: 16px; }
-    button { padding: 12px 25px; margin: 8px; font-size: 16px; border: none; border-radius: 6px; cursor: pointer; }
-    .start { background: #00ff00; color: black; font-weight: bold; }
+    body {
+      font-family: 'Courier New', monospace;
+      background: #000;
+      color: #00ff00;
+      margin: 0;
+      padding: 20px;
+      line-height: 1.5;
+    }
+    .container { max-width: 900px; margin: auto; }
+    h1 { text-align: center; color: #00ff41; }
+    .header { text-align: center; color: #666; margin-bottom: 20px; }
+    .log {
+      background: #0a0a0a;
+      padding: 20px;
+      border: 1px solid #00ff00;
+      border-radius: 8px;
+      height: 560px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+    button {
+      padding: 12px 30px;
+      font-size: 16px;
+      margin: 10px;
+      background: #00ff00;
+      color: black;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
     .stop { background: #ff4444; color: white; }
-    .log { background: #000; padding: 15px; height: 500px; overflow-y: auto; font-family: monospace; border: 1px solid #00ff00; border-radius: 8px; }
-    .online { color: lime; }
-    .offline { color: #ff6666; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🔄 NODE MONITOR (Best Effort)</h1>
-    <p style="text-align:center;">CWOA • HarrisFed • Colossus</p>
-
-    <div class="node"><h2>@CWOA</h2><input type="text" id="cwoa" value="192.168.0.1"></div>
-    <div class="node"><h2>@HarrisFed</h2><input type="text" id="harrisfed" value="192.168.0.1"></div>
-    <div class="node"><h2>Colossus</h2><input type="text" id="colossus" value="192.168.0.1"></div>
+    <h1>🚀 MULTI-NODE MONITOR</h1>
+    <p class="header">CWOA • HarrisFed • Colossus | Auto Running</p>
 
     <div style="text-align:center;">
-      <button class="start" onclick="startScan()">▶ Start Auto Scan</button>
-      <button class="stop" onclick="stopScan()">⛔ Stop</button>
+      <button onclick="startMonitor()">▶ START MONITOR</button>
+      <button class="stop" onclick="stopMonitor()">⛔ STOP</button>
     </div>
 
-    <h2 style="text-align:center;">Live Log</h2>
     <div id="log" class="log"></div>
   </div>
 
   <script>
     let interval = null;
 
-    function log(msg, status = "") {
+    function printLine(text) {
+      const log = document.getElementById("log");
       const time = new Date().toLocaleTimeString();
-      document.getElementById("log").innerHTML += `[${time}] ${msg} ${status}<br>`;
-      document.getElementById("log").scrollTop = 999999;
+      log.innerHTML += `[${time}] ${text}\n`;
+      log.scrollTop = log.scrollHeight;
     }
 
-    async function checkNode(host, name) {
-      log(`Checking ${name} (${host})...`);
+    async function checkNode(name, ip) {
+      printLine(`Checking ${name.padEnd(12)} → ${ip.padEnd(15)} ...`);
       
+      // Best possible browser detection
       try {
-        // Multiple methods for better chance
-        const promises = [
-          fetch(`http://${host}`, { mode: 'no-cors', cache: 'no-cache' }).then(() => true).catch(() => false),
-          new Promise(r => { const i = new Image(); i.onload = () => r(true); i.onerror = () => r(false); i.src = `http://${host}/?t=${Date.now()}`; })
-        ];
-        
-        const results = await Promise.race(promises);
-        const isUp = results === true;
-        
-        log(`${name} → ${isUp ? '<span class="online">ONLINE 🟢</span>' : '<span class="offline">OFFLINE 🔴</span>'}`);
-        return isUp;
+        await Promise.race([
+          fetch(`http://${ip}`, { mode: 'no-cors', cache: 'no-store' }),
+          new Promise(r => setTimeout(() => r(false), 3500))
+        ]);
+        printLine(`✅ ${name.padEnd(12)} → ONLINE 🟢`);
       } catch (e) {
-        log(`${name} → <span class="offline">OFFLINE 🔴</span>`);
-        return false;
+        printLine(`❌ ${name.padEnd(12)} → OFFLINE 🔴`);
       }
     }
 
-    async function runScan() {
-      await checkNode(document.getElementById("cwoa").value.trim(), "CWOA");
-      await checkNode(document.getElementById("harrisfed").value.trim(), "HarrisFed");
-      await checkNode(document.getElementById("colossus").value.trim(), "Colossus");
-      log("✅ Cycle complete — waiting 8 seconds...\n");
+    async function scanAll() {
+      printLine("=".repeat(60));
+      printLine(`SCAN STARTED AT ${new Date().toLocaleString()}`);
+      printLine("=".repeat(60));
+
+      await checkNode("CWOA", document.getElementById("cwoa") ? document.getElementById("cwoa").value : "192.168.0.1");
+      await checkNode("HarrisFed", document.getElementById("harrisfed") ? document.getElementById("harrisfed").value : "192.168.0.1");
+      await checkNode("Colossus", document.getElementById("colossus") ? document.getElementById("colossus").value : "192.168.0.1");
+
+      printLine("Cycle complete. Waiting 8 seconds...\n");
     }
 
-    function startScan() {
+    function startMonitor() {
       if (interval) clearInterval(interval);
-      log("🚀 Auto scan started...");
-      runScan();
-      interval = setInterval(runScan, 8000);
+      printLine("🚀 MONITOR STARTED - Running continuously");
+      scanAll();
+      interval = setInterval(scanAll, 8000);
     }
 
-    function stopScan() {
-      if (interval) clearInterval(interval);
-      interval = null;
-      log("⛔ Scan stopped.");
+    function stopMonitor() {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+      printLine("⛔ MONITOR STOPPED BY USER");
     }
 
+    // Auto start
     window.onload = () => {
-      log("📡 Monitor ready. Click Start Auto Scan.");
+      printLine("System initialized with default IP 192.168.0.1");
+      setTimeout(startMonitor, 1000);
     };
   </script>
 </body>
