@@ -3,213 +3,128 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Node Monitor • CWOA • HarrisFed • Colossus</title>
+  <title>Node Monitor • Live Online</title>
   <style>
-    :root {
-      --primary: #00ff00;
-      --bg: #0a0a0a;
-      --card: #111111;
-    }
-
+    :root { --primary: #00ff00; --bg: #0a0a0a; --card: #111; }
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
       background: var(--bg);
       color: var(--primary);
-      margin: 0;
-      padding: 20px;
-      line-height: 1.5;
+      margin: 0; padding: 20px;
     }
-
-    .container {
-      max-width: 1100px;
-      margin: auto;
-    }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 5px;
-      font-size: 2.2em;
-    }
-
-    .subtitle {
-      text-align: center;
-      color: #888;
-      margin-bottom: 30px;
-    }
-
+    .container { max-width: 1100px; margin: auto; }
+    h1 { text-align: center; font-size: 2.3em; margin-bottom: 5px; }
+    .subtitle { text-align: center; color: #888; margin-bottom: 30px; }
     .node {
       background: var(--card);
       padding: 18px;
       margin: 18px 0;
       border-radius: 10px;
       border: 1px solid var(--primary);
-      box-shadow: 0 0 10px rgba(0, 255, 0, 0.1);
     }
-
-    .node h2 {
-      margin: 0 0 12px 0;
-      font-size: 1.4em;
-    }
-
     input {
-      width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      background: #1a1a1a;
-      color: var(--primary);
-      border: 1px solid #333;
-      border-radius: 6px;
-      outline: none;
+      width: 100%; padding: 12px; font-size: 16px;
+      background: #1a1a1a; color: var(--primary);
+      border: 1px solid #333; border-radius: 6px;
     }
-
-    input:focus {
-      border-color: var(--primary);
-      box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
-    }
-
-    .controls {
-      text-align: center;
-      margin: 25px 0;
-    }
-
+    .controls { text-align: center; margin: 25px 0; }
     button {
-      padding: 14px 28px;
-      font-size: 16px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin: 0 8px;
-      transition: all 0.2s;
+      padding: 14px 28px; font-size: 16px; border: none;
+      border-radius: 6px; cursor: pointer; margin: 0 8px;
     }
-
-    button:hover {
-      transform: translateY(-2px);
-    }
-
-    .start-btn {
-      background: var(--primary);
-      color: black;
-      font-weight: bold;
-    }
-
-    .stop-btn {
-      background: #ff3333;
-      color: white;
-    }
-
+    .start-btn { background: var(--primary); color: black; font-weight: bold; }
+    .stop-btn { background: #ff3333; color: white; }
     .log {
-      background: #000000;
-      padding: 20px;
-      height: 520px;
-      overflow-y: auto;
-      font-family: 'Courier New', monospace;
-      font-size: 14px;
-      border: 1px solid var(--primary);
-      border-radius: 10px;
-      white-space: pre-wrap;
-      line-height: 1.6;
+      background: #000; padding: 20px; height: 520px;
+      overflow-y: auto; font-family: monospace; font-size: 14px;
+      border: 1px solid var(--primary); border-radius: 10px;
     }
-
-    .footer {
-      text-align: center;
-      margin-top: 30px;
-      color: #555;
-      font-size: 0.9em;
-    }
+    .online { color: lime; }
+    .offline { color: red; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🔄 Multi-Node Monitor</h1>
-    <p class="subtitle">CWOA • HarrisFed • Colossus | Auto-Scan Enabled</p>
+    <h1>🔴 LIVE NODE MONITOR</h1>
+    <p class="subtitle">CWOA • HarrisFed • Colossus | Auto Online Detection</p>
 
-    <div class="node">
-      <h2>Node 1: @CWOA</h2>
-      <input type="text" id="cwoa" value="192.168.0.1" placeholder="Enter CWOA IP or hostname">
-    </div>
-
-    <div class="node">
-      <h2>Node 2: @HarrisFed</h2>
-      <input type="text" id="harrisfed" value="192.168.0.1" placeholder="Enter HarrisFed IP or hostname">
-    </div>
-
-    <div class="node">
-      <h2>Node 3: Colossus</h2>
-      <input type="text" id="colossus" value="192.168.0.1" placeholder="Enter Colossus IP or hostname">
-    </div>
+    <div class="node"><h2>Node 1: @CWOA</h2><input type="text" id="cwoa" value="192.168.0.1"></div>
+    <div class="node"><h2>Node 2: @HarrisFed</h2><input type="text" id="harrisfed" value="192.168.0.1"></div>
+    <div class="node"><h2>Node 3: Colossus</h2><input type="text" id="colossus" value="192.168.0.1"></div>
 
     <div class="controls">
-      <button class="start-btn" onclick="startScan()">▶ Restart Scan</button>
-      <button class="stop-btn" onclick="stopScan()">⛔ Stop Scan</button>
+      <button class="start-btn" onclick="startScan()">▶ Start Auto Scan</button>
+      <button class="stop-btn" onclick="stopScan()">⛔ Stop</button>
     </div>
 
-    <h2 style="text-align:center;">Live Activity Log</h2>
+    <h2 style="text-align:center;">Live Log</h2>
     <div id="log" class="log"></div>
-
-    <div class="footer">
-      Persistent monitoring • Scans every 8 seconds
-    </div>
   </div>
 
   <script>
     let interval = null;
 
-    function log(message, status = "") {
+    function log(msg, status="") {
       const logDiv = document.getElementById("log");
       const time = new Date().toLocaleTimeString();
-      logDiv.innerHTML += `<span style="color:#666">[${time}]</span> ${message} ${status}<br>`;
+      logDiv.innerHTML += `<span style="color:#666">[${time}]</span> ${msg} ${status}<br>`;
       logDiv.scrollTop = logDiv.scrollHeight;
     }
 
-    async function ping(host) {
+    async function isOnline(host) {
       if (!host) return {status: "offline", time: 0};
       
-      return new Promise(resolve => {
-        const start = Date.now();
-        const img = new Image();
-        img.onload = () => resolve({status: "online", time: Date.now() - start});
-        img.onerror = () => resolve({status: "offline", time: 9999});
-        img.src = `http://${host}/favicon.ico?${start}`;
-        setTimeout(() => resolve({status: "offline", time: 9999}), 6000);
-      });
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+
+        const response = await fetch(`http://${host}`, {
+          mode: 'no-cors',
+          signal: controller.signal,
+          cache: 'no-cache'
+        });
+        
+        clearTimeout(timeout);
+        return {status: "online", time: "✓"};
+      } catch (e) {
+        return {status: "offline", time: "✕"};
+      }
     }
 
     async function runScan() {
       const nodes = [
-        {name: "CWOA",      ip: document.getElementById("cwoa").value.trim()},
+        {name: "CWOA", ip: document.getElementById("cwoa").value.trim()},
         {name: "HarrisFed", ip: document.getElementById("harrisfed").value.trim()},
-        {name: "Colossus",  ip: document.getElementById("colossus").value.trim()}
+        {name: "Colossus", ip: document.getElementById("colossus").value.trim()}
       ];
 
       for (let node of nodes) {
-        log(`Scanning <strong>${node.name}</strong> (${node.ip || "unknown"})...`);
-        const result = await ping(node.ip);
-        const emoji = result.status === "online" ? "🟢" : "🔴";
-        log(`${node.name} → <strong>${result.status.toUpperCase()}</strong> (${result.time}ms)`, emoji);
+        log(`Checking <strong>${node.name}</strong> (${node.ip})...`);
+        const res = await isOnline(node.ip);
+        const colorClass = res.status === "online" ? "online" : "offline";
+        log(`${node.name} → <span class="${colorClass}"><strong>${res.status.toUpperCase()}</strong></span>`, res.status === "online" ? "🟢" : "🔴");
       }
 
-      log("✅ Cycle complete — next scan in 8 seconds...\n");
+      log("✅ Scan cycle finished — next in 8 seconds...\n");
     }
 
     function startScan() {
       if (interval) clearInterval(interval);
-      log("🚀 Auto monitoring started...");
+      log("🚀 Auto scan activated — checking nodes...");
       runScan();
       interval = setInterval(runScan, 8000);
     }
 
     function stopScan() {
-      if (interval) {
-        clearInterval(interval);
-        interval = null;
-      }
-      log("⛔ Monitoring stopped by user.");
+      if (interval) clearInterval(interval);
+      interval = null;
+      log("⛔ Auto scan stopped.");
     }
 
-    // Auto-start on load
+    // Auto start
     window.onload = () => {
-      log("📡 System initialized with default IP 192.168.0.1");
-      setTimeout(startScan, 1200);
+      log("📡 System initialized with 192.168.0.1");
+      setTimeout(startScan, 1500);
     };
   </script>
 </body>
