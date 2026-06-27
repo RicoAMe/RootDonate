@@ -3,37 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Device Node Scanner - CWOA & HarrisFed</title>
+  <title>Auto Device Scanner - CWOA & HarrisFed</title>
   <style>
     body { font-family: Arial, sans-serif; background: #0f0f0f; color: #0f0; margin: 0; padding: 20px; }
     h1 { text-align: center; color: #0f0; }
     .container { max-width: 900px; margin: auto; }
     .node { background: #1a1a1a; padding: 15px; margin: 15px 0; border-radius: 8px; border: 1px solid #0f0; }
-    button { background: #0f0; color: black; padding: 12px 20px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+    button { background: #0f0; color: black; padding: 12px 20px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin: 5px; }
     button:hover { background: #00cc00; }
-    .log { background: black; padding: 15px; height: 400px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; border: 1px solid #0f0; }
+    .stop-btn { background: #f44; }
+    .log { background: black; padding: 15px; height: 500px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; border: 1px solid #0f0; }
     .status { font-weight: bold; }
-    .online { color: lime; }
-    .offline { color: red; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🔍 Device Node Scanner</h1>
-    <p style="text-align:center;">Monitoring: <strong>@CWOA</strong> &amp; <strong>@HarrisFed</strong> → Your Device</p>
+    <h1>🔄 Auto Device Node Scanner</h1>
+    <p style="text-align:center;">Monitoring: <strong>@CWOA</strong> &amp; <strong>@HarrisFed</strong> → Your Device<br>
+    <small>Auto-starts on load • Scans every 8 seconds</small></p>
 
     <div class="node">
       <h2>Node 1: @CWOA</h2>
-      <p>IP / Host: <input type="text" id="cwoa" placeholder="Enter CWOA IP or hostname" style="width:80%; padding:8px;"></p>
+      <input type="text" id="cwoa" placeholder="Enter CWOA IP or hostname" style="width:100%; padding:10px; font-size:16px;">
     </div>
 
     <div class="node">
       <h2>Node 2: @HarrisFed</h2>
-      <p>IP / Host: <input type="text" id="harrisfed" placeholder="Enter HarrisFed IP or hostname" style="width:80%; padding:8px;"></p>
+      <input type="text" id="harrisfed" placeholder="Enter HarrisFed IP or hostname" style="width:100%; padding:10px; font-size:16px;">
     </div>
 
-    <button onclick="startScan()">▶ Start Persistent Scan</button>
-    <button onclick="stopScan()" style="background:#f44; margin-left:10px;">⛔ Stop Scan</button>
+    <button onclick="startScan()">▶ Restart Scan</button>
+    <button onclick="stopScan()" class="stop-btn">⛔ Stop Scan</button>
 
     <h2>Live Log</h2>
     <div id="log" class="log"></div>
@@ -49,15 +49,18 @@
       logDiv.scrollTop = logDiv.scrollHeight;
     }
 
-    function ping(host) {
+    async function ping(host) {
       return new Promise(resolve => {
+        if (!host || host === "") {
+          resolve({host: "unknown", time: 0, status: "offline"});
+          return;
+        }
         const start = Date.now();
-        // Simple browser-based check using Image or fetch (limited but works for reachability)
         const img = new Image();
         img.onload = () => resolve({host, time: Date.now() - start, status: "online"});
         img.onerror = () => resolve({host, time: 9999, status: "offline"});
         img.src = `http://${host}/favicon.ico?${start}`;
-        setTimeout(() => resolve({host, time: 9999, status: "offline"}), 5000);
+        setTimeout(() => resolve({host, time: 9999, status: "offline"}), 6000);
       });
     }
 
@@ -65,24 +68,22 @@
       const cwoa = document.getElementById("cwoa").value.trim() || "CWOA-IP";
       const harrisfed = document.getElementById("harrisfed").value.trim() || "HarrisFed-IP";
 
-      log("Scanning CWOA...", "");
-      const cwoaResult = await ping(cwoa);
-      log(`CWOA → ${cwoaResult.status.toUpperCase()} (${cwoaResult.time}ms)`, 
-          cwoaResult.status === "online" ? "🟢" : "🔴");
+      log("🔍 Scanning CWOA...", "");
+      const cResult = await ping(cwoa);
+      log(`CWOA → ${cResult.status.toUpperCase()} (${cResult.time}ms)`, cResult.status === "online" ? "🟢" : "🔴");
 
-      log("Scanning HarrisFed...", "");
-      const harrisResult = await ping(harrisfed);
-      log(`HarrisFed → ${harrisResult.status.toUpperCase()} (${harrisResult.time}ms)`, 
-          harrisResult.status === "online" ? "🟢" : "🔴");
+      log("🔍 Scanning HarrisFed...", "");
+      const hResult = await ping(harrisfed);
+      log(`HarrisFed → ${hResult.status.toUpperCase()} (${hResult.time}ms)`, hResult.status === "online" ? "🟢" : "🔴");
 
-      log("--- Scan cycle complete — waiting 10s ---\n", "");
+      log("✅ Cycle complete — next scan in 8 seconds...\n", "");
     }
 
     function startScan() {
       if (interval) clearInterval(interval);
-      log("🚀 Persistent scan started (every 10 seconds)...");
-      runScan(); // first run immediately
-      interval = setInterval(runScan, 10000);
+      log("🚀 Auto persistent scan started...");
+      runScan();
+      interval = setInterval(runScan, 8000);   // every 8 seconds
     }
 
     function stopScan() {
@@ -90,12 +91,13 @@
         clearInterval(interval);
         interval = null;
       }
-      log("⛔ Scan stopped.");
+      log("⛔ Scan stopped by user.");
     }
 
-    // Auto example on load
+    // AUTO START when page loads
     window.onload = () => {
-      log("Page loaded. Enter IPs above and click Start.");
+      log("📡 Page loaded — Auto scan will begin in 2 seconds...");
+      setTimeout(startScan, 2000);
     };
   </script>
 </body>
