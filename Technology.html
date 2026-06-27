@@ -3,58 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Node Monitor • Live Online</title>
+  <title>Node Monitor - Best Effort Online</title>
   <style>
-    :root { --primary: #00ff00; --bg: #0a0a0a; --card: #111; }
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: var(--bg);
-      color: var(--primary);
-      margin: 0; padding: 20px;
-    }
+    body { font-family: Arial, sans-serif; background: #0a0a0a; color: #00ff00; margin: 0; padding: 20px; }
     .container { max-width: 1100px; margin: auto; }
-    h1 { text-align: center; font-size: 2.3em; margin-bottom: 5px; }
-    .subtitle { text-align: center; color: #888; margin-bottom: 30px; }
-    .node {
-      background: var(--card);
-      padding: 18px;
-      margin: 18px 0;
-      border-radius: 10px;
-      border: 1px solid var(--primary);
-    }
-    input {
-      width: 100%; padding: 12px; font-size: 16px;
-      background: #1a1a1a; color: var(--primary);
-      border: 1px solid #333; border-radius: 6px;
-    }
-    .controls { text-align: center; margin: 25px 0; }
-    button {
-      padding: 14px 28px; font-size: 16px; border: none;
-      border-radius: 6px; cursor: pointer; margin: 0 8px;
-    }
-    .start-btn { background: var(--primary); color: black; font-weight: bold; }
-    .stop-btn { background: #ff3333; color: white; }
-    .log {
-      background: #000; padding: 20px; height: 520px;
-      overflow-y: auto; font-family: monospace; font-size: 14px;
-      border: 1px solid var(--primary); border-radius: 10px;
-    }
+    h1 { text-align: center; }
+    .node { background: #111; padding: 15px; margin: 15px 0; border-radius: 8px; border: 1px solid #00ff00; }
+    input { width: 100%; padding: 12px; background: #222; color: #0f0; border: 1px solid #0f0; border-radius: 5px; font-size: 16px; }
+    button { padding: 12px 25px; margin: 8px; font-size: 16px; border: none; border-radius: 6px; cursor: pointer; }
+    .start { background: #00ff00; color: black; font-weight: bold; }
+    .stop { background: #ff4444; color: white; }
+    .log { background: #000; padding: 15px; height: 500px; overflow-y: auto; font-family: monospace; border: 1px solid #00ff00; border-radius: 8px; }
     .online { color: lime; }
-    .offline { color: red; }
+    .offline { color: #ff6666; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🔴 LIVE NODE MONITOR</h1>
-    <p class="subtitle">CWOA • HarrisFed • Colossus | Auto Online Detection</p>
+    <h1>🔄 NODE MONITOR (Best Effort)</h1>
+    <p style="text-align:center;">CWOA • HarrisFed • Colossus</p>
 
-    <div class="node"><h2>Node 1: @CWOA</h2><input type="text" id="cwoa" value="192.168.0.1"></div>
-    <div class="node"><h2>Node 2: @HarrisFed</h2><input type="text" id="harrisfed" value="192.168.0.1"></div>
-    <div class="node"><h2>Node 3: Colossus</h2><input type="text" id="colossus" value="192.168.0.1"></div>
+    <div class="node"><h2>@CWOA</h2><input type="text" id="cwoa" value="192.168.0.1"></div>
+    <div class="node"><h2>@HarrisFed</h2><input type="text" id="harrisfed" value="192.168.0.1"></div>
+    <div class="node"><h2>Colossus</h2><input type="text" id="colossus" value="192.168.0.1"></div>
 
-    <div class="controls">
-      <button class="start-btn" onclick="startScan()">▶ Start Auto Scan</button>
-      <button class="stop-btn" onclick="stopScan()">⛔ Stop</button>
+    <div style="text-align:center;">
+      <button class="start" onclick="startScan()">▶ Start Auto Scan</button>
+      <button class="stop" onclick="stopScan()">⛔ Stop</button>
     </div>
 
     <h2 style="text-align:center;">Live Log</h2>
@@ -64,53 +39,43 @@
   <script>
     let interval = null;
 
-    function log(msg, status="") {
-      const logDiv = document.getElementById("log");
+    function log(msg, status = "") {
       const time = new Date().toLocaleTimeString();
-      logDiv.innerHTML += `<span style="color:#666">[${time}]</span> ${msg} ${status}<br>`;
-      logDiv.scrollTop = logDiv.scrollHeight;
+      document.getElementById("log").innerHTML += `[${time}] ${msg} ${status}<br>`;
+      document.getElementById("log").scrollTop = 999999;
     }
 
-    async function isOnline(host) {
-      if (!host) return {status: "offline", time: 0};
+    async function checkNode(host, name) {
+      log(`Checking ${name} (${host})...`);
       
       try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 5000);
-
-        const response = await fetch(`http://${host}`, {
-          mode: 'no-cors',
-          signal: controller.signal,
-          cache: 'no-cache'
-        });
+        // Multiple methods for better chance
+        const promises = [
+          fetch(`http://${host}`, { mode: 'no-cors', cache: 'no-cache' }).then(() => true).catch(() => false),
+          new Promise(r => { const i = new Image(); i.onload = () => r(true); i.onerror = () => r(false); i.src = `http://${host}/?t=${Date.now()}`; })
+        ];
         
-        clearTimeout(timeout);
-        return {status: "online", time: "✓"};
+        const results = await Promise.race(promises);
+        const isUp = results === true;
+        
+        log(`${name} → ${isUp ? '<span class="online">ONLINE 🟢</span>' : '<span class="offline">OFFLINE 🔴</span>'}`);
+        return isUp;
       } catch (e) {
-        return {status: "offline", time: "✕"};
+        log(`${name} → <span class="offline">OFFLINE 🔴</span>`);
+        return false;
       }
     }
 
     async function runScan() {
-      const nodes = [
-        {name: "CWOA", ip: document.getElementById("cwoa").value.trim()},
-        {name: "HarrisFed", ip: document.getElementById("harrisfed").value.trim()},
-        {name: "Colossus", ip: document.getElementById("colossus").value.trim()}
-      ];
-
-      for (let node of nodes) {
-        log(`Checking <strong>${node.name}</strong> (${node.ip})...`);
-        const res = await isOnline(node.ip);
-        const colorClass = res.status === "online" ? "online" : "offline";
-        log(`${node.name} → <span class="${colorClass}"><strong>${res.status.toUpperCase()}</strong></span>`, res.status === "online" ? "🟢" : "🔴");
-      }
-
-      log("✅ Scan cycle finished — next in 8 seconds...\n");
+      await checkNode(document.getElementById("cwoa").value.trim(), "CWOA");
+      await checkNode(document.getElementById("harrisfed").value.trim(), "HarrisFed");
+      await checkNode(document.getElementById("colossus").value.trim(), "Colossus");
+      log("✅ Cycle complete — waiting 8 seconds...\n");
     }
 
     function startScan() {
       if (interval) clearInterval(interval);
-      log("🚀 Auto scan activated — checking nodes...");
+      log("🚀 Auto scan started...");
       runScan();
       interval = setInterval(runScan, 8000);
     }
@@ -118,13 +83,11 @@
     function stopScan() {
       if (interval) clearInterval(interval);
       interval = null;
-      log("⛔ Auto scan stopped.");
+      log("⛔ Scan stopped.");
     }
 
-    // Auto start
     window.onload = () => {
-      log("📡 System initialized with 192.168.0.1");
-      setTimeout(startScan, 1500);
+      log("📡 Monitor ready. Click Start Auto Scan.");
     };
   </script>
 </body>
