@@ -1,501 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Root Donate • Lost & Found</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@700&display=swap');
-        
-        body { font-family: 'Inter', system_ui, sans-serif; }
-        .logo-font { font-family: 'Playfair Display', Georgia, serif; font-weight: 700; }
-
-        .report-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .report-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15);
-        }
-
-        .modal {
-            animation: modalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        @keyframes modalPop {
-            from { opacity: 0; transform: scale(0.95) translateY(20px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-
-        .filter-btn.active {
-            background-color: #14b8a6;
-            color: white;
-            border-color: #14b8a6;
-        }
-
-        .line-clamp-3 {
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Node Monitor - Clean Online</title>
+  <style>
+    :root { --green: #00ff41; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #050505;
+      color: var(--green);
+      margin: 0;
+      padding: 20px;
+    }
+    .container { max-width: 1000px; margin: auto; }
+    h1 { text-align: center; font-size: 2.4em; margin-bottom: 10px; }
+    p.subtitle { text-align: center; color: #666; }
+    .node {
+      background: #0f0f0f;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 12px;
+      border: 2px solid var(--green);
+    }
+    input {
+      width: 100%;
+      padding: 14px;
+      font-size: 17px;
+      background: #1a1a1a;
+      color: var(--green);
+      border: 1px solid #333;
+      border-radius: 8px;
+    }
+    .controls { text-align: center; margin: 30px 0; }
+    button {
+      padding: 15px 32px;
+      font-size: 17px;
+      margin: 0 10px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .start-btn { background: var(--green); color: black; font-weight: bold; }
+    .stop-btn { background: #ff2d2d; color: white; }
+    .log {
+      background: #000;
+      padding: 20px;
+      height: 480px;
+      overflow-y: auto;
+      font-family: monospace;
+      border: 2px solid var(--green);
+      border-radius: 12px;
+      line-height: 1.6;
+    }
+    .online { color: lime; font-weight: bold; }
+    .offline { color: #ff6666; }
+  </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
+<body>
+  <div class="container">
+    <h1>🔄 NODE MONITOR</h1>
+    <p class="subtitle">CWOA • HarrisFed • Colossus | Auto Scan</p>
 
-    <!-- Navbar -->
-    <nav class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50">
-        <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-            <div class="flex items-center gap-x-3">
-                <div class="w-9 h-9 bg-teal-600 rounded-2xl flex items-center justify-center text-white text-3xl">
-                    <i class="fa-solid fa-handshake"></i>
-                </div>
-                <div>
-                    <a href="Technology.html">
-                    <span class="logo-font text-3xl sm:text-4xl font-bold tracking-tighter">Root</span>
-                    <span class="logo-font text-3xl sm:text-4xl font-bold tracking-tighter text-teal-600">Donate</span>
-                    </a>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-x-4 sm:gap-x-6">
-                <button onclick="toggleDarkMode()" class="w-10 h-10 flex items-center justify-center rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                    <i id="theme-icon" class="fa-solid fa-moon text-xl"></i>
-                </button>
-
-                <button onclick="showLoginModal()" id="login-btn"
-                        class="px-5 py-2.5 text-sm font-medium rounded-3xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                    Log in
-                </button>
-
-                <button onclick="showNewReportModal()" id="new-report-btn"
-                        class="hidden px-5 py-2.5 sm:px-6 sm:py-3 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-3xl flex items-center gap-x-2 transition-colors">
-                    <i class="fa-solid fa-plus"></i>
-                    <span>New Report</span>
-                </button>
-
-                <div onclick="showUserMenu()" id="profile-section" 
-                     class="hidden items-center gap-x-3 cursor-pointer hover:opacity-80 transition-opacity">
-                    <img id="nav-avatar" class="w-9 h-9 rounded-2xl object-cover ring-2 ring-teal-200" src="https://i.pravatar.cc/128" alt="Profile">
-                    <div class="hidden sm:block">
-                        <div id="nav-name" class="font-semibold text-sm"></div>
-                        <div id="nav-handle" class="text-teal-600 text-xs"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 pt-8 pb-12">
-        <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tighter text-center sm:text-left">Reuniting people with what matters.</h1>
-        <p class="text-slate-600 dark:text-slate-400 mt-3 text-lg text-center sm:text-left">Lost &amp; Found • UK • Verified Accounts</p>
-
-        <!-- Filters -->
-        <div class="mt-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl p-2 flex flex-col sm:flex-row gap-3">
-            <div class="flex-1 relative">
-                <i class="fa-solid fa-magnifying-glass absolute left-5 top-4 text-slate-400"></i>
-                <input id="search-input" type="text" placeholder="Search reports, items, locations..." 
-                       class="w-full pl-12 py-4 bg-slate-100 dark:bg-slate-800 rounded-3xl outline-none focus:ring-2 focus:ring-teal-500 transition-all"
-                       onkeyup="if(event.key === 'Enter') filterReports()">
-            </div>
-            <div class="flex gap-2 flex-wrap">
-                <button onclick="filterReports('all')" class="filter-btn active px-6 py-3 rounded-3xl text-sm font-medium">All</button>
-                <button onclick="filterReports('lost')" class="filter-btn px-6 py-3 rounded-3xl text-sm font-medium">Lost</button>
-                <button onclick="filterReports('found')" class="filter-btn px-6 py-3 rounded-3xl text-sm font-medium">Found</button>
-                <button onclick="filterReports('money')" class="filter-btn px-6 py-3 rounded-3xl text-sm font-medium">💷 Money</button>
-            </div>
-        </div>
-
-        <div id="reports-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-8"></div>
+    <div class="node">
+      <h2>1. @CWOA</h2>
+      <input type="text" id="cwoa" value="192.168.0.1">
+    </div>
+    <div class="node">
+      <h2>2. @HarrisFed</h2>
+      <input type="text" id="harrisfed" value="192.168.0.1">
+    </div>
+    <div class="node">
+      <h2>3. Colossus</h2>
+      <input type="text" id="colossus" value="192.168.0.1">
     </div>
 
-    <!-- New Report Modal -->
-    <div id="new-report-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xl z-[200] flex items-center justify-center p-4">
-        <div onclick="event.stopImmediatePropagation()" class="modal bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl p-8 shadow-2xl max-h-[90vh] overflow-auto">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-semibold">Create New Report</h2>
-                <button onclick="closeNewReportModal()" class="text-4xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">&times;</button>
-            </div>
-
-            <form id="new-report-form" onsubmit="submitNewReport(event)">
-                <div class="space-y-5">
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Type</label>
-                        <div class="flex gap-3">
-                            <button type="button" onclick="selectType(this)" data-type="lost" class="type-btn flex-1 py-4 rounded-2xl border-2 border-rose-300 text-rose-700 dark:border-rose-800 font-semibold active">LOST</button>
-                            <button type="button" onclick="selectType(this)" data-type="found" class="type-btn flex-1 py-4 rounded-2xl border-2 border-emerald-300 text-emerald-700 dark:border-emerald-800 font-semibold">FOUND</button>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Title</label>
-                        <input id="report-title" type="text" required class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500" placeholder="e.g. Black leather wallet with cash">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium mb-2">Description</label>
-                        <textarea id="report-desc" rows="4" required class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500" placeholder="Details about the item..."></textarea>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Location</label>
-                            <input id="report-location" type="text" required class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500" placeholder="Oxford Street, London">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium mb-2">Category</label>
-                            <select id="report-category" required class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500">
-                                <option value="item">General Item</option>
-                                <option value="money">Money / Wallet</option>
-                                <option value="phone">Phone / Electronics</option>
-                                <option value="bag">Bag / Backpack</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="w-full py-4 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-3xl transition-colors">Post Report</button>
-                </div>
-            </form>
-        </div>
+    <div class="controls">
+      <button class="start-btn" onclick="startScan()">▶ START AUTO SCAN</button>
+      <button class="stop-btn" onclick="stopScan()">⛔ STOP</button>
     </div>
 
-    <!-- Auth Modal -->
-    <div id="auth-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xl z-[200] flex items-center justify-center p-4">
-        <div onclick="event.stopImmediatePropagation()" class="modal bg-white dark:bg-slate-900 w-full max-w-md rounded-3xl p-8 shadow-2xl">
-            <div class="flex justify-between items-center mb-6">
-                <h2 id="auth-title" class="text-2xl font-semibold">Welcome back</h2>
-                <button onclick="closeAuthModal()" class="text-4xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">&times;</button>
-            </div>
+    <h2 style="text-align:center;">Live Status Log</h2>
+    <div id="log" class="log"></div>
+  </div>
 
-            <div id="auth-form">
-                <!-- Login Form -->
-                <div id="login-form">
-                    <div class="space-y-4">
-                        <input id="login-email" type="email" placeholder="Email" class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500">
-                        <input id="login-password" type="password" placeholder="Password" class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500">
-                        <button onclick="login()" class="w-full py-4 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-3xl">Log in</button>
-                    </div>
-                    <p class="text-center mt-6 text-sm text-slate-500">
-                        Don't have an account? 
-                        <span onclick="switchToSignup()" class="text-teal-600 cursor-pointer hover:underline">Sign up</span>
-                    </p>
-                </div>
+  <script>
+    let interval = null;
 
-                <!-- Signup Form -->
-                <div id="signup-form" class="hidden">
-                    <div class="space-y-4">
-                        <input id="signup-name" type="text" placeholder="Full Name" class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500">
-                        <input id="signup-handle" type="text" placeholder="@username" class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500">
-                        <input id="signup-email" type="email" placeholder="Email" class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500">
-                        <input id="signup-password" type="password" placeholder="Password" class="w-full px-5 py-4 rounded-2xl border border-slate-300 dark:border-slate-700 focus:outline-none focus:border-teal-500">
-                        <button onclick="signup()" class="w-full py-4 bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-3xl">Create Account</button>
-                    </div>
-                    <p class="text-center mt-6 text-sm text-slate-500">
-                        Already have an account? 
-                        <span onclick="switchToLogin()" class="text-teal-600 cursor-pointer hover:underline">Log in</span>
-                    </p>
-                </div>
-            </div>
-        </div>
-    </div>
+    function log(text) {
+      const time = new Date().toLocaleTimeString();
+      document.getElementById("log").innerHTML += `<span style="color:#555">[${time}]</span> ${text}<br>`;
+      document.getElementById("log").scrollTop = 1e6;
+    }
 
-    <!-- Report Detail Modal -->
-    <div id="detail-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xl z-[200] flex items-center justify-center p-4">
-        <div onclick="event.stopImmediatePropagation()" class="modal bg-white dark:bg-slate-900 w-full max-w-2xl rounded-3xl p-8 shadow-2xl max-h-[90vh] overflow-auto">
-            <button onclick="closeDetailModal()" class="float-right text-4xl text-slate-400 hover:text-slate-600">&times;</button>
-            <div id="detail-content" class="mt-8"></div>
-            
-            <div class="mt-8 flex flex-col sm:flex-row gap-3">
-                <button onclick="copyShareLink()" class="flex-1 py-3.5 border border-slate-300 dark:border-slate-700 rounded-3xl font-medium flex items-center justify-center gap-2 hover:bg-slate-50 dark:hover:bg-slate-800">
-                    <i class="fa-solid fa-link"></i> Copy Share Link
-                </button>
-                <button onclick="closeDetailModal()" class="flex-1 py-3.5 bg-teal-600 text-white rounded-3xl font-medium">Close</button>
-            </div>
-        </div>
-    </div>
+    async function check(host, name) {
+      if (!host) return log(`${name} → <span class="offline">OFFLINE (No IP)</span>`);
 
-    <script>
-        let reports = [];
-        let currentUser = null;
-        let currentDetailId = null;
+      log(`Checking ${name} (${host})...`);
 
-        // Sample Data
-        function loadSampleData() {
-            reports = [
-                { id: 1, type: "lost", category: "money", title: "Black Leather Wallet", description: "Lost near Covent Garden. Contains ID, cards and some cash. Reward offered.", location: "Covent Garden, London", date: "2025-06-24", account: "@sarah_k" },
-                { id: 2, type: "found", category: "phone", title: "iPhone 15 Pro - Blue", description: "Found on the Northern Line. Battery at 23%. Still locked.", location: "Northern Line, London", date: "2025-06-25", account: "@londoncommuter" },
-            ];
-        }
+      try {
+        // Best effort detection
+        await Promise.race([
+          fetch(`http://${host}`, {mode: 'no-cors', cache: 'no-store'}),
+          new Promise(resolve => setTimeout(() => resolve(false), 4000))
+        ]);
+        log(`${name} → <span class="online">ONLINE 🟢</span>`);
+      } catch (e) {
+        log(`${name} → <span class="offline">OFFLINE 🔴</span>`);
+      }
+    }
 
-        function loadData() {
-            const saved = localStorage.getItem('reports');
-            reports = saved ? JSON.parse(saved) : [];
-            if (reports.length === 0) loadSampleData();
+    async function runScan() {
+      await check(document.getElementById("cwoa").value.trim(), "@CWOA");
+      await check(document.getElementById("harrisfed").value.trim(), "@HarrisFed");
+      await check(document.getElementById("colossus").value.trim(), "Colossus");
+      log("✅ Scan cycle completed — next scan in 8 seconds\n");
+    }
 
-            const savedUser = localStorage.getItem('currentUser');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                updateUIForLoggedInUser();
-            }
-        }
+    function startScan() {
+      if (interval) clearInterval(interval);
+      log("<strong>🚀 Auto Scan Started</strong>");
+      runScan();
+      interval = setInterval(runScan, 8000);
+    }
 
-        function saveData() {
-            localStorage.setItem('reports', JSON.stringify(reports));
-        }
+    function stopScan() {
+      if (interval) clearInterval(interval);
+      interval = null;
+      log("<strong>⛔ Scan Stopped</strong>");
+    }
 
-        // Render Reports
-        function renderReports(filtered = reports) {
-            const grid = document.getElementById('reports-grid');
-            grid.innerHTML = '';
-
-            filtered.forEach(report => {
-                const card = document.createElement('div');
-                card.className = `report-card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 cursor-pointer`;
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="px-3 py-1 text-xs font-medium rounded-full ${report.type === 'lost' ? 'bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300'}">
-                            ${report.type.toUpperCase()}
-                        </span>
-                        <span class="text-xs text-slate-500">${report.date}</span>
-                    </div>
-                    <h3 class="font-semibold text-lg mb-2">${report.title}</h3>
-                    <p class="text-slate-600 dark:text-slate-400 text-sm line-clamp-3 mb-4">${report.description}</p>
-                    <div class="flex items-center justify-between text-sm">
-                        <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-location-dot text-teal-500"></i>
-                            <span>${report.location}</span>
-                        </div>
-                        <div class="text-teal-600 text-xs font-medium">${report.account}</div>
-                    </div>
-                `;
-                card.onclick = () => showDetailModal(report.id);
-                grid.appendChild(card);
-            });
-        }
-
-        function filterReports(type = 'all') {
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            const activeBtn = Array.from(document.querySelectorAll('.filter-btn')).find(btn => 
-                btn.getAttribute('onclick').includes(`'${type}'`));
-            if (activeBtn) activeBtn.classList.add('active');
-
-            let filtered = reports;
-            if (type === 'lost') filtered = reports.filter(r => r.type === 'lost');
-            if (type === 'found') filtered = reports.filter(r => r.type === 'found');
-            if (type === 'money') filtered = reports.filter(r => r.category === 'money');
-
-            const search = document.getElementById('search-input').value.toLowerCase().trim();
-            if (search) {
-                filtered = filtered.filter(r => 
-                    r.title.toLowerCase().includes(search) ||
-                    r.description.toLowerCase().includes(search) ||
-                    r.location.toLowerCase().includes(search)
-                );
-            }
-            renderReports(filtered);
-        }
-
-        // Auth Functions
-        function showLoginModal() {
-            document.getElementById('auth-modal').classList.remove('hidden');
-            document.getElementById('auth-modal').classList.add('flex');
-            switchToLogin();
-        }
-
-        function closeAuthModal() {
-            document.getElementById('auth-modal').classList.add('hidden');
-            document.getElementById('auth-modal').classList.remove('flex');
-        }
-
-        function switchToLogin() {
-            document.getElementById('login-form').classList.remove('hidden');
-            document.getElementById('signup-form').classList.add('hidden');
-            document.getElementById('auth-title').textContent = "Welcome back";
-        }
-
-        function switchToSignup() {
-            document.getElementById('login-form').classList.add('hidden');
-            document.getElementById('signup-form').classList.remove('hidden');
-            document.getElementById('auth-title').textContent = "Join Root Donate";
-        }
-
-        function login() {
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value.trim();
-
-            if (!email || !password) {
-                alert("Please fill all fields");
-                return;
-            }
-
-            // Demo login (in real app, use backend)
-            currentUser = {
-                name: "Alex Chen",
-                handle: "@alexchen",
-                avatar: "https://i.pravatar.cc/128?u=alex"
-            };
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            updateUIForLoggedInUser();
-            closeAuthModal();
-            showToast("✅ Logged in successfully!");
-        }
-
-        function signup() {
-            const name = document.getElementById('signup-name').value.trim();
-            const handle = document.getElementById('signup-handle').value.trim();
-            const email = document.getElementById('signup-email').value.trim();
-            const password = document.getElementById('signup-password').value.trim();
-
-            if (!name || !handle || !email || !password) {
-                alert("Please fill all fields");
-                return;
-            }
-
-            currentUser = {
-                name: name,
-                handle: handle.startsWith('@') ? handle : '@' + handle,
-                avatar: `https://i.pravatar.cc/128?u=${email}`
-            };
-            localStorage.setItem('currentUser', JSON.stringify(currentUser));
-            updateUIForLoggedInUser();
-            closeAuthModal();
-            showToast("🎉 Account created successfully!");
-        }
-
-        function updateUIForLoggedInUser() {
-            document.getElementById('login-btn').classList.add('hidden');
-            document.getElementById('new-report-btn').classList.remove('hidden');
-            document.getElementById('profile-section').classList.remove('hidden');
-            document.getElementById('profile-section').classList.add('flex');
-
-            document.getElementById('nav-name').textContent = currentUser.name;
-            document.getElementById('nav-handle').textContent = currentUser.handle;
-            document.getElementById('nav-avatar').src = currentUser.avatar;
-        }
-
-        function showUserMenu() {
-            if (confirm("Logout?")) {
-                localStorage.removeItem('currentUser');
-                location.reload();
-            }
-        }
-
-        // New Report
-        function showNewReportModal() {
-            if (!currentUser) {
-                showLoginModal();
-                return;
-            }
-            document.getElementById('new-report-modal').classList.remove('hidden');
-            document.getElementById('new-report-modal').classList.add('flex');
-        }
-
-        function closeNewReportModal() {
-            document.getElementById('new-report-modal').classList.add('hidden');
-            document.getElementById('new-report-modal').classList.remove('flex');
-        }
-
-        function selectType(btn) {
-            document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        }
-
-        function submitNewReport(e) {
-            e.preventDefault();
-
-            const newReport = {
-                id: Date.now(),
-                type: document.querySelector('.type-btn.active').dataset.type,
-                title: document.getElementById('report-title').value,
-                description: document.getElementById('report-desc').value,
-                location: document.getElementById('report-location').value,
-                category: document.getElementById('report-category').value,
-                date: new Date().toISOString().split('T')[0],
-                account: currentUser.handle
-            };
-
-            reports.unshift(newReport);
-            saveData();
-            renderReports();
-            closeNewReportModal();
-            showToast("✅ Report posted successfully!");
-        }
-
-        // Detail Modal
-        function showDetailModal(id) {
-            const report = reports.find(r => r.id === id);
-            if (!report) return;
-
-            currentDetailId = id;
-            window.location.hash = `report/${id}`;
-
-            const html = `
-                <div class="flex justify-between items-center">
-                    <span class="px-4 py-1 text-sm font-medium rounded-full ${report.type === 'lost' ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">
-                        ${report.type.toUpperCase()}
-                    </span>
-                    <span class="text-sm text-slate-500">${report.date}</span>
-                </div>
-                <h2 class="text-3xl font-semibold mt-4 mb-3">${report.title}</h2>
-                <p class="text-slate-600 dark:text-slate-400">${report.description}</p>
-                <div class="mt-6 flex items-center gap-4 text-sm">
-                    <div><i class="fa-solid fa-location-dot text-teal-500"></i> ${report.location}</div>
-                    <div>Posted by <span class="text-teal-600">${report.account}</span></div>
-                </div>
-            `;
-
-            document.getElementById('detail-content').innerHTML = html;
-            document.getElementById('detail-modal').classList.remove('hidden');
-            document.getElementById('detail-modal').classList.add('flex');
-        }
-
-        function closeDetailModal() {
-            document.getElementById('detail-modal').classList.add('hidden');
-            document.getElementById('detail-modal').classList.remove('flex');
-            window.location.hash = '';
-        }
-
-        function copyShareLink() {
-            if (!currentDetailId) return;
-            const url = `${window.location.origin}${window.location.pathname}#report/${currentDetailId}`;
-            navigator.clipboard.writeText(url).then(() => showToast("✅ Share link copied!"));
-        }
-
-        function handleHashChange() {
-            const hash = window.location.hash;
-            if (hash.startsWith('#report/')) {
-                const id = parseInt(hash.split('/')[1]);
-                if (id) showDetailModal(id);
-            }
-        }
-
-        function toggleDarkMode() {
-            document.documentElement.classList.toggle('dark');
-            const icon = document.getElementById('theme-icon');
-            icon.classList.toggle('fa-moon');
-            icon.classList.toggle('fa-sun');
-        }
-
-        function showToast(msg) {
-            const toast = document.createElement('div');
-            toast.className = "fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-3xl text-sm shadow-xl z-[300]";
-            toast.textContent = msg;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 2500);
-        }
-
-        // Initialize
-        window.onload = () => {
-            loadData();
-            renderReports();
-            handleHashChange();
-            window.addEventListener('hashchange', handleHashChange);
-
-            console.log('%c✅ Root Donate ready • Clean & Fully Functional', 'color:#14b8a6; font-weight:600; font-size:14px');
-        };
-    </script>
+    // Auto start
+    window.onload = () => {
+      log("📡 Monitor ready. Click START AUTO SCAN");
+    };
+  </script>
 </body>
 </html>
