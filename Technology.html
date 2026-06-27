@@ -3,40 +3,152 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Auto Device Scanner - CWOA & HarrisFed</title>
+  <title>Node Monitor • CWOA • HarrisFed • Colossus</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #0f0f0f; color: #0f0; margin: 0; padding: 20px; }
-    h1 { text-align: center; color: #0f0; }
-    .container { max-width: 900px; margin: auto; }
-    .node { background: #1a1a1a; padding: 15px; margin: 15px 0; border-radius: 8px; border: 1px solid #0f0; }
-    button { background: #0f0; color: black; padding: 12px 20px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin: 5px; }
-    button:hover { background: #00cc00; }
-    .stop-btn { background: #f44; }
-    .log { background: black; padding: 15px; height: 500px; overflow-y: auto; font-family: monospace; white-space: pre-wrap; border: 1px solid #0f0; }
-    .status { font-weight: bold; }
+    :root {
+      --primary: #00ff00;
+      --bg: #0a0a0a;
+      --card: #111111;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--primary);
+      margin: 0;
+      padding: 20px;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 5px;
+      font-size: 2.2em;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #888;
+      margin-bottom: 30px;
+    }
+
+    .node {
+      background: var(--card);
+      padding: 18px;
+      margin: 18px 0;
+      border-radius: 10px;
+      border: 1px solid var(--primary);
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.1);
+    }
+
+    .node h2 {
+      margin: 0 0 12px 0;
+      font-size: 1.4em;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      background: #1a1a1a;
+      color: var(--primary);
+      border: 1px solid #333;
+      border-radius: 6px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 8px rgba(0, 255, 0, 0.3);
+    }
+
+    .controls {
+      text-align: center;
+      margin: 25px 0;
+    }
+
+    button {
+      padding: 14px 28px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 0 8px;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+    }
+
+    .start-btn {
+      background: var(--primary);
+      color: black;
+      font-weight: bold;
+    }
+
+    .stop-btn {
+      background: #ff3333;
+      color: white;
+    }
+
+    .log {
+      background: #000000;
+      padding: 20px;
+      height: 520px;
+      overflow-y: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      border: 1px solid var(--primary);
+      border-radius: 10px;
+      white-space: pre-wrap;
+      line-height: 1.6;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      color: #555;
+      font-size: 0.9em;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🔄 Auto Device Node Scanner</h1>
-    <p style="text-align:center;">Monitoring: <strong>@CWOA</strong> &amp; <strong>@HarrisFed</strong> → Your Device<br>
-    <small>Auto-starts on load • Scans every 8 seconds</small></p>
+    <h1>🔄 Multi-Node Monitor</h1>
+    <p class="subtitle">CWOA • HarrisFed • Colossus | Auto-Scan Enabled</p>
 
     <div class="node">
       <h2>Node 1: @CWOA</h2>
-      <input type="text" id="cwoa" placeholder="Enter CWOA IP or hostname" style="width:100%; padding:10px; font-size:16px;">
+      <input type="text" id="cwoa" value="192.168.0.1" placeholder="Enter CWOA IP or hostname">
     </div>
 
     <div class="node">
       <h2>Node 2: @HarrisFed</h2>
-      <input type="text" id="harrisfed" placeholder="Enter HarrisFed IP or hostname" style="width:100%; padding:10px; font-size:16px;">
+      <input type="text" id="harrisfed" value="192.168.0.1" placeholder="Enter HarrisFed IP or hostname">
     </div>
 
-    <button onclick="startScan()">▶ Restart Scan</button>
-    <button onclick="stopScan()" class="stop-btn">⛔ Stop Scan</button>
+    <div class="node">
+      <h2>Node 3: Colossus</h2>
+      <input type="text" id="colossus" value="192.168.0.1" placeholder="Enter Colossus IP or hostname">
+    </div>
 
-    <h2>Live Log</h2>
+    <div class="controls">
+      <button class="start-btn" onclick="startScan()">▶ Restart Scan</button>
+      <button class="stop-btn" onclick="stopScan()">⛔ Stop Scan</button>
+    </div>
+
+    <h2 style="text-align:center;">Live Activity Log</h2>
     <div id="log" class="log"></div>
+
+    <div class="footer">
+      Persistent monitoring • Scans every 8 seconds
+    </div>
   </div>
 
   <script>
@@ -45,45 +157,45 @@
     function log(message, status = "") {
       const logDiv = document.getElementById("log");
       const time = new Date().toLocaleTimeString();
-      logDiv.innerHTML += `[${time}] ${message} ${status}<br>`;
+      logDiv.innerHTML += `<span style="color:#666">[${time}]</span> ${message} ${status}<br>`;
       logDiv.scrollTop = logDiv.scrollHeight;
     }
 
     async function ping(host) {
+      if (!host) return {status: "offline", time: 0};
+      
       return new Promise(resolve => {
-        if (!host || host === "") {
-          resolve({host: "unknown", time: 0, status: "offline"});
-          return;
-        }
         const start = Date.now();
         const img = new Image();
-        img.onload = () => resolve({host, time: Date.now() - start, status: "online"});
-        img.onerror = () => resolve({host, time: 9999, status: "offline"});
+        img.onload = () => resolve({status: "online", time: Date.now() - start});
+        img.onerror = () => resolve({status: "offline", time: 9999});
         img.src = `http://${host}/favicon.ico?${start}`;
-        setTimeout(() => resolve({host, time: 9999, status: "offline"}), 6000);
+        setTimeout(() => resolve({status: "offline", time: 9999}), 6000);
       });
     }
 
     async function runScan() {
-      const cwoa = document.getElementById("cwoa").value.trim() || "CWOA-IP";
-      const harrisfed = document.getElementById("harrisfed").value.trim() || "HarrisFed-IP";
+      const nodes = [
+        {name: "CWOA",      ip: document.getElementById("cwoa").value.trim()},
+        {name: "HarrisFed", ip: document.getElementById("harrisfed").value.trim()},
+        {name: "Colossus",  ip: document.getElementById("colossus").value.trim()}
+      ];
 
-      log("🔍 Scanning CWOA...", "");
-      const cResult = await ping(cwoa);
-      log(`CWOA → ${cResult.status.toUpperCase()} (${cResult.time}ms)`, cResult.status === "online" ? "🟢" : "🔴");
+      for (let node of nodes) {
+        log(`Scanning <strong>${node.name}</strong> (${node.ip || "unknown"})...`);
+        const result = await ping(node.ip);
+        const emoji = result.status === "online" ? "🟢" : "🔴";
+        log(`${node.name} → <strong>${result.status.toUpperCase()}</strong> (${result.time}ms)`, emoji);
+      }
 
-      log("🔍 Scanning HarrisFed...", "");
-      const hResult = await ping(harrisfed);
-      log(`HarrisFed → ${hResult.status.toUpperCase()} (${hResult.time}ms)`, hResult.status === "online" ? "🟢" : "🔴");
-
-      log("✅ Cycle complete — next scan in 8 seconds...\n", "");
+      log("✅ Cycle complete — next scan in 8 seconds...\n");
     }
 
     function startScan() {
       if (interval) clearInterval(interval);
-      log("🚀 Auto persistent scan started...");
+      log("🚀 Auto monitoring started...");
       runScan();
-      interval = setInterval(runScan, 8000);   // every 8 seconds
+      interval = setInterval(runScan, 8000);
     }
 
     function stopScan() {
@@ -91,13 +203,13 @@
         clearInterval(interval);
         interval = null;
       }
-      log("⛔ Scan stopped by user.");
+      log("⛔ Monitoring stopped by user.");
     }
 
-    // AUTO START when page loads
+    // Auto-start on load
     window.onload = () => {
-      log("📡 Page loaded — Auto scan will begin in 2 seconds...");
-      setTimeout(startScan, 2000);
+      log("📡 System initialized with default IP 192.168.0.1");
+      setTimeout(startScan, 1200);
     };
   </script>
 </body>
