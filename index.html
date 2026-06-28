@@ -21,17 +21,8 @@
       border: 2px solid #00ff00;
       box-shadow: 0 0 25px rgba(0, 255, 0, 0.25);
     }
-    h1 { 
-      text-align: center; 
-      font-size: 2.6em; 
-      margin: 0 0 8px 0; 
-    }
-    .subtitle { 
-      text-align: center; 
-      color: #0f0; 
-      font-size: 1.3em; 
-      margin-bottom: 35px; 
-    }
+    h1 { text-align: center; font-size: 2.6em; margin: 0 0 8px 0; }
+    .subtitle { text-align: center; color: #0f0; font-size: 1.3em; margin-bottom: 35px; }
     input, select, textarea {
       width: 100%;
       padding: 15px;
@@ -76,22 +67,13 @@
       margin-top: 25px;
     }
     .modal {
-      position: fixed; 
-      top: 0; left: 0; 
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.96); 
-      display: none; 
-      align-items: center; 
-      justify-content: center;
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.96); display: none; align-items: center; justify-content: center;
       z-index: 100;
     }
     .modal-content {
-      background: #111; 
-      padding: 35px; 
-      border: 2px solid #00ff00;
-      border-radius: 16px; 
-      width: 90%; 
-      max-width: 620px;
+      background: #111; padding: 35px; border: 2px solid #00ff00;
+      border-radius: 16px; width: 90%; max-width: 620px;
     }
   </style>
 </head>
@@ -100,7 +82,7 @@
     <h1>🔍 LOST & FOUND NODES</h1>
     <p class="subtitle">rootdonate.co.uk • Real-Time Recovery Network</p>
 
-    <!-- AUTH SECTION -->
+    <!-- AUTH -->
     <div id="authSection">
       <h2 style="text-align:center;">Node Access Required</h2>
       <div id="loginForm">
@@ -150,13 +132,13 @@
     </div>
   </div>
 
-  <!-- Individual Node View Modal -->
+  <!-- Individual Node Full View Modal -->
   <div id="nodeViewModal" class="modal">
     <div class="modal-content">
       <h2 id="viewTitle"></h2>
-      <div id="viewStatus" style="font-size:1.6em; text-align:center; margin:20px 0;"></div>
-      <p id="viewDesc">This node is actively tracked on the RootDonate Lost & Found network. Status updates in real time.</p>
-      <button onclick="closeNodeView()" style="width:100%;">Close</button>
+      <div id="viewStatus" style="font-size:1.8em; margin:20px 0; text-align:center;"></div>
+      <p id="viewDesc" style="line-height:1.6;"></p>
+      <button onclick="closeNodeView()" style="width:100%; margin-top:20px;">Close Node</button>
     </div>
   </div>
 
@@ -201,7 +183,7 @@
     function submitNewNode() {
       const name = document.getElementById('itemName').value.trim() || "Unnamed Item";
       const type = document.getElementById('itemType').value;
-      const loc = document.getElementById('location').value.trim() || "Unknown Location";
+      const loc = document.getElementById('location').value.trim() || "Unknown";
 
       const nodeHTML = `
         <div class="node">
@@ -224,6 +206,10 @@
       document.getElementById('viewTitle').textContent = name;
       document.getElementById('viewStatus').innerHTML = 
         `<span style="color:${type==='lost'?'#ff6666':'#00ff88'}">${type.toUpperCase()}</span> • ${loc}`;
+      document.getElementById('viewDesc').innerHTML = 
+        `This item is actively tracked on the RootDonate network.<br><br>
+         Status: Real-time updates enabled.<br>
+         Last updated: Just now.`;
       document.getElementById('nodeViewModal').style.display = 'flex';
     }
 
@@ -232,11 +218,10 @@
     }
 
     function shareNode(name) {
-      const cleanName = name.toLowerCase().replace(/[^a-z0-9@]/g, '').replace('@', '');
+      const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
       const url = `https://rootdonate.co.uk/lostfound/${cleanName}.html`;
-      
       navigator.clipboard.writeText(url).then(() => {
-        alert(`✅ Share Link Ready!\n\n${url}\n\nThis opens the dedicated individual node page.`);
+        alert(`✅ Share Link Copied!\n\n${url}\n\n(You can open this link later when you upload the individual page)`);
       });
       log(`🔗 Share link generated for ${name}`);
     }
