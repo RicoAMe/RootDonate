@@ -25,7 +25,6 @@
       line-height: 1.6;
     }
 
-    /* Matrix rain background */
     #matrix-bg {
       position: fixed;
       top: 0; left: 0;
@@ -85,7 +84,6 @@
       100% { transform: translateY(800px); }
     }
 
-    /* Navigation */
     .nav {
       display: flex;
       gap: 12px;
@@ -115,7 +113,6 @@
       box-shadow: 0 0 20px var(--neon);
     }
 
-    /* Nodes Grid */
     #nodesList {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -196,7 +193,6 @@
       box-shadow: 0 0 25px var(--neon);
     }
 
-    /* Log */
     .log {
       background: #000;
       border: 1px solid var(--neon);
@@ -210,7 +206,6 @@
       box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
     }
 
-    /* Modals */
     .modal {
       position: fixed;
       inset: 0;
@@ -257,7 +252,6 @@
       box-shadow: 0 0 15px var(--neon);
     }
 
-    /* Status indicators */
     .status-bar {
       position: fixed;
       bottom: 15px;
@@ -301,16 +295,24 @@
         <div id="loginForm">
           <input type="text" id="username" placeholder="NODE ID (@CWOA)">
           <input type="password" id="password" placeholder="ACCESS CODE">
-          <button onclick="login()" style="width:100%; margin-top:15px;"><i class="fas fa-plug"></i> CONNECT NODE</button>
-          <div onclick="toggleAuth()" style="margin-top:20px; color:#00ff88; cursor:pointer; text-decoration:underline;">CREATE NEW NODE →</div>
+          <button onclick="login()" style="width:100%; margin-top:15px;">
+            <i class="fas fa-plug"></i> CONNECT NODE
+          </button>
+          <div onclick="toggleAuth()" style="margin-top:20px; color:#00ff88; cursor:pointer; text-decoration:underline;">
+            CREATE NEW NODE →
+          </div>
         </div>
         
         <div id="signupForm" class="hidden">
           <input type="text" id="newUser" placeholder="NEW NODE HANDLE">
           <input type="email" id="email" placeholder="SIGNAL ADDRESS">
           <input type="password" id="newPass" placeholder="ENCRYPTED PASSPHRASE">
-          <button onclick="signup()" style="width:100%; margin-top:15px;"><i class="fas fa-satellite"></i> DEPLOY NODE</button>
-          <div onclick="toggleAuth()" style="margin-top:20px; color:#00ff88; cursor:pointer; text-decoration:underline;">← BACK TO TERMINAL</div>
+          <button onclick="signup()" style="width:100%; margin-top:15px;">
+            <i class="fas fa-satellite"></i> DEPLOY NODE
+          </button>
+          <div onclick="toggleAuth()" style="margin-top:20px; color:#00ff88; cursor:pointer; text-decoration:underline;">
+            ← BACK TO TERMINAL
+          </div>
         </div>
       </div>
     </div>
@@ -370,19 +372,23 @@
 
   <script>
     let currentUser = "@CWOA";
-    let currentTab = 0;
 
-    // Matrix rain background
+    // Matrix Rain Background
     function createMatrix() {
       const canvas = document.getElementById('matrix-bg');
       const ctx = canvas.getContext('2d');
-      canvas.height = window.innerHeight;
-      canvas.width = window.innerWidth;
+      
+      function resize() {
+        canvas.height = window.innerHeight;
+        canvas.width = window.innerWidth;
+      }
+      resize();
+      window.addEventListener('resize', resize);
 
       const chars = "01アイウエオカキクケコ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
       const fontSize = 14;
-      const columns = canvas.width / fontSize;
-      const drops = Array(Math.floor(columns)).fill(1);
+      let columns = canvas.width / fontSize;
+      let drops = Array(Math.floor(columns)).fill(1);
 
       function draw() {
         ctx.fillStyle = 'rgba(5, 5, 5, 0.1)';
@@ -404,7 +410,7 @@
     }
 
     function log(msg) {
-      const time = new Date().toLocaleTimeString('en-GB', {hour12:false});
+      const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
       const logEl = document.getElementById("log");
       logEl.innerHTML += `<span style="color:#00ff8866">[${time}]</span> ${msg}<br>`;
       logEl.scrollTop = logEl.scrollHeight;
@@ -434,11 +440,9 @@
     }
 
     function setTab(tab) {
-      currentTab = tab;
       document.querySelectorAll('.nav button').forEach((btn, i) => {
         btn.classList.toggle('active', i === tab);
       });
-      // Could filter in future
     }
 
     function showReportForm() {
@@ -457,9 +461,7 @@
       const nodeHTML = `
         <div class="node">
           <div class="node-header">
-            <div>
-              <strong>${name}</strong>
-            </div>
+            <div><strong>${name}</strong></div>
             <span class="node-type ${type}">${type.toUpperCase()}</span>
           </div>
           <div style="margin:10px 0; color:#aaa;">${loc}</div>
@@ -491,10 +493,13 @@
       const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>${name} — ROOTDONATE</title><style>body{background:#000;color:#0f0;font-family:Courier New;text-align:center;padding:40px;} .box{border:3px solid #0f0;padding:40px;max-width:500px;margin:40px auto;border-radius:20px;box-shadow:0 0 40px #0f0;}</style></head><body><div class="box"><h1>${name}</h1><h2 style="color:#0f0">LIVE ON THE GRID</h2><p>This node is part of the global lost &amp; found network.</p></div></body></html>`;
       
       const dataURL = 'data:text/html;base64,' + btoa(unescape(encodeURIComponent(html)));
-      navigator.clipboard.writeText(dataURL);
       
-      log(`🔗 BROADCAST LINK GENERATED FOR ${name}`);
-      }
+      navigator.clipboard.writeText(dataURL).then(() => {
+        log(`🔗 BROADCAST LINK GENERATED FOR ${name}`);
+        if (confirm("Broadcast link copied to clipboard.\n\nOpen preview now?")) {
+          window.open(dataURL, '_blank');
+        }
+      });
     }
 
     function loadSampleNodes() {
@@ -545,9 +550,10 @@
     // Initialize
     window.onload = () => {
       createMatrix();
-      // Fake live updates
+      
+      // Fake live activity
       setInterval(() => {
-        if (Math.random() > 0.7 && document.getElementById('mainApp').classList.contains('hidden') === false) {
+        if (Math.random() > 0.65 && !document.getElementById('mainApp').classList.contains('hidden')) {
           log("🔄 MATCH ALERT: Potential recovery in progress");
         }
       }, 6500);
