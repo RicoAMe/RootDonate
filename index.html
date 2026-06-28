@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ROOTDONATE • LOST & FOUND NODES</title>
+  <title>ROOTDONATE • LOST &amp; FOUND NODES</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
     :root {
@@ -12,16 +12,18 @@
       --neon-glow: #00ff4188;
       --bg: #050505;
       --card: #0a0a0a;
-      --accent: #00ff41;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       font-family: 'Courier New', monospace;
       background: var(--bg);
       color: var(--neon);
-      margin: 0;
-      padding: 0;
       overflow: hidden;
       line-height: 1.6;
       height: 100vh;
@@ -30,6 +32,7 @@
       justify-content: center;
     }
 
+    /* MATRIX BACKGROUND */
     canvas#matrix-bg {
       position: fixed;
       top: 0; left: 0;
@@ -39,17 +42,26 @@
       pointer-events: none;
     }
 
+    /* AUTH CONTAINER */
     .auth-container {
       width: 100%;
       max-width: 460px;
       background: var(--card);
       border: 3px solid var(--neon);
       border-radius: 20px;
-      box-shadow: 
-        0 0 60px var(--neon-glow),
-        inset 0 0 40px rgba(0, 255, 65, 0.08);
+      box-shadow: 0 0 60px var(--neon-glow),
+                  inset 0 0 40px rgba(0, 255, 65, 0.08);
       overflow: hidden;
       position: relative;
+    }
+
+    .scanline {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(transparent, rgba(0, 255, 65, 0.04), transparent);
+      pointer-events: none;
+      animation: scan 6s linear infinite;
+      z-index: 1;
     }
 
     .auth-header {
@@ -59,26 +71,17 @@
       position: relative;
     }
 
-    .auth-header::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; height: 3px;
-      background: linear-gradient(90deg, transparent, var(--neon), transparent);
-      animation: scanline 4s linear infinite;
-    }
-
     .auth-header h1 {
-      font-size: 2.4rem;
-      margin: 0;
+      font-size: 2.6rem;
       text-shadow: 0 0 20px var(--neon);
-      letter-spacing: 4px;
+      letter-spacing: 6px;
+      animation: glitch 2s infinite;
     }
 
     .auth-header p {
-      margin: 8px 0 0;
-      opacity: 0.7;
+      opacity: 0.75;
       font-size: 0.95rem;
-      letter-spacing: 2px;
+      letter-spacing: 3px;
     }
 
     .tab-switch {
@@ -95,14 +98,13 @@
       font-weight: bold;
       cursor: pointer;
       transition: all 0.3s;
-      border-bottom: 3px solid transparent;
     }
 
     .tab.active {
-      background: rgba(0, 255, 65, 0.1);
-      color: #fff;
-      border-bottom: 3px solid var(--neon);
+      background: rgba(0, 255, 65, 0.12);
+      color: white;
       text-shadow: 0 0 15px var(--neon);
+      border-bottom: 3px solid var(--neon);
     }
 
     .form-container {
@@ -111,7 +113,6 @@
 
     .input-group {
       margin-bottom: 24px;
-      position: relative;
     }
 
     .input-group label {
@@ -131,6 +132,7 @@
       top: 50%;
       transform: translateY(-50%);
       opacity: 0.6;
+      z-index: 2;
     }
 
     input {
@@ -157,6 +159,7 @@
       transform: translateY(-50%);
       cursor: pointer;
       opacity: 0.7;
+      z-index: 2;
     }
 
     .btn {
@@ -165,7 +168,7 @@
       background: transparent;
       color: var(--neon);
       border: 3px solid var(--neon);
-      font-size: 1.2rem;
+      font-size: 1.15rem;
       font-weight: bold;
       border-radius: 50px;
       cursor: pointer;
@@ -183,15 +186,11 @@
       transform: translateY(-3px);
     }
 
-    .btn:active {
-      transform: scale(0.98);
-    }
-
     .divider {
       text-align: center;
       margin: 30px 0;
+      color: #555;
       position: relative;
-      color: #666;
     }
 
     .divider::before {
@@ -206,25 +205,14 @@
 
     .divider span {
       background: var(--card);
-      padding: 0 20px;
-    }
-
-    .glitch {
-      animation: glitch 1.2s infinite;
-    }
-
-    @keyframes glitch {
-      0% { text-shadow: 2px 0 #00ff41, -2px 0 #ff00ff; }
-      20% { text-shadow: -2px 0 #00ff41, 2px 0 #ff00ff; }
-      40% { text-shadow: 2px 0 #00ff41, -2px 0 #ff00ff; }
-      100% { text-shadow: 2px 0 #00ff41, -2px 0 #ff00ff; }
+      padding: 0 25px;
     }
 
     .status {
       text-align: center;
       margin-top: 20px;
-      font-size: 0.9rem;
-      opacity: 0.8;
+      font-size: 0.95rem;
+      min-height: 24px;
     }
 
     .footer-links {
@@ -237,16 +225,101 @@
     .footer-links a {
       color: var(--neon);
       text-decoration: none;
+      margin: 0 8px;
     }
 
-    .scanline {
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 100%;
-      background: linear-gradient(transparent, rgba(0, 255, 65, 0.03), transparent);
-      pointer-events: none;
-      animation: scan 6s linear infinite;
-      z-index: 1;
+    /* MAIN APP */
+    #mainApp {
+      width: 100%;
+      max-width: 1100px;
+      margin: 20px;
+      padding: 25px;
+      background: var(--card);
+      border: 2px solid var(--neon);
+      border-radius: 20px;
+      box-shadow: 0 0 40px rgba(0, 255, 65, 0.4);
+      display: none;
+      flex-direction: column;
+      height: 92vh;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .header h1 {
+      font-size: 2.2rem;
+      letter-spacing: 4px;
+    }
+
+    .subtitle {
+      opacity: 0.7;
+      font-size: 0.95rem;
+      letter-spacing: 2px;
+    }
+
+    .nav {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
+    }
+
+    .nav button {
+      flex: 1;
+      padding: 14px;
+      background: transparent;
+      color: var(--neon);
+      border: 2px solid var(--neon);
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: bold;
+    }
+
+    .nav button.active,
+    .nav button:hover {
+      background: var(--neon);
+      color: #000;
+      box-shadow: 0 0 20px var(--neon);
+    }
+
+    .search-bar {
+      width: 100%;
+      padding: 16px 24px;
+      background: #000;
+      border: 2px solid var(--neon);
+      color: var(--neon);
+      font-size: 1.1rem;
+      border-radius: 50px;
+      margin-bottom: 20px;
+    }
+
+    .search-bar:focus {
+      outline: none;
+      box-shadow: 0 0 25px var(--neon);
+    }
+
+    .log {
+      background: #000;
+      border: 1px solid rgba(0, 255, 65, 0.3);
+      height: 220px;
+      overflow-y: auto;
+      padding: 15px;
+      font-size: 0.95rem;
+      border-radius: 8px;
+    }
+
+    /* Animations */
+    @keyframes glitch {
+      0%, 100% { text-shadow: 2px 0 #00ff41, -2px 0 #ff00ff; }
+      20% { text-shadow: -2px 0 #00ff41, 2px 0 #ff00ff; }
+    }
+
+    @keyframes scan {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(300%); }
     }
   </style>
 </head>
@@ -254,16 +327,15 @@
 
   <canvas id="matrix-bg"></canvas>
 
-  <!-- MASTERPIECE AUTH SECTION -->
+  <!-- AUTH SECTION -->
   <div class="auth-container" id="authContainer">
     <div class="scanline"></div>
 
     <div class="auth-header">
-      <h1 class="glitch">ROOTDONATE</h1>
+      <h1>ROOTDONATE</h1>
       <p>LOST &amp; FOUND NODE NETWORK • EST 2026</p>
     </div>
 
-    <!-- Tabs -->
     <div class="tab-switch">
       <div class="tab active" id="loginTab" onclick="switchTab(0)">LOGIN NODE</div>
       <div class="tab" id="signupTab" onclick="switchTab(1)">NEW NODE</div>
@@ -275,7 +347,7 @@
         <label>NODE ID / HANDLE</label>
         <div class="input-wrapper">
           <i class="fas fa-user-secret"></i>
-          <input type="text" id="loginHandle" placeholder="@CWOA" value="@CWOA">
+          <input type="text" id="loginHandle" value="@CWOA" placeholder="@CWOA">
         </div>
       </div>
 
@@ -312,7 +384,7 @@
       </div>
 
       <div class="input-group">
-        <label>EMAIL (FOR RECOVERY)</label>
+        <label>RECOVERY EMAIL</label>
         <div class="input-wrapper">
           <i class="fas fa-envelope"></i>
           <input type="email" id="signupEmail" placeholder="you@darknet.node">
@@ -350,9 +422,8 @@
     </div>
   </div>
 
-  <!-- MAIN APP (hidden initially) -->
-  <div id="mainApp" class="hidden" style="width:100%; max-width:1100px; margin:20px auto; padding:25px; background:var(--card); border:2px solid var(--neon); border-radius:20px; box-shadow:0 0 40px rgba(0,255,65,0.4); position:relative;">
-    <!-- Your existing main content here -->
+  <!-- MAIN APPLICATION -->
+  <div id="mainApp">
     <div class="header">
       <h1>🔗 ROOTDONATE</h1>
       <p class="subtitle">LOST &amp; FOUND NODE NETWORK • LIVE INTERNET SCAN</p>
@@ -361,23 +432,25 @@
     <div class="nav">
       <button onclick="setTab(0)" class="active"><i class="fas fa-network-wired"></i> ALL NODES</button>
       <button onclick="setTab(1)"><i class="fas fa-search"></i> SEARCH INTERNET</button>
-      <button onclick="showReportForm()"><i class="fas fa-plus-circle"></i> NEW NODE</button>
+      <button onclick="showReportForm()"><i class="fas fa-plus-circle"></i> REPORT NODE</button>
       <button onclick="logout()"><i class="fas fa-power-off"></i> DISCONNECT</button>
     </div>
 
     <div id="searchPanel" class="hidden">
-      <input type="text" id="searchInput" class="search-bar" placeholder="SEARCH INTERNET NODES (e.g. iphone, wallet, cat...)" onkeyup="debouncedSearch()">
-      <div id="searchResults" style="min-height:400px;"></div>
+      <input type="text" id="searchInput" class="search-bar" 
+             placeholder="SEARCH NODES (iphone, wallet, passport...)" 
+             onkeyup="debouncedSearch()">
+      <div id="searchResults" style="min-height: 400px;"></div>
     </div>
 
     <div id="nodesList"></div>
 
-    <h2 style="margin:40px 0 15px 10px; font-size:1.4rem;">NETWORK ACTIVITY LOG</h2>
+    <h2 style="margin: 30px 0 12px 10px; font-size: 1.4rem;">NETWORK ACTIVITY LOG</h2>
     <div id="log" class="log"></div>
   </div>
 
   <script>
-    // Matrix Rain Background
+    // ==================== MATRIX BACKGROUND ====================
     const canvas = document.getElementById('matrix-bg');
     const ctx = canvas.getContext('2d');
 
@@ -388,13 +461,17 @@
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    const chars = "01アイウエオカキクケコ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ@#$%^&*()";
+    const chars = "01アイウエオカキクケコ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ@#$%^&*";
     const fontSize = 14;
-    const columns = canvas.width / fontSize;
-    const drops = Array(Math.floor(columns)).fill(1);
+    let drops = [];
+
+    function initDrops() {
+      const columns = Math.floor(canvas.width / fontSize);
+      drops = Array(columns).fill(1);
+    }
 
     function drawMatrix() {
-      ctx.fillStyle = 'rgba(5, 5, 5, 0.08)';
+      ctx.fillStyle = 'rgba(5, 5, 5, 0.085)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = '#00ff41';
       ctx.font = `${fontSize}px monospace`;
@@ -409,99 +486,123 @@
         drops[i]++;
       }
     }
-    setInterval(drawMatrix, 35);
 
-    // Tab switching
+    setInterval(drawMatrix, 35);
+    initDrops();
+
+    // ==================== AUTH FUNCTIONS ====================
     function switchTab(tab) {
       document.getElementById('loginTab').classList.toggle('active', tab === 0);
       document.getElementById('signupTab').classList.toggle('active', tab === 1);
-      
       document.getElementById('loginForm').classList.toggle('hidden', tab !== 0);
       document.getElementById('signupForm').classList.toggle('hidden', tab !== 1);
     }
 
-    // Password toggle
     function togglePassword(el) {
       const input = el.parentElement.querySelector('input');
+      const icon = el.querySelector('i');
       if (input.type === 'password') {
         input.type = 'text';
-        el.innerHTML = '<i class="fas fa-eye-slash"></i>';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
       } else {
         input.type = 'password';
-        el.innerHTML = '<i class="fas fa-eye"></i>';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
       }
     }
 
-    // Demo Login
     function performLogin() {
       const status = document.getElementById('loginStatus');
-      status.innerHTML = `<span style="color:#0f0;">ENCRYPTING CONNECTION...</span>`;
+      status.innerHTML = `<span style="color:#0f0;">ENCRYPTING TUNNEL...</span>`;
       
       setTimeout(() => {
-        status.innerHTML = `<span style="color:#0f0;">✅ NODE AUTHENTICATED • TUNNEL ESTABLISHED</span>`;
-        setTimeout(() => {
-          document.getElementById('authContainer').classList.add('hidden');
-          document.getElementById('mainApp').classList.remove('hidden');
-          log(`✅ NODE @CWOA CONNECTED TO MESH`);
-          loadSampleNodes();
-        }, 800);
-      }, 1200);
+        status.innerHTML = `<span style="color:#0f0;">✅ AUTHENTICATED • TUNNEL ESTABLISHED</span>`;
+        setTimeout(enterMainApp, 800);
+      }, 1100);
     }
 
     function quickLogin() {
-      document.getElementById('loginStatus').innerHTML = `<span style="color:#0f0;">INSTANT TUNNEL OPENED...</span>`;
-      setTimeout(() => {
-        document.getElementById('authContainer').classList.add('hidden');
-        document.getElementById('mainApp').classList.remove('hidden');
-        log(`✅ QUICK CONNECT SUCCESSFUL • @CWOA`);
-        loadSampleNodes();
-      }, 600);
+      document.getElementById('loginStatus').innerHTML = `<span style="color:#0f0;">INSTANT MESH CONNECTION...</span>`;
+      setTimeout(enterMainApp, 600);
     }
 
     function performSignup() {
       const status = document.getElementById('signupStatus');
-      const handle = document.getElementById('signupHandle').value || "@NEWNODE";
+      const handle = document.getElementById('signupHandle').value.trim() || "@NEWNODE";
       
-      status.innerHTML = `<span style="color:#0f0;">DEPLOYING NODE TO DARKNET...</span>`;
+      status.innerHTML = `<span style="color:#0f0;">DEPLOYING NODE...</span>`;
       
       setTimeout(() => {
-        status.innerHTML = `<span style="color:#0f0;">✅ NODE ${handle} DEPLOYED • WELCOME TO THE MESH</span>`;
-        setTimeout(() => {
-          document.getElementById('authContainer').classList.add('hidden');
-          document.getElementById('mainApp').classList.remove('hidden');
-          log(`🆕 NEW NODE ${handle} JOINED THE NETWORK`);
-          loadSampleNodes();
-        }, 900);
-      }, 1400);
+        status.innerHTML = `<span style="color:#0f0;">✅ NODE ${handle} DEPLOYED</span>`;
+        setTimeout(enterMainApp, 900);
+      }, 1300);
     }
 
-    // Placeholder functions (add your original ones here)
+    function enterMainApp() {
+      document.getElementById('authContainer').style.display = 'none';
+      const main = document.getElementById('mainApp');
+      main.style.display = 'flex';
+      log(`✅ NODE CONNECTED TO ROOTDONATE MESH`);
+      loadSampleNodes();
+    }
+
+    // ==================== MAIN APP FUNCTIONS ====================
+    let logEl;
+
     function log(msg) {
-      console.log(msg); // Replace with your real log
+      if (!logEl) logEl = document.getElementById('log');
+      const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+      logEl.innerHTML += `<span style="color:#00ff8866">[${time}]</span> ${msg}<br>`;
+      logEl.scrollTop = logEl.scrollHeight;
     }
-    
+
     function loadSampleNodes() {
-      console.log("Sample nodes loaded");
+      // Placeholder - you can expand this
+      log("📡 LOADING NEARBY NODES...");
     }
-    
-    function setTab(n) { console.log("Tab", n); }
+
+    function setTab(n) {
+      document.querySelectorAll('.nav button').forEach((btn, i) => {
+        btn.classList.toggle('active', i === n);
+      });
+      document.getElementById('searchPanel').classList.toggle('hidden', n !== 1);
+      if (n === 1) document.getElementById('searchInput').focus();
+    }
+
     function logout() {
-      document.getElementById('mainApp').classList.add('hidden');
-      document.getElementById('authContainer').classList.remove('hidden');
+      document.getElementById('mainApp').style.display = 'none';
+      document.getElementById('authContainer').style.display = 'block';
+      log("🔌 DISCONNECTED FROM MESH");
     }
-    function showReportForm() { alert("New Node Report - Demo"); }
-    function debouncedSearch() { /* your search */ }
+
+    function showReportForm() {
+      alert("🛠️ NEW NODE REPORT FORM (Demo)");
+    }
+
+    let searchTimeout;
+    function debouncedSearch() {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(() => {
+        const query = document.getElementById('searchInput').value.trim();
+        if (query.length > 2) {
+          log(`🔍 SCANNING FOR: ${query}`);
+          // Add your search logic here
+        }
+      }, 500);
+    }
 
     // Keyboard support
-    document.addEventListener('keydown', (e) => {
+    document.addEventListener('keydown', e => {
       if (e.key === "Enter") {
-        if (!document.getElementById('loginForm').classList.contains('hidden')) {
-          performLogin();
-        } else {
-          performSignup();
-        }
+        const loginVisible = !document.getElementById('loginForm').classList.contains('hidden');
+        if (loginVisible) performLogin();
+        else performSignup();
       }
     });
+
+    // Initialize
+    window.onload = () => {
+      logEl = document.getElementById('log');
+    };
   </script>
 </body>
 </html>
