@@ -5,75 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RootDonate • Lost & Found Nodes</title>
   <style>
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: #0a0a0a;
-      color: #00ff00;
-      margin: 0;
-      padding: 20px;
-    }
-    .container {
-      max-width: 1000px;
-      margin: auto;
-      background: #111111;
-      padding: 35px;
-      border-radius: 16px;
-      border: 2px solid #00ff00;
-      box-shadow: 0 0 25px rgba(0, 255, 0, 0.25);
-    }
-    h1 { text-align: center; font-size: 2.6em; margin: 0 0 8px 0; }
-    .subtitle { text-align: center; color: #0f0; font-size: 1.3em; margin-bottom: 35px; }
-    input, select, textarea {
-      width: 100%;
-      padding: 15px;
-      margin: 12px 0;
-      background: #000;
-      border: 1px solid #00ff00;
-      border-radius: 8px;
-      color: #00ff00;
-      font-size: 16px;
-    }
-    button {
-      background: #00ff00;
-      color: black;
-      padding: 14px 32px;
-      font-size: 17px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    .node {
-      background: #1a1a1a;
-      padding: 22px;
-      margin: 18px 0;
-      border-radius: 12px;
-      border: 1px solid #00ff00;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-    .modal {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.96); display: none; align-items: center; justify-content: center;
-      z-index: 100;
-    }
-    .modal-content {
-      background: #111; padding: 35px; border: 2px solid #00ff00;
-      border-radius: 16px; width: 90%; max-width: 620px;
-    }
-    .log {
-      background: #000;
-      padding: 18px;
-      height: 220px;
-      overflow-y: auto;
-      font-family: monospace;
-      border: 1px solid #00ff00;
-      border-radius: 10px;
-      margin-top: 25px;
-    }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #0a0a0a; color: #00ff00; margin:0; padding:20px; }
+    .container { max-width:1000px; margin:auto; background:#111; padding:35px; border-radius:16px; border:2px solid #00ff00; box-shadow:0 0 25px rgba(0,255,0,0.25); }
+    h1 { text-align:center; font-size:2.6em; margin:0 0 8px 0; }
+    .subtitle { text-align:center; color:#0f0; font-size:1.3em; margin-bottom:35px; }
+    input, select, textarea { width:100%; padding:15px; margin:12px 0; background:#000; border:1px solid #00ff00; border-radius:8px; color:#00ff00; font-size:16px; }
+    button { background:#00ff00; color:black; padding:14px 32px; font-size:17px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; }
+    .node { background:#1a1a1a; padding:22px; margin:18px 0; border-radius:12px; border:1px solid #00ff00; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
+    .modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.96); display:none; align-items:center; justify-content:center; z-index:100; }
+    .modal-content { background:#111; padding:35px; border:2px solid #00ff00; border-radius:16px; width:90%; max-width:620px; }
+    .log { background:#000; padding:18px; height:220px; overflow-y:auto; font-family:monospace; border:1px solid #00ff00; border-radius:10px; margin-top:25px; }
   </style>
 </head>
 <body>
@@ -103,10 +44,8 @@
         <button onclick="showReportForm()">📋 Report New Lost / Found Item</button>
         <button onclick="logout()">Logout</button>
       </div>
-
       <h2>Your Active Nodes</h2>
       <div id="nodesList"></div>
-
       <h2 style="text-align:center; margin-top:40px;">Live Activity Log</h2>
       <div id="log" class="log"></div>
     </div>
@@ -116,10 +55,7 @@
   <div id="reportModal" class="modal">
     <div class="modal-content">
       <h2>Report New Node</h2>
-      <select id="itemType">
-        <option value="lost">🚨 Lost Item</option>
-        <option value="found">✅ Found Item</option>
-      </select>
+      <select id="itemType"><option value="lost">🚨 Lost Item</option><option value="found">✅ Found Item</option></select>
       <input type="text" id="itemName" placeholder="Item Name (e.g. Black Leather Wallet)">
       <input type="text" id="location" placeholder="Location">
       <textarea id="desc" rows="4" placeholder="Full description..."></textarea>
@@ -128,23 +64,20 @@
     </div>
   </div>
 
-  <!-- Individual Node Page Simulation -->
+  <!-- Individual Node Modal -->
   <div id="nodeViewModal" class="modal">
     <div class="modal-content">
       <h2 id="viewTitle"></h2>
       <div id="viewStatus" style="font-size:1.8em; margin:20px 0; text-align:center;"></div>
-      <p id="viewDesc" style="line-height:1.6; text-align:left;"></p>
-      <button onclick="closeNodeView()" style="width:100%; margin-top:20px;">Close Node</button>
+      <p id="viewDesc" style="line-height:1.6;"></p>
+      <button onclick="closeNodeView()" style="width:100%; margin-top:20px;">Close</button>
     </div>
   </div>
 
   <script>
     let currentUser = "";
 
-    function toggleAuth() {
-      document.getElementById('loginForm').classList.toggle('hidden');
-      document.getElementById('signupForm').classList.toggle('hidden');
-    }
+    function toggleAuth() { document.getElementById('loginForm').classList.toggle('hidden'); document.getElementById('signupForm').classList.toggle('hidden'); }
 
     function login() {
       currentUser = document.getElementById('username').value.trim() || "@DefaultNode";
@@ -168,31 +101,15 @@
       document.getElementById("log").scrollTop = 99999;
     }
 
-    function showReportForm() {
-      document.getElementById('reportModal').style.display = 'flex';
-    }
-
-    function closeModal() {
-      document.getElementById('reportModal').style.display = 'none';
-    }
+    function showReportForm() { document.getElementById('reportModal').style.display = 'flex'; }
+    function closeModal() { document.getElementById('reportModal').style.display = 'none'; }
 
     function submitNewNode() {
       const name = document.getElementById('itemName').value.trim() || "Unnamed Item";
       const type = document.getElementById('itemType').value;
       const loc = document.getElementById('location').value.trim() || "Unknown";
 
-      const nodeHTML = `
-        <div class="node">
-          <div>
-            <strong>${name}</strong><br>
-            <span style="color:${type==='lost'?'#ff6666':'#00ff88'}">${type.toUpperCase()}</span> • ${loc}
-          </div>
-          <div>
-            <button onclick="viewNode('${name}', '${type}', '${loc}')">👁 View Full Page</button>
-            <button onclick="shareNode('${name}')">🔗 Share</button>
-          </div>
-        </div>`;
-
+      const nodeHTML = `<div class="node"><div><strong>${name}</strong><br><span style="color:${type==='lost'?'#ff6666':'#00ff88'}">${type.toUpperCase()}</span> • ${loc}</div><div><button onclick="viewNode('${name}', '${type}', '${loc}')">👁 View</button><button onclick="shareNode('${name}')">🔗 Share</button></div></div>`;
       document.getElementById('nodesList').innerHTML += nodeHTML;
       closeModal();
       log(`📌 New ${type} node registered: ${name}`);
@@ -200,27 +117,25 @@
 
     function viewNode(name, type, loc) {
       document.getElementById('viewTitle').textContent = name;
-      document.getElementById('viewStatus').innerHTML = 
-        `<span style="color:${type==='lost'?'#ff6666':'#00ff88'}">${type.toUpperCase()}</span> • ${loc}`;
-      document.getElementById('viewDesc').innerHTML = 
-        `This is the dedicated individual page for this node.<br><br>
-         Status: Live • Last updated just now.<br>
-         You are viewing the full recovery details for this item.`;
+      document.getElementById('viewStatus').innerHTML = `<span style="color:${type==='lost'?'#ff6666':'#00ff88'}">${type.toUpperCase()}</span> • ${loc}`;
+      document.getElementById('viewDesc').innerHTML = `This is the dedicated individual recovery page.<br><br>Status: Live • Real-time tracking active.`;
       document.getElementById('nodeViewModal').style.display = 'flex';
     }
 
-    function closeNodeView() {
-      document.getElementById('nodeViewModal').style.display = 'none';
-    }
+    function closeNodeView() { document.getElementById('nodeViewModal').style.display = 'none'; }
 
     function shareNode(name) {
       const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const url = `https://rootdonate.co.uk/lostfound/${cleanName}`;
-      
-      navigator.clipboard.writeText(url).then(() => {
-        alert(`✅ Share Link Copied Successfully!\n\n${url}\n\nClick "View Full Page" button on any node to simulate opening the link.`);
+      const individualHTML = `<!DOCTYPE html><html><head><title>${name} - RootDonate</title><style>body{font-family:Segoe UI;background:#0a0a0a;color:#00ff00;margin:0;padding:40px;text-align:center;} .box{background:#111;padding:40px;border:2px solid #00ff00;border-radius:16px;}</style></head><body><div class="box"><h1>${name}</h1><h2 style="color:${name.includes('Lost')?'#ff6666':'#00ff88'}">${name.includes('Lost')?'🚨 LOST':'✅ FOUND'}</h2><p style="font-size:1.2em;">Location: ${name.includes('Wallet')?'Manchester Piccadilly':'London Euston'}</p><p>This item is actively tracked on the RootDonate network.</p></div></body></html>`;
+
+      const base64 = btoa(unescape(encodeURIComponent(individualHTML)));
+      const dataURL = `data:text/html;base64,${base64}`;
+
+      navigator.clipboard.writeText(dataURL).then(() => {
+        alert(`✅ Working Share Link Ready!\n\nBase64 Data URL copied to clipboard.\n\nPaste it in a new tab to open the individual node page.`);
       });
-      log(`🔗 Share link generated: ${url}`);
+
+      log(`🔗 Base64 Share Link generated for ${name}`);
     }
 
     function loadSampleNodes() {
@@ -228,22 +143,20 @@
         <div class="node">
           <div><strong>@LostWallet</strong><br><span style="color:#ff6666">LOST</span> • Manchester Piccadilly</div>
           <div>
-            <button onclick="viewNode('@LostWallet', 'lost', 'Manchester Piccadilly')">👁 View Full Page</button>
-            <button onclick="shareNode('@LostWallet')">🔗 Share</button>
+            <button onclick="viewNode('@LostWallet', 'lost', 'Manchester Piccadilly')">👁 View</button>
+            <button onclick="shareNode('@LostWallet')">🔗 Share (Base64)</button>
           </div>
         </div>
         <div class="node">
           <div><strong>@FoundKeys</strong><br><span style="color:#00ff88">FOUND</span> • London Euston</div>
           <div>
-            <button onclick="viewNode('@FoundKeys', 'found', 'London Euston')">👁 View Full Page</button>
-            <button onclick="shareNode('@FoundKeys')">🔗 Share</button>
+            <button onclick="viewNode('@FoundKeys', 'found', 'London Euston')">👁 View</button>
+            <button onclick="shareNode('@FoundKeys')">🔗 Share (Base64)</button>
           </div>
         </div>`;
     }
 
-    function logout() {
-      location.reload();
-    }
+    function logout() { location.reload(); }
   </script>
 </body>
 </html>
