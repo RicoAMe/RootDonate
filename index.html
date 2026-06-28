@@ -5,16 +5,93 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RootDonate • Lost & Found Nodes</title>
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #0a0a0a; color: #00ff00; margin:0; padding:20px; }
-    .container { max-width:1000px; margin:auto; background:#111; padding:35px; border-radius:16px; border:2px solid #00ff00; box-shadow:0 0 25px rgba(0,255,0,0.25); }
-    h1 { text-align:center; font-size:2.6em; margin:0 0 8px 0; }
-    .subtitle { text-align:center; color:#0f0; font-size:1.3em; margin-bottom:35px; }
-    input, select, textarea { width:100%; padding:15px; margin:12px 0; background:#000; border:1px solid #00ff00; border-radius:8px; color:#00ff00; font-size:16px; }
-    button { background:#00ff00; color:black; padding:14px 32px; font-size:17px; border:none; border-radius:8px; cursor:pointer; font-weight:bold; }
-    .node { background:#1a1a1a; padding:22px; margin:18px 0; border-radius:12px; border:1px solid #00ff00; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; }
-    .modal { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.96); display:none; align-items:center; justify-content:center; z-index:100; }
-    .modal-content { background:#111; padding:35px; border:2px solid #00ff00; border-radius:16px; width:90%; max-width:620px; }
-    .log { background:#000; padding:18px; height:220px; overflow-y:auto; font-family:monospace; border:1px solid #00ff00; border-radius:10px; margin-top:25px; }
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #0a0a0a;
+      color: #00ff00;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background: #111111;
+      padding: 35px;
+      border-radius: 16px;
+      border: 2px solid #00ff00;
+      box-shadow: 0 0 25px rgba(0, 255, 0, 0.25);
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.6em;
+      margin: 0 0 8px 0;
+    }
+    .subtitle {
+      text-align: center;
+      color: #0f0;
+      font-size: 1.3em;
+      margin-bottom: 35px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 15px;
+      margin: 12px 0;
+      background: #000;
+      border: 1px solid #00ff00;
+      border-radius: 8px;
+      color: #00ff00;
+      font-size: 16px;
+    }
+    button {
+      background: #00ff00;
+      color: black;
+      padding: 14px 32px;
+      font-size: 17px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .node {
+      background: #1a1a1a;
+      padding: 22px;
+      margin: 18px 0;
+      border-radius: 12px;
+      border: 1px solid #00ff00;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.96);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal-content {
+      background: #111;
+      padding: 35px;
+      border: 2px solid #00ff00;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 620px;
+    }
+    .log {
+      background: #000;
+      padding: 18px;
+      height: 220px;
+      overflow-y: auto;
+      font-family: monospace;
+      border: 1px solid #00ff00;
+      border-radius: 10px;
+      margin-top: 25px;
+    }
   </style>
 </head>
 <body>
@@ -22,6 +99,7 @@
     <h1>🔍 LOST & FOUND NODES</h1>
     <p class="subtitle">rootdonate.co.uk • Real-Time Recovery Network</p>
 
+    <!-- AUTH -->
     <div id="authSection">
       <h2 style="text-align:center;">Node Access Required</h2>
       <div id="loginForm">
@@ -39,13 +117,16 @@
       </div>
     </div>
 
+    <!-- MAIN APP -->
     <div id="mainApp" class="hidden">
       <div style="text-align:center; margin-bottom:25px;">
         <button onclick="showReportForm()">📋 Report New Lost / Found Item</button>
         <button onclick="logout()">Logout</button>
       </div>
+
       <h2>Your Active Nodes</h2>
       <div id="nodesList"></div>
+
       <h2 style="text-align:center; margin-top:40px;">Live Activity Log</h2>
       <div id="log" class="log"></div>
     </div>
@@ -55,7 +136,10 @@
   <div id="reportModal" class="modal">
     <div class="modal-content">
       <h2>Report New Node</h2>
-      <select id="itemType"><option value="lost">🚨 Lost Item</option><option value="found">✅ Found Item</option></select>
+      <select id="itemType">
+        <option value="lost">🚨 Lost Item</option>
+        <option value="found">✅ Found Item</option>
+      </select>
       <input type="text" id="itemName" placeholder="Item Name (e.g. Black Leather Wallet)">
       <input type="text" id="location" placeholder="Location">
       <textarea id="desc" rows="4" placeholder="Full description..."></textarea>
@@ -77,9 +161,9 @@
   <script>
     let currentUser = "";
 
-    function toggleAuth() { 
-      document.getElementById('loginForm').classList.toggle('hidden'); 
-      document.getElementById('signupForm').classList.toggle('hidden'); 
+    function toggleAuth() {
+      document.getElementById('loginForm').classList.toggle('hidden');
+      document.getElementById('signupForm').classList.toggle('hidden');
     }
 
     function login() {
@@ -112,7 +196,18 @@
       const type = document.getElementById('itemType').value;
       const loc = document.getElementById('location').value.trim() || "Unknown";
 
-      const nodeHTML = `<div class="node"><div><strong>${name}</strong><br><span style="color:${type==='lost'?'#ff6666':'#00ff88'}">${type.toUpperCase()}</span> • ${loc}</div><div><button onclick="viewNode('${name}', '${type}', '${loc}')">👁 View</button><button onclick="shareNode('${name}')">🔗 Share (Base64)</button></div></div>`;
+      const nodeHTML = `
+        <div class="node">
+          <div>
+            <strong>${name}</strong><br>
+            <span style="color:${type==='lost'?'#ff6666':'#00ff88'}">${type.toUpperCase()}</span> • ${loc}
+          </div>
+          <div>
+            <button onclick="viewNode('${name}', '${type}', '${loc}')">👁 View</button>
+            <button onclick="shareNode('${name}')">🔗 Share (Base64)</button>
+          </div>
+        </div>`;
+
       document.getElementById('nodesList').innerHTML += nodeHTML;
       closeModal();
       log(`📌 New ${type} node registered: ${name}`);
@@ -125,8 +220,8 @@
       document.getElementById('nodeViewModal').style.display = 'flex';
     }
 
-    function closeNodeView() { 
-      document.getElementById('nodeViewModal').style.display = 'none'; 
+    function closeNodeView() {
+      document.getElementById('nodeViewModal').style.display = 'none';
     }
 
     function shareNode(name) {
@@ -137,7 +232,7 @@
       const dataURL = `data:text/html;base64,${base64}`;
 
       navigator.clipboard.writeText(dataURL).then(() => {
-        if (confirm(`✅ Base64 Share Link Ready!\n\nCopy successful.\n\nDo you want to open it now?`)) {
+        if (confirm("✅ Base64 Share Link Ready!\n\nOpen it now in a new tab?")) {
           window.open(dataURL, '_blank');
         }
       });
@@ -163,7 +258,9 @@
         </div>`;
     }
 
-    function logout() { location.reload(); }
+    function logout() {
+      location.reload();
+    }
   </script>
 </body>
 </html>
