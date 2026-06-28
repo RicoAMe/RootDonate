@@ -11,12 +11,17 @@
     :root {
       --neon: #00ff41;
       --neon-glow: #00ff4188;
+      --accent: #00ff9d;
       --bg: #050505;
       --card: #0a0a0a;
-      --accent: #00ff9d;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       font-family: 'Courier New', monospace;
       background: var(--bg);
@@ -33,69 +38,78 @@
       position: fixed;
       inset: 0;
       z-index: -1;
-      opacity: 0.15;
+      opacity: 0.18;
       pointer-events: none;
     }
 
     .overlay {
       position: fixed;
       inset: 0;
-      background: linear-gradient(transparent 50%, rgba(0,255,65,0.03) 50%),
-                  radial-gradient(circle at center, transparent 60%, rgba(0,0,0,0.65) 100%);
+      background: 
+        linear-gradient(transparent 50%, rgba(0,255,65,0.04) 50%),
+        radial-gradient(circle at center, transparent 55%, rgba(0,0,0,0.75) 100%);
       pointer-events: none;
       z-index: 1;
-      animation: scanline-move 8s linear infinite;
+      animation: scanline 10s linear infinite;
     }
 
-    @keyframes scanline-move {
+    @keyframes scanline {
       0% { background-position: 0 0; }
-      100% { background-position: 0 200px; }
+      100% { background-position: 0 400px; }
     }
 
     /* AUTH */
     .auth-container {
-      background: rgba(10,10,10,0.95);
+      background: rgba(10,10,10,0.96);
       border: 2px solid var(--neon);
       border-radius: 16px;
-      width: 420px;
-      padding: 40px 30px;
-      box-shadow: 0 0 40px var(--neon-glow);
+      width: 100%;
+      max-width: 420px;
+      padding: 40px 32px;
+      box-shadow: 0 0 60px var(--neon-glow),
+                  inset 0 0 40px rgba(0,255,65,0.1);
       z-index: 10;
       text-align: center;
+      position: relative;
     }
 
     .auth-header h1 {
-      font-size: 2.8rem;
-      margin-bottom: 8px;
-      text-shadow: 0 0 20px var(--neon);
-      animation: glitch 2s infinite;
+      font-size: 3rem;
+      margin-bottom: 6px;
+      text-shadow: 0 0 25px var(--neon),
+                   0 0 40px var(--neon);
+      animation: glitch 1.5s infinite alternate;
+      letter-spacing: 4px;
     }
 
     .auth-header p {
-      opacity: 0.7;
-      letter-spacing: 4px;
-      font-size: 0.9rem;
+      opacity: 0.75;
+      letter-spacing: 6px;
+      font-size: 0.85rem;
+      margin-bottom: 30px;
     }
 
     .tab-switch {
       display: flex;
-      margin: 25px 0;
+      margin: 25px 0 30px;
       border: 1px solid var(--neon);
       border-radius: 50px;
       overflow: hidden;
+      background: #000;
     }
 
     .tab {
       flex: 1;
-      padding: 12px;
+      padding: 14px;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.3s ease;
+      font-weight: bold;
     }
 
     .tab.active {
       background: var(--neon);
       color: #000;
-      font-weight: bold;
+      box-shadow: 0 0 20px var(--neon);
     }
 
     .form-container {
@@ -107,122 +121,164 @@
     .form-container input,
     .form-container textarea {
       background: #000;
-      border: 1px solid rgba(0,255,65,0.4);
+      border: 1px solid rgba(0,255,65,0.5);
       color: var(--neon);
-      padding: 14px;
+      padding: 15px 18px;
       border-radius: 8px;
       font-family: inherit;
+      font-size: 1rem;
+      transition: all 0.3s;
+    }
+
+    .form-container input:focus,
+    .form-container textarea:focus {
+      outline: none;
+      border-color: var(--neon);
+      box-shadow: 0 0 15px var(--neon-glow);
     }
 
     .btn {
       background: transparent;
       border: 2px solid var(--neon);
       color: var(--neon);
-      padding: 14px;
+      padding: 15px;
       border-radius: 50px;
       cursor: pointer;
-      font-size: 1rem;
-      transition: all 0.3s;
+      font-size: 1.05rem;
+      font-weight: bold;
+      transition: all 0.3s ease;
       margin-top: 10px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
     }
 
     .btn:hover {
       background: var(--neon);
       color: #000;
-      box-shadow: 0 0 25px var(--neon-glow);
+      box-shadow: 0 0 30px var(--neon-glow);
+      transform: translateY(-2px);
     }
 
     /* MAIN APP */
     #mainApp {
       display: none;
       width: 100%;
-      max-width: 1400px;
+      max-width: 1480px;
       height: 100vh;
       flex-direction: column;
     }
 
     .header {
-      padding: 20px 30px;
-      border-bottom: 1px solid rgba(0,255,65,0.3);
+      padding: 18px 40px;
+      border-bottom: 1px solid rgba(0,255,65,0.25);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      background: rgba(5,5,5,0.8);
+      backdrop-filter: blur(8px);
     }
 
     .header h1 {
-      font-size: 2.2rem;
-      text-shadow: 0 0 15px var(--neon);
+      font-size: 2.4rem;
+      text-shadow: 0 0 20px var(--neon);
+      letter-spacing: 3px;
     }
 
     .nav {
-      padding: 15px 30px;
+      padding: 12px 40px;
       display: flex;
       gap: 12px;
       border-bottom: 1px solid rgba(0,255,65,0.2);
+      background: rgba(5,5,5,0.8);
+      flex-wrap: wrap;
     }
 
     .nav button {
       background: transparent;
       border: 1px solid var(--neon);
       color: var(--neon);
-      padding: 10px 20px;
+      padding: 10px 22px;
       border-radius: 50px;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 8px;
-      transition: all 0.3s;
+      transition: all 0.3s ease;
+      font-size: 0.95rem;
     }
 
     .nav button.active,
     .nav button:hover {
       background: var(--neon);
       color: #000;
+      box-shadow: 0 0 20px var(--neon-glow);
     }
 
     .search-bar {
-      margin: 20px 30px;
-      width: calc(100% - 60px);
-      padding: 16px 24px;
+      margin: 25px 40px 20px;
+      width: calc(100% - 80px);
+      padding: 18px 28px;
       background: #000;
       border: 1px solid var(--neon);
       border-radius: 50px;
       color: var(--neon);
       font-size: 1.1rem;
+      transition: all 0.3s;
+    }
+
+    .search-bar:focus {
+      outline: none;
+      box-shadow: 0 0 25px var(--neon-glow);
     }
 
     .nodes-grid {
       flex: 1;
-      padding: 0 30px 20px;
+      padding: 0 40px 30px;
       overflow-y: auto;
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 24px;
     }
 
     .node-card {
-      background: rgba(0, 20, 10, 0.85);
+      background: rgba(10, 25, 15, 0.9);
       border: 1px solid rgba(0, 255, 65, 0.3);
       border-radius: 16px;
-      padding: 20px;
-      transition: all 0.3s;
+      padding: 22px;
+      transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
       cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .node-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(transparent, rgba(0,255,65,0.05));
+      opacity: 0;
+      transition: opacity 0.3s;
     }
 
     .node-card:hover {
-      transform: translateY(-8px);
+      transform: translateY(-12px) scale(1.02);
       border-color: var(--neon);
-      box-shadow: 0 0 30px var(--neon-glow);
+      box-shadow: 0 0 40px var(--neon-glow);
+    }
+
+    .node-card:hover::before {
+      opacity: 1;
     }
 
     .log {
-      height: 180px;
+      height: 160px;
       background: #000;
       border-top: 1px solid rgba(0,255,65,0.3);
-      padding: 15px 30px;
+      padding: 16px 40px;
       overflow-y: auto;
       font-size: 0.9rem;
-      opacity: 0.85;
+      opacity: 0.9;
+      line-height: 1.5;
     }
 
     /* MODALS */
@@ -230,10 +286,11 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.9);
+      background: rgba(0,0,0,0.92);
       z-index: 100;
       align-items: center;
       justify-content: center;
+      backdrop-filter: blur(6px);
     }
 
     .modal-content {
@@ -242,47 +299,65 @@
       border-radius: 16px;
       width: 90%;
       max-width: 520px;
-      padding: 30px;
+      padding: 35px;
       position: relative;
+      box-shadow: 0 0 60px var(--neon-glow);
     }
 
     .close-btn {
       position: absolute;
-      top: 15px;
-      right: 25px;
-      font-size: 2rem;
+      top: 18px;
+      right: 28px;
+      font-size: 2.2rem;
       cursor: pointer;
       color: var(--neon);
+      transition: all 0.2s;
+    }
+
+    .close-btn:hover {
+      color: #fff;
+      transform: rotate(90deg);
     }
 
     .share-url {
       background: #000;
-      padding: 14px 18px;
+      padding: 16px 20px;
       border-radius: 50px;
       font-size: 0.95rem;
       word-break: break-all;
-      margin: 20px 0;
+      margin: 25px 0;
       border: 1px solid rgba(0,255,65,0.4);
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.6);
     }
 
     .copy-btn {
       background: transparent;
       border: 2px solid var(--neon);
       color: var(--neon);
-      padding: 8px 18px;
+      padding: 8px 22px;
       border-radius: 50px;
       cursor: pointer;
       font-size: 0.9rem;
       white-space: nowrap;
+      transition: all 0.3s;
+    }
+
+    .copy-btn:hover {
+      background: var(--neon);
+      color: #000;
     }
 
     @keyframes glitch {
-      0%, 100% { text-shadow: 3px 0 #00ff41, -3px 0 #ff00ff; }
+      0% { text-shadow: 2px 0 #00ff41, -2px 0 #ff00ff; }
       20% { text-shadow: -3px 0 #00ff41, 3px 0 #ff00ff; }
+      40% { text-shadow: 2px 0 #00ff41, -2px 0 #00ffff; }
+      100% { text-shadow: 2px 0 #00ff41, -2px 0 #ff00ff; }
     }
+
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
@@ -313,7 +388,7 @@
     <div class="form-container hidden" id="signupForm">
       <input type="text" id="signupName" placeholder="NODE OPERATOR NAME">
       <input type="text" id="signupLoc" placeholder="YOUR CITY / REGION">
-      <textarea id="signupBio" placeholder="Short description of your node..."></textarea>
+      <textarea id="signupBio" rows="3" placeholder="Short description of your node..."></textarea>
       <button class="btn" onclick="deployNode()">DEPLOY NEW NODE</button>
     </div>
   </div>
@@ -322,7 +397,7 @@
   <div id="mainApp">
     <div class="header">
       <h1>🔗 ROOTDONATE</h1>
-      <p style="opacity:0.7; letter-spacing:3px;">LIVE NODE NETWORK • 2026</p>
+      <p style="opacity:0.7; letter-spacing:4px; font-size:0.95rem;">LIVE DECENTRALIZED MESH • 2026</p>
     </div>
 
     <div class="nav">
@@ -338,7 +413,7 @@
 
     <div class="nodes-grid" id="nodesGrid"></div>
 
-    <h2 style="margin: 20px 30px 10px; font-size:1.4rem;">NETWORK LOG</h2>
+    <h2 style="margin: 15px 40px 10px; font-size:1.35rem; opacity:0.9;">NETWORK LOG</h2>
     <div id="log" class="log"></div>
   </div>
 
@@ -347,20 +422,20 @@
     <div class="modal-content">
       <span class="close-btn" onclick="closeModal()">×</span>
       <div style="text-align:center; margin-bottom:25px;">
-        <h2 id="modalItemName" style="color:var(--accent); font-size:2.2rem;"></h2>
-        <p id="modalItemId" style="opacity:0.7;"></p>
+        <h2 id="modalItemName" style="color:var(--accent); font-size:2.3rem;"></h2>
+        <p id="modalItemId" style="opacity:0.7; font-size:1.1rem;"></p>
       </div>
 
       <div class="share-url">
-        <span id="modalUrl"></span>
+        <span id="modalUrl" style="flex:1;"></span>
         <button class="copy-btn" onclick="copyShareLink()">COPY LINK</button>
       </div>
 
       <p><strong>Location:</strong> <span id="modalLoc"></span></p>
       <p><strong>Found:</strong> <span id="modalTime"></span></p>
-      <p><strong>Status:</strong> <span id="modalStatus" style="color:#0f0;"></span></p>
+      <p><strong>Status:</strong> <span id="modalStatus" style="color:#0f0; font-weight:bold;"></span></p>
 
-      <button class="btn" onclick="claimItem()" style="margin-top:25px; width:100%;">
+      <button class="btn" onclick="claimItem()" style="margin-top:30px; width:100%;">
         <i class="fas fa-hand-holding-heart"></i> CLAIM THIS ITEM
       </button>
     </div>
@@ -374,7 +449,7 @@
 
       <input type="text" id="reportItem" placeholder="Item Name (e.g. Black iPhone 16)">
       <input type="text" id="reportLoc" placeholder="Last Known Location">
-      <textarea id="reportNotes" rows="4" placeholder="Additional description, serial number, etc..."></textarea>
+      <textarea id="reportNotes" rows="4" placeholder="Additional description, serial number, photos..."></textarea>
 
       <button class="btn" onclick="submitReport()" style="width:100%;">
         <i class="fas fa-paper-plane"></i> SUBMIT TO MESH
@@ -395,7 +470,7 @@
     resizeCanvas();
 
     const chars = "01アイウエオカキクケコ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ$@#%&";
-    const fontSize = 15;
+    const fontSize = 16;
     let drops = [];
 
     function initDrops() {
@@ -403,7 +478,7 @@
     }
 
     function drawMatrix() {
-      ctx.fillStyle = 'rgba(5,5,5,0.1)';
+      ctx.fillStyle = 'rgba(5,5,5,0.12)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = '#00ff41';
       ctx.font = `${fontSize}px monospace`;
@@ -414,6 +489,7 @@
         drops[i]++;
       }
     }
+
     setInterval(drawMatrix, 35);
     initDrops();
 
@@ -427,7 +503,6 @@
       { id: "RD-5567", item: "Gucci Wallet", loc: "Paris Gare du Nord", time: "Yesterday", status: "ACTIVE" }
     ];
 
-    // Generate Shareable URL (now works with deep linking)
     function generateShareUrl(node) {
       const data = JSON.stringify({
         id: node.id,
@@ -437,7 +512,7 @@
         status: node.status
       });
       const base64 = btoa(data);
-      return `https://rootdonate.co.uk/item/${base64}`;
+      return `${window.location.origin}/item/${base64}`;
     }
 
     function loadNodes(filteredNodes) {
@@ -448,10 +523,13 @@
         const card = document.createElement('div');
         card.className = 'node-card';
         card.innerHTML = `
-          <h3>#${node.id}</h3>
-          <p><strong>${node.item}</strong></p>
-          <p style="opacity:0.8;">📍 ${node.loc}</p>
-          <p style="margin-top:12px; opacity:0.7;">${node.time} • <span style="color:${node.status==='RECOVERED'?'#0f0':'#ff0'}">${node.status}</span></p>
+          <h3 style="margin-bottom:8px;">#${node.id}</h3>
+          <p style="font-size:1.15rem; font-weight:bold;">${node.item}</p>
+          <p style="opacity:0.8; margin:8px 0;">📍 ${node.loc}</p>
+          <p style="margin-top:12px; opacity:0.75;">
+            ${node.time} • 
+            <span style="color:${node.status==='RECOVERED'?'#0f0':'#ff0'}">${node.status}</span>
+          </p>
         `;
         card.onclick = () => showItemDetail(node);
         grid.appendChild(card);
@@ -491,7 +569,7 @@
         const btn = document.querySelector('#itemModal .copy-btn');
         const orig = btn.textContent;
         btn.textContent = '✓ COPIED';
-        setTimeout(() => btn.textContent = orig, 2000);
+        setTimeout(() => btn.textContent = orig, 1800);
       });
     }
 
@@ -501,12 +579,11 @@
 
     function claimItem() {
       if (!currentItem) return;
-      alert(`✅ Claim request sent for ${currentItem.item}!\nA node operator will contact you shortly.`);
+      alert(`✅ Claim request sent for ${currentItem.item}!\nMesh node operator will contact you shortly.`);
       closeModal();
       log(`🛡️ CLAIM REQUEST SENT FOR #${currentItem.id}`);
     }
 
-    // Report Modal
     function showReportForm() {
       document.getElementById('reportModal').style.display = 'flex';
     }
@@ -532,7 +609,7 @@
       log(`🚨 NEW LOST ITEM REPORTED: ${item}`);
     }
 
-    // Auth
+    // Auth & Navigation
     function switchTab(n) {
       document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === n));
       document.getElementById('loginForm').classList.toggle('hidden', n !== 0);
@@ -543,18 +620,18 @@
       document.getElementById('authContainer').style.display = 'none';
       document.getElementById('mainApp').style.display = 'flex';
       log("🔓 NODE CONNECTED SUCCESSFULLY");
-      log("🌐 MESH SYNC COMPLETE");
+      log("🌐 MESH SYNC COMPLETE • 142 NODES ONLINE");
     }
 
     function deployNode() {
-      alert("🛰️ New node deployed! Welcome to the ROOTDONATE network.");
+      alert("🛰️ New node successfully deployed!\nWelcome to the ROOTDONATE mesh.");
       performLogin();
     }
 
     function logout() {
-      if (confirm("Disconnect from mesh?")) {
+      if (confirm("Disconnect from the mesh?")) {
         document.getElementById('mainApp').style.display = 'none';
-        document.getElementById('authContainer').style.display = 'block';
+        document.getElementById('authContainer').style.display = 'flex';
         log("🔌 NODE DISCONNECTED");
       }
     }
@@ -567,25 +644,24 @@
     function log(message) {
       const logEl = document.getElementById('log');
       const time = new Date().toLocaleTimeString('en-GB', { hour12: false }).slice(0, 8);
-      logEl.innerHTML += `<span style="opacity:0.6">[${time}]</span> ${message}<br>`;
+      logEl.innerHTML += `<span style="opacity:0.55">[${time}]</span> ${message}<br>`;
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    // ==================== DEEP LINK SUPPORT (SHARE URL WORKS) ====================
+    // Deep Link Support
     function handleDeepLink() {
       const path = window.location.pathname;
       const match = path.match(/\/item\/([A-Za-z0-9+/=]+)/);
       if (match) {
         try {
           const decoded = JSON.parse(atob(match[1]));
-          // Find or create matching node
           let node = sampleNodes.find(n => n.id === decoded.id);
           if (!node) {
             node = decoded;
             sampleNodes.unshift(node);
           }
-          performLogin(); // auto-login for demo
-          setTimeout(() => showItemDetail(node), 800);
+          performLogin();
+          setTimeout(() => showItemDetail(node), 600);
         } catch (e) {
           console.error("Invalid share link");
         }
