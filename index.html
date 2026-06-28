@@ -104,7 +104,8 @@
       gap: 16px;
     }
 
-    .form-container input, .form-container textarea {
+    .form-container input,
+    .form-container textarea {
       background: #000;
       border: 1px solid rgba(0,255,65,0.4);
       color: var(--neon);
@@ -173,7 +174,8 @@
       transition: all 0.3s;
     }
 
-    .nav button.active, .nav button:hover {
+    .nav button.active,
+    .nav button:hover {
       background: var(--neon);
       color: #000;
     }
@@ -425,8 +427,8 @@
       { id: "RD-5567", item: "Gucci Wallet", loc: "Paris Gare du Nord", time: "Yesterday", status: "ACTIVE" }
     ];
 
-    // Generate Shareable URL
-    function generateBase64Url(node) {
+    // Generate Shareable URL (now works with deep linking)
+    function generateShareUrl(node) {
       const data = JSON.stringify({
         id: node.id,
         item: node.item,
@@ -434,14 +436,15 @@
         time: node.time,
         status: node.status
       });
-      return `https://rootdonate.co.uk/item/${btoa(data)}`;
+      const base64 = btoa(data);
+      return `https://rootdonate.co.uk/item/${base64}`;
     }
 
     function loadNodes(filteredNodes) {
       const grid = document.getElementById('nodesGrid');
       grid.innerHTML = '';
       filteredNodes.forEach(node => {
-        node.url = generateBase64Url(node);
+        node.url = generateShareUrl(node);
         const card = document.createElement('div');
         card.className = 'node-card';
         card.innerHTML = `
@@ -513,11 +516,10 @@
     }
 
     function submitReport() {
-      const item = document.getElementById('reportItem').value || "Unnamed Item";
-      const loc = document.getElementById('reportLoc').value || "Unknown";
+      const item = document.getElementById('reportItem').value.trim() || "Unnamed Item";
+      const loc = document.getElementById('reportLoc').value.trim() || "Unknown";
       closeReportModal();
       
-      // Add to list
       const newNode = {
         id: "RD-" + Math.floor(1000 + Math.random() * 9000),
         item: item,
@@ -532,9 +534,7 @@
 
     // Auth
     function switchTab(n) {
-      document.querySelectorAll('.tab').forEach((t, i) => {
-        t.classList.toggle('active', i === n);
-      });
+      document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === n));
       document.getElementById('loginForm').classList.toggle('hidden', n !== 0);
       document.getElementById('signupForm').classList.toggle('hidden', n !== 1);
     }
@@ -560,18 +560,36 @@
     }
 
     function setTab(n) {
-      document.querySelectorAll('.nav button').forEach((b, i) => {
-        b.classList.toggle('active', i === n);
-      });
-      // For demo, just reload all
+      document.querySelectorAll('.nav button').forEach((b, i) => b.classList.toggle('active', i === n));
       if (n === 0) loadNodes(sampleNodes);
     }
 
     function log(message) {
       const logEl = document.getElementById('log');
-      const time = new Date().toLocaleTimeString('en-GB', {hour12:false}).slice(0,8);
+      const time = new Date().toLocaleTimeString('en-GB', { hour12: false }).slice(0, 8);
       logEl.innerHTML += `<span style="opacity:0.6">[${time}]</span> ${message}<br>`;
       logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // ==================== DEEP LINK SUPPORT (SHARE URL WORKS) ====================
+    function handleDeepLink() {
+      const path = window.location.pathname;
+      const match = path.match(/\/item\/([A-Za-z0-9+/=]+)/);
+      if (match) {
+        try {
+          const decoded = JSON.parse(atob(match[1]));
+          // Find or create matching node
+          let node = sampleNodes.find(n => n.id === decoded.id);
+          if (!node) {
+            node = decoded;
+            sampleNodes.unshift(node);
+          }
+          performLogin(); // auto-login for demo
+          setTimeout(() => showItemDetail(node), 800);
+        } catch (e) {
+          console.error("Invalid share link");
+        }
+      }
     }
 
     // Initialize
@@ -579,6 +597,7 @@
       log("SYSTEM BOOT SEQUENCE COMPLETE");
       log("CONNECTING TO ROOTDONATE MESH...");
       loadNodes(sampleNodes);
+      handleDeepLink();
     };
   </script>
 </body>
