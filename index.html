@@ -13,15 +13,9 @@
       --neon-glow: #00ff4188;
       --accent: #00ff9d;
       --bg: #050505;
-      --card: #0a0a0a;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Courier New', monospace;
       background: var(--bg);
@@ -45,9 +39,8 @@
     .overlay {
       position: fixed;
       inset: 0;
-      background: 
-        linear-gradient(transparent 50%, rgba(0,255,65,0.04) 50%),
-        radial-gradient(circle at center, transparent 55%, rgba(0,0,0,0.75) 100%);
+      background: linear-gradient(transparent 50%, rgba(0,255,65,0.04) 50%),
+                  radial-gradient(circle at center, transparent 55%, rgba(0,0,0,0.75) 100%);
       pointer-events: none;
       z-index: 1;
       animation: scanline 10s linear infinite;
@@ -66,27 +59,23 @@
       width: 100%;
       max-width: 420px;
       padding: 40px 32px;
-      box-shadow: 0 0 60px var(--neon-glow),
-                  inset 0 0 40px rgba(0,255,65,0.1);
+      box-shadow: 0 0 60px var(--neon-glow), inset 0 0 40px rgba(0,255,65,0.1);
       z-index: 10;
       text-align: center;
-      position: relative;
     }
 
     .auth-header h1 {
       font-size: 3rem;
-      margin-bottom: 6px;
-      text-shadow: 0 0 25px var(--neon),
-                   0 0 40px var(--neon);
-      animation: glitch 1.5s infinite alternate;
       letter-spacing: 4px;
+      text-shadow: 0 0 25px var(--neon), 0 0 40px var(--neon);
+      animation: glitch 1.5s infinite alternate;
     }
 
     .auth-header p {
       opacity: 0.75;
       letter-spacing: 6px;
       font-size: 0.85rem;
-      margin-bottom: 30px;
+      margin: 6px 0 30px;
     }
 
     .tab-switch {
@@ -126,7 +115,6 @@
       padding: 15px 18px;
       border-radius: 8px;
       font-family: inherit;
-      font-size: 1rem;
       transition: all 0.3s;
     }
 
@@ -146,10 +134,9 @@
       cursor: pointer;
       font-size: 1.05rem;
       font-weight: bold;
-      transition: all 0.3s ease;
-      margin-top: 10px;
       text-transform: uppercase;
       letter-spacing: 2px;
+      transition: all 0.3s ease;
     }
 
     .btn:hover {
@@ -174,7 +161,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: rgba(5,5,5,0.8);
+      background: rgba(5,5,5,0.85);
       backdrop-filter: blur(8px);
     }
 
@@ -189,7 +176,7 @@
       display: flex;
       gap: 12px;
       border-bottom: 1px solid rgba(0,255,65,0.2);
-      background: rgba(5,5,5,0.8);
+      background: rgba(5,5,5,0.85);
       flex-wrap: wrap;
     }
 
@@ -204,7 +191,6 @@
       align-items: center;
       gap: 8px;
       transition: all 0.3s ease;
-      font-size: 0.95rem;
     }
 
     .nav button.active,
@@ -223,7 +209,6 @@
       border-radius: 50px;
       color: var(--neon);
       font-size: 1.1rem;
-      transition: all 0.3s;
     }
 
     .search-bar:focus {
@@ -266,9 +251,7 @@
       box-shadow: 0 0 40px var(--neon-glow);
     }
 
-    .node-card:hover::before {
-      opacity: 1;
-    }
+    .node-card:hover::before { opacity: 1; }
 
     .log {
       height: 160px;
@@ -300,8 +283,8 @@
       width: 90%;
       max-width: 520px;
       padding: 35px;
-      position: relative;
       box-shadow: 0 0 60px var(--neon-glow);
+      position: relative;
     }
 
     .close-btn {
@@ -315,7 +298,7 @@
     }
 
     .close-btn:hover {
-      color: #fff;
+      color: white;
       transform: rotate(90deg);
     }
 
@@ -340,7 +323,6 @@
       padding: 8px 22px;
       border-radius: 50px;
       cursor: pointer;
-      font-size: 0.9rem;
       white-space: nowrap;
       transition: all 0.3s;
     }
@@ -351,9 +333,9 @@
     }
 
     @keyframes glitch {
-      0% { text-shadow: 2px 0 #00ff41, -2px 0 #ff00ff; }
-      20% { text-shadow: -3px 0 #00ff41, 3px 0 #ff00ff; }
-      40% { text-shadow: 2px 0 #00ff41, -2px 0 #00ffff; }
+      0%   { text-shadow: 2px 0 #00ff41, -2px 0 #ff00ff; }
+      20%  { text-shadow: -3px 0 #00ff41, 3px 0 #ff00ff; }
+      40%  { text-shadow: 2px 0 #00ff41, -2px 0 #00ffff; }
       100% { text-shadow: 2px 0 #00ff41, -2px 0 #ff00ff; }
     }
 
@@ -365,7 +347,7 @@
   <canvas id="matrix-bg"></canvas>
   <div class="overlay"></div>
 
-  <!-- AUTH SECTION -->
+  <!-- AUTH -->
   <div class="auth-container" id="authContainer">
     <div class="auth-header">
       <h1>ROOTDONATE</h1>
@@ -373,18 +355,16 @@
     </div>
 
     <div class="tab-switch">
-      <div class="tab active" id="loginTab" onclick="switchTab(0)">LOGIN NODE</div>
-      <div class="tab" id="signupTab" onclick="switchTab(1)">DEPLOY NODE</div>
+      <div class="tab active" onclick="switchTab(0)">LOGIN NODE</div>
+      <div class="tab" onclick="switchTab(1)">DEPLOY NODE</div>
     </div>
 
-    <!-- LOGIN FORM -->
     <div class="form-container" id="loginForm">
-      <input type="text" id="loginNodeId" placeholder="NODE ID (e.g. RD-7842)" value="RD-7842">
+      <input type="text" id="loginNodeId" placeholder="NODE ID" value="RD-7842">
       <input type="password" id="loginPass" placeholder="PASSPHRASE" value="demo123">
       <button class="btn" onclick="performLogin()">CONNECT TO MESH</button>
     </div>
 
-    <!-- SIGNUP FORM -->
     <div class="form-container hidden" id="signupForm">
       <input type="text" id="signupName" placeholder="NODE OPERATOR NAME">
       <input type="text" id="signupLoc" placeholder="YOUR CITY / REGION">
@@ -397,7 +377,7 @@
   <div id="mainApp">
     <div class="header">
       <h1>🔗 ROOTDONATE</h1>
-      <p style="opacity:0.7; letter-spacing:4px; font-size:0.95rem;">LIVE DECENTRALIZED MESH • 2026</p>
+      <p style="opacity:0.7; letter-spacing:4px;">LIVE DECENTRALIZED MESH • 2026</p>
     </div>
 
     <div class="nav">
@@ -407,23 +387,21 @@
       <button onclick="logout()"><i class="fas fa-power-off"></i> DISCONNECT</button>
     </div>
 
-    <input type="text" id="searchInput" class="search-bar" 
-           placeholder="SEARCH LOST ITEMS • iphone, passport, wallet..." 
-           onkeyup="liveSearch()">
+    <input type="text" id="searchInput" class="search-bar" placeholder="SEARCH LOST ITEMS • iphone, passport, wallet..." onkeyup="liveSearch()">
 
     <div class="nodes-grid" id="nodesGrid"></div>
 
-    <h2 style="margin: 15px 40px 10px; font-size:1.35rem; opacity:0.9;">NETWORK LOG</h2>
+    <h2 style="margin:15px 40px 10px; font-size:1.35rem; opacity:0.9;">NETWORK LOG</h2>
     <div id="log" class="log"></div>
   </div>
 
-  <!-- ITEM DETAIL MODAL -->
+  <!-- ITEM MODAL -->
   <div class="modal" id="itemModal">
     <div class="modal-content">
       <span class="close-btn" onclick="closeModal()">×</span>
       <div style="text-align:center; margin-bottom:25px;">
         <h2 id="modalItemName" style="color:var(--accent); font-size:2.3rem;"></h2>
-        <p id="modalItemId" style="opacity:0.7; font-size:1.1rem;"></p>
+        <p id="modalItemId" style="opacity:0.7;"></p>
       </div>
 
       <div class="share-url">
@@ -446,36 +424,31 @@
     <div class="modal-content">
       <span class="close-btn" onclick="closeReportModal()">×</span>
       <h2 style="text-align:center; margin-bottom:25px; color:var(--accent);">REPORT NEW LOST ITEM</h2>
-
       <input type="text" id="reportItem" placeholder="Item Name (e.g. Black iPhone 16)">
       <input type="text" id="reportLoc" placeholder="Last Known Location">
-      <textarea id="reportNotes" rows="4" placeholder="Additional description, serial number, photos..."></textarea>
-
-      <button class="btn" onclick="submitReport()" style="width:100%;">
-        <i class="fas fa-paper-plane"></i> SUBMIT TO MESH
-      </button>
+      <textarea id="reportNotes" rows="4" placeholder="Additional description, serial number..."></textarea>
+      <button class="btn" onclick="submitReport()" style="width:100%;">SUBMIT TO MESH</button>
     </div>
   </div>
 
   <script>
-    // Matrix Background
+    // ==================== CONFIG ====================
+    const BASE_URL = "https://rootdonate.co.uk";   // ← Change this to your real domain when hosting
+
+    // Matrix Rain
     const canvas = document.getElementById('matrix-bg');
     const ctx = canvas.getContext('2d');
+    let drops = [];
+    const chars = "01アイウエオカキクケコ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ$@#%&";
+    const fontSize = 16;
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      drops = Array(Math.floor(canvas.width / fontSize)).fill(1);
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
-
-    const chars = "01アイウエオカキクケコ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ$@#%&";
-    const fontSize = 16;
-    let drops = [];
-
-    function initDrops() {
-      drops = Array(Math.floor(canvas.width / fontSize)).fill(1);
-    }
 
     function drawMatrix() {
       ctx.fillStyle = 'rgba(5,5,5,0.12)';
@@ -489,9 +462,7 @@
         drops[i]++;
       }
     }
-
     setInterval(drawMatrix, 35);
-    initDrops();
 
     // Sample Data
     let sampleNodes = [
@@ -504,21 +475,14 @@
     ];
 
     function generateShareUrl(node) {
-      const data = JSON.stringify({
-        id: node.id,
-        item: node.item,
-        loc: node.loc,
-        time: node.time,
-        status: node.status
-      });
-      const base64 = btoa(data);
-      return `${window.location.origin}/item/${base64}`;
+      const data = btoa(JSON.stringify(node));
+      return `${BASE_URL}/item/${data}`;
     }
 
-    function loadNodes(filteredNodes) {
+    function loadNodes(filtered = sampleNodes) {
       const grid = document.getElementById('nodesGrid');
       grid.innerHTML = '';
-      filteredNodes.forEach(node => {
+      filtered.forEach(node => {
         node.url = generateShareUrl(node);
         const card = document.createElement('div');
         card.className = 'node-card';
@@ -527,8 +491,7 @@
           <p style="font-size:1.15rem; font-weight:bold;">${node.item}</p>
           <p style="opacity:0.8; margin:8px 0;">📍 ${node.loc}</p>
           <p style="margin-top:12px; opacity:0.75;">
-            ${node.time} • 
-            <span style="color:${node.status==='RECOVERED'?'#0f0':'#ff0'}">${node.status}</span>
+            ${node.time} • <span style="color:${node.status==='RECOVERED'?'#0f0':'#ff0'}">${node.status}</span>
           </p>
         `;
         card.onclick = () => showItemDetail(node);
@@ -537,14 +500,10 @@
     }
 
     function liveSearch() {
-      const query = document.getElementById('searchInput').value.toLowerCase().trim();
-      if (!query) {
-        loadNodes(sampleNodes);
-        return;
-      }
-      const filtered = sampleNodes.filter(node => 
-        node.item.toLowerCase().includes(query) || 
-        node.loc.toLowerCase().includes(query)
+      const q = document.getElementById('searchInput').value.toLowerCase().trim();
+      if (!q) return loadNodes();
+      const filtered = sampleNodes.filter(n => 
+        n.item.toLowerCase().includes(q) || n.loc.toLowerCase().includes(q)
       );
       loadNodes(filtered);
     }
@@ -573,47 +532,35 @@
       });
     }
 
-    function closeModal() {
-      document.getElementById('itemModal').style.display = 'none';
-    }
-
+    function closeModal() { document.getElementById('itemModal').style.display = 'none'; }
     function claimItem() {
       if (!currentItem) return;
-      alert(`✅ Claim request sent for ${currentItem.item}!\nMesh node operator will contact you shortly.`);
+      alert(`✅ Claim request sent for ${currentItem.item}`);
       closeModal();
       log(`🛡️ CLAIM REQUEST SENT FOR #${currentItem.id}`);
     }
 
-    function showReportForm() {
-      document.getElementById('reportModal').style.display = 'flex';
-    }
-
-    function closeReportModal() {
-      document.getElementById('reportModal').style.display = 'none';
-    }
+    function showReportForm() { document.getElementById('reportModal').style.display = 'flex'; }
+    function closeReportModal() { document.getElementById('reportModal').style.display = 'none'; }
 
     function submitReport() {
       const item = document.getElementById('reportItem').value.trim() || "Unnamed Item";
       const loc = document.getElementById('reportLoc').value.trim() || "Unknown";
       closeReportModal();
-      
+
       const newNode = {
-        id: "RD-" + Math.floor(1000 + Math.random() * 9000),
-        item: item,
-        loc: loc,
-        time: "Just now",
-        status: "ACTIVE"
+        id: `RD-${1000 + Math.floor(Math.random() * 9000)}`,
+        item, loc, time: "Just now", status: "ACTIVE"
       };
       sampleNodes.unshift(newNode);
-      loadNodes(sampleNodes);
-      log(`🚨 NEW LOST ITEM REPORTED: ${item}`);
+      loadNodes();
+      log(`🚨 NEW REPORT: ${item}`);
     }
 
-    // Auth & Navigation
     function switchTab(n) {
-      document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', i === n));
-      document.getElementById('loginForm').classList.toggle('hidden', n !== 0);
-      document.getElementById('signupForm').classList.toggle('hidden', n !== 1);
+      document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===n));
+      document.getElementById('loginForm').classList.toggle('hidden', n!==0);
+      document.getElementById('signupForm').classList.toggle('hidden', n!==1);
     }
 
     function performLogin() {
@@ -624,12 +571,12 @@
     }
 
     function deployNode() {
-      alert("🛰️ New node successfully deployed!\nWelcome to the ROOTDONATE mesh.");
+      alert("🛰️ New node deployed successfully!");
       performLogin();
     }
 
     function logout() {
-      if (confirm("Disconnect from the mesh?")) {
+      if (confirm("Disconnect from mesh?")) {
         document.getElementById('mainApp').style.display = 'none';
         document.getElementById('authContainer').style.display = 'flex';
         log("🔌 NODE DISCONNECTED");
@@ -637,42 +584,36 @@
     }
 
     function setTab(n) {
-      document.querySelectorAll('.nav button').forEach((b, i) => b.classList.toggle('active', i === n));
-      if (n === 0) loadNodes(sampleNodes);
+      document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n));
+      if (n === 0) loadNodes();
     }
 
     function log(message) {
-      const logEl = document.getElementById('log');
-      const time = new Date().toLocaleTimeString('en-GB', { hour12: false }).slice(0, 8);
-      logEl.innerHTML += `<span style="opacity:0.55">[${time}]</span> ${message}<br>`;
-      logEl.scrollTop = logEl.scrollHeight;
+      const el = document.getElementById('log');
+      const time = new Date().toLocaleTimeString('en-GB',{hour12:false}).slice(0,8);
+      el.innerHTML += `<span style="opacity:0.55">[${time}]</span> ${message}<br>`;
+      el.scrollTop = el.scrollHeight;
     }
 
-    // Deep Link Support
+    // Deep Link Handler
     function handleDeepLink() {
-      const path = window.location.pathname;
-      const match = path.match(/\/item\/([A-Za-z0-9+/=]+)/);
+      const match = window.location.pathname.match(/\/item\/([A-Za-z0-9+/=]+)/);
       if (match) {
         try {
-          const decoded = JSON.parse(atob(match[1]));
-          let node = sampleNodes.find(n => n.id === decoded.id);
-          if (!node) {
-            node = decoded;
-            sampleNodes.unshift(node);
-          }
+          const node = JSON.parse(atob(match[1]));
+          const existing = sampleNodes.find(n => n.id === node.id);
+          if (!existing) sampleNodes.unshift(node);
           performLogin();
           setTimeout(() => showItemDetail(node), 600);
-        } catch (e) {
-          console.error("Invalid share link");
-        }
+        } catch(e) { console.error("Invalid link"); }
       }
     }
 
-    // Initialize
+    // Init
     window.onload = () => {
       log("SYSTEM BOOT SEQUENCE COMPLETE");
       log("CONNECTING TO ROOTDONATE MESH...");
-      loadNodes(sampleNodes);
+      loadNodes();
       handleDeepLink();
     };
   </script>
