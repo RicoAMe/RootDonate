@@ -75,7 +75,7 @@
 
     .form-container input, .form-container textarea {
       background: #000; border: 1px solid rgba(0,255,65,0.5); color: var(--neon);
-      padding: 15px 18px; border-radius: 8px; transition: all 0.3s;
+      padding: 15px 18px; border-radius: 8px; transition: all 0.3s; font-family: inherit;
     }
 
     .form-container input:focus, .form-container textarea:focus {
@@ -262,15 +262,26 @@
     </div>
   </div>
 
-  <!-- REPORT MODAL -->
+  <!-- REPORT LOST MODAL (Enhanced) -->
   <div class="modal" id="reportModal">
     <div class="modal-content">
       <span class="close-btn" onclick="closeReportModal()">×</span>
       <h2 style="text-align:center; margin-bottom:25px; color:var(--accent);">REPORT NEW LOST ITEM</h2>
-      <input type="text" id="reportItem" placeholder="Item Name (e.g. Black iPhone 16)">
-      <input type="text" id="reportLoc" placeholder="Last Known Location">
-      <textarea id="reportNotes" rows="4" placeholder="Additional description..."></textarea>
-      <button class="btn" onclick="submitReport()" style="width:100%;">SUBMIT TO MESH</button>
+
+      <div class="form-container">
+        <input type="text" id="reportItem" placeholder="Item Name (e.g. Black iPhone 16 Pro)" required>
+        <input type="text" id="reportLoc" placeholder="Last Known Location (e.g. Shibuya Station)" required>
+        <input type="text" id="reportDate" placeholder="Date / Time Lost (optional)">
+        <textarea id="reportNotes" rows="5" placeholder="Detailed description, color, brand, serial number, photos, etc..."></textarea>
+      </div>
+
+      <button class="btn" onclick="submitReport()" style="margin-top:20px; width:100%;">
+        <i class="fas fa-paper-plane"></i> SUBMIT TO MESH
+      </button>
+
+      <p style="text-align:center; margin-top:15px; opacity:0.6; font-size:0.85rem;">
+        Your report will be broadcasted to the entire node network
+      </p>
     </div>
   </div>
 
@@ -342,7 +353,9 @@
     function liveSearch() {
       const q = document.getElementById('searchInput').value.toLowerCase().trim();
       if (!q) return loadNodes();
-      loadNodes(sampleNodes.filter(n => n.item.toLowerCase().includes(q) || n.loc.toLowerCase().includes(q)));
+      loadNodes(sampleNodes.filter(n => 
+        n.item.toLowerCase().includes(q) || n.loc.toLowerCase().includes(q)
+      ));
     }
 
     let currentItem = null;
@@ -380,19 +393,42 @@
       log(`🛡️ CLAIM REQUEST SENT FOR #${currentItem.id}`);
     }
 
-    function showReportForm() { document.getElementById('reportModal').style.display = 'flex'; }
+    function showReportForm() { 
+      document.getElementById('reportModal').style.display = 'flex'; 
+      // Clear form on open
+      document.getElementById('reportItem').value = '';
+      document.getElementById('reportLoc').value = '';
+      document.getElementById('reportDate').value = '';
+      document.getElementById('reportNotes').value = '';
+    }
+
     function closeReportModal() { document.getElementById('reportModal').style.display = 'none'; }
 
     function submitReport() {
-      const item = document.getElementById('reportItem').value.trim() || "Unnamed Item";
-      const loc = document.getElementById('reportLoc').value.trim() || "Unknown";
+      const item = document.getElementById('reportItem').value.trim();
+      const loc = document.getElementById('reportLoc').value.trim();
+
+      if (!item || !loc) {
+        alert("⚠️ Please fill in Item Name and Location.");
+        return;
+      }
+
       closeReportModal();
-      const newNode = { id: `RD-${1000 + Math.floor(Math.random()*9000)}`, item, loc, time: "Just now", status: "ACTIVE" };
+
+      const newNode = {
+        id: `RD-${1000 + Math.floor(Math.random()*9000)}`,
+        item: item,
+        loc: loc,
+        time: "Just now",
+        status: "ACTIVE"
+      };
+
       sampleNodes.unshift(newNode);
       loadNodes();
-      log(`🚨 NEW REPORT: ${item}`);
+      log(`🚨 NEW LOST ITEM REPORTED: ${item}`);
     }
 
+    // Navigation & Other functions (unchanged)
     function switchTab(n) {
       document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===n));
       document.getElementById('loginForm').classList.toggle('hidden', n!==0);
