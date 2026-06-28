@@ -373,7 +373,6 @@
   <script>
     let currentUser = "@CWOA";
 
-    // Matrix Rain Background
     function createMatrix() {
       const canvas = document.getElementById('matrix-bg');
       const ctx = canvas.getContext('2d');
@@ -400,9 +399,7 @@
           const text = chars[Math.floor(Math.random() * chars.length)];
           ctx.fillText(text, i * fontSize, drops[i] * fontSize);
           
-          if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-            drops[i] = 0;
-          }
+          if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
           drops[i]++;
         }
       }
@@ -489,17 +486,52 @@
       document.getElementById('nodeViewModal').style.display = 'none';
     }
 
+    // FIXED BROADCAST FUNCTION
     function shareNode(name) {
-      const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>${name} — ROOTDONATE</title><style>body{background:#000;color:#0f0;font-family:Courier New;text-align:center;padding:40px;} .box{border:3px solid #0f0;padding:40px;max-width:500px;margin:40px auto;border-radius:20px;box-shadow:0 0 40px #0f0;}</style></head><body><div class="box"><h1>${name}</h1><h2 style="color:#0f0">LIVE ON THE GRID</h2><p>This node is part of the global lost &amp; found network.</p></div></body></html>`;
-      
-      const dataURL = 'data:text/html;base64,' + btoa(unescape(encodeURIComponent(html)));
-      
-      navigator.clipboard.writeText(dataURL).then(() => {
-        log(`🔗 BROADCAST LINK GENERATED FOR ${name}`);
-        if (confirm("Broadcast link copied to clipboard.\n\nOpen preview now?")) {
-          window.open(dataURL, '_blank');
-        }
-      });
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>${name} — ROOTDONATE</title>
+  <style>
+    body {
+      background:#000; 
+      color:#0f0; 
+      font-family:Courier New; 
+      text-align:center; 
+      padding:60px 20px;
+    }
+    .box {
+      border:3px solid #0f0; 
+      padding:50px; 
+      max-width:600px; 
+      margin:40px auto; 
+      border-radius:20px;
+      box-shadow:0 0 40px #0f0;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>${name}</h1>
+    <h2 style="color:#0f0">LIVE ON THE GRID</h2>
+    <p>This item is actively tracked on the RootDonate Lost & Found network.</p>
+    <p style="margin-top:40px; font-size:0.9rem; opacity:0.7;">Node ID: ${name} • Status: BROADCASTING</p>
+  </div>
+</body>
+</html>`;
+
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+
+      log(`🔗 BROADCAST LINK GENERATED FOR ${name}`);
+
+      if (confirm("Broadcast link ready!\n\nOpen preview now?")) {
+        window.open(url, '_blank');
+      }
+
+      // Clean up after 30 seconds
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
     }
 
     function loadSampleNodes() {
@@ -542,16 +574,11 @@
     }
 
     function logout() {
-      if (confirm("Disconnect from RootDonate network?")) {
-        location.reload();
-      }
+      if (confirm("Disconnect from RootDonate network?")) location.reload();
     }
 
-    // Initialize
     window.onload = () => {
       createMatrix();
-      
-      // Fake live activity
       setInterval(() => {
         if (Math.random() > 0.65 && !document.getElementById('mainApp').classList.contains('hidden')) {
           log("🔄 MATCH ALERT: Potential recovery in progress");
