@@ -51,16 +51,17 @@
       100% { background-position: 0 400px; }
     }
 
-    /* AUTH */
-    .auth-container {
+    .auth-container, .modal-content {
       background: rgba(10,10,10,0.96);
       border: 2px solid var(--neon);
       border-radius: 16px;
+      box-shadow: 0 0 60px var(--neon-glow), inset 0 0 40px rgba(0,255,65,0.1);
+    }
+
+    .auth-container {
       width: 100%;
       max-width: 420px;
       padding: 40px 32px;
-      box-shadow: 0 0 60px var(--neon-glow), inset 0 0 40px rgba(0,255,65,0.1);
-      z-index: 10;
       text-align: center;
     }
 
@@ -69,13 +70,6 @@
       letter-spacing: 4px;
       text-shadow: 0 0 25px var(--neon), 0 0 40px var(--neon);
       animation: glitch 1.5s infinite alternate;
-    }
-
-    .auth-header p {
-      opacity: 0.75;
-      letter-spacing: 6px;
-      font-size: 0.85rem;
-      margin: 6px 0 30px;
     }
 
     .tab-switch {
@@ -91,8 +85,8 @@
       flex: 1;
       padding: 14px;
       cursor: pointer;
-      transition: all 0.3s ease;
       font-weight: bold;
+      transition: all 0.3s ease;
     }
 
     .tab.active {
@@ -114,15 +108,14 @@
       color: var(--neon);
       padding: 15px 18px;
       border-radius: 8px;
-      font-family: inherit;
       transition: all 0.3s;
     }
 
     .form-container input:focus,
     .form-container textarea:focus {
-      outline: none;
       border-color: var(--neon);
       box-shadow: 0 0 15px var(--neon-glow);
+      outline: none;
     }
 
     .btn {
@@ -146,7 +139,6 @@
       transform: translateY(-2px);
     }
 
-    /* MAIN APP */
     #mainApp {
       display: none;
       width: 100%;
@@ -163,12 +155,6 @@
       align-items: center;
       background: rgba(5,5,5,0.85);
       backdrop-filter: blur(8px);
-    }
-
-    .header h1 {
-      font-size: 2.4rem;
-      text-shadow: 0 0 20px var(--neon);
-      letter-spacing: 3px;
     }
 
     .nav {
@@ -190,7 +176,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      transition: all 0.3s ease;
+      transition: all 0.3s;
     }
 
     .nav button.active,
@@ -211,10 +197,7 @@
       font-size: 1.1rem;
     }
 
-    .search-bar:focus {
-      outline: none;
-      box-shadow: 0 0 25px var(--neon-glow);
-    }
+    .search-bar:focus { box-shadow: 0 0 25px var(--neon-glow); outline: none; }
 
     .nodes-grid {
       flex: 1;
@@ -236,22 +219,11 @@
       overflow: hidden;
     }
 
-    .node-card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(transparent, rgba(0,255,65,0.05));
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-
     .node-card:hover {
       transform: translateY(-12px) scale(1.02);
       border-color: var(--neon);
       box-shadow: 0 0 40px var(--neon-glow);
     }
-
-    .node-card:hover::before { opacity: 1; }
 
     .log {
       height: 160px;
@@ -261,10 +233,8 @@
       overflow-y: auto;
       font-size: 0.9rem;
       opacity: 0.9;
-      line-height: 1.5;
     }
 
-    /* MODALS */
     .modal {
       display: none;
       position: fixed;
@@ -277,13 +247,9 @@
     }
 
     .modal-content {
-      background: #0a0a0a;
-      border: 2px solid var(--neon);
-      border-radius: 16px;
       width: 90%;
       max-width: 520px;
       padding: 35px;
-      box-shadow: 0 0 60px var(--neon-glow);
       position: relative;
     }
 
@@ -294,7 +260,6 @@
       font-size: 2.2rem;
       cursor: pointer;
       color: var(--neon);
-      transition: all 0.2s;
     }
 
     .close-btn:hover {
@@ -313,7 +278,6 @@
       display: flex;
       align-items: center;
       gap: 14px;
-      box-shadow: inset 0 2px 8px rgba(0,0,0,0.6);
     }
 
     .copy-btn {
@@ -324,7 +288,6 @@
       border-radius: 50px;
       cursor: pointer;
       white-space: nowrap;
-      transition: all 0.3s;
     }
 
     .copy-btn:hover {
@@ -333,9 +296,9 @@
     }
 
     @keyframes glitch {
-      0%   { text-shadow: 2px 0 #00ff41, -2px 0 #ff00ff; }
-      20%  { text-shadow: -3px 0 #00ff41, 3px 0 #ff00ff; }
-      40%  { text-shadow: 2px 0 #00ff41, -2px 0 #00ffff; }
+      0% { text-shadow: 2px 0 #00ff41, -2px 0 #ff00ff; }
+      20% { text-shadow: -3px 0 #00ff41, 3px 0 #ff00ff; }
+      40% { text-shadow: 2px 0 #00ff41, -2px 0 #00ffff; }
       100% { text-shadow: 2px 0 #00ff41, -2px 0 #ff00ff; }
     }
 
@@ -387,7 +350,9 @@
       <button onclick="logout()"><i class="fas fa-power-off"></i> DISCONNECT</button>
     </div>
 
-    <input type="text" id="searchInput" class="search-bar" placeholder="SEARCH LOST ITEMS • iphone, passport, wallet..." onkeyup="liveSearch()">
+    <input type="text" id="searchInput" class="search-bar" 
+           placeholder="SEARCH LOST ITEMS • iphone, passport, wallet..." 
+           onkeyup="liveSearch()">
 
     <div class="nodes-grid" id="nodesGrid"></div>
 
@@ -426,16 +391,16 @@
       <h2 style="text-align:center; margin-bottom:25px; color:var(--accent);">REPORT NEW LOST ITEM</h2>
       <input type="text" id="reportItem" placeholder="Item Name (e.g. Black iPhone 16)">
       <input type="text" id="reportLoc" placeholder="Last Known Location">
-      <textarea id="reportNotes" rows="4" placeholder="Additional description, serial number..."></textarea>
+      <textarea id="reportNotes" rows="4" placeholder="Additional description..."></textarea>
       <button class="btn" onclick="submitReport()" style="width:100%;">SUBMIT TO MESH</button>
     </div>
   </div>
 
   <script>
     // ==================== CONFIG ====================
-    const BASE_URL = "https://rootdonate.co.uk";   // ← Change this to your real domain when hosting
+    const DEMO_BASE = window.location.origin + window.location.pathname;
 
-    // Matrix Rain
+    // Matrix Background
     const canvas = document.getElementById('matrix-bg');
     const ctx = canvas.getContext('2d');
     let drops = [];
@@ -456,8 +421,7 @@
       ctx.fillStyle = '#00ff41';
       ctx.font = `${fontSize}px monospace`;
       for (let i = 0; i < drops.length; i++) {
-        const text = chars[Math.floor(Math.random() * chars.length)];
-        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * fontSize, drops[i] * fontSize);
         if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
         drops[i]++;
       }
@@ -476,7 +440,7 @@
 
     function generateShareUrl(node) {
       const data = btoa(JSON.stringify(node));
-      return `${BASE_URL}/item/${data}`;
+      return `${DEMO_BASE}#item=${data}`;
     }
 
     function loadNodes(filtered = sampleNodes) {
@@ -502,10 +466,9 @@
     function liveSearch() {
       const q = document.getElementById('searchInput').value.toLowerCase().trim();
       if (!q) return loadNodes();
-      const filtered = sampleNodes.filter(n => 
+      loadNodes(sampleNodes.filter(n => 
         n.item.toLowerCase().includes(q) || n.loc.toLowerCase().includes(q)
-      );
-      loadNodes(filtered);
+      ));
     }
 
     let currentItem = null;
@@ -533,6 +496,7 @@
     }
 
     function closeModal() { document.getElementById('itemModal').style.display = 'none'; }
+
     function claimItem() {
       if (!currentItem) return;
       alert(`✅ Claim request sent for ${currentItem.item}`);
@@ -548,15 +512,13 @@
       const loc = document.getElementById('reportLoc').value.trim() || "Unknown";
       closeReportModal();
 
-      const newNode = {
-        id: `RD-${1000 + Math.floor(Math.random() * 9000)}`,
-        item, loc, time: "Just now", status: "ACTIVE"
-      };
+      const newNode = { id: `RD-${1000 + Math.floor(Math.random()*9000)}`, item, loc, time: "Just now", status: "ACTIVE" };
       sampleNodes.unshift(newNode);
       loadNodes();
       log(`🚨 NEW REPORT: ${item}`);
     }
 
+    // Navigation
     function switchTab(n) {
       document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===n));
       document.getElementById('loginForm').classList.toggle('hidden', n!==0);
@@ -595,21 +557,27 @@
       el.scrollTop = el.scrollHeight;
     }
 
-    // Deep Link Handler
+    // ==================== DEEP LINK (HASH) ====================
     function handleDeepLink() {
-      const match = window.location.pathname.match(/\/item\/([A-Za-z0-9+/=]+)/);
+      const hash = window.location.hash;
+      const match = hash.match(/#item=([A-Za-z0-9+/=]+)/);
       if (match) {
         try {
           const node = JSON.parse(atob(match[1]));
           const existing = sampleNodes.find(n => n.id === node.id);
           if (!existing) sampleNodes.unshift(node);
+          
           performLogin();
           setTimeout(() => showItemDetail(node), 600);
-        } catch(e) { console.error("Invalid link"); }
+        } catch(e) {
+          console.error("Invalid share link");
+        }
       }
     }
 
-    // Init
+    window.addEventListener('hashchange', handleDeepLink);
+
+    // Initialize
     window.onload = () => {
       log("SYSTEM BOOT SEQUENCE COMPLETE");
       log("CONNECTING TO ROOTDONATE MESH...");
