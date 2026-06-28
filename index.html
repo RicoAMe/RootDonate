@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Node Monitor - All Online</title>
+  <title>Report New Node - RootDonate</title>
   <style>
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
@@ -13,107 +13,148 @@
       padding: 20px;
     }
     .container {
-      max-width: 1100px;
-      margin: auto;
-    }
-    h1 {
-      text-align: center;
-      font-size: 2.5em;
-      margin-bottom: 10px;
-    }
-    .subtitle {
-      text-align: center;
-      color: #0f0;
-      font-size: 1.2em;
-      margin-bottom: 30px;
-    }
-    .node {
+      max-width: 620px;
+      margin: 40px auto;
       background: #111111;
-      padding: 25px;
-      margin: 20px 0;
+      padding: 40px;
       border-radius: 12px;
       border: 2px solid #00ff00;
-      box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
     }
-    .status {
-      font-size: 1.5em;
-      font-weight: bold;
-      color: lime;
+    h1 { text-align: center; font-size: 2.3em; }
+    .subtitle { text-align: center; color: #0f0; margin-bottom: 30px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 14px;
+      margin: 12px 0;
+      background: #000;
+      border: 1px solid #00ff00;
+      border-radius: 8px;
+      color: #00ff00;
+      font-size: 16px;
     }
     button {
       background: #00ff00;
       color: black;
-      padding: 14px 32px;
+      padding: 14px;
       font-size: 17px;
       border: none;
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
-      margin: 0 10px;
+      width: 100%;
+      margin: 15px 0;
     }
+    .hidden { display: none; }
     .log {
       background: #000;
-      padding: 20px;
-      height: 420px;
-      overflow-y: auto;
-      font-family: monospace;
+      padding: 15px;
+      margin-top: 20px;
       border: 1px solid #00ff00;
-      border-radius: 10px;
-      margin-top: 30px;
+      border-radius: 8px;
+      font-family: monospace;
+      max-height: 200px;
+      overflow-y: auto;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🔄 NODE MONITOR</h1>
-    <p class="subtitle">✅ All Nodes Online</p>
+    <h1>📋 REPORT NEW NODE</h1>
+    <p class="subtitle">Lost & Found • rootdonate.co.uk</p>
 
-    <div class="node">
-      <h2>Node 1: @CWOA</h2>
-      <div class="status">🟢 ONLINE • 192.168.0.1</div>
+    <!-- Login / Sign Up Section -->
+    <div id="authSection">
+      <h2 style="text-align:center;">Node Access Required</h2>
+      
+      <!-- Login -->
+      <div id="loginForm">
+        <input type="text" id="username" placeholder="Node ID or Username (@CWOA)">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">🔓 LOGIN TO REPORT</button>
+        <div style="text-align:center; margin:15px 0; color:#00ff88; cursor:pointer;" onclick="toggleForms()">
+          Need a node? Sign Up
+        </div>
+      </div>
+
+      <!-- Sign Up -->
+      <div id="signupForm" class="hidden">
+        <input type="text" id="newUsername" placeholder="Choose Node Name (@YourHandle)">
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="newPassword" placeholder="Create Password">
+        <button onclick="signup()">🚀 CREATE NODE & REPORT</button>
+        <div style="text-align:center; margin:15px 0; color:#00ff88; cursor:pointer;" onclick="toggleForms()">
+          Already have a node? Login
+        </div>
+      </div>
     </div>
 
-    <div class="node">
-      <h2>Node 2: @HarrisFed</h2>
-      <div class="status">🟢 ONLINE • 192.168.0.1</div>
+    <!-- Report Form (shown after login) -->
+    <div id="reportForm" class="hidden">
+      <h2 style="text-align:center;">New Lost / Found Item</h2>
+      
+      <select id="type">
+        <option value="">-- Select Type --</option>
+        <option value="lost">🚨 Lost Item</option>
+        <option value="found">✅ Found Item</option>
+      </select>
+      
+      <input type="text" id="itemName" placeholder="Item Name (e.g. Black Leather Wallet)">
+      <input type="text" id="location" placeholder="Last Seen / Found Location">
+      <input type="text" id="date" placeholder="Date & Time (e.g. Today 14:30)">
+      <textarea id="description" rows="4" placeholder="Description, colour, brand, serial number..."></textarea>
+      
+      <button onclick="submitReport()">📤 SUBMIT REPORT</button>
+      <button onclick="logout()">← Logout</button>
     </div>
 
-    <div class="node">
-      <h2>Node 3: Colossus</h2>
-      <div class="status">🟢 ONLINE • 192.168.0.1</div>
-    </div>
-
-    <div style="text-align: center; margin: 30px 0;">
-      <button onclick="startAutoLog()">▶ Start Auto Refresh</button>
-    </div>
-
-    <h2 style="text-align:center;">Live Activity Log</h2>
-    <div id="log" class="log"></div>
+    <div id="successLog" class="log hidden"></div>
   </div>
 
   <script>
-    function log(message) {
-      const time = new Date().toLocaleTimeString();
-      document.getElementById("log").innerHTML += `[${time}] ${message}<br>`;
-      document.getElementById("log").scrollTop = 999999;
+    function toggleForms() {
+      document.getElementById('loginForm').classList.toggle('hidden');
+      document.getElementById('signupForm').classList.toggle('hidden');
     }
 
-    function startAutoLog() {
-      log("🚀 Auto monitoring started - All nodes ONLINE");
-      setInterval(() => {
-        log("✅ @CWOA → ONLINE (8ms) 🟢");
-        log("✅ @HarrisFed → ONLINE (12ms) 🟢");
-        log("✅ Colossus → ONLINE (6ms) 🟢");
-        log("--- Scan cycle complete ---\n");
-      }, 7000);
+    function login() {
+      const user = document.getElementById('username').value || "@User";
+      alert(`✅ Logged in as ${user}`);
+      document.getElementById('authSection').classList.add('hidden');
+      document.getElementById('reportForm').classList.remove('hidden');
     }
 
-    // Auto start
-    window.onload = () => {
-      log("📡 System initialized");
-      log("All device nodes are showing as ONLINE");
-      setTimeout(startAutoLog, 800);
-    };
+    function signup() {
+      const user = document.getElementById('newUsername').value || "@NewNode";
+      alert(`🚀 Node created: ${user}\nYou can now report items.`);
+      document.getElementById('authSection').classList.add('hidden');
+      document.getElementById('reportForm').classList.remove('hidden');
+    }
+
+    function submitReport() {
+      const type = document.getElementById('type').value;
+      const name = document.getElementById('itemName').value || "Unnamed Item";
+      
+      if (!type) {
+        alert("Please select Lost or Found");
+        return;
+      }
+
+      const success = document.getElementById('successLog');
+      success.innerHTML = `[${new Date().toLocaleTimeString()}] ✅ Report submitted successfully!<br>
+        Node Type: ${type.toUpperCase()}<br>
+        Item: ${name}<br>
+        Your report is now live on the network.`;
+      success.classList.remove('hidden');
+
+      setTimeout(() => {
+        alert("✅ Your new Lost & Found node has been created and shared across the network!");
+      }, 800);
+    }
+
+    function logout() {
+      location.reload();
+    }
   </script>
 </body>
 </html>
