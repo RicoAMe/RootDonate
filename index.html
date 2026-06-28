@@ -17,7 +17,6 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
       font-family: 'Courier New', monospace;
       background: var(--bg);
@@ -53,8 +52,142 @@
       100% { background-position: 0 200px; }
     }
 
-    /* AUTH + MAIN + MODALS (cleaned & optimized) */
-    .auth-container, #mainApp, .modal-content, .node-card, .btn, .share-url { /* styles same as previous polished version */ }
+    /* AUTH */
+    .auth-container {
+      background: rgba(10,10,10,0.95);
+      border: 2px solid var(--neon);
+      border-radius: 16px;
+      width: 420px;
+      padding: 40px 30px;
+      box-shadow: 0 0 40px var(--neon-glow);
+      z-index: 10;
+      text-align: center;
+    }
+
+    .auth-header h1 {
+      font-size: 2.8rem;
+      margin-bottom: 8px;
+      text-shadow: 0 0 20px var(--neon);
+      animation: glitch 2s infinite;
+    }
+
+    .auth-header p {
+      opacity: 0.7;
+      letter-spacing: 4px;
+      font-size: 0.9rem;
+    }
+
+    .tab-switch {
+      display: flex;
+      margin: 25px 0;
+      border: 1px solid var(--neon);
+      border-radius: 50px;
+      overflow: hidden;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .tab.active {
+      background: var(--neon);
+      color: #000;
+      font-weight: bold;
+    }
+
+    .form-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .form-container input, .form-container textarea {
+      background: #000;
+      border: 1px solid rgba(0,255,65,0.4);
+      color: var(--neon);
+      padding: 14px;
+      border-radius: 8px;
+      font-family: inherit;
+    }
+
+    .btn {
+      background: transparent;
+      border: 2px solid var(--neon);
+      color: var(--neon);
+      padding: 14px;
+      border-radius: 50px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+
+    .btn:hover {
+      background: var(--neon);
+      color: #000;
+      box-shadow: 0 0 25px var(--neon-glow);
+    }
+
+    /* MAIN APP */
+    #mainApp {
+      display: none;
+      width: 100%;
+      max-width: 1400px;
+      height: 100vh;
+      flex-direction: column;
+    }
+
+    .header {
+      padding: 20px 30px;
+      border-bottom: 1px solid rgba(0,255,65,0.3);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      font-size: 2.2rem;
+      text-shadow: 0 0 15px var(--neon);
+    }
+
+    .nav {
+      padding: 15px 30px;
+      display: flex;
+      gap: 12px;
+      border-bottom: 1px solid rgba(0,255,65,0.2);
+    }
+
+    .nav button {
+      background: transparent;
+      border: 1px solid var(--neon);
+      color: var(--neon);
+      padding: 10px 20px;
+      border-radius: 50px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s;
+    }
+
+    .nav button.active, .nav button:hover {
+      background: var(--neon);
+      color: #000;
+    }
+
+    .search-bar {
+      margin: 20px 30px;
+      width: calc(100% - 60px);
+      padding: 16px 24px;
+      background: #000;
+      border: 1px solid var(--neon);
+      border-radius: 50px;
+      color: var(--neon);
+      font-size: 1.1rem;
+    }
 
     .nodes-grid {
       flex: 1;
@@ -78,6 +211,46 @@
       transform: translateY(-8px);
       border-color: var(--neon);
       box-shadow: 0 0 30px var(--neon-glow);
+    }
+
+    .log {
+      height: 180px;
+      background: #000;
+      border-top: 1px solid rgba(0,255,65,0.3);
+      padding: 15px 30px;
+      overflow-y: auto;
+      font-size: 0.9rem;
+      opacity: 0.85;
+    }
+
+    /* MODALS */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.9);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: #0a0a0a;
+      border: 2px solid var(--neon);
+      border-radius: 16px;
+      width: 90%;
+      max-width: 520px;
+      padding: 30px;
+      position: relative;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 15px;
+      right: 25px;
+      font-size: 2rem;
+      cursor: pointer;
+      color: var(--neon);
     }
 
     .share-url {
@@ -117,7 +290,6 @@
 
   <!-- AUTH SECTION -->
   <div class="auth-container" id="authContainer">
-    <div class="scanline"></div>
     <div class="auth-header">
       <h1>ROOTDONATE</h1>
       <p>LOST &amp; FOUND NODE NETWORK • EST 2026</p>
@@ -128,9 +300,20 @@
       <div class="tab" id="signupTab" onclick="switchTab(1)">DEPLOY NODE</div>
     </div>
 
-    <!-- Login & Signup Forms (same as before) -->
-    <div class="form-container" id="loginForm"> ... [full login form as in previous] ... </div>
-    <div class="form-container hidden" id="signupForm"> ... [full signup form] ... </div>
+    <!-- LOGIN FORM -->
+    <div class="form-container" id="loginForm">
+      <input type="text" id="loginNodeId" placeholder="NODE ID (e.g. RD-7842)" value="RD-7842">
+      <input type="password" id="loginPass" placeholder="PASSPHRASE" value="demo123">
+      <button class="btn" onclick="performLogin()">CONNECT TO MESH</button>
+    </div>
+
+    <!-- SIGNUP FORM -->
+    <div class="form-container hidden" id="signupForm">
+      <input type="text" id="signupName" placeholder="NODE OPERATOR NAME">
+      <input type="text" id="signupLoc" placeholder="YOUR CITY / REGION">
+      <textarea id="signupBio" placeholder="Short description of your node..."></textarea>
+      <button class="btn" onclick="deployNode()">DEPLOY NEW NODE</button>
+    </div>
   </div>
 
   <!-- MAIN APP -->
@@ -175,7 +358,7 @@
       <p><strong>Found:</strong> <span id="modalTime"></span></p>
       <p><strong>Status:</strong> <span id="modalStatus" style="color:#0f0;"></span></p>
 
-      <button class="btn" onclick="claimItem()" style="margin-top:25px;">
+      <button class="btn" onclick="claimItem()" style="margin-top:25px; width:100%;">
         <i class="fas fa-hand-holding-heart"></i> CLAIM THIS ITEM
       </button>
     </div>
@@ -187,20 +370,21 @@
       <span class="close-btn" onclick="closeReportModal()">×</span>
       <h2 style="text-align:center; margin-bottom:25px; color:var(--accent);">REPORT NEW LOST ITEM</h2>
 
-      <input type="text" id="reportItem" placeholder="Item Name">
+      <input type="text" id="reportItem" placeholder="Item Name (e.g. Black iPhone 16)">
       <input type="text" id="reportLoc" placeholder="Last Known Location">
-      <textarea id="reportNotes" placeholder="Description..."></textarea>
+      <textarea id="reportNotes" rows="4" placeholder="Additional description, serial number, etc..."></textarea>
 
-      <button class="btn" onclick="submitReport()">
+      <button class="btn" onclick="submitReport()" style="width:100%;">
         <i class="fas fa-paper-plane"></i> SUBMIT TO MESH
       </button>
     </div>
   </div>
 
   <script>
-    // Matrix Background (unchanged)
+    // Matrix Background
     const canvas = document.getElementById('matrix-bg');
     const ctx = canvas.getContext('2d');
+
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -212,7 +396,10 @@
     const fontSize = 15;
     let drops = [];
 
-    function initDrops() { drops = Array(Math.floor(canvas.width / fontSize)).fill(1); }
+    function initDrops() {
+      drops = Array(Math.floor(canvas.width / fontSize)).fill(1);
+    }
+
     function drawMatrix() {
       ctx.fillStyle = 'rgba(5,5,5,0.1)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -228,11 +415,26 @@
     setInterval(drawMatrix, 35);
     initDrops();
 
-    // Data & Functions
-    let sampleNodes = [ /* full list as before */ ];
+    // Sample Data
+    let sampleNodes = [
+      { id: "RD-7842", item: "Black iPhone 16 Pro", loc: "Shibuya Crossing, Tokyo", time: "12m ago", status: "RECOVERED" },
+      { id: "RD-3921", item: "Brown Leather Passport", loc: "Heathrow Airport, London", time: "47m ago", status: "ACTIVE" },
+      { id: "RD-6719", item: "Gold Rolex Submariner", loc: "Downtown Dubai", time: "2h ago", status: "ACTIVE" },
+      { id: "RD-1245", item: "Red Air Jordan 1", loc: "Times Square, NYC", time: "5h ago", status: "RECOVERED" },
+      { id: "RD-8834", item: "MacBook Air M3", loc: "Kuala Lumpur Sentral", time: "11h ago", status: "ACTIVE" },
+      { id: "RD-5567", item: "Gucci Wallet", loc: "Paris Gare du Nord", time: "Yesterday", status: "ACTIVE" }
+    ];
 
+    // Generate Shareable URL
     function generateBase64Url(node) {
-      return `https://rootdonate.network/item/${btoa(JSON.stringify(node))}`;
+      const data = JSON.stringify({
+        id: node.id,
+        item: node.item,
+        loc: node.loc,
+        time: node.time,
+        status: node.status
+      });
+      return `https://rootdonate.co.uk/item/${btoa(data)}`;
     }
 
     function loadNodes(filteredNodes) {
@@ -260,7 +462,7 @@
         return;
       }
       const filtered = sampleNodes.filter(node => 
-        node.item.toLowerCase().includes(query) ||
+        node.item.toLowerCase().includes(query) || 
         node.loc.toLowerCase().includes(query)
       );
       loadNodes(filtered);
@@ -285,16 +487,97 @@
       navigator.clipboard.writeText(currentItem.url).then(() => {
         const btn = document.querySelector('#itemModal .copy-btn');
         const orig = btn.textContent;
-        btn.textContent = 'COPIED ✓';
+        btn.textContent = '✓ COPIED';
         setTimeout(() => btn.textContent = orig, 2000);
       });
     }
 
-    // Report, Login, etc. (all functions from previous version)
-    // ... (include full set of functions: performLogin, submitReport, etc.)
+    function closeModal() {
+      document.getElementById('itemModal').style.display = 'none';
+    }
 
+    function claimItem() {
+      if (!currentItem) return;
+      alert(`✅ Claim request sent for ${currentItem.item}!\nA node operator will contact you shortly.`);
+      closeModal();
+      log(`🛡️ CLAIM REQUEST SENT FOR #${currentItem.id}`);
+    }
+
+    // Report Modal
+    function showReportForm() {
+      document.getElementById('reportModal').style.display = 'flex';
+    }
+
+    function closeReportModal() {
+      document.getElementById('reportModal').style.display = 'none';
+    }
+
+    function submitReport() {
+      const item = document.getElementById('reportItem').value || "Unnamed Item";
+      const loc = document.getElementById('reportLoc').value || "Unknown";
+      closeReportModal();
+      
+      // Add to list
+      const newNode = {
+        id: "RD-" + Math.floor(1000 + Math.random() * 9000),
+        item: item,
+        loc: loc,
+        time: "Just now",
+        status: "ACTIVE"
+      };
+      sampleNodes.unshift(newNode);
+      loadNodes(sampleNodes);
+      log(`🚨 NEW LOST ITEM REPORTED: ${item}`);
+    }
+
+    // Auth
+    function switchTab(n) {
+      document.querySelectorAll('.tab').forEach((t, i) => {
+        t.classList.toggle('active', i === n);
+      });
+      document.getElementById('loginForm').classList.toggle('hidden', n !== 0);
+      document.getElementById('signupForm').classList.toggle('hidden', n !== 1);
+    }
+
+    function performLogin() {
+      document.getElementById('authContainer').style.display = 'none';
+      document.getElementById('mainApp').style.display = 'flex';
+      log("🔓 NODE CONNECTED SUCCESSFULLY");
+      log("🌐 MESH SYNC COMPLETE");
+    }
+
+    function deployNode() {
+      alert("🛰️ New node deployed! Welcome to the ROOTDONATE network.");
+      performLogin();
+    }
+
+    function logout() {
+      if (confirm("Disconnect from mesh?")) {
+        document.getElementById('mainApp').style.display = 'none';
+        document.getElementById('authContainer').style.display = 'block';
+        log("🔌 NODE DISCONNECTED");
+      }
+    }
+
+    function setTab(n) {
+      document.querySelectorAll('.nav button').forEach((b, i) => {
+        b.classList.toggle('active', i === n);
+      });
+      // For demo, just reload all
+      if (n === 0) loadNodes(sampleNodes);
+    }
+
+    function log(message) {
+      const logEl = document.getElementById('log');
+      const time = new Date().toLocaleTimeString('en-GB', {hour12:false}).slice(0,8);
+      logEl.innerHTML += `<span style="opacity:0.6">[${time}]</span> ${message}<br>`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // Initialize
     window.onload = () => {
       log("SYSTEM BOOT SEQUENCE COMPLETE");
+      log("CONNECTING TO ROOTDONATE MESH...");
       loadNodes(sampleNodes);
     };
   </script>
