@@ -13,20 +13,20 @@
       padding: 20px;
     }
     .container {
-      max-width: 900px;
+      max-width: 1000px;
       margin: auto;
       background: #111111;
-      padding: 30px;
-      border-radius: 12px;
+      padding: 35px;
+      border-radius: 16px;
       border: 2px solid #00ff00;
-      box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+      box-shadow: 0 0 25px rgba(0, 255, 0, 0.25);
     }
-    h1 { text-align: center; font-size: 2.4em; margin-bottom: 5px; }
-    .subtitle { text-align: center; color: #0f0; margin-bottom: 30px; }
+    h1 { text-align: center; font-size: 2.6em; margin: 0 0 8px 0; }
+    .subtitle { text-align: center; color: #0f0; font-size: 1.3em; margin-bottom: 35px; }
     input, select, textarea {
       width: 100%;
-      padding: 14px;
-      margin: 10px 0;
+      padding: 15px;
+      margin: 12px 0;
       background: #000;
       border: 1px solid #00ff00;
       border-radius: 8px;
@@ -36,64 +36,77 @@
     button {
       background: #00ff00;
       color: black;
-      padding: 14px 28px;
+      padding: 14px 32px;
       font-size: 17px;
       border: none;
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
-      margin: 10px 5px;
     }
     .node {
       background: #1a1a1a;
-      padding: 20px;
-      margin: 15px 0;
-      border-radius: 10px;
+      padding: 22px;
+      margin: 18px 0;
+      border-radius: 12px;
       border: 1px solid #00ff00;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     .hidden { display: none; }
     .log {
       background: #000;
-      padding: 15px;
-      height: 180px;
+      padding: 18px;
+      height: 220px;
       overflow-y: auto;
       font-family: monospace;
       border: 1px solid #00ff00;
-      border-radius: 8px;
-      margin-top: 20px;
+      border-radius: 10px;
+      margin-top: 25px;
+    }
+    .modal {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.96); display: none; align-items: center; justify-content: center;
+      z-index: 100;
+    }
+    .modal-content {
+      background: #111; padding: 35px; border: 2px solid #00ff00;
+      border-radius: 16px; width: 90%; max-width: 620px;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>🔍 LOST & FOUND NODES</h1>
-    <p class="subtitle">rootdonate.co.uk</p>
+    <p class="subtitle">rootdonate.co.uk • Real-Time Recovery Network</p>
 
-    <!-- AUTH SECTION -->
+    <!-- AUTH -->
     <div id="authSection">
-      <h2 style="text-align:center;">Access Required</h2>
+      <h2 style="text-align:center;">Node Access Required</h2>
       <div id="loginForm">
-        <input type="text" id="username" placeholder="Username or Node ID (@CWOA)">
+        <input type="text" id="username" placeholder="Username / Node ID (@CWOA)">
         <input type="password" id="password" placeholder="Password">
-        <button onclick="login()">🔓 LOGIN</button>
-        <div style="text-align:center; color:#00ff88; cursor:pointer;" onclick="toggleAuth()">Create New Node → Sign Up</div>
+        <button onclick="login()" style="width:100%;">🔓 LOGIN</button>
+        <div style="text-align:center; margin:20px 0; color:#00ff88; cursor:pointer;" onclick="toggleAuth()">Create New Node → Sign Up</div>
       </div>
 
       <div id="signupForm" class="hidden">
         <input type="text" id="newUser" placeholder="New Node Name (@YourHandle)">
-        <input type="email" id="email" placeholder="Email">
+        <input type="email" id="email" placeholder="Email Address">
         <input type="password" id="newPass" placeholder="Password">
-        <button onclick="signup()">🚀 CREATE NODE</button>
-        <div style="text-align:center; color:#00ff88; cursor:pointer;" onclick="toggleAuth()">← Back to Login</div>
+        <button onclick="signup()" style="width:100%;">🚀 CREATE NODE</button>
+        <div style="text-align:center; margin:20px 0; color:#00ff88; cursor:pointer;" onclick="toggleAuth()">← Back to Login</div>
       </div>
     </div>
 
-    <!-- MAIN APP (after login) -->
+    <!-- MAIN DASHBOARD -->
     <div id="mainApp" class="hidden">
-      <button onclick="showReportForm()">📋 Report New Lost / Found Item</button>
-      <button onclick="logout()">Logout</button>
+      <div style="text-align:center; margin-bottom:25px;">
+        <button onclick="showReportForm()">📋 Report New Lost / Found Item</button>
+        <button onclick="logout()">Logout</button>
+      </div>
 
-      <h2 style="margin-top:30px;">Your Active Nodes</h2>
+      <h2>Your Active Nodes</h2>
       <div id="nodesList"></div>
 
       <h2 style="text-align:center; margin-top:40px;">Live Activity Log</h2>
@@ -102,15 +115,28 @@
   </div>
 
   <!-- Report Modal -->
-  <div id="reportModal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:flex; align-items:center; justify-content:center;">
-    <div style="background:#111; padding:30px; border:2px solid #00ff00; border-radius:12px; width:90%; max-width:600px;">
+  <div id="reportModal" class="modal">
+    <div class="modal-content">
       <h2>Report New Node</h2>
-      <select id="itemType"><option value="lost">🚨 Lost</option><option value="found">✅ Found</option></select>
-      <input type="text" id="itemName" placeholder="Item Name">
+      <select id="itemType">
+        <option value="lost">🚨 Lost Item</option>
+        <option value="found">✅ Found Item</option>
+      </select>
+      <input type="text" id="itemName" placeholder="Item Name (e.g. Black Leather Wallet)">
       <input type="text" id="location" placeholder="Location">
-      <textarea id="desc" rows="3" placeholder="Description"></textarea>
-      <button onclick="submitNewNode()">Submit Node</button>
-      <button onclick="closeModal()">Cancel</button>
+      <textarea id="desc" rows="4" placeholder="Full description, colour, brand, serial..."></textarea>
+      <button onclick="submitNewNode()" style="width:100%; margin-top:10px;">SUBMIT NODE</button>
+      <button onclick="closeModal()" style="width:100%; background:#333;">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Individual Node View Modal -->
+  <div id="nodeViewModal" class="modal">
+    <div class="modal-content">
+      <h2 id="viewTitle"></h2>
+      <div id="viewStatus" style="font-size:1.6em; text-align:center; margin:20px 0;"></div>
+      <p id="viewDesc"></p>
+      <button onclick="closeNodeView()" style="width:100%;">Close</button>
     </div>
   </div>
 
@@ -123,76 +149,90 @@
     }
 
     function login() {
-      currentUser = document.getElementById('username').value || "@UserNode";
+      currentUser = document.getElementById('username').value.trim() || "@DefaultNode";
       document.getElementById('authSection').classList.add('hidden');
       document.getElementById('mainApp').classList.remove('hidden');
-      log("✅ Logged in as " + currentUser);
-      addSampleNodes();
+      log(`✅ Logged in as ${currentUser}`);
+      loadSampleNodes();
     }
 
     function signup() {
-      currentUser = document.getElementById('newUser').value || "@NewNode";
+      currentUser = document.getElementById('newUser').value.trim() || "@NewNode";
       document.getElementById('authSection').classList.add('hidden');
       document.getElementById('mainApp').classList.remove('hidden');
-      log("🚀 New node created: " + currentUser);
-      addSampleNodes();
+      log(`🚀 New node created: ${currentUser}`);
+      loadSampleNodes();
     }
 
     function log(msg) {
       const time = new Date().toLocaleTimeString();
       document.getElementById("log").innerHTML += `[${time}] ${msg}<br>`;
-      document.getElementById("log").scrollTop = 9999;
+      document.getElementById("log").scrollTop = 99999;
     }
 
     function showReportForm() {
-      document.getElementById('reportModal').classList.remove('hidden');
+      document.getElementById('reportModal').style.display = 'flex';
     }
 
     function closeModal() {
-      document.getElementById('reportModal').classList.add('hidden');
+      document.getElementById('reportModal').style.display = 'none';
     }
 
     function submitNewNode() {
       const name = document.getElementById('itemName').value || "Unnamed Item";
       const type = document.getElementById('itemType').value;
-      
+      const loc = document.getElementById('location').value || "Unknown";
+
       const nodeHTML = `
         <div class="node">
           <div>
-            <strong>Node: ${name}</strong><br>
-            <span style="color:${type==='lost'?'#ff6666':'lime'}">${type.toUpperCase()}</span> • ${document.getElementById('location').value}
+            <strong>${name}</strong><br>
+            <span style="color:${type==='lost'?'#ff6666':'#00ff88'}">${type.toUpperCase()}</span> • ${loc}
           </div>
-          <button onclick="shareThisNode('${name}')">🔗 Share</button>
+          <button onclick="viewNode('${name}', '${type}', '${loc}')">View</button>
+          <button onclick="shareNode('${name}')">🔗 Share</button>
         </div>`;
-      
+
       document.getElementById('nodesList').innerHTML += nodeHTML;
       closeModal();
-      log(`📌 New ${type} node added: ${name}`);
-      alert(`✅ Node created!\nShare link ready for ${name}`);
+      log(`📌 New ${type} node registered: ${name}`);
     }
 
-    function shareThisNode(name) {
-      const shareURL = `https://rootdonate.co.uk/lostfound/node-${name.toLowerCase().replace(/ /g,'')}.html`;
-      navigator.clipboard.writeText(shareURL);
-      alert(`✅ Share Link Copied!\n${shareURL}\n\n(Open this link to view the individual node page)`);
-      log(`🔗 Share link generated for ${name}`);
+    function viewNode(name, type, loc) {
+      document.getElementById('viewTitle').textContent = name;
+      document.getElementById('viewStatus').innerHTML = `<span style="color:${type==='lost'?'#ff6666':'#00ff88'}">${type.toUpperCase()}</span> • ${loc}`;
+      document.getElementById('viewDesc').innerHTML = `This node is actively being tracked on the RootDonate network.<br><br>Status updated in real time.`;
+      document.getElementById('nodeViewModal').style.display = 'flex';
     }
 
-    function addSampleNodes() {
+    function closeNodeView() {
+      document.getElementById('nodeViewModal').style.display = 'none';
+    }
+
+    function shareNode(name) {
+      const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const url = `https://rootdonate.co.uk/lostfound/${cleanName}.html`;
+      navigator.clipboard.writeText(url).then(() => {
+        alert(`✅ Share Link Ready!\n${url}\n\nThis link leads to the dedicated individual node page.`);
+      });
+      log(`🔗 Share link created for ${name}`);
+    }
+
+    function loadSampleNodes() {
       document.getElementById('nodesList').innerHTML = `
         <div class="node">
-          <div><strong>Node 1: @LostWallet</strong><br><span style="color:#ff6666">LOST</span> • Manchester</div>
-          <button onclick="shareThisNode('@LostWallet')">🔗 Share</button>
+          <div><strong>@LostWallet</strong><br><span style="color:#ff6666">LOST</span> • Manchester Piccadilly</div>
+          <button onclick="viewNode('@LostWallet', 'lost', 'Manchester Piccadilly')">View</button>
+          <button onclick="shareNode('@LostWallet')">🔗 Share</button>
         </div>
         <div class="node">
-          <div><strong>Node 3: @FoundKeys</strong><br><span style="color:lime">FOUND</span> • London Euston</div>
-          <button onclick="shareThisNode('@FoundKeys')">🔗 Share</button>
+          <div><strong>@FoundKeys</strong><br><span style="color:#00ff88">FOUND</span> • London Euston</div>
+          <button onclick="viewNode('@FoundKeys', 'found', 'London Euston')">View</button>
+          <button onclick="shareNode('@FoundKeys')">🔗 Share</button>
         </div>`;
     }
 
-    function logout() {
-      location.reload();
-    }
+    function logout() { location.reload(); }
   </script>
 </body>
 </html>
