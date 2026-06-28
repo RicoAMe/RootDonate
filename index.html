@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Report New Node - RootDonate</title>
+  <title>RootDonate • Lost & Found Nodes</title>
   <style>
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
@@ -13,20 +13,20 @@
       padding: 20px;
     }
     .container {
-      max-width: 620px;
-      margin: 40px auto;
+      max-width: 900px;
+      margin: auto;
       background: #111111;
-      padding: 40px;
+      padding: 30px;
       border-radius: 12px;
       border: 2px solid #00ff00;
-      box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+      box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
     }
-    h1 { text-align: center; font-size: 2.3em; }
+    h1 { text-align: center; font-size: 2.4em; margin-bottom: 5px; }
     .subtitle { text-align: center; color: #0f0; margin-bottom: 30px; }
     input, select, textarea {
       width: 100%;
       padding: 14px;
-      margin: 12px 0;
+      margin: 10px 0;
       background: #000;
       border: 1px solid #00ff00;
       border-radius: 8px;
@@ -36,120 +36,158 @@
     button {
       background: #00ff00;
       color: black;
-      padding: 14px;
+      padding: 14px 28px;
       font-size: 17px;
       border: none;
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
-      width: 100%;
+      margin: 10px 5px;
+    }
+    .node {
+      background: #1a1a1a;
+      padding: 20px;
       margin: 15px 0;
+      border-radius: 10px;
+      border: 1px solid #00ff00;
     }
     .hidden { display: none; }
     .log {
       background: #000;
       padding: 15px;
-      margin-top: 20px;
+      height: 180px;
+      overflow-y: auto;
+      font-family: monospace;
       border: 1px solid #00ff00;
       border-radius: 8px;
-      font-family: monospace;
-      max-height: 200px;
-      overflow-y: auto;
+      margin-top: 20px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>📋 REPORT NEW NODE</h1>
-    <p class="subtitle">Lost & Found • rootdonate.co.uk</p>
+    <h1>🔍 LOST & FOUND NODES</h1>
+    <p class="subtitle">rootdonate.co.uk</p>
 
-    <!-- Login / Sign Up Section -->
+    <!-- AUTH SECTION -->
     <div id="authSection">
-      <h2 style="text-align:center;">Node Access Required</h2>
-      
-      <!-- Login -->
+      <h2 style="text-align:center;">Access Required</h2>
       <div id="loginForm">
-        <input type="text" id="username" placeholder="Node ID or Username (@CWOA)">
+        <input type="text" id="username" placeholder="Username or Node ID (@CWOA)">
         <input type="password" id="password" placeholder="Password">
-        <button onclick="login()">🔓 LOGIN TO REPORT</button>
-        <div style="text-align:center; margin:15px 0; color:#00ff88; cursor:pointer;" onclick="toggleForms()">
-          Need a node? Sign Up
-        </div>
+        <button onclick="login()">🔓 LOGIN</button>
+        <div style="text-align:center; color:#00ff88; cursor:pointer;" onclick="toggleAuth()">Create New Node → Sign Up</div>
       </div>
 
-      <!-- Sign Up -->
       <div id="signupForm" class="hidden">
-        <input type="text" id="newUsername" placeholder="Choose Node Name (@YourHandle)">
+        <input type="text" id="newUser" placeholder="New Node Name (@YourHandle)">
         <input type="email" id="email" placeholder="Email">
-        <input type="password" id="newPassword" placeholder="Create Password">
-        <button onclick="signup()">🚀 CREATE NODE & REPORT</button>
-        <div style="text-align:center; margin:15px 0; color:#00ff88; cursor:pointer;" onclick="toggleForms()">
-          Already have a node? Login
-        </div>
+        <input type="password" id="newPass" placeholder="Password">
+        <button onclick="signup()">🚀 CREATE NODE</button>
+        <div style="text-align:center; color:#00ff88; cursor:pointer;" onclick="toggleAuth()">← Back to Login</div>
       </div>
     </div>
 
-    <!-- Report Form (shown after login) -->
-    <div id="reportForm" class="hidden">
-      <h2 style="text-align:center;">New Lost / Found Item</h2>
-      
-      <select id="type">
-        <option value="">-- Select Type --</option>
-        <option value="lost">🚨 Lost Item</option>
-        <option value="found">✅ Found Item</option>
-      </select>
-      
-      <input type="text" id="itemName" placeholder="Item Name (e.g. Black Leather Wallet)">
-      <input type="text" id="location" placeholder="Last Seen / Found Location">
-      <input type="text" id="date" placeholder="Date & Time (e.g. Today 14:30)">
-      <textarea id="description" rows="4" placeholder="Description, colour, brand, serial number..."></textarea>
-      
-      <button onclick="submitReport()">📤 SUBMIT REPORT</button>
-      <button onclick="logout()">← Logout</button>
-    </div>
+    <!-- MAIN APP (after login) -->
+    <div id="mainApp" class="hidden">
+      <button onclick="showReportForm()">📋 Report New Lost / Found Item</button>
+      <button onclick="logout()">Logout</button>
 
-    <div id="successLog" class="log hidden"></div>
+      <h2 style="margin-top:30px;">Your Active Nodes</h2>
+      <div id="nodesList"></div>
+
+      <h2 style="text-align:center; margin-top:40px;">Live Activity Log</h2>
+      <div id="log" class="log"></div>
+    </div>
+  </div>
+
+  <!-- Report Modal -->
+  <div id="reportModal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:flex; align-items:center; justify-content:center;">
+    <div style="background:#111; padding:30px; border:2px solid #00ff00; border-radius:12px; width:90%; max-width:600px;">
+      <h2>Report New Node</h2>
+      <select id="itemType"><option value="lost">🚨 Lost</option><option value="found">✅ Found</option></select>
+      <input type="text" id="itemName" placeholder="Item Name">
+      <input type="text" id="location" placeholder="Location">
+      <textarea id="desc" rows="3" placeholder="Description"></textarea>
+      <button onclick="submitNewNode()">Submit Node</button>
+      <button onclick="closeModal()">Cancel</button>
+    </div>
   </div>
 
   <script>
-    function toggleForms() {
+    let currentUser = "";
+
+    function toggleAuth() {
       document.getElementById('loginForm').classList.toggle('hidden');
       document.getElementById('signupForm').classList.toggle('hidden');
     }
 
     function login() {
-      const user = document.getElementById('username').value || "@User";
-      alert(`✅ Logged in as ${user}`);
+      currentUser = document.getElementById('username').value || "@UserNode";
       document.getElementById('authSection').classList.add('hidden');
-      document.getElementById('reportForm').classList.remove('hidden');
+      document.getElementById('mainApp').classList.remove('hidden');
+      log("✅ Logged in as " + currentUser);
+      addSampleNodes();
     }
 
     function signup() {
-      const user = document.getElementById('newUsername').value || "@NewNode";
-      alert(`🚀 Node created: ${user}\nYou can now report items.`);
+      currentUser = document.getElementById('newUser').value || "@NewNode";
       document.getElementById('authSection').classList.add('hidden');
-      document.getElementById('reportForm').classList.remove('hidden');
+      document.getElementById('mainApp').classList.remove('hidden');
+      log("🚀 New node created: " + currentUser);
+      addSampleNodes();
     }
 
-    function submitReport() {
-      const type = document.getElementById('type').value;
+    function log(msg) {
+      const time = new Date().toLocaleTimeString();
+      document.getElementById("log").innerHTML += `[${time}] ${msg}<br>`;
+      document.getElementById("log").scrollTop = 9999;
+    }
+
+    function showReportForm() {
+      document.getElementById('reportModal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('reportModal').classList.add('hidden');
+    }
+
+    function submitNewNode() {
       const name = document.getElementById('itemName').value || "Unnamed Item";
+      const type = document.getElementById('itemType').value;
       
-      if (!type) {
-        alert("Please select Lost or Found");
-        return;
-      }
+      const nodeHTML = `
+        <div class="node">
+          <div>
+            <strong>Node: ${name}</strong><br>
+            <span style="color:${type==='lost'?'#ff6666':'lime'}">${type.toUpperCase()}</span> • ${document.getElementById('location').value}
+          </div>
+          <button onclick="shareThisNode('${name}')">🔗 Share</button>
+        </div>`;
+      
+      document.getElementById('nodesList').innerHTML += nodeHTML;
+      closeModal();
+      log(`📌 New ${type} node added: ${name}`);
+      alert(`✅ Node created!\nShare link ready for ${name}`);
+    }
 
-      const success = document.getElementById('successLog');
-      success.innerHTML = `[${new Date().toLocaleTimeString()}] ✅ Report submitted successfully!<br>
-        Node Type: ${type.toUpperCase()}<br>
-        Item: ${name}<br>
-        Your report is now live on the network.`;
-      success.classList.remove('hidden');
+    function shareThisNode(name) {
+      const shareURL = `https://rootdonate.co.uk/lostfound/node-${name.toLowerCase().replace(/ /g,'')}.html`;
+      navigator.clipboard.writeText(shareURL);
+      alert(`✅ Share Link Copied!\n${shareURL}\n\n(Open this link to view the individual node page)`);
+      log(`🔗 Share link generated for ${name}`);
+    }
 
-      setTimeout(() => {
-        alert("✅ Your new Lost & Found node has been created and shared across the network!");
-      }, 800);
+    function addSampleNodes() {
+      document.getElementById('nodesList').innerHTML = `
+        <div class="node">
+          <div><strong>Node 1: @LostWallet</strong><br><span style="color:#ff6666">LOST</span> • Manchester</div>
+          <button onclick="shareThisNode('@LostWallet')">🔗 Share</button>
+        </div>
+        <div class="node">
+          <div><strong>Node 3: @FoundKeys</strong><br><span style="color:lime">FOUND</span> • London Euston</div>
+          <button onclick="shareThisNode('@FoundKeys')">🔗 Share</button>
+        </div>`;
     }
 
     function logout() {
