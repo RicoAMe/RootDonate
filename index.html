@@ -10,59 +10,65 @@
       background: #0a0a0a;
       color: #00ff00;
       margin: 0;
-      padding: 20px;
+      padding: 15px;
+      line-height: 1.5;
     }
     .container {
       max-width: 1000px;
       margin: auto;
       background: #111111;
-      padding: 35px;
+      padding: 25px;
       border-radius: 16px;
       border: 2px solid #00ff00;
       box-shadow: 0 0 25px rgba(0, 255, 0, 0.25);
     }
     h1 {
       text-align: center;
-      font-size: 2.6em;
+      font-size: 2.2em;
       margin: 0 0 8px 0;
     }
     .subtitle {
       text-align: center;
       color: #0f0;
-      font-size: 1.3em;
-      margin-bottom: 35px;
+      font-size: 1.1em;
+      margin-bottom: 30px;
     }
     input, select, textarea {
       width: 100%;
-      padding: 15px;
-      margin: 12px 0;
+      padding: 14px;
+      margin: 10px 0;
       background: #000;
       border: 1px solid #00ff00;
       border-radius: 8px;
       color: #00ff00;
       font-size: 16px;
+      box-sizing: border-box;
     }
     button {
       background: #00ff00;
       color: black;
-      padding: 14px 32px;
-      font-size: 17px;
+      padding: 14px 28px;
+      font-size: 16px;
       border: none;
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
+      width: 100%;
+      margin: 8px 0;
     }
     .node {
       background: #1a1a1a;
-      padding: 22px;
-      margin: 18px 0;
+      padding: 20px;
+      margin: 15px 0;
       border-radius: 12px;
       border: 1px solid #00ff00;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
+      flex-direction: column;
       gap: 12px;
+    }
+    @media (min-width: 600px) {
+      .node { flex-direction: row; align-items: center; }
+      button { width: auto; }
     }
     .modal {
       position: fixed;
@@ -73,24 +79,27 @@
       align-items: center;
       justify-content: center;
       z-index: 100;
+      padding: 15px;
+      box-sizing: border-box;
     }
     .modal-content {
       background: #111;
-      padding: 35px;
+      padding: 30px;
       border: 2px solid #00ff00;
       border-radius: 16px;
-      width: 90%;
+      width: 100%;
       max-width: 620px;
     }
     .log {
       background: #000;
-      padding: 18px;
-      height: 220px;
+      padding: 15px;
+      height: 200px;
       overflow-y: auto;
       font-family: monospace;
       border: 1px solid #00ff00;
       border-radius: 10px;
-      margin-top: 25px;
+      margin-top: 20px;
+      font-size: 14px;
     }
   </style>
 </head>
@@ -99,27 +108,25 @@
     <h1>🔍 LOST & FOUND NODES</h1>
     <p class="subtitle">rootdonate.co.uk • Real-Time Recovery Network</p>
 
-    <!-- AUTH -->
     <div id="authSection">
       <h2 style="text-align:center;">Node Access Required</h2>
       <div id="loginForm">
         <input type="text" id="username" placeholder="Username / Node ID (@CWOA)">
         <input type="password" id="password" placeholder="Password">
-        <button onclick="login()" style="width:100%;">🔓 LOGIN</button>
-        <div style="text-align:center; margin:20px 0; color:#00ff88; cursor:pointer;" onclick="toggleAuth()">Create New Node → Sign Up</div>
+        <button onclick="login()">🔓 LOGIN</button>
+        <div style="text-align:center; margin:15px 0; color:#00ff88; cursor:pointer;" onclick="toggleAuth()">Create New Node → Sign Up</div>
       </div>
       <div id="signupForm" class="hidden">
         <input type="text" id="newUser" placeholder="New Node Name (@YourHandle)">
         <input type="email" id="email" placeholder="Email Address">
         <input type="password" id="newPass" placeholder="Password">
-        <button onclick="signup()" style="width:100%;">🚀 CREATE NODE</button>
-        <div style="text-align:center; margin:20px 0; color:#00ff88; cursor:pointer;" onclick="toggleAuth()">← Back to Login</div>
+        <button onclick="signup()">🚀 CREATE NODE</button>
+        <div style="text-align:center; margin:15px 0; color:#00ff88; cursor:pointer;" onclick="toggleAuth()">← Back to Login</div>
       </div>
     </div>
 
-    <!-- MAIN APP -->
     <div id="mainApp" class="hidden">
-      <div style="text-align:center; margin-bottom:25px;">
+      <div style="text-align:center; margin-bottom:20px;">
         <button onclick="showReportForm()">📋 Report New Lost / Found Item</button>
         <button onclick="logout()">Logout</button>
       </div>
@@ -127,7 +134,7 @@
       <h2>Your Active Nodes</h2>
       <div id="nodesList"></div>
 
-      <h2 style="text-align:center; margin-top:40px;">Live Activity Log</h2>
+      <h2 style="text-align:center; margin-top:35px;">Live Activity Log</h2>
       <div id="log" class="log"></div>
     </div>
   </div>
@@ -143,8 +150,8 @@
       <input type="text" id="itemName" placeholder="Item Name (e.g. Black Leather Wallet)">
       <input type="text" id="location" placeholder="Location">
       <textarea id="desc" rows="4" placeholder="Full description..."></textarea>
-      <button onclick="submitNewNode()" style="width:100%; margin-top:15px;">SUBMIT NODE</button>
-      <button onclick="closeModal()" style="width:100%; background:#333;">Cancel</button>
+      <button onclick="submitNewNode()">SUBMIT NODE</button>
+      <button onclick="closeModal()" style="background:#333;">Cancel</button>
     </div>
   </div>
 
@@ -152,9 +159,9 @@
   <div id="nodeViewModal" class="modal">
     <div class="modal-content">
       <h2 id="viewTitle"></h2>
-      <div id="viewStatus" style="font-size:1.8em; margin:20px 0; text-align:center;"></div>
+      <div id="viewStatus" style="font-size:1.7em; margin:20px 0; text-align:center;"></div>
       <p id="viewDesc" style="line-height:1.6;"></p>
-      <button onclick="closeNodeView()" style="width:100%; margin-top:20px;">Close</button>
+      <button onclick="closeNodeView()">Close</button>
     </div>
   </div>
 
@@ -204,7 +211,7 @@
           </div>
           <div>
             <button onclick="viewNode('${name}', '${type}', '${loc}')">👁 View</button>
-            <button onclick="shareNode('${name}')">🔗 Share (Base64)</button>
+            <button onclick="shareNode('${name}')">🔗 Share</button>
           </div>
         </div>`;
 
@@ -226,18 +233,18 @@
 
     function shareNode(name) {
       const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const individualHTML = `<!DOCTYPE html><html><head><title>${name} - RootDonate</title><style>body{font-family:Segoe UI;background:#0a0a0a;color:#00ff00;margin:0;padding:40px;text-align:center;} .box{background:#111;padding:40px;border:2px solid #00ff00;border-radius:16px;max-width:600px;margin:40px auto;}</style></head><body><div class="box"><h1>${name}</h1><h2 style="color:${name.includes('Lost')?'#ff6666':'#00ff88'}">${name.includes('Lost')?'🚨 LOST':'✅ FOUND'}</h2><p style="font-size:1.3em;">Location: ${name.includes('Wallet')?'Manchester Piccadilly':'London Euston'}</p><p>This item is actively tracked on the RootDonate Lost & Found network.</p></div></body></html>`;
+      const individualHTML = `<!DOCTYPE html><html><head><title>${name} - RootDonate</title><style>body{font-family:Segoe UI;background:#0a0a0a;color:#00ff00;margin:0;padding:20px;text-align:center;} .box{background:#111;padding:30px;border:2px solid #00ff00;border-radius:16px;max-width:600px;margin:20px auto;}</style></head><body><div class="box"><h1>${name}</h1><h2 style="color:${name.includes('Lost')?'#ff6666':'#00ff88'}">${name.includes('Lost')?'🚨 LOST':'✅ FOUND'}</h2><p style="font-size:1.2em;">Location: ${name.includes('Wallet')?'Manchester Piccadilly':'London Euston'}</p><p>This item is actively tracked on the RootDonate Lost & Found network.</p></div></body></html>`;
 
       const base64 = btoa(unescape(encodeURIComponent(individualHTML)));
       const dataURL = `data:text/html;base64,${base64}`;
 
       navigator.clipboard.writeText(dataURL).then(() => {
-        if (confirm("✅ Base64 Share Link Ready!\n\nOpen it now in a new tab?")) {
+        if (confirm("✅ Share Link Ready!\n\nOpen the individual node page now?")) {
           window.open(dataURL, '_blank');
         }
       });
 
-      log(`🔗 Base64 Share Link generated for ${name}`);
+      log(`🔗 Share link generated for ${name}`);
     }
 
     function loadSampleNodes() {
@@ -246,14 +253,14 @@
           <div><strong>@LostWallet</strong><br><span style="color:#ff6666">LOST</span> • Manchester Piccadilly</div>
           <div>
             <button onclick="viewNode('@LostWallet', 'lost', 'Manchester Piccadilly')">👁 View</button>
-            <button onclick="shareNode('@LostWallet')">🔗 Share (Base64)</button>
+            <button onclick="shareNode('@LostWallet')">🔗 Share</button>
           </div>
         </div>
         <div class="node">
           <div><strong>@FoundKeys</strong><br><span style="color:#00ff88">FOUND</span> • London Euston</div>
           <div>
             <button onclick="viewNode('@FoundKeys', 'found', 'London Euston')">👁 View</button>
-            <button onclick="shareNode('@FoundKeys')">🔗 Share (Base64)</button>
+            <button onclick="shareNode('@FoundKeys')">🔗 Share</button>
           </div>
         </div>`;
     }
