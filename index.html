@@ -77,7 +77,10 @@
   <script>
     let currentUser = "";
 
-    function toggleAuth() { document.getElementById('loginForm').classList.toggle('hidden'); document.getElementById('signupForm').classList.toggle('hidden'); }
+    function toggleAuth() { 
+      document.getElementById('loginForm').classList.toggle('hidden'); 
+      document.getElementById('signupForm').classList.toggle('hidden'); 
+    }
 
     function login() {
       currentUser = document.getElementById('username').value.trim() || "@DefaultNode";
@@ -109,7 +112,7 @@
       const type = document.getElementById('itemType').value;
       const loc = document.getElementById('location').value.trim() || "Unknown";
 
-      const nodeHTML = `<div class="node"><div><strong>${name}</strong><br><span style="color:${type==='lost'?'#ff6666':'#00ff88'}">${type.toUpperCase()}</span> • ${loc}</div><div><button onclick="viewNode('${name}', '${type}', '${loc}')">👁 View</button><button onclick="shareNode('${name}')">🔗 Share</button></div></div>`;
+      const nodeHTML = `<div class="node"><div><strong>${name}</strong><br><span style="color:${type==='lost'?'#ff6666':'#00ff88'}">${type.toUpperCase()}</span> • ${loc}</div><div><button onclick="viewNode('${name}', '${type}', '${loc}')">👁 View</button><button onclick="shareNode('${name}')">🔗 Share (Base64)</button></div></div>`;
       document.getElementById('nodesList').innerHTML += nodeHTML;
       closeModal();
       log(`📌 New ${type} node registered: ${name}`);
@@ -118,21 +121,25 @@
     function viewNode(name, type, loc) {
       document.getElementById('viewTitle').textContent = name;
       document.getElementById('viewStatus').innerHTML = `<span style="color:${type==='lost'?'#ff6666':'#00ff88'}">${type.toUpperCase()}</span> • ${loc}`;
-      document.getElementById('viewDesc').innerHTML = `This is the dedicated individual recovery page.<br><br>Status: Live • Real-time tracking active.`;
+      document.getElementById('viewDesc').innerHTML = `This is the dedicated individual recovery page for this node.<br><br>Status: Live • Real-time tracking active.`;
       document.getElementById('nodeViewModal').style.display = 'flex';
     }
 
-    function closeNodeView() { document.getElementById('nodeViewModal').style.display = 'none'; }
+    function closeNodeView() { 
+      document.getElementById('nodeViewModal').style.display = 'none'; 
+    }
 
     function shareNode(name) {
       const cleanName = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const individualHTML = `<!DOCTYPE html><html><head><title>${name} - RootDonate</title><style>body{font-family:Segoe UI;background:#0a0a0a;color:#00ff00;margin:0;padding:40px;text-align:center;} .box{background:#111;padding:40px;border:2px solid #00ff00;border-radius:16px;}</style></head><body><div class="box"><h1>${name}</h1><h2 style="color:${name.includes('Lost')?'#ff6666':'#00ff88'}">${name.includes('Lost')?'🚨 LOST':'✅ FOUND'}</h2><p style="font-size:1.2em;">Location: ${name.includes('Wallet')?'Manchester Piccadilly':'London Euston'}</p><p>This item is actively tracked on the RootDonate network.</p></div></body></html>`;
+      const individualHTML = `<!DOCTYPE html><html><head><title>${name} - RootDonate</title><style>body{font-family:Segoe UI;background:#0a0a0a;color:#00ff00;margin:0;padding:40px;text-align:center;} .box{background:#111;padding:40px;border:2px solid #00ff00;border-radius:16px;max-width:600px;margin:40px auto;}</style></head><body><div class="box"><h1>${name}</h1><h2 style="color:${name.includes('Lost')?'#ff6666':'#00ff88'}">${name.includes('Lost')?'🚨 LOST':'✅ FOUND'}</h2><p style="font-size:1.3em;">Location: ${name.includes('Wallet')?'Manchester Piccadilly':'London Euston'}</p><p>This item is actively tracked on the RootDonate Lost & Found network.</p></div></body></html>`;
 
       const base64 = btoa(unescape(encodeURIComponent(individualHTML)));
       const dataURL = `data:text/html;base64,${base64}`;
 
       navigator.clipboard.writeText(dataURL).then(() => {
-        alert(`✅ Working Share Link Ready!\n\nBase64 Data URL copied to clipboard.\n\nPaste it in a new tab to open the individual node page.`);
+        if (confirm(`✅ Base64 Share Link Ready!\n\nCopy successful.\n\nDo you want to open it now?`)) {
+          window.open(dataURL, '_blank');
+        }
       });
 
       log(`🔗 Base64 Share Link generated for ${name}`);
