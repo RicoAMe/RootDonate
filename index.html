@@ -398,13 +398,6 @@
 
     function closeModal() { document.getElementById('itemModal').style.display = 'none'; }
 
-    function claimItem() {
-      if (!currentItem) return;
-      alert(`✅ Claim request sent for ${currentItem.n}`);
-      closeModal();
-      log(`🛡️ CLAIM REQUEST SENT FOR #${currentItem.i}`);
-    }
-
     function showReportForm() { 
       document.getElementById('reportModal').style.display = 'flex'; 
       document.getElementById('reportItem').value = '';
