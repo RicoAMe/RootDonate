@@ -62,7 +62,7 @@
       <button class="active" onclick="setTab(0)">🌐 LIVE FEED</button>
       <button onclick="setTab(1)">🔎 DEEP SCAN</button>
       <button onclick="showReportModal()">📢 REPORT</button>
-      <button onclick="location.reload()">RESET</button>
+      <button onclick="resetScan()">RESET SCAN</button>
     </div>
 
     <input type="text" id="searchInput" class="search-bar" placeholder="Search nodes..." onkeyup="filterNodes()">
@@ -215,7 +215,7 @@
       document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n));
     }
 
-    // Direct Link Handler (always works)
+    // Direct Link Handler (preserves individual page)
     function handleDirectLink() {
       const hash = location.hash.slice(1);
       if (!hash) return;
@@ -227,6 +227,18 @@
           clearInterval(interval);
         }
       }, 200);
+    }
+
+    // Reset without losing hash
+    function resetScan() {
+      if (confirm("Reset all nodes?")) {
+        allNodes = [];
+        document.getElementById('grid').innerHTML = '';
+        document.getElementById('nodeCount').textContent = '0';
+        document.getElementById('log').innerHTML = '';
+        log("🔄 SCAN RESET — NEW SCAN STARTING");
+        startGlobalScan();
+      }
     }
 
     window.onload = () => {
