@@ -6,46 +6,140 @@
   <title>ROOTDONATE • GLOBAL INTERNET MESH</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
-    :root { --neon:#00ff41; --glow:#00ff4188; --bg:#050505; }
+    :root {
+      --neon: #00ff41;
+      --glow: #00ff4188;
+      --bg: #0a0a0a;
+      --card: rgba(15, 25, 20, 0.95);
+    }
+
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
-      font-family:'Courier New',monospace;
-      background:var(--bg); color:var(--neon);
-      height:100vh; overflow:hidden;
+      font-family: 'Courier New', monospace;
+      background: var(--bg);
+      color: var(--neon);
+      height: 100vh;
+      overflow: hidden;
+      line-height: 1.5;
     }
-    canvas#matrix { position:fixed; inset:0; z-index:-1; opacity:0.18; }
 
-    .header { padding:16px 30px; display:flex; justify-content:space-between; border-bottom:1px solid rgba(0,255,65,0.3); background:rgba(5,5,5,0.95); }
-    .nav { padding:12px 30px; display:flex; gap:12px; flex-wrap:wrap; border-bottom:1px solid rgba(0,255,65,0.2); background:rgba(5,5,5,0.95); }
-    .nav button { background:transparent; border:1px solid var(--neon); color:var(--neon); padding:10px 24px; border-radius:50px; cursor:pointer; transition:0.3s; }
-    .nav button.active, .nav button:hover { background:var(--neon); color:#000; box-shadow:0 0 25px var(--glow); }
+    canvas#matrix {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      opacity: 0.12;
+    }
+
+    .header {
+      padding: 18px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(0,255,65,0.25);
+      background: rgba(10,10,10,0.98);
+    }
+
+    .header h1 {
+      font-size: 1.8rem;
+      letter-spacing: 3px;
+      text-shadow: 0 0 15px var(--neon);
+    }
+
+    .nav {
+      padding: 14px 32px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid rgba(0,255,65,0.2);
+      background: rgba(10,10,10,0.98);
+    }
+
+    .nav button {
+      background: transparent;
+      border: 1px solid var(--neon);
+      color: var(--neon);
+      padding: 10px 26px;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-family: inherit;
+    }
+
+    .nav button.active,
+    .nav button:hover {
+      background: var(--neon);
+      color: #000;
+      box-shadow: 0 0 25px var(--glow);
+    }
 
     .search-bar {
-      margin:18px 30px; padding:18px 28px; width:calc(100% - 60px);
-      background:#000; border:1px solid var(--neon); border-radius:50px; color:var(--neon); font-family:inherit;
+      margin: 20px 32px;
+      padding: 16px 28px;
+      width: calc(100% - 64px);
+      background: #111;
+      border: 1px solid var(--neon);
+      border-radius: 50px;
+      color: var(--neon);
+      font-family: inherit;
+      font-size: 1rem;
     }
 
     .nodes-grid {
-      flex:1; padding:20px 30px; overflow-y:auto;
-      display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:24px;
+      flex: 1;
+      padding: 20px 32px;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 24px;
     }
 
     .node-card {
-      background:rgba(10,25,15,0.95); border:1px solid rgba(0,255,65,0.35);
-      border-radius:16px; padding:20px; cursor:pointer; transition:0.4s;
+      background: var(--card);
+      border: 1px solid rgba(0,255,65,0.3);
+      border-radius: 16px;
+      padding: 22px;
+      cursor: pointer;
+      transition: all 0.4s ease;
     }
+
     .node-card:hover {
-      transform:translateY(-12px); border-color:var(--neon); box-shadow:0 0 40px var(--glow);
+      transform: translateY(-10px);
+      border-color: var(--neon);
+      box-shadow: 0 0 35px var(--glow);
     }
 
-    .log { height:160px; background:#000; padding:12px 30px; overflow-y:auto; font-size:0.9rem; border-top:1px solid rgba(0,255,65,0.3); }
+    .log {
+      height: 160px;
+      background: #0a0a0a;
+      padding: 14px 32px;
+      overflow-y: auto;
+      font-size: 0.9rem;
+      border-top: 1px solid rgba(0,255,65,0.25);
+    }
 
-    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.96); z-index:100; align-items:center; justify-content:center; }
-    .modal-content { background:rgba(10,10,10,0.98); border:2px solid var(--neon); border-radius:16px; width:90%; max-width:560px; padding:35px; }
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.96);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: rgba(15,15,15,0.98);
+      border: 2px solid var(--neon);
+      border-radius: 16px;
+      width: 90%;
+      max-width: 560px;
+      padding: 35px;
+      position: relative;
+    }
 
     @keyframes glitch {
-      0%,100% { text-shadow:2px 0 #00ff41, -2px 0 #ff00ff; }
-      50% { text-shadow:-3px 0 #00ff41, 3px 0 #00ffff; }
+      0%,100% { text-shadow: 2px 0 #00ff41, -2px 0 #ff00ff; }
+      50% { text-shadow: -3px 0 #00ff41, 3px 0 #00ffff; }
     }
   </style>
 </head>
@@ -53,8 +147,8 @@
 
   <canvas id="matrix"></canvas>
 
-  <!-- MAIN APP (Always Visible) -->
-  <div class="main-app" id="mainApp" style="display:flex;">
+  <!-- MAIN APP -->
+  <div class="main-app" style="display:flex; flex-direction:column; height:100vh;">
     <div class="header">
       <h1>🔗 ROOTDONATE</h1>
       <div id="stats">SCANNING INTERNET • <span id="nodeCount">0</span> NODES ONLINE</div>
@@ -67,7 +161,7 @@
       <button onclick="location.reload()">RESET SCAN</button>
     </div>
 
-    <input type="text" id="searchInput" class="search-bar" placeholder="Search entire internet sources..." onkeyup="filterNodes()">
+    <input type="text" id="searchInput" class="search-bar" placeholder="Search nodes across the global mesh..." onkeyup="filterNodes()">
 
     <div class="nodes-grid" id="grid"></div>
     <div class="log" id="log"></div>
@@ -77,23 +171,31 @@
   <div class="modal" id="itemModal">
     <div class="modal-content">
       <span onclick="closeItemModal()" style="position:absolute;top:15px;right:25px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
-      <h2 id="modalName" style="color:#0f0;"></h2>
-      <p id="modalLoc"></p>
+      <h2 id="modalName" style="color:#0f0; margin-bottom:12px;"></h2>
+      <p id="modalLoc" style="margin:8px 0;"></p>
       <p id="modalTime"></p>
-      <div id="shareUrl" style="background:#000;padding:12px;margin:15px 0;border:1px solid var(--neon);word-break:break-all;font-size:0.95rem;"></div>
-      <button onclick="copyShareLink()" style="width:100%;padding:12px;border:2px solid var(--neon);background:transparent;color:var(--neon);">COPY INDIVIDUAL PAGE LINK</button>
+      
+      <div id="shareUrl" style="background:#111;padding:14px;margin:20px 0;border:1px solid var(--neon);word-break:break-all;font-size:0.95rem;"></div>
+      
+      <button onclick="copyShareLink()" style="width:100%;padding:14px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">
+        COPY INDIVIDUAL PAGE LINK
+      </button>
     </div>
   </div>
 
   <!-- Report Modal -->
   <div class="modal" id="reportModal">
     <div class="modal-content">
-      <span onclick="closeReportModal()" style="position:absolute;top:15px;right:25px;font-size:2.5rem;cursor:pointer;">×</span>
-      <h2 style="text-align:center;color:#0f0;">BROADCAST TO GLOBAL INTERNET</h2>
-      <input id="rName" placeholder="Item / Node name" style="width:100%;padding:14px;margin:10px 0;background:#000;border:1px solid var(--neon);color:var(--neon);">
-      <input id="rLoc" placeholder="Location / URL / IP" style="width:100%;padding:14px;margin:10px 0;background:#000;border:1px solid var(--neon);color:var(--neon);">
-      <textarea id="rDesc" rows="4" placeholder="Description / Details..." style="width:100%;padding:14px;margin:10px 0;background:#000;border:1px solid var(--neon);color:var(--neon);"></textarea>
-      <button onclick="submitReport()" style="width:100%;padding:16px;margin-top:10px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">SEND TO GLOBAL MESH</button>
+      <span onclick="closeReportModal()" style="position:absolute;top:15px;right:25px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
+      <h2 style="text-align:center;color:#0f0;margin-bottom:20px;">BROADCAST TO GLOBAL INTERNET</h2>
+      
+      <input id="rName" placeholder="Item / Node name" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
+      <input id="rLoc" placeholder="Location / URL / IP" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
+      <textarea id="rDesc" rows="4" placeholder="Description / Details..." style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);resize:vertical;"></textarea>
+      
+      <button onclick="submitReport()" style="width:100%;padding:16px;margin-top:15px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">
+        SEND TO GLOBAL MESH
+      </button>
     </div>
   </div>
 
@@ -102,40 +204,41 @@
     const canvas = document.getElementById('matrix');
     const ctx = canvas.getContext('2d');
     let drops = [];
-    function resize() {
+
+    function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      drops = Array(Math.floor(canvas.width/14)).fill(1);
+      drops = Array(Math.floor(canvas.width / 14)).fill(1);
     }
-    window.addEventListener('resize', resize); resize();
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
-    function rain() {
-      ctx.fillStyle = 'rgba(5,5,5,0.1)';
-      ctx.fillRect(0,0,canvas.width,canvas.height);
+    function drawRain() {
+      ctx.fillStyle = 'rgba(10,10,10,0.12)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = '#00ff41';
       ctx.font = '14px monospace';
-      for(let i=0; i<drops.length; i++) {
-        const text = '01アイウエオ0123456789$@#%&*'.charAt(Math.random()*25|0);
-        ctx.fillText(text, i*14, drops[i]*14);
-        if(drops[i]*14 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+      for (let i = 0; i < drops.length; i++) {
+        const text = '01アイウエオ0123456789$@#%&*'[Math.random() * 25 | 0];
+        ctx.fillText(text, i * 14, drops[i] * 14);
+        if (drops[i] * 14 > canvas.height && Math.random() > 0.975) drops[i] = 0;
         drops[i]++;
       }
     }
-    setInterval(rain, 35);
+    setInterval(drawRain, 35);
 
     let allNodes = [];
     let currentItem = null;
 
     function log(msg) {
       const el = document.getElementById('log');
-      const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       el.innerHTML += `<span style="opacity:0.5">[${time}]</span> ${msg}<br>`;
       el.scrollTop = el.scrollHeight;
     }
 
     function generateShareUrl(node) {
-      const base = window.location.origin + window.location.pathname;
-      return `${base}?node=${node.id}`;
+      return `${window.location.origin}${window.location.pathname}?node=${node.id}`;
     }
 
     function renderNodes(filtered = allNodes) {
@@ -148,9 +251,9 @@
         card.className = 'node-card';
         card.innerHTML = `
           <div style="font-size:0.8rem;opacity:0.7;">#${item.id} • ${item.source}</div>
-          <h3 style="margin:8px 0 6px;">${item.name}</h3>
+          <h3 style="margin:10px 0 8px;">${item.name}</h3>
           <p>📍 ${item.loc}</p>
-          <p>${item.time} • <span style="color:#0f0">${item.status}</span></p>
+          <p style="margin-top:8px;">${item.time} • <span style="color:#0f0">${item.status}</span></p>
         `;
         card.onclick = () => showItemDetail(item);
         grid.appendChild(card);
@@ -162,9 +265,9 @@
       document.getElementById('modalName').textContent = item.name;
       document.getElementById('modalLoc').innerHTML = `📍 ${item.loc}`;
       document.getElementById('modalTime').textContent = item.time;
-      
+
       const url = generateShareUrl(item);
-      document.getElementById('shareUrl').innerHTML = `<strong>INDIVIDUAL PAGE URL:</strong><br><a href="${url}" target="_blank" style="color:var(--neon);word-break:break-all;">${url}</a>`;
+      document.getElementById('shareUrl').innerHTML = `<strong>INDIVIDUAL PAGE URL:</strong><br><a href="${url}" target="_blank" style="color:var(--neon);">${url}</a>`;
       document.getElementById('itemModal').style.display = 'flex';
     }
 
@@ -181,10 +284,10 @@
     // Auto Scanning
     async function startGlobalScan() {
       log("🌐 INITIALIZING GLOBAL INTERNET SCAN...");
-      const sources = ["Tor Exit Node • DE", "Public Webcam • Tokyo", "Lost Phone • NYC", "Open IoT Device • Brazil", "GitHub Leak • RU", "Dark Web Mirror • Unknown", "Satellite Feed • Pacific", "5G Mesh • Berlin"];
+      const sources = ["Tor Exit Node • DE", "Public Webcam • Tokyo", "Lost Phone • NYC", "Open IoT • Brazil", "GitHub Leak • RU", "Dark Mirror • Unknown", "Satellite Feed • Pacific", "5G Mesh • Berlin"];
 
       for (let i = 0; i < 18; i++) {
-        await new Promise(r => setTimeout(r, 180));
+        await new Promise(r => setTimeout(r, 160));
         const newNode = {
           id: `RD-${1000 + Math.floor(Math.random()*8999)}`,
           name: ["Lost Drone", "Found Wallet", "Exposed Server", "Abandoned Laptop", "Mysterious Package", "Open Security Cam"][Math.floor(Math.random()*6)],
@@ -206,7 +309,7 @@
     function submitReport() {
       const name = document.getElementById('rName').value.trim();
       const loc = document.getElementById('rLoc').value.trim();
-      if (!name || !loc) return alert("Name and location required");
+      if (!name || !loc) return alert("Please fill in name and location");
 
       const newItem = {
         id: `RD-${1000 + Math.floor(Math.random()*9000)}`,
@@ -220,12 +323,14 @@
       allNodes.unshift(newItem);
       renderNodes();
       closeReportModal();
-      log("🚨 REPORT BROADCAST SUCCESSFULLY TO GLOBAL INTERNET");
+      log("🚨 REPORT BROADCAST SUCCESSFULLY");
     }
 
     function filterNodes() {
       const q = document.getElementById('searchInput').value.toLowerCase();
-      const filtered = allNodes.filter(n => n.name.toLowerCase().includes(q) || n.loc.toLowerCase().includes(q));
+      const filtered = allNodes.filter(n => 
+        n.name.toLowerCase().includes(q) || n.loc.toLowerCase().includes(q)
+      );
       renderNodes(filtered);
     }
 
@@ -233,19 +338,17 @@
       document.querySelectorAll('.nav button').forEach((b, i) => b.classList.toggle('active', i === n));
     }
 
-    // Handle direct link ?node=ID
+    // Handle ?node=ID direct link
     function handleDirectLink() {
       const params = new URLSearchParams(window.location.search);
       const nodeId = params.get('node');
       if (nodeId) {
         const item = allNodes.find(n => n.id === nodeId);
-        if (item) {
-          setTimeout(() => showItemDetail(item), 800);
-        }
+        if (item) setTimeout(() => showItemDetail(item), 600);
       }
     }
 
-    // Auto-start everything
+    // Auto Start
     window.onload = () => {
       startGlobalScan();
       handleDirectLink();
