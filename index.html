@@ -210,7 +210,7 @@
       document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n));
     }
 
-    // Direct Link Handler
+    // Direct Link Handler for short hash
     function handleDirectLink() {
       const hash = location.hash.slice(1);
       if (!hash) return;
