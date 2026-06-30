@@ -103,8 +103,8 @@
       <h2 id="modalName" style="color:#0f0;"></h2>
       <p id="modalLoc"></p>
       <p id="modalTime"></p>
-      <div id="shareUrl" style="background:#000;padding:12px;margin:15px 0;border:1px solid var(--neon);word-break:break-all;"></div>
-      <button onclick="copyShareLink()" style="width:100%;padding:12px;border:2px solid var(--neon);background:transparent;color:var(--neon);">COPY SHARE LINK</button>
+      <div id="shareUrl" style="background:#000;padding:12px;margin:15px 0;border:1px solid var(--neon);word-break:break-all;font-size:0.95rem;"></div>
+      <button onclick="copyShareLink()" style="width:100%;padding:12px;border:2px solid var(--neon);background:transparent;color:var(--neon);">COPY INDIVIDUAL PAGE LINK</button>
     </div>
   </div>
 
@@ -130,8 +130,7 @@
       canvas.height = window.innerHeight;
       drops = Array(Math.floor(canvas.width/14)).fill(1);
     }
-    window.addEventListener('resize', resize);
-    resize();
+    window.addEventListener('resize', resize); resize();
 
     function rain() {
       ctx.fillStyle = 'rgba(5,5,5,0.1)';
@@ -158,8 +157,8 @@
     }
 
     function generateShareUrl(node) {
-      const data = btoa(JSON.stringify(node)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-      return window.location.origin + window.location.pathname + '#node=' + data;
+      const base = window.location.origin + window.location.pathname;
+      return `${base}?node=${node.id}`;
     }
 
     function renderNodes(filtered = allNodes) {
@@ -186,29 +185,26 @@
       document.getElementById('modalName').textContent = item.name;
       document.getElementById('modalLoc').innerHTML = `📍 ${item.loc}`;
       document.getElementById('modalTime').textContent = item.time;
+      
       const url = generateShareUrl(item);
-      document.getElementById('shareUrl').innerHTML = `<strong>SHARE LINK:</strong><br><a href="${url}" target="_blank" style="color:var(--neon);">${url}</a>`;
+      document.getElementById('shareUrl').innerHTML = `<strong>INDIVIDUAL PAGE URL:</strong><br><a href="${url}" target="_blank" style="color:var(--neon);word-break:break-all;">${url}</a>`;
       document.getElementById('itemModal').style.display = 'flex';
     }
 
     function copyShareLink() {
       if (!currentItem) return;
       navigator.clipboard.writeText(generateShareUrl(currentItem));
-      alert("✅ Share link copied to clipboard!");
+      alert("✅ Individual page link copied!");
     }
 
     function closeItemModal() {
       document.getElementById('itemModal').style.display = 'none';
     }
 
-    // Simulate real internet scanning
+    // Simulate scanning
     async function fetchInternetSources() {
       log("🌐 INITIALIZING GLOBAL SCAN...");
-      
-      const sources = [
-        "Tor Exit Node • DE", "Public Webcam • Tokyo", "Lost Phone • NYC", "Open IoT Device • Brazil",
-        "GitHub Leak • RU", "Dark Web Mirror • Unknown", "Satellite Feed • Pacific", "5G Mesh • Berlin"
-      ];
+      const sources = ["Tor Exit Node • DE", "Public Webcam • Tokyo", "Lost Phone • NYC", "Open IoT Device • Brazil", "GitHub Leak • RU", "Dark Web Mirror • Unknown", "Satellite Feed • Pacific", "5G Mesh • Berlin"];
 
       for (let i = 0; i < 18; i++) {
         await new Promise(r => setTimeout(r, 180));
@@ -224,7 +220,7 @@
         renderNodes();
         log(`📡 NEW NODE DETECTED → ${newNode.name}`);
       }
-      log("✅ GLOBAL SCAN COMPLETE — 18 NEW NODES FOUND");
+      log("✅ GLOBAL SCAN COMPLETE");
     }
 
     function login() {
@@ -242,13 +238,8 @@
       }
     }
 
-    function showReportModal() {
-      document.getElementById('reportModal').style.display = 'flex';
-    }
-
-    function closeReportModal() {
-      document.getElementById('reportModal').style.display = 'none';
-    }
+    function showReportModal() { document.getElementById('reportModal').style.display = 'flex'; }
+    function closeReportModal() { document.getElementById('reportModal').style.display = 'none'; }
 
     function submitReport() {
       const name = document.getElementById('rName').value.trim();
@@ -267,15 +258,12 @@
       allNodes.unshift(newItem);
       renderNodes();
       closeReportModal();
-      log("🚨 REPORT BROADCAST SUCCESSFULLY TO GLOBAL INTERNET");
+      log("🚨 REPORT BROADCAST SUCCESSFULLY");
     }
 
     function filterNodes() {
       const q = document.getElementById('searchInput').value.toLowerCase();
-      const filtered = allNodes.filter(n => 
-        n.name.toLowerCase().includes(q) || 
-        n.loc.toLowerCase().includes(q)
-      );
+      const filtered = allNodes.filter(n => n.name.toLowerCase().includes(q) || n.loc.toLowerCase().includes(q));
       renderNodes(filtered);
     }
 
@@ -283,22 +271,24 @@
       document.querySelectorAll('.nav button').forEach((b, i) => b.classList.toggle('active', i === n));
     }
 
-    // Deep link support
-    function handleDeepLink() {
-      const hash = window.location.hash;
-      if (hash.includes('#node=')) {
-        try {
-          let data = hash.split('#node=')[1];
-          let b64 = data.replace(/-/g,'+').replace(/_/g,'/');
-          while (b64.length % 4) b64 += '=';
-          const item = JSON.parse(atob(b64));
+    // Handle direct link with ?node=ID
+    function handleDirectLink() {
+      const params = new URLSearchParams(window.location.search);
+      const nodeId = params.get('node');
+      if (nodeId) {
+        const item = allNodes.find(n => n.id === nodeId);
+        if (item) {
           login();
           setTimeout(() => showItemDetail(item), 800);
-        } catch(e) {}
+        } else {
+          log(`⚠️ Node ${nodeId} not found in current session`);
+        }
       }
     }
 
-    window.onload = handleDeepLink;
+    window.onload = () => {
+      handleDirectLink();
+    };
   </script>
 </body>
-</html>
+</html>=
