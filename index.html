@@ -23,126 +23,41 @@
       line-height: 1.5;
     }
 
-    canvas#matrix {
-      position: fixed;
-      inset: 0;
-      z-index: -1;
-      opacity: 0.12;
-    }
+    canvas#matrix { position:fixed; inset:0; z-index:-1; opacity:0.12; }
 
-    .header {
-      padding: 18px 32px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid rgba(0,255,65,0.25);
-      background: rgba(10,10,10,0.98);
-    }
+    .header { padding:18px 32px; display:flex; justify-content:space-between; align-items:center;
+      border-bottom:1px solid rgba(0,255,65,0.25); background:rgba(10,10,10,0.98); }
+    .header h1 { font-size:1.8rem; letter-spacing:3px; text-shadow:0 0 15px var(--neon); }
 
-    .header h1 {
-      font-size: 1.8rem;
-      letter-spacing: 3px;
-      text-shadow: 0 0 15px var(--neon);
-    }
+    .nav { padding:14px 32px; display:flex; gap:12px; flex-wrap:wrap; border-bottom:1px solid rgba(0,255,65,0.2);
+      background:rgba(10,10,10,0.98); }
+    .nav button { background:transparent; border:1px solid var(--neon); color:var(--neon);
+      padding:10px 26px; border-radius:50px; cursor:pointer; transition:all 0.3s; font-family:inherit; }
+    .nav button.active, .nav button:hover { background:var(--neon); color:#000; box-shadow:0 0 25px var(--glow); }
 
-    .nav {
-      padding: 14px 32px;
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      border-bottom: 1px solid rgba(0,255,65,0.2);
-      background: rgba(10,10,10,0.98);
-    }
+    .search-bar { margin:20px 32px; padding:16px 28px; width:calc(100%-64px); background:#111;
+      border:1px solid var(--neon); border-radius:50px; color:var(--neon); font-family:inherit; }
 
-    .nav button {
-      background: transparent;
-      border: 1px solid var(--neon);
-      color: var(--neon);
-      padding: 10px 26px;
-      border-radius: 50px;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-family: inherit;
-    }
+    .nodes-grid { flex:1; padding:20px 32px; overflow-y:auto; display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:24px; }
 
-    .nav button.active,
-    .nav button:hover {
-      background: var(--neon);
-      color: #000;
-      box-shadow: 0 0 25px var(--glow);
-    }
+    .node-card { background:var(--card); border:1px solid rgba(0,255,65,0.3); border-radius:16px;
+      padding:22px; cursor:pointer; transition:all 0.4s ease; }
+    .node-card:hover { transform:translateY(-10px); border-color:var(--neon); box-shadow:0 0 35px var(--glow); }
 
-    .search-bar {
-      margin: 20px 32px;
-      padding: 16px 28px;
-      width: calc(100% - 64px);
-      background: #111;
-      border: 1px solid var(--neon);
-      border-radius: 50px;
-      color: var(--neon);
-      font-family: inherit;
-      font-size: 1rem;
-    }
+    .log { height:160px; background:#0a0a0a; padding:14px 32px; overflow-y:auto; font-size:0.9rem;
+      border-top:1px solid rgba(0,255,65,0.25); }
 
-    .nodes-grid {
-      flex: 1;
-      padding: 20px 32px;
-      overflow-y: auto;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-      gap: 24px;
-    }
-
-    .node-card {
-      background: var(--card);
-      border: 1px solid rgba(0,255,65,0.3);
-      border-radius: 16px;
-      padding: 22px;
-      cursor: pointer;
-      transition: all 0.4s ease;
-    }
-
-    .node-card:hover {
-      transform: translateY(-10px);
-      border-color: var(--neon);
-      box-shadow: 0 0 35px var(--glow);
-    }
-
-    .log {
-      height: 160px;
-      background: #0a0a0a;
-      padding: 14px 32px;
-      overflow-y: auto;
-      font-size: 0.9rem;
-      border-top: 1px solid rgba(0,255,65,0.25);
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.96);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .modal-content {
-      background: rgba(15,15,15,0.98);
-      border: 2px solid var(--neon);
-      border-radius: 16px;
-      width: 90%;
-      max-width: 560px;
-      padding: 35px;
-      position: relative;
-    }
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.96); z-index:100;
+      align-items:center; justify-content:center; }
+    .modal-content { background:rgba(15,15,15,0.98); border:2px solid var(--neon);
+      border-radius:16px; width:90%; max-width:560px; padding:35px; position:relative; }
   </style>
 </head>
 <body>
 
   <canvas id="matrix"></canvas>
 
-  <!-- MAIN APP -->
   <div class="main-app" style="display:flex; flex-direction:column; height:100vh;">
     <div class="header">
       <h1>🔗 ROOTDONATE</h1>
@@ -169,9 +84,7 @@
       <h2 id="modalName" style="color:#0f0; margin-bottom:12px;"></h2>
       <p id="modalLoc" style="margin:8px 0;"></p>
       <p id="modalTime"></p>
-      
       <div id="shareUrl" style="background:#111;padding:14px;margin:20px 0;border:1px solid var(--neon);word-break:break-all;font-size:0.95rem;"></div>
-      
       <button onclick="copyShareLink()" style="width:100%;padding:14px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">
         COPY INDIVIDUAL PAGE LINK
       </button>
@@ -183,11 +96,9 @@
     <div class="modal-content">
       <span onclick="closeReportModal()" style="position:absolute;top:15px;right:25px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
       <h2 style="text-align:center;color:#0f0;margin-bottom:20px;">BROADCAST TO GLOBAL INTERNET</h2>
-      
       <input id="rName" placeholder="Item / Node name" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
       <input id="rLoc" placeholder="Location / URL / IP" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
       <textarea id="rDesc" rows="4" placeholder="Description / Details..." style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);resize:vertical;"></textarea>
-      
       <button onclick="submitReport()" style="width:100%;padding:16px;margin-top:15px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">
         SEND TO GLOBAL MESH
       </button>
@@ -195,7 +106,6 @@
   </div>
 
   <script>
-    // Matrix Rain
     const canvas = document.getElementById('matrix');
     const ctx = canvas.getContext('2d');
     let drops = [];
@@ -276,7 +186,6 @@
       document.getElementById('itemModal').style.display = 'none';
     }
 
-    // Auto Scanning
     async function startGlobalScan() {
       log("🌐 INITIALIZING GLOBAL INTERNET SCAN...");
       const sources = ["Tor Exit Node • DE", "Public Webcam • Tokyo", "Lost Phone • NYC", "Open IoT • Brazil", "GitHub Leak • RU", "Dark Mirror • Unknown", "Satellite Feed • Pacific", "5G Mesh • Berlin"];
@@ -296,9 +205,7 @@
         log(`📡 NEW NODE DETECTED → ${newNode.name}`);
       }
       log("✅ GLOBAL SCAN COMPLETE — NODES LIVE");
-
-      // Check for direct link AFTER scan is complete
-      handleDirectLink();
+      handleDirectLink();   // Run after full scan
     }
 
     function showReportModal() { document.getElementById('reportModal').style.display = 'flex'; }
@@ -326,9 +233,7 @@
 
     function filterNodes() {
       const q = document.getElementById('searchInput').value.toLowerCase();
-      const filtered = allNodes.filter(n => 
-        n.name.toLowerCase().includes(q) || n.loc.toLowerCase().includes(q)
-      );
+      const filtered = allNodes.filter(n => n.name.toLowerCase().includes(q) || n.loc.toLowerCase().includes(q));
       renderNodes(filtered);
     }
 
@@ -336,21 +241,25 @@
       document.querySelectorAll('.nav button').forEach((b, i) => b.classList.toggle('active', i === n));
     }
 
-    // Handle direct link ?node=ID
+    // Improved Direct Link Handler with retry
     function handleDirectLink() {
       const params = new URLSearchParams(window.location.search);
       const nodeId = params.get('node');
-      if (nodeId) {
+      if (!nodeId) return;
+
+      const checkNode = () => {
         const item = allNodes.find(n => n.id === nodeId);
         if (item) {
-          setTimeout(() => showItemDetail(item), 300);
+          showItemDetail(item);
+        } else if (allNodes.length < 18) {
+          setTimeout(checkNode, 300);   // Retry if scan not finished
         } else {
           log(`⚠️ Node ${nodeId} not found`);
         }
-      }
+      };
+      checkNode();
     }
 
-    // Auto Start
     window.onload = () => {
       startGlobalScan();
     };
