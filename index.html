@@ -184,7 +184,7 @@
 
       const url = generateShareUrl(item);
       document.getElementById('shareUrl').innerHTML = `
-        <strong>SHORTEST BASE64 LINK:</strong><br>
+        <strong>SHORTEST LINK:</strong><br>
         <a href="${url}" target="_blank" style="color:var(--neon);word-break:break-all;">${url}</a>
       `;
       document.getElementById('itemModal').style.display = 'flex';
@@ -193,7 +193,7 @@
     function copyShareLink() {
       if (!currentItem) return;
       navigator.clipboard.writeText(generateShareUrl(currentItem));
-      alert("✅ Shortest base64 link copied to clipboard!");
+      alert("✅ Shortest link copied to clipboard!");
     }
 
     function closeItemModal() { document.getElementById('itemModal').style.display = 'none'; }
