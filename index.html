@@ -95,7 +95,6 @@
   </div>
 
   <script>
-    // Matrix Rain
     const canvas = document.getElementById('matrix');
     const ctx = canvas.getContext('2d');
     let drops = [];
@@ -210,23 +209,23 @@
       document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n));
     }
 
-    // Direct Link Handler - Runs repeatedly until node is found
+    // Direct Link Handler
     function handleDirectLink() {
       const nodeId = new URLSearchParams(location.search).get('node');
       if (!nodeId) return;
 
-      const check = setInterval(() => {
+      const interval = setInterval(() => {
         const item = allNodes.find(n => n.id === nodeId);
         if (item) {
           showItemDetail(item);
-          clearInterval(check);
+          clearInterval(interval);
         }
       }, 250);
     }
 
     window.onload = () => {
       startGlobalScan();
-      setTimeout(handleDirectLink, 800); // Small delay for scan to begin
+      setTimeout(handleDirectLink, 1000); // Give scan time to start
     };
   </script>
 </body>
