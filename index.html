@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>NUMIROOT • MONETARY MESH</title>
+  <title>Root Donate • MONETARY MESH</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
     :root { 
@@ -138,7 +138,7 @@
 
   <div style="display:flex; flex-direction:column; height:100vh;">
     <div class="header">
-      <h1>💰 NUMIROOT</h1>
+      <h1>💰 Root Donate</h1>
       <div id="stats">GLOBAL MONETARY SCAN • <span id="nodeCount">0</span> ARTIFACTS LIVE</div>
     </div>
 
@@ -169,7 +169,7 @@
       </div>
       <div id="shareUrl" style="background:#111;padding:14px;margin:20px 0;border:1px solid var(--neon);word-break:break-all;font-size:0.9rem;"></div>
       <button onclick="copyShareLink()" style="width:100%;padding:14px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">
-        📋 COPY NUMISMATIC LINK
+        📋 COPY LINK
       </button>
     </div>
   </div>
@@ -284,7 +284,7 @@
 
       const url = generateShareUrl(item);
       document.getElementById('shareUrl').innerHTML = `
-        <strong>NUMISMATIC LINK:</strong><br>
+        <strong>LINK:</strong><br>
         <a href="${url}" target="_blank" style="color:var(--neon);word-break:break-all;">${url}</a>
       `;
       document.getElementById('itemModal').style.display = 'flex';
@@ -293,7 +293,7 @@
     function copyShareLink() {
       if (!currentItem) return;
       navigator.clipboard.writeText(generateShareUrl(currentItem));
-      alert("✅ Numismatic link copied!");
+      alert("✅ link copied!");
     }
 
     function closeItemModal() { 
