@@ -78,9 +78,9 @@
       <h2 id="modalName" style="color:#0f0;margin-bottom:12px;"></h2>
       <p id="modalLoc" style="margin:8px 0;"></p>
       <p id="modalTime"></p>
-      <div id="shareUrl" style="background:#111;padding:14px;margin:20px 0;border:1px solid var(--neon);word-break:break-all;"></div>
+      <div id="shareUrl" style="background:#111;padding:14px;margin:20px 0;border:1px solid var(--neon);word-break:break-all;font-size:0.9rem;"></div>
       <button onclick="copyShareLink()" style="width:100%;padding:14px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">
-        COPY INDIVIDUAL PAGE LINK
+        📋 COPY SHORTEST BASE64 LINK
       </button>
     </div>
   </div>
@@ -130,8 +130,31 @@
       el.scrollTop = el.scrollHeight;
     }
 
+    // === BASE64URL HELPERS (shortest share link) ===
+    function toBase64Url(obj) {
+      const json = JSON.stringify(obj);
+      let base64 = btoa(unescape(encodeURIComponent(json)));
+      return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    function fromBase64Url(str) {
+      str = str.replace(/-/g, '+').replace(/_/g, '/');
+      while (str.length % 4) str += '=';
+      try {
+        return JSON.parse(decodeURIComponent(escape(atob(str))));
+      } catch(e) { return null; }
+    }
+
     function generateShareUrl(node) {
-      return `${location.origin}${location.pathname}#${node.id}`;
+      const minimal = {
+        id: node.id,
+        name: node.name,
+        loc: node.loc,
+        time: node.time || new Date().toLocaleString(),
+        status: node.status || "ACTIVE"
+      };
+      const b64 = toBase64Url(minimal);
+      return `${location.origin}${location.pathname}#${b64}`;   // SHORTEST VERSION
     }
 
     function renderNodes(filtered = allNodes) {
@@ -157,19 +180,37 @@
       currentItem = item;
       document.getElementById('modalName').textContent = item.name;
       document.getElementById('modalLoc').innerHTML = `📍 ${item.loc}`;
-      document.getElementById('modalTime').textContent = item.time;
+      document.getElementById('modalTime').textContent = item.time || '—';
+
       const url = generateShareUrl(item);
-      document.getElementById('shareUrl').innerHTML = `<strong>INDIVIDUAL PAGE:</strong><br><a href="${url}" target="_blank" style="color:var(--neon);">${url}</a>`;
+      document.getElementById('shareUrl').innerHTML = `
+        <strong>SHORTEST BASE64 LINK:</strong><br>
+        <a href="${url}" target="_blank" style="color:var(--neon);word-break:break-all;">${url}</a>
+      `;
       document.getElementById('itemModal').style.display = 'flex';
     }
 
     function copyShareLink() {
       if (!currentItem) return;
       navigator.clipboard.writeText(generateShareUrl(currentItem));
-      alert("✅ Short individual link copied!");
+      alert("✅ Shortest base64 link copied to clipboard!");
     }
 
     function closeItemModal() { document.getElementById('itemModal').style.display = 'none'; }
+
+    // Load from base64 hash
+    function handleBase64Link() {
+      const hash = location.hash.slice(1);
+      if (!hash) return;
+      const node = fromBase64Url(hash);
+      if (node) {
+        showItemDetail(node);
+        if (!allNodes.some(n => n.id === node.id)) {
+          allNodes.unshift(node);
+          renderNodes();
+        }
+      }
+    }
 
     async function startGlobalScan() {
       log("🌐 INITIALIZING GLOBAL INTERNET SCAN...");
@@ -199,7 +240,13 @@
       const name = document.getElementById('rName').value.trim();
       const loc = document.getElementById('rLoc').value.trim();
       if (!name || !loc) return alert("Name and location required");
-      const newItem = { id:`RD-${1000+Math.floor(Math.random()*9000)}`, name, loc, time:"Just now", status:"BROADCAST", source:"USER REPORT" };
+      const newItem = { 
+        id:`RD-${1000+Math.floor(Math.random()*9000)}`, 
+        name, loc, 
+        time:"Just now", 
+        status:"BROADCAST", 
+        source:"USER REPORT" 
+      };
       allNodes.unshift(newItem);
       renderNodes();
       closeReportModal();
@@ -208,28 +255,15 @@
 
     function filterNodes() {
       const q = document.getElementById('searchInput').value.toLowerCase();
-      renderNodes(allNodes.filter(n => n.name.toLowerCase().includes(q) || n.loc.toLowerCase().includes(q)));
+      renderNodes(allNodes.filter(n => 
+        n.name.toLowerCase().includes(q) || n.loc.toLowerCase().includes(q)
+      ));
     }
 
     function setTab(n) {
       document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n));
     }
 
-    // Direct Link Handler (preserves individual page)
-    function handleDirectLink() {
-      const hash = location.hash.slice(1);
-      if (!hash) return;
-
-      const interval = setInterval(() => {
-        const item = allNodes.find(n => n.id === hash);
-        if (item) {
-          showItemDetail(item);
-          clearInterval(interval);
-        }
-      }, 200);
-    }
-
-    // Reset without losing hash
     function resetScan() {
       if (confirm("Reset all nodes?")) {
         allNodes = [];
@@ -243,7 +277,7 @@
 
     window.onload = () => {
       startGlobalScan();
-      setTimeout(handleDirectLink, 600);
+      setTimeout(handleBase64Link, 800);
     };
   </script>
 </body>
