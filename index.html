@@ -3,44 +3,128 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ROOTDONATE • GLOBAL INTERNET MESH</title>
+  <title>NUMIROOT • MONETARY MESH</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
-    :root { --neon:#00ff41; --glow:#00ff4188; --bg:#0a0a0a; --card:rgba(15,25,20,0.95); }
+    :root { 
+      --neon:#ffd700; 
+      --glow:#ffd70088; 
+      --bg:#0a0a0a; 
+      --card:rgba(20,20,15,0.95); 
+    }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
-      font-family:'Courier New',monospace; background:var(--bg); color:var(--neon);
-      height:100vh; overflow:hidden; touch-action:manipulation;
+      font-family:'Courier New',monospace; 
+      background:var(--bg); 
+      color:var(--neon);
+      height:100vh; 
+      overflow:hidden; 
+      touch-action:manipulation;
     }
-    canvas#matrix { position:fixed; inset:0; z-index:-1; opacity:0.12; }
+    canvas#matrix { position:fixed; inset:0; z-index:-1; opacity:0.15; }
 
-    .header { padding:16px 20px; display:flex; justify-content:space-between; align-items:center;
-      border-bottom:1px solid rgba(0,255,65,0.25); background:rgba(10,10,10,0.98); }
-    .header h1 { font-size:1.6rem; letter-spacing:2px; text-shadow:0 0 15px var(--neon); }
+    .header { 
+      padding:16px 20px; 
+      display:flex; 
+      justify-content:space-between; 
+      align-items:center;
+      border-bottom:1px solid rgba(255,215,0,0.3); 
+      background:rgba(10,10,10,0.98); 
+    }
+    .header h1 { 
+      font-size:1.6rem; 
+      letter-spacing:3px; 
+      text-shadow:0 0 15px var(--neon); 
+    }
 
-    .nav { padding:12px 20px; display:flex; gap:8px; flex-wrap:wrap; border-bottom:1px solid rgba(0,255,65,0.2);
-      background:rgba(10,10,10,0.98); }
-    .nav button { background:transparent; border:1px solid var(--neon); color:var(--neon);
-      padding:10px 20px; border-radius:50px; cursor:pointer; transition:all 0.3s; font-size:0.95rem; }
-    .nav button.active, .nav button:hover { background:var(--neon); color:#000; box-shadow:0 0 25px var(--glow); }
+    .nav { 
+      padding:12px 20px; 
+      display:flex; 
+      gap:8px; 
+      flex-wrap:wrap; 
+      border-bottom:1px solid rgba(255,215,0,0.2);
+      background:rgba(10,10,10,0.98); 
+    }
+    .nav button { 
+      background:transparent; 
+      border:1px solid var(--neon); 
+      color:var(--neon);
+      padding:10px 20px; 
+      border-radius:50px; 
+      cursor:pointer; 
+      transition:all 0.3s; 
+      font-size:0.95rem; 
+    }
+    .nav button.active, .nav button:hover { 
+      background:var(--neon); 
+      color:#000; 
+      box-shadow:0 0 25px var(--glow); 
+    }
 
-    .search-bar { margin:16px 20px; padding:14px 24px; width:calc(100% - 40px); background:#111;
-      border:1px solid var(--neon); border-radius:50px; color:var(--neon); font-size:1rem; }
+    .search-bar { 
+      margin:16px 20px; 
+      padding:14px 24px; 
+      width:calc(100% - 40px); 
+      background:#111;
+      border:1px solid var(--neon); 
+      border-radius:50px; 
+      color:var(--neon); 
+      font-size:1rem; 
+    }
 
-    .nodes-grid { flex:1; padding:16px 20px; overflow-y:auto; 
-      display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
+    .nodes-grid { 
+      flex:1; 
+      padding:16px 20px; 
+      overflow-y:auto; 
+      display:grid; 
+      grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); 
+      gap:16px; 
+    }
 
-    .node-card { background:var(--card); border:1px solid rgba(0,255,65,0.3); border-radius:16px;
-      padding:18px; cursor:pointer; transition:all 0.4s; }
-    .node-card:active { transform:translateY(-6px); border-color:var(--neon); box-shadow:0 0 30px var(--glow); }
+    .node-card { 
+      background:var(--card); 
+      border:1px solid rgba(255,215,0,0.35); 
+      border-radius:16px;
+      padding:18px; 
+      cursor:pointer; 
+      transition:all 0.4s; 
+    }
+    .node-card:active { 
+      transform:translateY(-6px); 
+      border-color:var(--neon); 
+      box-shadow:0 0 30px var(--glow); 
+    }
 
-    .log { height:140px; background:#0a0a0a; padding:12px 20px; overflow-y:auto; font-size:0.85rem;
-      border-top:1px solid rgba(0,255,65,0.25); }
+    .log { 
+      height:140px; 
+      background:#0a0a0a; 
+      padding:12px 20px; 
+      overflow-y:auto; 
+      font-size:0.85rem;
+      border-top:1px solid rgba(255,215,0,0.3); 
+    }
 
-    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.96); z-index:100;
-      align-items:center; justify-content:center; padding:10px; }
-    .modal-content { background:rgba(15,15,15,0.98); border:2px solid var(--neon);
-      border-radius:16px; width:100%; max-width:520px; padding:28px; position:relative; }
+    .modal { 
+      display:none; 
+      position:fixed; 
+      inset:0; 
+      background:rgba(0,0,0,0.96); 
+      z-index:100;
+      align-items:center; 
+      justify-content:center; 
+      padding:10px; 
+    }
+    .modal-content { 
+      background:rgba(20,20,15,0.98); 
+      border:2px solid var(--neon);
+      border-radius:16px; 
+      width:100%; 
+      max-width:520px; 
+      padding:28px; 
+      position:relative; 
+    }
+
+    .coin-icon { font-size:2.8rem; margin-bottom:12px; }
 
     @media (max-width: 480px) {
       .nodes-grid { grid-template-columns:1fr; }
@@ -54,18 +138,18 @@
 
   <div style="display:flex; flex-direction:column; height:100vh;">
     <div class="header">
-      <h1>🔗 ROOTDONATE</h1>
-      <div id="stats">SCANNING INTERNET • <span id="nodeCount">0</span> NODES ONLINE</div>
+      <h1>💰 NUMIROOT</h1>
+      <div id="stats">GLOBAL MONETARY SCAN • <span id="nodeCount">0</span> ARTIFACTS LIVE</div>
     </div>
 
     <div class="nav">
       <button class="active" onclick="setTab(0)">🌐 LIVE FEED</button>
-      <button onclick="setTab(1)">🔎 DEEP SCAN</button>
-      <button onclick="showReportModal()">📢 REPORT</button>
-      <button onclick="resetScan()">RESET SCAN</button>
+      <button onclick="setTab(1)">🔎 DEEP NUMIS</button>
+      <button onclick="showReportModal()">📢 REPORT FIND</button>
+      <button onclick="resetScan()">RESET VAULT</button>
     </div>
 
-    <input type="text" id="searchInput" class="search-bar" placeholder="Search nodes..." onkeyup="filterNodes()">
+    <input type="text" id="searchInput" class="search-bar" placeholder="Search coins, notes, mints..." onkeyup="filterNodes()">
 
     <div class="nodes-grid" id="grid"></div>
     <div class="log" id="log"></div>
@@ -75,12 +159,17 @@
   <div class="modal" id="itemModal">
     <div class="modal-content">
       <span onclick="closeItemModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
-      <h2 id="modalName" style="color:#0f0;margin-bottom:12px;"></h2>
+      <div id="modalIcon" class="coin-icon">🪙</div>
+      <h2 id="modalName" style="color:#ffd700;margin-bottom:12px;"></h2>
       <p id="modalLoc" style="margin:8px 0;"></p>
       <p id="modalTime"></p>
+      <div style="margin:20px 0;padding:14px;background:#111;border:1px solid var(--neon);font-size:0.9rem;">
+        <strong>EST. VALUE:</strong> <span id="modalValue" style="color:#0f0;"></span><br>
+        <strong>MINT / ORIGIN:</strong> <span id="modalMint"></span>
+      </div>
       <div id="shareUrl" style="background:#111;padding:14px;margin:20px 0;border:1px solid var(--neon);word-break:break-all;font-size:0.9rem;"></div>
       <button onclick="copyShareLink()" style="width:100%;padding:14px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">
-        📋 COPY LINK
+        📋 COPY NUMISMATIC LINK
       </button>
     </div>
   </div>
@@ -89,12 +178,13 @@
   <div class="modal" id="reportModal">
     <div class="modal-content">
       <span onclick="closeReportModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
-      <h2 style="text-align:center;color:#0f0;margin-bottom:20px;">BROADCAST TO GLOBAL INTERNET</h2>
-      <input id="rName" placeholder="Item / Node name" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
-      <input id="rLoc" placeholder="Location / URL / IP" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
-      <textarea id="rDesc" rows="4" placeholder="Description..." style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);"></textarea>
+      <h2 style="text-align:center;color:#ffd700;margin-bottom:20px;">📜 BROADCAST NEW FIND</h2>
+      <input id="rName" placeholder="Coin / Note name (e.g. 1933 Double Eagle)" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
+      <input id="rLoc" placeholder="Mint / Location / Era" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
+      <input id="rValue" placeholder="Est. market value (USD)" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
+      <textarea id="rDesc" rows="3" placeholder="Description / Condition / History..." style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);"></textarea>
       <button onclick="submitReport()" style="width:100%;padding:16px;margin-top:15px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">
-        SEND TO GLOBAL MESH
+        SEND TO GLOBAL VAULT
       </button>
     </div>
   </div>
@@ -104,21 +194,27 @@
     const canvas = document.getElementById('matrix');
     const ctx = canvas.getContext('2d');
     let drops = [];
-    function resize() { canvas.width = innerWidth; canvas.height = innerHeight; drops = Array(Math.floor(canvas.width/14)).fill(1); }
-    window.addEventListener('resize', resize); resize();
+    function resize() { 
+      canvas.width = innerWidth; 
+      canvas.height = innerHeight; 
+      drops = Array(Math.floor(canvas.width/14)).fill(1); 
+    }
+    window.addEventListener('resize', resize); 
+    resize();
 
     function rain() {
-      ctx.fillStyle = 'rgba(10,10,10,0.12)';
+      ctx.fillStyle = 'rgba(10,10,10,0.15)';
       ctx.fillRect(0,0,canvas.width,canvas.height);
-      ctx.fillStyle = '#00ff41';
+      ctx.fillStyle = '#ffd700';
       ctx.font = '14px monospace';
+      const chars = '0123456789$€£¥₿🪙⚖️📜';
       for (let i = 0; i < drops.length; i++) {
-        ctx.fillText('01アイウエオ0123456789$@#%&*'[Math.random()*25|0], i*14, drops[i]*14);
+        ctx.fillText(chars[Math.random()*chars.length|0], i*14, drops[i]*14);
         if (drops[i]*14 > canvas.height && Math.random()>0.975) drops[i]=0;
         drops[i]++;
       }
     }
-    setInterval(rain, 35);
+    setInterval(rain, 40);
 
     let allNodes = [];
     let currentItem = null;
@@ -130,7 +226,6 @@
       el.scrollTop = el.scrollHeight;
     }
 
-    // === BASE64URL HELPERS (shortest share link) ===
     function toBase64Url(obj) {
       const json = JSON.stringify(obj);
       let base64 = btoa(unescape(encodeURIComponent(json)));
@@ -150,11 +245,11 @@
         id: node.id,
         name: node.name,
         loc: node.loc,
-        time: node.time || new Date().toLocaleString(),
-        status: node.status || "ACTIVE"
+        value: node.value,
+        time: node.time
       };
       const b64 = toBase64Url(minimal);
-      return `${location.origin}${location.pathname}#${b64}`;   // SHORTEST VERSION
+      return `${location.origin}${location.pathname}#${b64}`;
     }
 
     function renderNodes(filtered = allNodes) {
@@ -167,9 +262,11 @@
         card.className = 'node-card';
         card.innerHTML = `
           <div style="font-size:0.8rem;opacity:0.7;">#${item.id} • ${item.source}</div>
-          <h3 style="margin:10px 0 8px;">${item.name}</h3>
+          <div style="font-size:2.5rem;margin:12px 0;">${item.icon}</div>
+          <h3 style="margin:8px 0;">${item.name}</h3>
           <p>📍 ${item.loc}</p>
-          <p style="margin-top:8px;">${item.time} • <span style="color:#0f0">${item.status}</span></p>
+          <p style="margin-top:8px;color:#0f0;">${item.value}</p>
+          <p style="font-size:0.85rem;">${item.time} • ${item.status}</p>
         `;
         card.onclick = () => showItemDetail(item);
         grid.appendChild(card);
@@ -178,13 +275,16 @@
 
     function showItemDetail(item) {
       currentItem = item;
+      document.getElementById('modalIcon').textContent = item.icon;
       document.getElementById('modalName').textContent = item.name;
-      document.getElementById('modalLoc').innerHTML = `📍 ${item.loc}`;
-      document.getElementById('modalTime').textContent = item.time || '—';
+      document.getElementById('modalLoc').innerHTML = `📍 ${item.loc} • ${item.era || ''}`;
+      document.getElementById('modalTime').textContent = item.time;
+      document.getElementById('modalValue').textContent = item.value;
+      document.getElementById('modalMint').textContent = item.mint || 'Unknown';
 
       const url = generateShareUrl(item);
       document.getElementById('shareUrl').innerHTML = `
-        <strong>SHORTEST LINK:</strong><br>
+        <strong>NUMISMATIC LINK:</strong><br>
         <a href="${url}" target="_blank" style="color:var(--neon);word-break:break-all;">${url}</a>
       `;
       document.getElementById('itemModal').style.display = 'flex';
@@ -193,12 +293,13 @@
     function copyShareLink() {
       if (!currentItem) return;
       navigator.clipboard.writeText(generateShareUrl(currentItem));
-      alert("✅ Shortest link copied to clipboard!");
+      alert("✅ Numismatic link copied!");
     }
 
-    function closeItemModal() { document.getElementById('itemModal').style.display = 'none'; }
+    function closeItemModal() { 
+      document.getElementById('itemModal').style.display = 'none'; 
+    }
 
-    // Load from base64 hash
     function handleBase64Link() {
       const hash = location.hash.slice(1);
       if (!hash) return;
@@ -213,50 +314,68 @@
     }
 
     async function startGlobalScan() {
-      log("🌐 INITIALIZING GLOBAL INTERNET SCAN...");
-      const sources = ["Tor Exit Node • DE","Public Webcam • Tokyo","Lost Phone • NYC","Open IoT • Brazil","GitHub Leak • RU","Dark Mirror • Unknown","Satellite Feed • Pacific","5G Mesh • Berlin"];
+      log("💰 INITIALIZING GLOBAL MONETARY MESH...");
+      const samples = [
+        {icon:"🪙", name:"1907 Saint-Gaudens Double Eagle", loc:"U.S. Mint, Philadelphia", value:"~$3.2M", era:"Pre-1933", mint:"Philadelphia", status:"CERTIFIED MS-65"},
+        {icon:"💵", name:"1934 $100,000 Gold Certificate", loc:"Federal Reserve Vault", value:"Priceless (Specimen)", era:"Great Depression", mint:"Bureau of Engraving", status:"ACTIVE"},
+        {icon:"₿", name:"Bitcoin Genesis Block Artifact", loc:"Satoshi Nakamoto Wallet", value:"~$110,000 (1 BTC)", era:"2009", mint:"Digital", status:"LEGENDARY"},
+        {icon:"🪙", name:"Ancient Athenian Tetradrachm", loc:"Athens, 450 BC", value:"~$18,500", era:"Classical Greece", mint:"Athens", status:"XF"},
+        {icon:"£", name:"Bank of England £1,000 Note (1940s)", loc:"Threadneedle Street", value:"~$45,000", era:"WWII", mint:"Bank of England", status:"RARE"},
+        {icon:"¥", name:"Meiji Era 10 Yen Gold Coin", loc:"Japan Imperial Mint", value:"~$28,000", era:"1871", mint:"Osaka", status:"UNC"},
+      ];
 
-      for (let i = 0; i < 18; i++) {
-        await new Promise(r => setTimeout(r, 160));
+      for (let i = 0; i < 16; i++) {
+        await new Promise(r => setTimeout(r, 140));
+        const base = samples[Math.floor(Math.random()*samples.length)];
         const newNode = {
-          id: `RD-${1000 + Math.floor(Math.random()*8999)}`,
-          name: ["Lost Drone","Found Wallet","Exposed Server","Abandoned Laptop","Mysterious Package","Open Security Cam"][Math.floor(Math.random()*6)],
-          loc: sources[Math.floor(Math.random()*sources.length)],
-          time: new Date(Date.now() - Math.random()*86400000*3).toLocaleString(),
-          status: Math.random() > 0.7 ? "ACTIVE" : "PINGING",
-          source: "PUBLIC MESH"
+          id: `NR-${1000 + Math.floor(Math.random()*8999)}`,
+          ...base,
+          time: new Date(Date.now() - Math.random()*86400000*7).toLocaleString(),
+          source: Math.random() > 0.6 ? "AUCTION HOUSE" : "PRIVATE VAULT"
         };
         allNodes.unshift(newNode);
         renderNodes();
-        log(`📡 NEW NODE → ${newNode.name}`);
+        log(`🪙 NEW ARTIFACT → ${newNode.name}`);
       }
-      log("✅ GLOBAL SCAN COMPLETE");
+      log("✅ MONETARY MESH SYNCHRONIZED");
     }
 
-    function showReportModal() { document.getElementById('reportModal').style.display = 'flex'; }
-    function closeReportModal() { document.getElementById('reportModal').style.display = 'none'; }
+    function showReportModal() { 
+      document.getElementById('reportModal').style.display = 'flex'; 
+    }
+    function closeReportModal() { 
+      document.getElementById('reportModal').style.display = 'none'; 
+    }
 
     function submitReport() {
       const name = document.getElementById('rName').value.trim();
       const loc = document.getElementById('rLoc').value.trim();
+      const value = document.getElementById('rValue').value.trim() || "Market Pending";
       if (!name || !loc) return alert("Name and location required");
+      
       const newItem = { 
-        id:`RD-${1000+Math.floor(Math.random()*9000)}`, 
-        name, loc, 
+        id:`NR-${1000+Math.floor(Math.random()*9000)}`, 
+        icon: "🪙",
+        name, 
+        loc, 
+        value,
         time:"Just now", 
-        status:"BROADCAST", 
-        source:"USER REPORT" 
+        status:"USER SUBMITTED", 
+        source:"NUMIROOT CONTRIBUTOR",
+        mint: "Unknown"
       };
       allNodes.unshift(newItem);
       renderNodes();
       closeReportModal();
-      log("🚨 REPORT BROADCAST SUCCESSFULLY");
+      log("🚨 NEW FIND BROADCAST TO MESH");
     }
 
     function filterNodes() {
       const q = document.getElementById('searchInput').value.toLowerCase();
       renderNodes(allNodes.filter(n => 
-        n.name.toLowerCase().includes(q) || n.loc.toLowerCase().includes(q)
+        n.name.toLowerCase().includes(q) || 
+        n.loc.toLowerCase().includes(q) ||
+        (n.value && n.value.toLowerCase().includes(q))
       ));
     }
 
@@ -265,12 +384,12 @@
     }
 
     function resetScan() {
-      if (confirm("Reset all nodes?")) {
+      if (confirm("Clear monetary vault?")) {
         allNodes = [];
         document.getElementById('grid').innerHTML = '';
         document.getElementById('nodeCount').textContent = '0';
         document.getElementById('log').innerHTML = '';
-        log("🔄 SCAN RESET — NEW SCAN STARTING");
+        log("🔄 VAULT RESET — NEW SCAN STARTING");
         startGlobalScan();
       }
     }
