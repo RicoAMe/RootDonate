@@ -6,23 +6,12 @@
   <title>ROOTDONATE • GLOBAL INTERNET MESH</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
-    :root {
-      --neon: #00ff41;
-      --glow: #00ff4188;
-      --bg: #0a0a0a;
-      --card: rgba(15, 25, 20, 0.95);
-    }
-
+    :root { --neon:#00ff41; --glow:#00ff4188; --bg:#0a0a0a; --card:rgba(15,25,20,0.95); }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
-      font-family: 'Courier New', monospace;
-      background: var(--bg);
-      color: var(--neon);
-      height: 100vh;
-      overflow: hidden;
-      line-height: 1.5;
+      font-family:'Courier New',monospace; background:var(--bg); color:var(--neon);
+      height:100vh; overflow:hidden;
     }
-
     canvas#matrix { position:fixed; inset:0; z-index:-1; opacity:0.12; }
 
     .header { padding:18px 32px; display:flex; justify-content:space-between; align-items:center;
@@ -32,17 +21,17 @@
     .nav { padding:14px 32px; display:flex; gap:12px; flex-wrap:wrap; border-bottom:1px solid rgba(0,255,65,0.2);
       background:rgba(10,10,10,0.98); }
     .nav button { background:transparent; border:1px solid var(--neon); color:var(--neon);
-      padding:10px 26px; border-radius:50px; cursor:pointer; transition:all 0.3s; font-family:inherit; }
+      padding:10px 26px; border-radius:50px; cursor:pointer; transition:all 0.3s; }
     .nav button.active, .nav button:hover { background:var(--neon); color:#000; box-shadow:0 0 25px var(--glow); }
 
     .search-bar { margin:20px 32px; padding:16px 28px; width:calc(100%-64px); background:#111;
-      border:1px solid var(--neon); border-radius:50px; color:var(--neon); font-family:inherit; }
+      border:1px solid var(--neon); border-radius:50px; color:var(--neon); }
 
     .nodes-grid { flex:1; padding:20px 32px; overflow-y:auto; display:grid;
       grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:24px; }
 
     .node-card { background:var(--card); border:1px solid rgba(0,255,65,0.3); border-radius:16px;
-      padding:22px; cursor:pointer; transition:all 0.4s ease; }
+      padding:22px; cursor:pointer; transition:all 0.4s; }
     .node-card:hover { transform:translateY(-10px); border-color:var(--neon); box-shadow:0 0 35px var(--glow); }
 
     .log { height:160px; background:#0a0a0a; padding:14px 32px; overflow-y:auto; font-size:0.9rem;
@@ -58,7 +47,7 @@
 
   <canvas id="matrix"></canvas>
 
-  <div class="main-app" style="display:flex; flex-direction:column; height:100vh;">
+  <div style="display:flex; flex-direction:column; height:100vh;">
     <div class="header">
       <h1>🔗 ROOTDONATE</h1>
       <div id="stats">SCANNING INTERNET • <span id="nodeCount">0</span> NODES ONLINE</div>
@@ -81,10 +70,10 @@
   <div class="modal" id="itemModal">
     <div class="modal-content">
       <span onclick="closeItemModal()" style="position:absolute;top:15px;right:25px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
-      <h2 id="modalName" style="color:#0f0; margin-bottom:12px;"></h2>
+      <h2 id="modalName" style="color:#0f0;margin-bottom:12px;"></h2>
       <p id="modalLoc" style="margin:8px 0;"></p>
       <p id="modalTime"></p>
-      <div id="shareUrl" style="background:#111;padding:14px;margin:20px 0;border:1px solid var(--neon);word-break:break-all;font-size:0.95rem;"></div>
+      <div id="shareUrl" style="background:#111;padding:14px;margin:20px 0;border:1px solid var(--neon);word-break:break-all;"></div>
       <button onclick="copyShareLink()" style="width:100%;padding:14px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">
         COPY INDIVIDUAL PAGE LINK
       </button>
@@ -98,7 +87,7 @@
       <h2 style="text-align:center;color:#0f0;margin-bottom:20px;">BROADCAST TO GLOBAL INTERNET</h2>
       <input id="rName" placeholder="Item / Node name" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
       <input id="rLoc" placeholder="Location / URL / IP" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
-      <textarea id="rDesc" rows="4" placeholder="Description / Details..." style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);resize:vertical;"></textarea>
+      <textarea id="rDesc" rows="4" placeholder="Description..." style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);"></textarea>
       <button onclick="submitReport()" style="width:100%;padding:16px;margin-top:15px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">
         SEND TO GLOBAL MESH
       </button>
@@ -106,44 +95,38 @@
   </div>
 
   <script>
+    // Matrix Rain
     const canvas = document.getElementById('matrix');
     const ctx = canvas.getContext('2d');
     let drops = [];
+    function resize() { canvas.width = innerWidth; canvas.height = innerHeight; drops = Array(Math.floor(canvas.width/14)).fill(1); }
+    window.addEventListener('resize', resize); resize();
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      drops = Array(Math.floor(canvas.width / 14)).fill(1);
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    function drawRain() {
+    function rain() {
       ctx.fillStyle = 'rgba(10,10,10,0.12)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0,0,canvas.width,canvas.height);
       ctx.fillStyle = '#00ff41';
       ctx.font = '14px monospace';
       for (let i = 0; i < drops.length; i++) {
-        const text = '01アイウエオ0123456789$@#%&*'[Math.random() * 25 | 0];
-        ctx.fillText(text, i * 14, drops[i] * 14);
-        if (drops[i] * 14 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        ctx.fillText('01アイウエオ0123456789$@#%&*'[Math.random()*25|0], i*14, drops[i]*14);
+        if (drops[i]*14 > canvas.height && Math.random()>0.975) drops[i]=0;
         drops[i]++;
       }
     }
-    setInterval(drawRain, 35);
+    setInterval(rain, 35);
 
     let allNodes = [];
     let currentItem = null;
 
     function log(msg) {
       const el = document.getElementById('log');
-      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
       el.innerHTML += `<span style="opacity:0.5">[${time}]</span> ${msg}<br>`;
       el.scrollTop = el.scrollHeight;
     }
 
     function generateShareUrl(node) {
-      return `${window.location.origin}${window.location.pathname}?node=${node.id}`;
+      return `${location.origin}${location.pathname}?node=${node.id}`;
     }
 
     function renderNodes(filtered = allNodes) {
@@ -170,7 +153,6 @@
       document.getElementById('modalName').textContent = item.name;
       document.getElementById('modalLoc').innerHTML = `📍 ${item.loc}`;
       document.getElementById('modalTime').textContent = item.time;
-
       const url = generateShareUrl(item);
       document.getElementById('shareUrl').innerHTML = `<strong>INDIVIDUAL PAGE URL:</strong><br><a href="${url}" target="_blank" style="color:var(--neon);">${url}</a>`;
       document.getElementById('itemModal').style.display = 'flex';
@@ -179,22 +161,20 @@
     function copyShareLink() {
       if (!currentItem) return;
       navigator.clipboard.writeText(generateShareUrl(currentItem));
-      alert("✅ Individual page link copied!");
+      alert("✅ Link copied!");
     }
 
-    function closeItemModal() {
-      document.getElementById('itemModal').style.display = 'none';
-    }
+    function closeItemModal() { document.getElementById('itemModal').style.display = 'none'; }
 
     async function startGlobalScan() {
       log("🌐 INITIALIZING GLOBAL INTERNET SCAN...");
-      const sources = ["Tor Exit Node • DE", "Public Webcam • Tokyo", "Lost Phone • NYC", "Open IoT • Brazil", "GitHub Leak • RU", "Dark Mirror • Unknown", "Satellite Feed • Pacific", "5G Mesh • Berlin"];
+      const sources = ["Tor Exit Node • DE","Public Webcam • Tokyo","Lost Phone • NYC","Open IoT • Brazil","GitHub Leak • RU","Dark Mirror • Unknown","Satellite Feed • Pacific","5G Mesh • Berlin"];
 
       for (let i = 0; i < 18; i++) {
         await new Promise(r => setTimeout(r, 160));
         const newNode = {
           id: `RD-${1000 + Math.floor(Math.random()*8999)}`,
-          name: ["Lost Drone", "Found Wallet", "Exposed Server", "Abandoned Laptop", "Mysterious Package", "Open Security Cam"][Math.floor(Math.random()*6)],
+          name: ["Lost Drone","Found Wallet","Exposed Server","Abandoned Laptop","Mysterious Package","Open Security Cam"][Math.floor(Math.random()*6)],
           loc: sources[Math.floor(Math.random()*sources.length)],
           time: new Date(Date.now() - Math.random()*86400000*3).toLocaleString(),
           status: Math.random() > 0.7 ? "ACTIVE" : "PINGING",
@@ -202,10 +182,10 @@
         };
         allNodes.unshift(newNode);
         renderNodes();
-        log(`📡 NEW NODE DETECTED → ${newNode.name}`);
+        log(`📡 NEW NODE → ${newNode.name}`);
       }
-      log("✅ GLOBAL SCAN COMPLETE — NODES LIVE");
-      handleDirectLink();   // Run after full scan
+      log("✅ GLOBAL SCAN COMPLETE");
+      handleDirectLink();
     }
 
     function showReportModal() { document.getElementById('reportModal').style.display = 'flex'; }
@@ -214,17 +194,8 @@
     function submitReport() {
       const name = document.getElementById('rName').value.trim();
       const loc = document.getElementById('rLoc').value.trim();
-      if (!name || !loc) return alert("Please fill in name and location");
-
-      const newItem = {
-        id: `RD-${1000 + Math.floor(Math.random()*9000)}`,
-        name: name,
-        loc: loc,
-        time: "Just now",
-        status: "BROADCAST",
-        source: "USER REPORT"
-      };
-
+      if (!name || !loc) return alert("Name and location required");
+      const newItem = { id:`RD-${1000+Math.floor(Math.random()*9000)}`, name, loc, time:"Just now", status:"BROADCAST", source:"USER REPORT" };
       allNodes.unshift(newItem);
       renderNodes();
       closeReportModal();
@@ -233,36 +204,30 @@
 
     function filterNodes() {
       const q = document.getElementById('searchInput').value.toLowerCase();
-      const filtered = allNodes.filter(n => n.name.toLowerCase().includes(q) || n.loc.toLowerCase().includes(q));
-      renderNodes(filtered);
+      renderNodes(allNodes.filter(n => n.name.toLowerCase().includes(q) || n.loc.toLowerCase().includes(q)));
     }
 
     function setTab(n) {
-      document.querySelectorAll('.nav button').forEach((b, i) => b.classList.toggle('active', i === n));
+      document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n));
     }
 
-    // Improved Direct Link Handler with retry
+    // Strong Direct Link Handler
     function handleDirectLink() {
-      const params = new URLSearchParams(window.location.search);
-      const nodeId = params.get('node');
+      const nodeId = new URLSearchParams(location.search).get('node');
       if (!nodeId) return;
 
-      const checkNode = () => {
+      const tryOpen = () => {
         const item = allNodes.find(n => n.id === nodeId);
         if (item) {
           showItemDetail(item);
-        } else if (allNodes.length < 18) {
-          setTimeout(checkNode, 300);   // Retry if scan not finished
-        } else {
-          log(`⚠️ Node ${nodeId} not found`);
+        } else if (allNodes.length < 5) {
+          setTimeout(tryOpen, 400);
         }
       };
-      checkNode();
+      tryOpen();
     }
 
-    window.onload = () => {
-      startGlobalScan();
-    };
+    window.onload = startGlobalScan;
   </script>
 </body>
 </html>
