@@ -13,9 +13,8 @@
       background:var(--bg); color:var(--neon);
       height:100vh; overflow:hidden;
     }
-    canvas#matrix { position:fixed; inset:0; z-index:-1; opacity:0.16; }
+    canvas#matrix { position:fixed; inset:0; z-index:-1; opacity:0.18; }
 
-    /* Auth Screen */
     .auth-container {
       position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:50;
       background:rgba(5,5,5,0.98);
@@ -26,25 +25,21 @@
       box-shadow:0 0 60px var(--glow);
     }
     .auth-box h1 { font-size:3rem; letter-spacing:4px; text-shadow:0 0 25px var(--neon); animation:glitch 1.5s infinite alternate; }
-    .tab-switch { display:flex; margin:25px 0; border:1px solid var(--neon); border-radius:50px; overflow:hidden; }
-    .tab { flex:1; padding:14px; cursor:pointer; }
-    .tab.active { background:var(--neon); color:#000; }
 
-    /* Main App */
     .main-app { display:none; height:100vh; flex-direction:column; }
     .header { padding:16px 30px; display:flex; justify-content:space-between; border-bottom:1px solid rgba(0,255,65,0.3); background:rgba(5,5,5,0.95); }
     .nav { padding:12px 30px; display:flex; gap:12px; flex-wrap:wrap; border-bottom:1px solid rgba(0,255,65,0.2); background:rgba(5,5,5,0.95); }
-    .nav button { background:transparent; border:1px solid var(--neon); color:var(--neon); padding:10px 24px; border-radius:50px; cursor:pointer; }
+    .nav button { background:transparent; border:1px solid var(--neon); color:var(--neon); padding:10px 24px; border-radius:50px; cursor:pointer; transition:0.3s; }
     .nav button.active, .nav button:hover { background:var(--neon); color:#000; box-shadow:0 0 25px var(--glow); }
 
     .search-bar {
       margin:18px 30px; padding:18px 28px; width:calc(100% - 60px);
-      background:#000; border:1px solid var(--neon); border-radius:50px; color:var(--neon);
+      background:#000; border:1px solid var(--neon); border-radius:50px; color:var(--neon); font-family:inherit;
     }
 
     .nodes-grid {
-      flex:1; padding:0 30px 20px; overflow-y:auto;
-      display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:24px;
+      flex:1; padding:20px 30px; overflow-y:auto;
+      display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:24px;
     }
 
     .node-card {
@@ -55,10 +50,10 @@
       transform:translateY(-12px); border-color:var(--neon); box-shadow:0 0 40px var(--glow);
     }
 
-    .log { height:150px; background:#000; padding:12px 30px; overflow-y:auto; font-size:0.9rem; border-top:1px solid rgba(0,255,65,0.3); }
+    .log { height:160px; background:#000; padding:12px 30px; overflow-y:auto; font-size:0.9rem; border-top:1px solid rgba(0,255,65,0.3); }
 
     .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.96); z-index:100; align-items:center; justify-content:center; }
-    .modal-content { background:rgba(10,10,10,0.98); border:2px solid var(--neon); border-radius:16px; width:90%; max-width:540px; padding:35px; position:relative; }
+    .modal-content { background:rgba(10,10,10,0.98); border:2px solid var(--neon); border-radius:16px; width:90%; max-width:560px; padding:35px; }
 
     @keyframes glitch {
       0%,100% { text-shadow:2px 0 #00ff41, -2px 0 #ff00ff; }
@@ -70,28 +65,14 @@
 
   <canvas id="matrix"></canvas>
 
-  <!-- AUTH SCREEN -->
+  <!-- AUTH -->
   <div class="auth-container" id="authScreen">
     <div class="auth-box">
       <h1>ROOTDONATE</h1>
-      <p style="opacity:0.7;">GLOBAL INTERNET LOST & FOUND • 2026</p>
-
-      <div class="tab-switch">
-        <div class="tab active" onclick="switchTab(0)">LOGIN NODE</div>
-        <div class="tab" onclick="switchTab(1)">DEPLOY NODE</div>
-      </div>
-
-      <div id="loginForm">
-        <input type="text" id="nodeId" placeholder="NODE ID" value="RD-7842" style="width:100%;padding:14px;margin:10px 0;background:#000;border:1px solid var(--neon);color:var(--neon);">
-        <input type="password" id="pass" placeholder="PASSPHRASE" value="demo123" style="width:100%;padding:14px;margin:10px 0;background:#000;border:1px solid var(--neon);color:var(--neon);">
-        <button onclick="login()" style="width:100%;padding:16px;margin-top:15px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">CONNECT TO MESH</button>
-      </div>
-
-      <div id="signupForm" style="display:none;">
-        <input type="text" id="opName" placeholder="OPERATOR NAME" style="width:100%;padding:14px;margin:10px 0;background:#000;border:1px solid var(--neon);color:var(--neon);">
-        <input type="text" id="region" placeholder="CITY / REGION" style="width:100%;padding:14px;margin:10px 0;background:#000;border:1px solid var(--neon);color:var(--neon);">
-        <button onclick="deployNode()" style="width:100%;padding:16px;margin-top:15px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">DEPLOY NEW NODE</button>
-      </div>
+      <p style="opacity:0.7; margin:10px 0 30px;">GLOBAL INTERNET LOST & FOUND • 2026</p>
+      <button onclick="login()" style="width:100%;padding:18px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;font-size:1.1rem;">
+        CONNECT TO GLOBAL MESH
+      </button>
     </div>
   </div>
 
@@ -99,7 +80,7 @@
   <div class="main-app" id="mainApp">
     <div class="header">
       <h1>🔗 ROOTDONATE</h1>
-      <div id="stats">SCANNING INTERNET • 8,247 NODES</div>
+      <div id="stats">SCANNING INTERNET • <span id="nodeCount">0</span> NODES ONLINE</div>
     </div>
 
     <div class="nav">
@@ -115,14 +96,14 @@
     <div class="log" id="log"></div>
   </div>
 
-  <!-- Item Detail Modal -->
+  <!-- Detail Modal -->
   <div class="modal" id="itemModal">
     <div class="modal-content">
       <span onclick="closeItemModal()" style="position:absolute;top:15px;right:25px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
       <h2 id="modalName" style="color:#0f0;"></h2>
       <p id="modalLoc"></p>
       <p id="modalTime"></p>
-      <div class="share-url" id="shareUrl" style="background:#000;padding:12px;margin:15px 0;border:1px solid var(--neon);word-break:break-all;"></div>
+      <div id="shareUrl" style="background:#000;padding:12px;margin:15px 0;border:1px solid var(--neon);word-break:break-all;"></div>
       <button onclick="copyShareLink()" style="width:100%;padding:12px;border:2px solid var(--neon);background:transparent;color:var(--neon);">COPY SHARE LINK</button>
     </div>
   </div>
@@ -131,10 +112,10 @@
   <div class="modal" id="reportModal">
     <div class="modal-content">
       <span onclick="closeReportModal()" style="position:absolute;top:15px;right:25px;font-size:2.5rem;cursor:pointer;">×</span>
-      <h2 style="text-align:center;color:#0f0;">BROADCAST TO INTERNET</h2>
-      <input id="rName" placeholder="Item name" style="width:100%;padding:14px;margin:10px 0;background:#000;border:1px solid var(--neon);color:var(--neon);">
-      <input id="rLoc" placeholder="Last seen location" style="width:100%;padding:14px;margin:10px 0;background:#000;border:1px solid var(--neon);color:var(--neon);">
-      <textarea id="rDesc" rows="3" placeholder="Details..." style="width:100%;padding:14px;margin:10px 0;background:#000;border:1px solid var(--neon);color:var(--neon);"></textarea>
+      <h2 style="text-align:center;color:#0f0;">BROADCAST TO GLOBAL INTERNET</h2>
+      <input id="rName" placeholder="Item / Node name" style="width:100%;padding:14px;margin:10px 0;background:#000;border:1px solid var(--neon);color:var(--neon);">
+      <input id="rLoc" placeholder="Location / URL / IP" style="width:100%;padding:14px;margin:10px 0;background:#000;border:1px solid var(--neon);color:var(--neon);">
+      <textarea id="rDesc" rows="4" placeholder="Description / Details..." style="width:100%;padding:14px;margin:10px 0;background:#000;border:1px solid var(--neon);color:var(--neon);"></textarea>
       <button onclick="submitReport()" style="width:100%;padding:16px;margin-top:10px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">SEND TO GLOBAL MESH</button>
     </div>
   </div>
@@ -144,45 +125,54 @@
     const canvas = document.getElementById('matrix');
     const ctx = canvas.getContext('2d');
     let drops = [];
-    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; drops = Array(Math.floor(canvas.width/14)).fill(1); }
-    window.addEventListener('resize', resize); resize();
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      drops = Array(Math.floor(canvas.width/14)).fill(1);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
     function rain() {
-      ctx.fillStyle = 'rgba(5,5,5,0.08)';
+      ctx.fillStyle = 'rgba(5,5,5,0.1)';
       ctx.fillRect(0,0,canvas.width,canvas.height);
       ctx.fillStyle = '#00ff41';
       ctx.font = '14px monospace';
       for(let i=0; i<drops.length; i++) {
-        ctx.fillText('01アイウエオ0123456789$@#'.charAt(Math.random()*25|0), i*14, drops[i]*14);
-        if(drops[i]*14 > canvas.height && Math.random()>0.975) drops[i]=0;
+        const text = '01アイウエオ0123456789$@#%&*'.charAt(Math.random()*25|0);
+        ctx.fillText(text, i*14, drops[i]*14);
+        if(drops[i]*14 > canvas.height && Math.random() > 0.975) drops[i] = 0;
         drops[i]++;
       }
     }
     setInterval(rain, 35);
 
-    let allNodes = JSON.parse(localStorage.getItem('rd_nodes')) || [];
+    let allNodes = [];
     let currentItem = null;
 
     function log(msg) {
       const el = document.getElementById('log');
-      const time = new Date().toLocaleTimeString([], {hour12:false}).slice(0,8);
+      const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
       el.innerHTML += `<span style="opacity:0.5">[${time}]</span> ${msg}<br>`;
       el.scrollTop = el.scrollHeight;
     }
 
     function generateShareUrl(node) {
       const data = btoa(JSON.stringify(node)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
-      return window.location.href.split('#')[0] + '#node=' + data;
+      return window.location.origin + window.location.pathname + '#node=' + data;
     }
 
     function renderNodes(filtered = allNodes) {
       const grid = document.getElementById('grid');
       grid.innerHTML = '';
+      document.getElementById('nodeCount').textContent = filtered.length;
+
       filtered.forEach(item => {
         const card = document.createElement('div');
         card.className = 'node-card';
         card.innerHTML = `
           <div style="font-size:0.8rem;opacity:0.7;">#${item.id} • ${item.source}</div>
-          <h3 style="margin:8px 0;">${item.name}</h3>
+          <h3 style="margin:8px 0 6px;">${item.name}</h3>
           <p>📍 ${item.loc}</p>
           <p>${item.time} • <span style="color:#0f0">${item.status}</span></p>
         `;
@@ -197,102 +187,118 @@
       document.getElementById('modalLoc').innerHTML = `📍 ${item.loc}`;
       document.getElementById('modalTime').textContent = item.time;
       const url = generateShareUrl(item);
-      document.getElementById('shareUrl').innerHTML = `<strong>SHARE LINK:</strong><br><a href="${url}" target="_blank" style="color:var(--neon);word-break:break-all;">${url}</a>`;
+      document.getElementById('shareUrl').innerHTML = `<strong>SHARE LINK:</strong><br><a href="${url}" target="_blank" style="color:var(--neon);">${url}</a>`;
       document.getElementById('itemModal').style.display = 'flex';
     }
 
     function copyShareLink() {
-      if(!currentItem) return;
+      if (!currentItem) return;
       navigator.clipboard.writeText(generateShareUrl(currentItem));
-      alert("✅ Share link copied!");
+      alert("✅ Share link copied to clipboard!");
     }
 
-    function closeItemModal() { document.getElementById('itemModal').style.display = 'none'; }
+    function closeItemModal() {
+      document.getElementById('itemModal').style.display = 'none';
+    }
 
+    // Simulate real internet scanning
     async function fetchInternetSources() {
-      log("🌐 SCANNING PUBLIC INTERNET SOURCES...");
-      // Add seed data + public API
-      const seed = [ /* same as before */ ];
-      // ... (you can copy the seed from previous version)
-      renderNodes();
+      log("🌐 INITIALIZING GLOBAL SCAN...");
+      
+      const sources = [
+        "Tor Exit Node • DE", "Public Webcam • Tokyo", "Lost Phone • NYC", "Open IoT Device • Brazil",
+        "GitHub Leak • RU", "Dark Web Mirror • Unknown", "Satellite Feed • Pacific", "5G Mesh • Berlin"
+      ];
+
+      for (let i = 0; i < 18; i++) {
+        await new Promise(r => setTimeout(r, 180));
+        const newNode = {
+          id: `RD-${1000 + Math.floor(Math.random()*8999)}`,
+          name: ["Lost Drone", "Found Wallet", "Exposed Server", "Abandoned Laptop", "Mysterious Package", "Open Security Cam"][Math.floor(Math.random()*6)],
+          loc: sources[Math.floor(Math.random()*sources.length)],
+          time: new Date(Date.now() - Math.random()*86400000*3).toLocaleString(),
+          status: Math.random() > 0.7 ? "ACTIVE" : "PINGING",
+          source: "PUBLIC MESH"
+        };
+        allNodes.unshift(newNode);
+        renderNodes();
+        log(`📡 NEW NODE DETECTED → ${newNode.name}`);
+      }
+      log("✅ GLOBAL SCAN COMPLETE — 18 NEW NODES FOUND");
     }
 
     function login() {
       document.getElementById('authScreen').style.display = 'none';
       document.getElementById('mainApp').style.display = 'flex';
-      log("🔓 NODE CONNECTED TO GLOBAL MESH");
+      log("🔓 CONNECTED TO GLOBAL ROOTDONATE MESH");
       fetchInternetSources();
     }
 
-    function deployNode() {
-      alert("🛰️ New node deployed successfully!");
-      login();
-    }
-
     function logout() {
-      if(confirm("Disconnect from mesh?")) {
+      if (confirm("Disconnect from the mesh?")) {
         document.getElementById('mainApp').style.display = 'none';
         document.getElementById('authScreen').style.display = 'flex';
+        allNodes = [];
       }
     }
 
-    function switchTab(n) {
-      document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', i===n));
-      document.getElementById('loginForm').style.display = n===0 ? 'block' : 'none';
-      document.getElementById('signupForm').style.display = n===1 ? 'block' : 'none';
+    function showReportModal() {
+      document.getElementById('reportModal').style.display = 'flex';
     }
 
-    function showReportModal() { document.getElementById('reportModal').style.display = 'flex'; }
-    function closeReportModal() { document.getElementById('reportModal').style.display = 'none'; }
+    function closeReportModal() {
+      document.getElementById('reportModal').style.display = 'none';
+    }
 
     function submitReport() {
       const name = document.getElementById('rName').value.trim();
       const loc = document.getElementById('rLoc').value.trim();
-      if(!name || !loc) return alert("Please fill item and location");
+      if (!name || !loc) return alert("Name and location required");
 
       const newItem = {
         id: `RD-${1000 + Math.floor(Math.random()*9000)}`,
         name: name,
         loc: loc,
         time: "Just now",
-        status: "ACTIVE",
-        source: "YOUR REPORT"
+        status: "BROADCAST",
+        source: "USER REPORT"
       };
+
       allNodes.unshift(newItem);
-      localStorage.setItem('rd_nodes', JSON.stringify(allNodes));
       renderNodes();
       closeReportModal();
-      log("🚨 REPORT BROADCAST TO INTERNET");
+      log("🚨 REPORT BROADCAST SUCCESSFULLY TO GLOBAL INTERNET");
     }
 
     function filterNodes() {
       const q = document.getElementById('searchInput').value.toLowerCase();
-      const filtered = allNodes.filter(n => n.name.toLowerCase().includes(q) || n.loc.toLowerCase().includes(q));
+      const filtered = allNodes.filter(n => 
+        n.name.toLowerCase().includes(q) || 
+        n.loc.toLowerCase().includes(q)
+      );
       renderNodes(filtered);
     }
 
     function setTab(n) {
-      document.querySelectorAll('.nav button').forEach((b,i)=>b.classList.toggle('active',i===n));
+      document.querySelectorAll('.nav button').forEach((b, i) => b.classList.toggle('active', i === n));
     }
 
     // Deep link support
     function handleDeepLink() {
       const hash = window.location.hash;
-      if(hash.includes('#node=')) {
+      if (hash.includes('#node=')) {
         try {
-          const data = hash.split('#node=')[1];
+          let data = hash.split('#node=')[1];
           let b64 = data.replace(/-/g,'+').replace(/_/g,'/');
-          while(b64.length % 4) b64 += '=';
+          while (b64.length % 4) b64 += '=';
           const item = JSON.parse(atob(b64));
           login();
-          setTimeout(() => showItemDetail(item), 600);
+          setTimeout(() => showItemDetail(item), 800);
         } catch(e) {}
       }
     }
 
-    window.onload = () => {
-      handleDeepLink();
-    };
+    window.onload = handleDeepLink;
   </script>
 </body>
 </html>
