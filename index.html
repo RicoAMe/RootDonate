@@ -161,7 +161,7 @@
     function copyShareLink() {
       if (!currentItem) return;
       navigator.clipboard.writeText(generateShareUrl(currentItem));
-      alert("✅ Link copied!");
+      alert("✅ Individual page link copied!");
     }
 
     function closeItemModal() { document.getElementById('itemModal').style.display = 'none'; }
@@ -185,7 +185,6 @@
         log(`📡 NEW NODE → ${newNode.name}`);
       }
       log("✅ GLOBAL SCAN COMPLETE");
-      handleDirectLink();
     }
 
     function showReportModal() { document.getElementById('reportModal').style.display = 'flex'; }
@@ -211,23 +210,30 @@
       document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n));
     }
 
-    // Strong Direct Link Handler
+    // Strong Direct Link Handler (runs continuously until success)
     function handleDirectLink() {
       const nodeId = new URLSearchParams(location.search).get('node');
       if (!nodeId) return;
 
-      const tryOpen = () => {
+      let attempts = 0;
+      const interval = setInterval(() => {
+        attempts++;
         const item = allNodes.find(n => n.id === nodeId);
         if (item) {
           showItemDetail(item);
-        } else if (allNodes.length < 5) {
-          setTimeout(tryOpen, 400);
+          clearInterval(interval);
+        } else if (attempts > 25) {  // Stop after ~10 seconds
+          clearInterval(interval);
+          log(`⚠️ Node ${nodeId} not found`);
         }
-      };
-      tryOpen();
+      }, 300);
     }
 
-    window.onload = startGlobalScan;
+    // Auto Start
+    window.onload = () => {
+      startGlobalScan();
+      setTimeout(handleDirectLink, 500);   // Give scan a small head start
+    };
   </script>
 </body>
 </html>
