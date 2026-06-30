@@ -95,6 +95,7 @@
   </div>
 
   <script>
+    // Matrix Rain
     const canvas = document.getElementById('matrix');
     const ctx = canvas.getContext('2d');
     let drops = [];
@@ -124,8 +125,9 @@
       el.scrollTop = el.scrollHeight;
     }
 
+    // Shortest Share URL using hash
     function generateShareUrl(node) {
-      return `${location.origin}${location.pathname}?node=${node.id}`;
+      return `${location.origin}${location.pathname}#${node.id}`;
     }
 
     function renderNodes(filtered = allNodes) {
@@ -160,7 +162,7 @@
     function copyShareLink() {
       if (!currentItem) return;
       navigator.clipboard.writeText(generateShareUrl(currentItem));
-      alert("✅ Individual page link copied!");
+      alert("✅ Short link copied!");
     }
 
     function closeItemModal() { document.getElementById('itemModal').style.display = 'none'; }
@@ -209,13 +211,13 @@
       document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n));
     }
 
-    // Direct Link Handler
+    // Direct Link Handler for short hash (#RD-XXXX)
     function handleDirectLink() {
-      const nodeId = new URLSearchParams(location.search).get('node');
-      if (!nodeId) return;
+      const hash = location.hash.slice(1); // remove #
+      if (!hash) return;
 
       const interval = setInterval(() => {
-        const item = allNodes.find(n => n.id === nodeId);
+        const item = allNodes.find(n => n.id === hash);
         if (item) {
           showItemDetail(item);
           clearInterval(interval);
@@ -225,7 +227,7 @@
 
     window.onload = () => {
       startGlobalScan();
-      setTimeout(handleDirectLink, 1000); // Give scan time to start
+      setTimeout(handleDirectLink, 800);
     };
   </script>
 </body>
