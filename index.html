@@ -136,11 +136,6 @@
       padding: 35px;
       position: relative;
     }
-
-    @keyframes glitch {
-      0%,100% { text-shadow: 2px 0 #00ff41, -2px 0 #ff00ff; }
-      50% { text-shadow: -3px 0 #00ff41, 3px 0 #00ffff; }
-    }
   </style>
 </head>
 <body>
@@ -301,6 +296,9 @@
         log(`📡 NEW NODE DETECTED → ${newNode.name}`);
       }
       log("✅ GLOBAL SCAN COMPLETE — NODES LIVE");
+
+      // Check for direct link AFTER scan is complete
+      handleDirectLink();
     }
 
     function showReportModal() { document.getElementById('reportModal').style.display = 'flex'; }
@@ -338,20 +336,23 @@
       document.querySelectorAll('.nav button').forEach((b, i) => b.classList.toggle('active', i === n));
     }
 
-    // Handle ?node=ID direct link
+    // Handle direct link ?node=ID
     function handleDirectLink() {
       const params = new URLSearchParams(window.location.search);
       const nodeId = params.get('node');
       if (nodeId) {
         const item = allNodes.find(n => n.id === nodeId);
-        if (item) setTimeout(() => showItemDetail(item), 600);
+        if (item) {
+          setTimeout(() => showItemDetail(item), 300);
+        } else {
+          log(`⚠️ Node ${nodeId} not found`);
+        }
       }
     }
 
     // Auto Start
     window.onload = () => {
       startGlobalScan();
-      handleDirectLink();
     };
   </script>
 </body>
