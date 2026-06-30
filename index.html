@@ -125,7 +125,7 @@
       el.scrollTop = el.scrollHeight;
     }
 
-    // Shortest Share URL using hash
+    // Shortest Share URL
     function generateShareUrl(node) {
       return `${location.origin}${location.pathname}#${node.id}`;
     }
@@ -162,7 +162,7 @@
     function copyShareLink() {
       if (!currentItem) return;
       navigator.clipboard.writeText(generateShareUrl(currentItem));
-      alert("✅ Short link copied!");
+      alert("✅ Short individual link copied!");
     }
 
     function closeItemModal() { document.getElementById('itemModal').style.display = 'none'; }
@@ -211,9 +211,9 @@
       document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n));
     }
 
-    // Direct Link Handler for short hash (#RD-XXXX)
+    // Direct Link Handler for short hash
     function handleDirectLink() {
-      const hash = location.hash.slice(1); // remove #
+      const hash = location.hash.slice(1);
       if (!hash) return;
 
       const interval = setInterval(() => {
@@ -222,12 +222,12 @@
           showItemDetail(item);
           clearInterval(interval);
         }
-      }, 250);
+      }, 200);
     }
 
     window.onload = () => {
       startGlobalScan();
-      setTimeout(handleDirectLink, 800);
+      setTimeout(handleDirectLink, 600);
     };
   </script>
 </body>
