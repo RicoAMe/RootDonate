@@ -210,29 +210,23 @@
       document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n));
     }
 
-    // Strong Direct Link Handler (runs continuously until success)
+    // Direct Link Handler - Runs repeatedly until node is found
     function handleDirectLink() {
       const nodeId = new URLSearchParams(location.search).get('node');
       if (!nodeId) return;
 
-      let attempts = 0;
-      const interval = setInterval(() => {
-        attempts++;
+      const check = setInterval(() => {
         const item = allNodes.find(n => n.id === nodeId);
         if (item) {
           showItemDetail(item);
-          clearInterval(interval);
-        } else if (attempts > 25) {  // Stop after ~10 seconds
-          clearInterval(interval);
-          log(`⚠️ Node ${nodeId} not found`);
+          clearInterval(check);
         }
-      }, 300);
+      }, 250);
     }
 
-    // Auto Start
     window.onload = () => {
       startGlobalScan();
-      setTimeout(handleDirectLink, 500);   // Give scan a small head start
+      setTimeout(handleDirectLink, 800); // Small delay for scan to begin
     };
   </script>
 </body>
