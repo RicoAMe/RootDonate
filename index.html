@@ -12,11 +12,7 @@
       --bg: #0a0a0a; 
       --card: rgba(20,20,15,0.95); 
     }
-    * { 
-      margin: 0; 
-      padding: 0; 
-      box-sizing: border-box; 
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Courier New', monospace; 
       background: var(--bg); 
@@ -156,12 +152,8 @@
     }
 
     @media (max-width: 480px) {
-      .nodes-grid { 
-        grid-template-columns: 1fr; 
-      }
-      .header h1 { 
-        font-size: 1.35rem; 
-      }
+      .nodes-grid { grid-template-columns: 1fr; }
+      .header h1 { font-size: 1.35rem; }
     }
   </style>
 </head>
@@ -279,6 +271,7 @@
       try {
         return JSON.parse(decodeURIComponent(escape(atob(str))));
       } catch(e) { 
+        console.error("Invalid share link");
         return null; 
       }
     }
@@ -417,7 +410,7 @@
     }
 
     function filterNodes() {
-      const q = document.getElementById('searchInput').value.toLowerCase();
+      const q = document.getElementById('searchInput').value.toLowerCase().trim();
       const filtered = allNodes.filter(n => 
         n.name.toLowerCase().includes(q) || 
         n.loc.toLowerCase().includes(q)
@@ -441,7 +434,7 @@
       }
     }
 
-    // Auto-start scan on load
+    // Auto-start
     window.onload = () => {
       startGlobalScan();
       setTimeout(handleBase64Link, 800);
