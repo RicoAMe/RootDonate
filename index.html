@@ -33,7 +33,7 @@
       border-bottom: 1px solid rgba(255,215,0,0.3);
       background: rgba(10,10,10,0.98);
     }
-    .header h1 { font-size: 1.5rem; letter-spacing: 3px; text-shadow: 0 0 15px var(--neon); }
+    .header h1 { font-size: 1.55rem; letter-spacing: 3px; text-shadow: 0 0 15px var(--neon); }
 
     .learn-btn {
       padding: 8px 16px;
@@ -74,7 +74,8 @@
       cursor: pointer;
       transition: all 0.3s;
     }
-    .nav button.active, .nav button:hover {
+    .nav button.active,
+    .nav button:hover {
       background: var(--neon);
       color: #000;
       box-shadow: 0 0 25px var(--glow);
@@ -180,9 +181,10 @@
   <canvas id="matrix"></canvas>
 
   <div class="header">
-    <h1>🌐 ROOT DONATE <span style="font-size:0.75rem;opacity:0.7;"></span></h1>
+    <h1>🌐 ROOT DONATE</h1>
     <div style="display:flex; align-items:center; gap:12px;">
       <button class="learn-btn" onclick="toggleLearnMode()">📖 LEARN MODE</button>
+      
       <div id="userSection" style="display:none;">
         <div class="user-info" onclick="showProfile()">
           <div id="avatar" class="avatar">👤</div>
@@ -192,6 +194,7 @@
           </div>
         </div>
       </div>
+      
       <button onclick="showAuthModal()" id="authBtn"
               style="padding:8px 20px; border:1px solid var(--neon); background:transparent; color:var(--neon); border-radius:50px;">
         <i class="fas fa-user"></i> LOGIN
@@ -272,26 +275,11 @@
   </div>
 
   <div class="decentralised-badge">
-    <i class="fas fa-globe"></i> OPEN SOURCE • CLIENT-SIDE • LEARNING LAB
+    <i class="fas fa-globe"></i> OPEN SOURCE • CLIENT-SIDE ONLY
   </div>
 
   <script>
-    /* ================================================================
-       SOCIAL NODE LEARNING LAB
-       ================================================================
-       This project teaches you how to build a basic decentralized 
-       social network node using only HTML, CSS, and JavaScript.
-
-       Key Concepts You Will Learn:
-       • User Identity System (Sign Up / Login)
-       • Content Creation & Broadcasting
-       • Local Persistence (localStorage)
-       • Simulated P2P Mesh (Auto Scan)
-       • Shareable Decentralized Links
-       • Client-side Architecture
-    ================================================================ */
-
-    // === MATRIX BACKGROUND ===
+    // Matrix Rain Background
     const canvas = document.getElementById('matrix');
     const ctx = canvas.getContext('2d');
     let drops = [];
@@ -318,11 +306,10 @@
     }
     setInterval(drawMatrix, 40);
 
-    // === APP STATE ===
+    // App State
     let allNodes = [];
     let currentUser = null;
     let currentItem = null;
-    let learnMode = false;
 
     const logEl = document.getElementById('log');
     function log(msg) {
@@ -332,26 +319,10 @@
     }
 
     function toggleLearnMode() {
-      learnMode = !learnMode;
-      alert(learnMode ? 
-        "📖 LEARN MODE ENABLED\n\n    /* ================================================================
-       SOCIAL NODE LEARNING LAB
-       ================================================================
-       This project teaches you how to build a basic decentralized 
-       social network node using only HTML, CSS, and JavaScript.
-
-       Key Concepts You Will Learn:
-       • User Identity System (Sign Up / Login)
-       • Content Creation & Broadcasting
-       • Local Persistence (localStorage)
-       • Simulated P2P Mesh (Auto Scan)
-       • Shareable Decentralized Links
-       • Client-side Architecture
-    ================================================================ */" : 
-        "📖 Learn Mode Disabled");
+      alert("📖 This is a learning lab for building a decentralized social node.\n\nKey concepts:\n• User Identity\n• Content Broadcasting\n• Simulated P2P Mesh\n• Shareable Links\n• Client-side only");
     }
 
-    // === SHAREABLE LINKS ===
+    // Shareable Links
     function toBase64Url(obj) {
       const str = btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
       return str.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -368,7 +339,7 @@
       return `${location.origin}${location.pathname}#${toBase64Url(minimal)}`;
     }
 
-    // === RENDER SOCIAL FEED ===
+    // Render Feed
     function renderNodes(filtered = allNodes) {
       const grid = document.getElementById('grid');
       grid.innerHTML = '';
@@ -398,19 +369,19 @@
       document.getElementById('modalMint').textContent = item.mint || 'Unknown';
 
       const url = generateShareUrl(item);
-      document.getElementById('shareUrl').innerHTML = `<strong>DECENTRALISED LINK:</strong><br><a href="${url}" target="_blank" style="color:var(--neon);">${url}</a>`;
+      document.getElementById('shareUrl').innerHTML = `<strong>DECENTRALISED LINK:</strong><br><a href="${url}" target="_blank" style="color:var(--neon);word-break:break-all;">${url}</a>`;
       document.getElementById('itemModal').style.display = 'flex';
     }
 
     function copyShareLink() {
       if (!currentItem) return;
       navigator.clipboard.writeText(generateShareUrl(currentItem));
-      alert("✅ Decentralised link copied to clipboard!");
+      alert("✅ Decentralised link copied!");
     }
 
     function closeItemModal() { document.getElementById('itemModal').style.display = 'none'; }
 
-    // === USER IDENTITY (Social Login) ===
+    // Auth System
     function showAuthModal() {
       document.getElementById('authModal').style.display = 'flex';
       switchAuthTab(0);
@@ -463,7 +434,7 @@
       if (currentUser) alert(`🪙 ${currentUser.handle}\nJoined: ${currentUser.joined}\n\nMesh Reputation: LEGEND`);
     }
 
-    // === BROADCAST CONTENT ===
+    // Report / Broadcast
     function showReportModal() { document.getElementById('reportModal').style.display = 'flex'; }
     function closeReportModal() { document.getElementById('reportModal').style.display = 'none'; }
 
@@ -514,7 +485,7 @@
       }
     }
 
-    // === SIMULATED P2P AUTO SCAN ===
+    // Sample Data & Auto Scan
     const sampleData = [
       { name: "1909-S VDB Lincoln Cent", loc: "San Francisco Mint", value: "$1,250", icon: "🪙", mint: "USA" },
       { name: "1921 Morgan Silver Dollar", loc: "Peace Treaty Era", value: "$850", icon: "🌕", mint: "USA" },
@@ -541,7 +512,7 @@
       log("✅ MESH SYNCHRONISED • FULLY DECENTRALISED");
     }
 
-    // === INITIALIZATION ===
+    // Init
     window.onload = () => {
       const saved = localStorage.getItem('rootDonateUser');
       if (saved) {
@@ -559,7 +530,7 @@
         }
       }, 800);
 
-      log("🔓 ROOT DONATE SOCIAL NODE LEARNING LAB STARTED");
+      log("🔓 ROOT DONATE SOCIAL NODE STARTED");
     };
   </script>
 </body>
