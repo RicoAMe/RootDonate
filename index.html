@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>ROOT DONATE • SOCIAL NODE LEARNING LAB</title>
+  <title>ROOT DONATE • SOCIAL NODE</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
     :root {
@@ -180,7 +180,7 @@
   <canvas id="matrix"></canvas>
 
   <div class="header">
-    <h1>🌐 ROOT DONATE <span style="font-size:0.75rem;opacity:0.7;">SOCIAL NODE LAB</span></h1>
+    <h1>🌐 ROOT DONATE <span style="font-size:0.75rem;opacity:0.7;"></span></h1>
     <div style="display:flex; align-items:center; gap:12px;">
       <button class="learn-btn" onclick="toggleLearnMode()">📖 LEARN MODE</button>
       <div id="userSection" style="display:none;">
@@ -334,7 +334,20 @@
     function toggleLearnMode() {
       learnMode = !learnMode;
       alert(learnMode ? 
-        "📖 LEARN MODE ENABLED\n\nRead the big comment block in the <script> section.\nThis lab teaches real social node concepts!" : 
+        "📖 LEARN MODE ENABLED\n\n    /* ================================================================
+       SOCIAL NODE LEARNING LAB
+       ================================================================
+       This project teaches you how to build a basic decentralized 
+       social network node using only HTML, CSS, and JavaScript.
+
+       Key Concepts You Will Learn:
+       • User Identity System (Sign Up / Login)
+       • Content Creation & Broadcasting
+       • Local Persistence (localStorage)
+       • Simulated P2P Mesh (Auto Scan)
+       • Shareable Decentralized Links
+       • Client-side Architecture
+    ================================================================ */" : 
         "📖 Learn Mode Disabled");
     }
 
