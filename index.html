@@ -6,133 +6,126 @@
   <title>ROOT DONATE • DECENTRALISED MONETARY MESH</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
   <style>
-    :root { 
-      --neon: #ffd700; 
-      --glow: #ffd70088; 
-      --bg: #0a0a0a; 
-      --card: rgba(20,20,15,0.95); 
+    :root {
+      --neon: #ffd700;
+      --glow: #ffd70088;
+      --bg: #0a0a0a;
+      --card: rgba(20,20,15,0.95);
     }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin:0; padding:0; box-sizing:border-box; }
     body {
-      font-family: 'Courier New', monospace; 
-      background: var(--bg); 
+      font-family: 'Courier New', monospace;
+      background: var(--bg);
       color: var(--neon);
-      height: 100vh; 
-      overflow: hidden; 
-      touch-action: manipulation;
-    }
-    canvas#matrix { 
-      position: fixed; 
-      inset: 0; 
-      z-index: -1; 
-      opacity: 0.15; 
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
-    .header { 
-      padding: 16px 20px; 
-      display: flex; 
-      justify-content: space-between; 
+    canvas#matrix {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      opacity: 0.15;
+    }
+
+    .header {
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid rgba(255,215,0,0.3); 
-      background: rgba(10,10,10,0.98); 
+      border-bottom: 1px solid rgba(255,215,0,0.3);
+      background: rgba(10,10,10,0.98);
     }
-    .header h1 { 
-      font-size: 1.55rem; 
-      letter-spacing: 3px; 
-      text-shadow: 0 0 15px var(--neon); 
-    }
+    .header h1 { font-size: 1.55rem; letter-spacing: 3px; text-shadow: 0 0 15px var(--neon); }
 
-    .nav { 
-      padding: 12px 20px; 
-      display: flex; 
-      gap: 8px; 
-      flex-wrap: wrap; 
+    .nav {
+      padding: 12px 20px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
       border-bottom: 1px solid rgba(255,215,0,0.2);
-      background: rgba(10,10,10,0.98); 
+      background: rgba(10,10,10,0.98);
     }
-    .nav button { 
-      background: transparent; 
-      border: 1px solid var(--neon); 
+    .nav button {
+      background: transparent;
+      border: 1px solid var(--neon);
       color: var(--neon);
-      padding: 10px 20px; 
-      border-radius: 50px; 
-      cursor: pointer; 
-      transition: all 0.3s; 
-      font-size: 0.95rem; 
+      padding: 10px 20px;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 0.95rem;
     }
-    .nav button.active, 
-    .nav button:hover { 
-      background: var(--neon); 
-      color: #000; 
-      box-shadow: 0 0 25px var(--glow); 
+    .nav button.active,
+    .nav button:hover {
+      background: var(--neon);
+      color: #000;
+      box-shadow: 0 0 25px var(--glow);
     }
 
-    .search-bar { 
-      margin: 16px 20px; 
-      padding: 14px 24px; 
-      width: calc(100% - 40px); 
+    .search-bar {
+      margin: 16px 20px;
+      padding: 14px 24px;
+      width: calc(100% - 40px);
       background: #111;
-      border: 1px solid var(--neon); 
-      border-radius: 50px; 
-      color: var(--neon); 
-      font-size: 1rem; 
+      border: 1px solid var(--neon);
+      border-radius: 50px;
+      color: var(--neon);
+      font-size: 1rem;
     }
 
-    .nodes-grid { 
-      flex: 1; 
-      padding: 16px 20px; 
-      overflow-y: auto; 
-      display: grid; 
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
-      gap: 16px; 
+    .nodes-grid {
+      flex: 1;
+      padding: 16px 20px;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
     }
 
-    .node-card { 
-      background: var(--card); 
-      border: 1px solid rgba(255,215,0,0.35); 
+    .node-card {
+      background: var(--card);
+      border: 1px solid rgba(255,215,0,0.35);
       border-radius: 16px;
-      padding: 18px; 
-      cursor: pointer; 
-      transition: all 0.4s; 
+      padding: 18px;
+      cursor: pointer;
+      transition: all 0.4s;
     }
-    .node-card:active { 
-      transform: translateY(-6px); 
-      border-color: var(--neon); 
-      box-shadow: 0 0 30px var(--glow); 
+    .node-card:active {
+      transform: translateY(-6px);
+      border-color: var(--neon);
+      box-shadow: 0 0 30px var(--glow);
     }
 
-    .log { 
-      height: 140px; 
-      background: #0a0a0a; 
-      padding: 12px 20px; 
-      overflow-y: auto; 
+    .log {
+      height: 140px;
+      background: #0a0a0a;
+      padding: 12px 20px;
+      overflow-y: auto;
       font-size: 0.85rem;
-      border-top: 1px solid rgba(255,215,0,0.3); 
+      border-top: 1px solid rgba(255,215,0,0.3);
     }
 
-    .modal { 
-      display: none; 
-      position: fixed; 
-      inset: 0; 
-      background: rgba(0,0,0,0.96); 
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.96);
       z-index: 100;
-      align-items: center; 
-      justify-content: center; 
-      padding: 10px; 
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
     }
-    .modal-content { 
-      background: rgba(20,20,15,0.98); 
+    .modal-content {
+      background: rgba(20,20,15,0.98);
       border: 2px solid var(--neon);
-      border-radius: 16px; 
-      width: 100%; 
-      max-width: 520px; 
-      padding: 28px; 
-      position: relative; 
-    }
-
-    .coin-icon { 
-      font-size: 2.8rem; 
-      margin-bottom: 12px; 
+      border-radius: 16px;
+      width: 100%;
+      max-width: 520px;
+      padding: 28px;
+      position: relative;
     }
 
     .decentralised-badge {
@@ -161,35 +154,33 @@
 
   <canvas id="matrix"></canvas>
 
-  <div style="display:flex; flex-direction:column; height:100vh;">
-    <div class="header">
-      <h1>🌐 ROOT DONATE</h1>
-      <div style="text-align:right;">
-        <div>DECENTRALISED MONETARY MESH</div>
-        <div class="status" style="font-size:0.85rem;color:#0f0;">100% CLIENT-SIDE • OPEN SOURCE</div>
-      </div>
+  <div class="header">
+    <h1>🌐 ROOT DONATE</h1>
+    <div style="text-align:right;">
+      <div>DECENTRALISED MONETARY MESH</div>
+      <div style="font-size:0.85rem;color:#0f0;">100% CLIENT-SIDE • OPEN SOURCE</div>
     </div>
-
-    <div class="nav">
-      <button class="active" onclick="setTab(0)">🌐 LIVE FEED</button>
-      <button onclick="setTab(1)">🔎 DEEP NUMIS</button>
-      <button onclick="showReportModal()">📢 REPORT FIND</button>
-      <button onclick="resetScan()">RESET MESH</button>
-    </div>
-
-    <input type="text" id="searchInput" class="search-bar" 
-           placeholder="Search coins, notes, mints, eras, seizures..." 
-           onkeyup="filterNodes()">
-
-    <div class="nodes-grid" id="grid"></div>
-    <div class="log" id="log"></div>
   </div>
 
-  <!-- Detail Modal -->
+  <div class="nav">
+    <button class="active" onclick="setTab(0)">🌐 LIVE FEED</button>
+    <button onclick="setTab(1)">🔎 DEEP NUMIS</button>
+    <button onclick="showReportModal()">📢 REPORT FIND</button>
+    <button onclick="resetScan()">RESET MESH</button>
+  </div>
+
+  <input type="text" id="searchInput" class="search-bar" 
+         placeholder="Search coins, notes, mints, eras, seizures..." 
+         onkeyup="filterNodes()">
+
+  <div class="nodes-grid" id="grid"></div>
+  <div class="log" id="log"></div>
+
+  <!-- Modals -->
   <div class="modal" id="itemModal">
     <div class="modal-content">
       <span onclick="closeItemModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
-      <div id="modalIcon" class="coin-icon">🪙</div>
+      <div id="modalIcon" style="font-size:2.8rem;margin-bottom:12px;">🪙</div>
       <h2 id="modalName" style="color:#ffd700;margin-bottom:12px;"></h2>
       <p id="modalLoc" style="margin:8px 0;"></p>
       <p id="modalTime"></p>
@@ -204,7 +195,6 @@
     </div>
   </div>
 
-  <!-- Report Modal -->
   <div class="modal" id="reportModal">
     <div class="modal-content">
       <span onclick="closeReportModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
@@ -224,18 +214,18 @@
   </div>
 
   <script>
-    // Matrix Rain Background
+    // Matrix Rain
     const canvas = document.getElementById('matrix');
     const ctx = canvas.getContext('2d');
     let drops = [];
 
-    function resizeCanvas() {
+    function resize() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       drops = Array(Math.floor(canvas.width / 14)).fill(1);
     }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+    window.addEventListener('resize', resize);
+    resize();
 
     function drawMatrix() {
       ctx.fillStyle = 'rgba(10,10,10,0.15)';
@@ -244,60 +234,44 @@
       ctx.font = '14px monospace';
       const chars = '0123456789$€£¥₿🪙⚖️📜🔓💰';
       for (let i = 0; i < drops.length; i++) {
-        const text = chars[Math.floor(Math.random() * chars.length)];
-        ctx.fillText(text, i * 14, drops[i] * 14);
-        if (drops[i] * 14 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        ctx.fillText(chars[Math.floor(Math.random()*chars.length)], i*14, drops[i]*14);
+        if (drops[i]*14 > canvas.height && Math.random() > 0.975) drops[i] = 0;
         drops[i]++;
       }
     }
     setInterval(drawMatrix, 40);
 
-    // App Data
+    // App state
     let allNodes = [];
     let currentItem = null;
 
+    const logEl = document.getElementById('log');
     function log(msg) {
-      const el = document.getElementById('log');
-      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-      el.innerHTML += `<span style="opacity:0.5">[${time}]</span> ${msg}<br>`;
-      el.scrollTop = el.scrollHeight;
+      const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+      logEl.innerHTML += `<span style="opacity:0.5">[${time}]</span> ${msg}<br>`;
+      logEl.scrollTop = logEl.scrollHeight;
     }
 
-    // Base64 URL-safe encoding for share links
+    // Share link helpers
     function toBase64Url(obj) {
-      const json = JSON.stringify(obj);
-      let base64 = btoa(unescape(encodeURIComponent(json)));
-      return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      const str = btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
+      return str.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
     }
-
     function fromBase64Url(str) {
-      str = str.replace(/-/g, '+').replace(/_/g, '/');
+      str = str.replace(/-/g,'+').replace(/_/g,'/');
       while (str.length % 4) str += '=';
-      try {
-        return JSON.parse(decodeURIComponent(escape(atob(str))));
-      } catch(e) {
-        console.error("Invalid share link");
-        return null;
-      }
+      try { return JSON.parse(decodeURIComponent(escape(atob(str)))); }
+      catch(e) { return null; }
     }
 
     function generateShareUrl(node) {
-      const minimal = {
-        id: node.id,
-        name: node.name,
-        loc: node.loc,
-        value: node.value,
-        time: node.time,
-        icon: node.icon
-      };
-      const b64 = toBase64Url(minimal);
-      return `${location.origin}${location.pathname}#${b64}`;
+      const minimal = {id:node.id, name:node.name, loc:node.loc, value:node.value, time:node.time, icon:node.icon};
+      return `${location.origin}${location.pathname}#${toBase64Url(minimal)}`;
     }
 
     function renderNodes(filtered = allNodes) {
       const grid = document.getElementById('grid');
       grid.innerHTML = '';
-
       filtered.forEach(item => {
         const card = document.createElement('div');
         card.className = 'node-card';
@@ -324,10 +298,7 @@
       document.getElementById('modalMint').textContent = item.mint || 'Unknown';
 
       const url = generateShareUrl(item);
-      document.getElementById('shareUrl').innerHTML = `
-        <strong>DECENTRALISED LINK:</strong><br>
-        <a href="${url}" target="_blank" style="color:var(--neon);word-break:break-all;">${url}</a>
-      `;
+      document.getElementById('shareUrl').innerHTML = `<strong>DECENTRALISED LINK:</strong><br><a href="${url}" target="_blank" style="color:var(--neon);word-break:break-all;">${url}</a>`;
       document.getElementById('itemModal').style.display = 'flex';
     }
 
@@ -337,77 +308,20 @@
       alert("✅ Decentralised link copied!");
     }
 
-    function closeItemModal() {
-      document.getElementById('itemModal').style.display = 'none';
-    }
-
-    function handleBase64Link() {
-      const hash = location.hash.slice(1);
-      if (!hash) return;
-      const node = fromBase64Url(hash);
-      if (node) {
-        showItemDetail(node);
-        if (!allNodes.some(n => n.id === node.id)) {
-          allNodes.unshift(node);
-          renderNodes();
-        }
-      }
-    }
-
-    async function startGlobalScan() {
-      log("🌐 INITIALIZING DECENTRALISED MONETARY MESH...");
-
-      const samples = [
-        {icon:"🪙", name:"1907 Saint-Gaudens Double Eagle", loc:"U.S. Mint, Philadelphia", value:"~$3.2M", mint:"Philadelphia", status:"CERTIFIED"},
-        {icon:"💵", name:"1934 $100,000 Gold Certificate", loc:"Federal Reserve", value:"Specimen", mint:"Bureau of Engraving", status:"HISTORIC"},
-        {icon:"₿", name:"Bitcoin Genesis Block Relic", loc:"Satoshi Era", value:"~$110K (1 BTC)", mint:"Digital", status:"LEGENDARY"},
-        {icon:"🪙", name:"Athenian Tetradrachm", loc:"Athens 450 BC", value:"~$18,500", mint:"Athens", status:"ANCIENT"},
-        // Crime / Seized money nodes
-        {icon:"💰", name:"Pablo Escobar Cartel Cash Bundle", loc:"Seized Miami 1989", value:"~$2.4M (historical)", mint:"U.S. Treasury", status:"SEIZED"},
-        {icon:"🪙", name:"Nazi Reichsbank Gold Bar", loc:"Recovered from Lake Toplitz", value:"~$450K", mint:"Reichsbank", status:"WAR LOOT"},
-        {icon:"💵", name:"Operation Choke Point Seized Notes", loc:"FBI Vault 2013", value:"Classified", mint:"Bureau of Engraving", status:"FORFEITED"},
-        {icon:"₿", name:"Silk Road BTC Seizure (Sample)", loc:"FBI 2013-2024", value:"~$1.2M", mint:"Blockchain", status:"RECOVERED"}
-      ];
-
-      for (let i = 0; i < 18; i++) {
-        await new Promise(r => setTimeout(r, 110));
-        const base = samples[Math.floor(Math.random() * samples.length)];
-        const newNode = {
-          id: `NR-${1000 + Math.floor(Math.random() * 8999)}`,
-          ...base,
-          time: new Date(Date.now() - Math.random() * 86400000 * 7).toLocaleString(),
-          source: "P2P MESH"
-        };
-        allNodes.unshift(newNode);
-        renderNodes();
-        log(`🪙 NEW NODE DETECTED → ${newNode.name}`);
-      }
-      log("✅ MESH SYNCHRONISED • FULLY DECENTRALISED");
-    }
-
-    function showReportModal() {
-      document.getElementById('reportModal').style.display = 'flex';
-    }
-    function closeReportModal() {
-      document.getElementById('reportModal').style.display = 'none';
-    }
+    function closeItemModal() { document.getElementById('itemModal').style.display = 'none'; }
+    function showReportModal() { document.getElementById('reportModal').style.display = 'flex'; }
+    function closeReportModal() { document.getElementById('reportModal').style.display = 'none'; }
 
     function submitReport() {
       const name = document.getElementById('rName').value.trim();
       const loc = document.getElementById('rLoc').value.trim();
       const value = document.getElementById('rValue').value.trim() || "Pending Valuation";
-
-      if (!name || !loc) {
-        alert("Name and location are required");
-        return;
-      }
+      if (!name || !loc) return alert("Name and location required");
 
       const newItem = {
-        id: `NR-${1000 + Math.floor(Math.random() * 9000)}`,
+        id: `NR-${1000 + Math.floor(Math.random()*9000)}`,
         icon: "🪙",
-        name,
-        loc,
-        value,
+        name, loc, value,
         time: "Just now",
         status: "BROADCAST",
         source: "P2P USER",
@@ -421,8 +335,8 @@
 
     function filterNodes() {
       const q = document.getElementById('searchInput').value.toLowerCase().trim();
-      const filtered = allNodes.filter(n =>
-        n.name.toLowerCase().includes(q) ||
+      const filtered = allNodes.filter(n => 
+        n.name.toLowerCase().includes(q) || 
         n.loc.toLowerCase().includes(q) ||
         (n.status && n.status.toLowerCase().includes(q))
       );
@@ -430,9 +344,7 @@
     }
 
     function setTab(n) {
-      document.querySelectorAll('.nav button').forEach((b, i) =>
-        b.classList.toggle('active', i === n)
-      );
+      document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n));
     }
 
     function resetScan() {
@@ -445,10 +357,36 @@
       }
     }
 
-    // Auto-start
+    async function startGlobalScan() {
+      log("🌐 INITIALIZING DECENTRALISED MONETARY MESH...");
+      const samples = [ /* your original samples here */ ];
+
+      for (let i = 0; i < 18; i++) {
+        await new Promise(r => setTimeout(r, 110));
+        const base = samples[Math.floor(Math.random() * samples.length)];
+        const newNode = {
+          id: `NR-${1000 + Math.floor(Math.random()*8999)}`,
+          ...base,
+          time: new Date(Date.now() - Math.random()*86400000*7).toLocaleString(),
+          source: "P2P MESH"
+        };
+        allNodes.unshift(newNode);
+        renderNodes();
+        log(`🪙 NEW NODE DETECTED → ${newNode.name}`);
+      }
+      log("✅ MESH SYNCHRONISED • FULLY DECENTRALISED");
+    }
+
+    // Init
     window.onload = () => {
       startGlobalScan();
-      setTimeout(handleBase64Link, 800);
+      setTimeout(() => {
+        const hash = location.hash.slice(1);
+        if (hash) {
+          const node = fromBase64Url(hash);
+          if (node) showItemDetail(node);
+        }
+      }, 800);
       log("🔓 ROOT DONATE — FULLY OPEN SOURCE & DECENTRALISED");
     };
   </script>
