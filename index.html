@@ -177,7 +177,9 @@
       <button onclick="resetScan()">RESET MESH</button>
     </div>
 
-    <input type="text" id="searchInput" class="search-bar" placeholder="Search coins, notes, mints, eras..." onkeyup="filterNodes()">
+    <input type="text" id="searchInput" class="search-bar" 
+           placeholder="Search coins, notes, mints, eras, seizures..." 
+           onkeyup="filterNodes()">
 
     <div class="nodes-grid" id="grid"></div>
     <div class="log" id="log"></div>
@@ -208,9 +210,9 @@
       <span onclick="closeReportModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
       <h2 style="text-align:center;color:#ffd700;margin-bottom:20px;">📜 BROADCAST NEW FIND</h2>
       <input id="rName" placeholder="Coin / Note name" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
-      <input id="rLoc" placeholder="Mint / Location / Era" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
+      <input id="rLoc" placeholder="Mint / Location / Era / Seizure" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
       <input id="rValue" placeholder="Est. market value (USD)" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
-      <textarea id="rDesc" rows="3" placeholder="Description / Condition..." style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);"></textarea>
+      <textarea id="rDesc" rows="3" placeholder="Description / Condition / Notes..." style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);"></textarea>
       <button onclick="submitReport()" style="width:100%;padding:16px;margin-top:15px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">
         BROADCAST TO THE MESH
       </button>
@@ -222,33 +224,35 @@
   </div>
 
   <script>
-    // Matrix Rain
+    // Matrix Rain Background
     const canvas = document.getElementById('matrix');
     const ctx = canvas.getContext('2d');
     let drops = [];
 
-    function resize() { 
-      canvas.width = window.innerWidth; 
-      canvas.height = window.innerHeight; 
-      drops = Array(Math.floor(canvas.width / 14)).fill(1); 
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      drops = Array(Math.floor(canvas.width / 14)).fill(1);
     }
-    window.addEventListener('resize', resize);
-    resize();
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
-    function rain() {
+    function drawMatrix() {
       ctx.fillStyle = 'rgba(10,10,10,0.15)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = '#ffd700';
       ctx.font = '14px monospace';
-      const chars = '0123456789$€£¥₿🪙⚖️📜🔓';
+      const chars = '0123456789$€£¥₿🪙⚖️📜🔓💰';
       for (let i = 0; i < drops.length; i++) {
-        ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * 14, drops[i] * 14);
+        const text = chars[Math.floor(Math.random() * chars.length)];
+        ctx.fillText(text, i * 14, drops[i] * 14);
         if (drops[i] * 14 > canvas.height && Math.random() > 0.975) drops[i] = 0;
         drops[i]++;
       }
     }
-    setInterval(rain, 40);
+    setInterval(drawMatrix, 40);
 
+    // App Data
     let allNodes = [];
     let currentItem = null;
 
@@ -259,6 +263,7 @@
       el.scrollTop = el.scrollHeight;
     }
 
+    // Base64 URL-safe encoding for share links
     function toBase64Url(obj) {
       const json = JSON.stringify(obj);
       let base64 = btoa(unescape(encodeURIComponent(json)));
@@ -270,20 +275,20 @@
       while (str.length % 4) str += '=';
       try {
         return JSON.parse(decodeURIComponent(escape(atob(str))));
-      } catch(e) { 
+      } catch(e) {
         console.error("Invalid share link");
-        return null; 
+        return null;
       }
     }
 
     function generateShareUrl(node) {
-      const minimal = { 
-        id: node.id, 
-        name: node.name, 
-        loc: node.loc, 
-        value: node.value, 
-        time: node.time, 
-        icon: node.icon 
+      const minimal = {
+        id: node.id,
+        name: node.name,
+        loc: node.loc,
+        value: node.value,
+        time: node.time,
+        icon: node.icon
       };
       const b64 = toBase64Url(minimal);
       return `${location.origin}${location.pathname}#${b64}`;
@@ -329,11 +334,11 @@
     function copyShareLink() {
       if (!currentItem) return;
       navigator.clipboard.writeText(generateShareUrl(currentItem));
-      alert("✅ Decentralised link copied to clipboard!");
+      alert("✅ Decentralised link copied!");
     }
 
-    function closeItemModal() { 
-      document.getElementById('itemModal').style.display = 'none'; 
+    function closeItemModal() {
+      document.getElementById('itemModal').style.display = 'none';
     }
 
     function handleBase64Link() {
@@ -351,55 +356,60 @@
 
     async function startGlobalScan() {
       log("🌐 INITIALIZING DECENTRALISED MONETARY MESH...");
-      
+
       const samples = [
         {icon:"🪙", name:"1907 Saint-Gaudens Double Eagle", loc:"U.S. Mint, Philadelphia", value:"~$3.2M", mint:"Philadelphia", status:"CERTIFIED"},
         {icon:"💵", name:"1934 $100,000 Gold Certificate", loc:"Federal Reserve", value:"Specimen", mint:"Bureau of Engraving", status:"HISTORIC"},
         {icon:"₿", name:"Bitcoin Genesis Block Relic", loc:"Satoshi Era", value:"~$110K (1 BTC)", mint:"Digital", status:"LEGENDARY"},
         {icon:"🪙", name:"Athenian Tetradrachm", loc:"Athens 450 BC", value:"~$18,500", mint:"Athens", status:"ANCIENT"},
+        // Crime / Seized money nodes
+        {icon:"💰", name:"Pablo Escobar Cartel Cash Bundle", loc:"Seized Miami 1989", value:"~$2.4M (historical)", mint:"U.S. Treasury", status:"SEIZED"},
+        {icon:"🪙", name:"Nazi Reichsbank Gold Bar", loc:"Recovered from Lake Toplitz", value:"~$450K", mint:"Reichsbank", status:"WAR LOOT"},
+        {icon:"💵", name:"Operation Choke Point Seized Notes", loc:"FBI Vault 2013", value:"Classified", mint:"Bureau of Engraving", status:"FORFEITED"},
+        {icon:"₿", name:"Silk Road BTC Seizure (Sample)", loc:"FBI 2013-2024", value:"~$1.2M", mint:"Blockchain", status:"RECOVERED"}
       ];
 
-      for (let i = 0; i < 15; i++) {
-        await new Promise(r => setTimeout(r, 130));
+      for (let i = 0; i < 18; i++) {
+        await new Promise(r => setTimeout(r, 110));
         const base = samples[Math.floor(Math.random() * samples.length)];
         const newNode = {
           id: `NR-${1000 + Math.floor(Math.random() * 8999)}`,
           ...base,
-          time: new Date(Date.now() - Math.random() * 86400000 * 5).toLocaleString(),
+          time: new Date(Date.now() - Math.random() * 86400000 * 7).toLocaleString(),
           source: "P2P MESH"
         };
         allNodes.unshift(newNode);
         renderNodes();
-        log(`🪙 NEW ARTIFACT DETECTED → ${newNode.name}`);
+        log(`🪙 NEW NODE DETECTED → ${newNode.name}`);
       }
       log("✅ MESH SYNCHRONISED • FULLY DECENTRALISED");
     }
 
-    function showReportModal() { 
-      document.getElementById('reportModal').style.display = 'flex'; 
+    function showReportModal() {
+      document.getElementById('reportModal').style.display = 'flex';
     }
-    function closeReportModal() { 
-      document.getElementById('reportModal').style.display = 'none'; 
+    function closeReportModal() {
+      document.getElementById('reportModal').style.display = 'none';
     }
 
     function submitReport() {
       const name = document.getElementById('rName').value.trim();
       const loc = document.getElementById('rLoc').value.trim();
       const value = document.getElementById('rValue').value.trim() || "Pending Valuation";
-      
+
       if (!name || !loc) {
         alert("Name and location are required");
         return;
       }
-      
-      const newItem = { 
-        id: `NR-${1000 + Math.floor(Math.random() * 9000)}`, 
+
+      const newItem = {
+        id: `NR-${1000 + Math.floor(Math.random() * 9000)}`,
         icon: "🪙",
-        name, 
-        loc, 
+        name,
+        loc,
         value,
-        time: "Just now", 
-        status: "BROADCAST", 
+        time: "Just now",
+        status: "BROADCAST",
         source: "P2P USER",
         mint: "Community"
       };
@@ -411,15 +421,16 @@
 
     function filterNodes() {
       const q = document.getElementById('searchInput').value.toLowerCase().trim();
-      const filtered = allNodes.filter(n => 
-        n.name.toLowerCase().includes(q) || 
-        n.loc.toLowerCase().includes(q)
+      const filtered = allNodes.filter(n =>
+        n.name.toLowerCase().includes(q) ||
+        n.loc.toLowerCase().includes(q) ||
+        (n.status && n.status.toLowerCase().includes(q))
       );
       renderNodes(filtered);
     }
 
     function setTab(n) {
-      document.querySelectorAll('.nav button').forEach((b, i) => 
+      document.querySelectorAll('.nav button').forEach((b, i) =>
         b.classList.toggle('active', i === n)
       );
     }
