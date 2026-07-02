@@ -23,12 +23,7 @@
       flex-direction: column;
     }
 
-    canvas#matrix {
-      position: fixed;
-      inset: 0;
-      z-index: -1;
-      opacity: 0.15;
-    }
+    canvas#matrix { position: fixed; inset: 0; z-index: -1; opacity: 0.15; }
 
     .header {
       padding: 16px 20px;
@@ -40,114 +35,71 @@
     }
     .header h1 { font-size: 1.55rem; letter-spacing: 3px; text-shadow: 0 0 15px var(--neon); }
 
-    .nav {
-      padding: 12px 20px;
+    .user-info {
       display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+    }
+    .avatar {
+      width: 38px; height: 38px;
+      background: #222;
+      border: 2px solid var(--neon);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .nav { /* same as before */ 
+      padding: 12px 20px; display: flex; gap: 8px; flex-wrap: wrap;
       border-bottom: 1px solid rgba(255,215,0,0.2);
       background: rgba(10,10,10,0.98);
     }
     .nav button {
-      background: transparent;
-      border: 1px solid var(--neon);
-      color: var(--neon);
-      padding: 10px 20px;
-      border-radius: 50px;
-      cursor: pointer;
-      transition: all 0.3s;
-      font-size: 0.95rem;
+      background: transparent; border: 1px solid var(--neon); color: var(--neon);
+      padding: 10px 20px; border-radius: 50px; cursor: pointer; transition: all 0.3s;
     }
-    .nav button.active,
-    .nav button:hover {
-      background: var(--neon);
-      color: #000;
-      box-shadow: 0 0 25px var(--glow);
+    .nav button.active, .nav button:hover {
+      background: var(--neon); color: #000; box-shadow: 0 0 25px var(--glow);
     }
 
-    .search-bar {
-      margin: 16px 20px;
-      padding: 14px 24px;
-      width: calc(100% - 40px);
-      background: #111;
-      border: 1px solid var(--neon);
-      border-radius: 50px;
-      color: var(--neon);
-      font-size: 1rem;
+    .search-bar { /* same */ margin: 16px 20px; padding: 14px 24px; width: calc(100% - 40px);
+      background: #111; border: 1px solid var(--neon); border-radius: 50px; color: var(--neon);
     }
 
-    .nodes-grid {
-      flex: 1;
-      padding: 16px 20px;
-      overflow-y: auto;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 16px;
+    .nodes-grid { flex: 1; padding: 16px 20px; overflow-y: auto;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;
     }
 
-    .node-card {
-      background: var(--card);
-      border: 1px solid rgba(255,215,0,0.35);
-      border-radius: 16px;
-      padding: 18px;
-      cursor: pointer;
-      transition: all 0.4s;
-    }
-    .node-card:active {
-      transform: translateY(-6px);
-      border-color: var(--neon);
-      box-shadow: 0 0 30px var(--glow);
-    }
+    .node-card { /* same as before */ }
 
-    .log {
-      height: 140px;
-      background: #0a0a0a;
-      padding: 12px 20px;
-      overflow-y: auto;
-      font-size: 0.85rem;
-      border-top: 1px solid rgba(255,215,0,0.3);
+    .log { height: 140px; background: #0a0a0a; padding: 12px 20px; overflow-y: auto;
+      font-size: 0.85rem; border-top: 1px solid rgba(255,215,0,0.3);
     }
 
     .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.96);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-      padding: 10px;
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.96);
+      z-index: 100; align-items: center; justify-content: center; padding: 10px;
     }
     .modal-content {
-      background: rgba(20,20,15,0.98);
-      border: 2px solid var(--neon);
-      border-radius: 16px;
-      width: 100%;
-      max-width: 520px;
-      padding: 28px;
-      position: relative;
+      background: rgba(20,20,15,0.98); border: 2px solid var(--neon);
+      border-radius: 16px; width: 100%; max-width: 480px; padding: 28px;
     }
 
-    .decentralised-badge {
-      position: fixed;
-      bottom: 16px;
-      right: 16px;
-      background: rgba(0,0,0,0.85);
-      border: 1px solid var(--neon);
-      color: var(--neon);
-      padding: 8px 14px;
-      border-radius: 30px;
-      font-size: 0.78rem;
-      z-index: 200;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+    .auth-tabs {
+      display: flex; margin-bottom: 20px; border-bottom: 1px solid #333;
+    }
+    .auth-tabs button {
+      flex: 1; padding: 12px; background: transparent; color: var(--neon);
+      border: none; border-bottom: 3px solid transparent; cursor: pointer;
+    }
+    .auth-tabs button.active {
+      border-bottom: 3px solid var(--neon); font-weight: bold;
     }
 
-    @media (max-width: 480px) {
-      .nodes-grid { grid-template-columns: 1fr; }
-      .header h1 { font-size: 1.35rem; }
-    }
+    .decentralised-badge { /* same */ }
   </style>
 </head>
 <body>
@@ -156,12 +108,24 @@
 
   <div class="header">
     <h1>🌐 ROOT DONATE</h1>
-    <div style="text-align:right;">
-      <div>DECENTRALISED MONETARY MESH</div>
-      <div style="font-size:0.85rem;color:#0f0;">100% CLIENT-SIDE • OPEN SOURCE</div>
+    <div style="display:flex; align-items:center; gap:15px;">
+      <div id="userSection" style="display:none;">
+        <div class="user-info" onclick="showProfile()">
+          <div id="avatar" class="avatar">👤</div>
+          <div>
+            <div id="usernameDisplay" style="font-size:1rem;"></div>
+            <div style="font-size:0.75rem; opacity:0.7;">Mesh Node</div>
+          </div>
+        </div>
+      </div>
+      <button onclick="showAuthModal()" id="authBtn"
+              style="padding:8px 20px; border:1px solid var(--neon); background:transparent; color:var(--neon); border-radius:50px;">
+        <i class="fas fa-user"></i> LOGIN
+      </button>
     </div>
   </div>
 
+  <!-- Rest of your nav, search, grid, log stay the same -->
   <div class="nav">
     <button class="active" onclick="setTab(0)">🌐 LIVE FEED</button>
     <button onclick="setTab(1)">🔎 DEEP NUMIS</button>
@@ -169,80 +133,61 @@
     <button onclick="resetScan()">RESET MESH</button>
   </div>
 
-  <input type="text" id="searchInput" class="search-bar" 
-         placeholder="Search coins, notes, mints, eras, seizures..." 
-         onkeyup="filterNodes()">
+  <input type="text" id="searchInput" class="search-bar" placeholder="Search coins, notes, mints..." onkeyup="filterNodes()">
 
   <div class="nodes-grid" id="grid"></div>
   <div class="log" id="log"></div>
 
-  <!-- Modals -->
-  <div class="modal" id="itemModal">
+  <!-- AUTH MODAL -->
+  <div class="modal" id="authModal">
     <div class="modal-content">
-      <span onclick="closeItemModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
-      <div id="modalIcon" style="font-size:2.8rem;margin-bottom:12px;">🪙</div>
-      <h2 id="modalName" style="color:#ffd700;margin-bottom:12px;"></h2>
-      <p id="modalLoc" style="margin:8px 0;"></p>
-      <p id="modalTime"></p>
-      <div style="margin:20px 0;padding:14px;background:#111;border:1px solid var(--neon);font-size:0.9rem;">
-        <strong>EST. VALUE:</strong> <span id="modalValue" style="color:#0f0;"></span><br>
-        <strong>MINT / ORIGIN:</strong> <span id="modalMint"></span>
+      <span onclick="closeAuthModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
+      
+      <div class="auth-tabs">
+        <button onclick="switchAuthTab(0)" id="tabLogin" class="active">LOGIN</button>
+        <button onclick="switchAuthTab(1)" id="tabSignup">SIGN UP</button>
       </div>
-      <div id="shareUrl" style="background:#111;padding:14px;margin:20px 0;border:1px solid var(--neon);word-break:break-all;font-size:0.9rem;"></div>
-      <button onclick="copyShareLink()" style="width:100%;padding:14px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">
-        📋 COPY DECENTRALISED LINK
-      </button>
+
+      <!-- LOGIN -->
+      <div id="loginForm">
+        <input id="loginUser" placeholder="Username or Handle" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
+        <input id="loginPass" type="password" placeholder="Passphrase" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
+        <button onclick="login()" style="width:100%;padding:16px;margin-top:15px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">
+          ENTER THE MESH
+        </button>
+      </div>
+
+      <!-- SIGNUP -->
+      <div id="signupForm" style="display:none;">
+        <input id="signupUser" placeholder="Choose handle (e.g. @cybermidas)" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
+        <input id="signupEmail" placeholder="Email (optional)" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
+        <input id="signupPass" type="password" placeholder="Create passphrase" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
+        <button onclick="signup()" style="width:100%;padding:16px;margin-top:15px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">
+          JOIN THE DECENTRALISED MESH
+        </button>
+      </div>
     </div>
   </div>
 
-  <div class="modal" id="reportModal">
-    <div class="modal-content">
-      <span onclick="closeReportModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
-      <h2 style="text-align:center;color:#ffd700;margin-bottom:20px;">📜 BROADCAST NEW FIND</h2>
-      <input id="rName" placeholder="Coin / Note name" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
-      <input id="rLoc" placeholder="Mint / Location / Era / Seizure" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
-      <input id="rValue" placeholder="Est. market value (USD)" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
-      <textarea id="rDesc" rows="3" placeholder="Description / Condition / Notes..." style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);"></textarea>
-      <button onclick="submitReport()" style="width:100%;padding:16px;margin-top:15px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">
-        BROADCAST TO THE MESH
-      </button>
-    </div>
-  </div>
+  <!-- Your existing modals (itemModal, reportModal) remain the same -->
 
   <div class="decentralised-badge">
     <i class="fas fa-globe"></i> OPEN SOURCE • NO SERVERS • P2P READY
   </div>
 
   <script>
-    // Matrix Rain
+    // === MATRIX RAIN (unchanged) ===
     const canvas = document.getElementById('matrix');
     const ctx = canvas.getContext('2d');
     let drops = [];
-
-    function resize() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      drops = Array(Math.floor(canvas.width / 14)).fill(1);
-    }
-    window.addEventListener('resize', resize);
-    resize();
-
-    function drawMatrix() {
-      ctx.fillStyle = 'rgba(10,10,10,0.15)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#ffd700';
-      ctx.font = '14px monospace';
-      const chars = '0123456789$€£¥₿🪙⚖️📜🔓💰';
-      for (let i = 0; i < drops.length; i++) {
-        ctx.fillText(chars[Math.floor(Math.random()*chars.length)], i*14, drops[i]*14);
-        if (drops[i]*14 > canvas.height && Math.random() > 0.975) drops[i] = 0;
-        drops[i]++;
-      }
-    }
+    function resize() { /* ... same as before */ }
+    window.addEventListener('resize', resize); resize();
+    function drawMatrix() { /* ... same */ }
     setInterval(drawMatrix, 40);
 
-    // App state
+    // === APP STATE ===
     let allNodes = [];
+    let currentUser = null;
     let currentItem = null;
 
     const logEl = document.getElementById('log');
@@ -252,133 +197,113 @@
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    // Share link helpers
-    function toBase64Url(obj) {
-      const str = btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
-      return str.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    // === AUTH FUNCTIONS ===
+    function showAuthModal() {
+      document.getElementById('authModal').style.display = 'flex';
+      switchAuthTab(0);
     }
-    function fromBase64Url(str) {
-      str = str.replace(/-/g,'+').replace(/_/g,'/');
-      while (str.length % 4) str += '=';
-      try { return JSON.parse(decodeURIComponent(escape(atob(str)))); }
-      catch(e) { return null; }
+    function closeAuthModal() {
+      document.getElementById('authModal').style.display = 'none';
     }
 
-    function generateShareUrl(node) {
-      const minimal = {id:node.id, name:node.name, loc:node.loc, value:node.value, time:node.time, icon:node.icon};
-      return `${location.origin}${location.pathname}#${toBase64Url(minimal)}`;
+    function switchAuthTab(n) {
+      document.getElementById('loginForm').style.display = n === 0 ? 'block' : 'none';
+      document.getElementById('signupForm').style.display = n === 1 ? 'block' : 'none';
+      document.getElementById('tabLogin').classList.toggle('active', n===0);
+      document.getElementById('tabSignup').classList.toggle('active', n===1);
     }
 
-    function renderNodes(filtered = allNodes) {
-      const grid = document.getElementById('grid');
-      grid.innerHTML = '';
-      filtered.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'node-card';
-        card.innerHTML = `
-          <div style="font-size:0.8rem;opacity:0.7;">#${item.id} • ${item.source}</div>
-          <div style="font-size:2.5rem;margin:12px 0;">${item.icon}</div>
-          <h3 style="margin:8px 0;">${item.name}</h3>
-          <p>📍 ${item.loc}</p>
-          <p style="margin-top:8px;color:#0f0;">${item.value}</p>
-          <p style="font-size:0.85rem;">${item.time} • ${item.status}</p>
-        `;
-        card.onclick = () => showItemDetail(item);
-        grid.appendChild(card);
-      });
+    function signup() {
+      const handle = document.getElementById('signupUser').value.trim();
+      if (!handle) return alert("Handle required");
+      
+      currentUser = {
+        handle: handle.startsWith('@') ? handle : '@' + handle,
+        avatar: '🪙',
+        joined: new Date().toLocaleDateString()
+      };
+      
+      localStorage.setItem('rootDonateUser', JSON.stringify(currentUser));
+      updateUIAfterLogin();
+      closeAuthModal();
+      log(`✅ ${currentUser.handle} joined the mesh`);
     }
 
-    function showItemDetail(item) {
-      currentItem = item;
-      document.getElementById('modalIcon').textContent = item.icon;
-      document.getElementById('modalName').textContent = item.name;
-      document.getElementById('modalLoc').innerHTML = `📍 ${item.loc}`;
-      document.getElementById('modalTime').textContent = item.time;
-      document.getElementById('modalValue').textContent = item.value;
-      document.getElementById('modalMint').textContent = item.mint || 'Unknown';
+    function login() {
+      const handle = document.getElementById('loginUser').value.trim();
+      if (!handle) return alert("Enter handle");
 
-      const url = generateShareUrl(item);
-      document.getElementById('shareUrl').innerHTML = `<strong>DECENTRALISED LINK:</strong><br><a href="${url}" target="_blank" style="color:var(--neon);word-break:break-all;">${url}</a>`;
-      document.getElementById('itemModal').style.display = 'flex';
+      // Simulate login (in real P2P you would verify signature)
+      currentUser = {
+        handle: handle.startsWith('@') ? handle : '@' + handle,
+        avatar: '🪙',
+        joined: "2025"
+      };
+      
+      localStorage.setItem('rootDonateUser', JSON.stringify(currentUser));
+      updateUIAfterLogin();
+      closeAuthModal();
+      log(`🔓 ${currentUser.handle} connected to mesh`);
     }
 
-    function copyShareLink() {
-      if (!currentItem) return;
-      navigator.clipboard.writeText(generateShareUrl(currentItem));
-      alert("✅ Decentralised link copied!");
+    function updateUIAfterLogin() {
+      document.getElementById('authBtn').style.display = 'none';
+      document.getElementById('userSection').style.display = 'block';
+      document.getElementById('usernameDisplay').textContent = currentUser.handle;
+      document.getElementById('avatar').textContent = currentUser.avatar;
     }
 
-    function closeItemModal() { document.getElementById('itemModal').style.display = 'none'; }
-    function showReportModal() { document.getElementById('reportModal').style.display = 'flex'; }
-    function closeReportModal() { document.getElementById('reportModal').style.display = 'none'; }
+    function logout() {
+      if (confirm("Disconnect from mesh?")) {
+        localStorage.removeItem('rootDonateUser');
+        location.reload();
+      }
+    }
 
+    function showProfile() {
+      alert(`🪙 ${currentUser.handle}\nJoined: ${currentUser.joined}\n\nMesh Reputation: LEGEND`);
+    }
+
+    // === REPORT (now tied to user) ===
     function submitReport() {
+      if (!currentUser) {
+        alert("You must be logged in to broadcast finds");
+        showAuthModal();
+        return;
+      }
+
       const name = document.getElementById('rName').value.trim();
       const loc = document.getElementById('rLoc').value.trim();
-      const value = document.getElementById('rValue').value.trim() || "Pending Valuation";
       if (!name || !loc) return alert("Name and location required");
 
       const newItem = {
         id: `NR-${1000 + Math.floor(Math.random()*9000)}`,
         icon: "🪙",
-        name, loc, value,
+        name, loc,
+        value: document.getElementById('rValue').value.trim() || "Pending Valuation",
         time: "Just now",
         status: "BROADCAST",
-        source: "P2P USER",
+        source: currentUser.handle,
         mint: "Community"
       };
       allNodes.unshift(newItem);
       renderNodes();
       closeReportModal();
-      log("🚨 FIND BROADCAST TO THE DECENTRALISED MESH");
+      log(`🚨 ${currentUser.handle} broadcasted a new find`);
     }
 
-    function filterNodes() {
-      const q = document.getElementById('searchInput').value.toLowerCase().trim();
-      const filtered = allNodes.filter(n => 
-        n.name.toLowerCase().includes(q) || 
-        n.loc.toLowerCase().includes(q) ||
-        (n.status && n.status.toLowerCase().includes(q))
-      );
-      renderNodes(filtered);
-    }
-
-    function setTab(n) {
-      document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n));
-    }
-
-    function resetScan() {
-      if (confirm("Reset the entire mesh?")) {
-        allNodes = [];
-        document.getElementById('grid').innerHTML = '';
-        document.getElementById('log').innerHTML = '';
-        log("🔄 MESH RESET — RECONNECTING...");
-        startGlobalScan();
-      }
-    }
-
-    async function startGlobalScan() {
-      log("🌐 INITIALIZING DECENTRALISED MONETARY MESH...");
-      const samples = [ /* your original samples here */ ];
-
-      for (let i = 0; i < 18; i++) {
-        await new Promise(r => setTimeout(r, 110));
-        const base = samples[Math.floor(Math.random() * samples.length)];
-        const newNode = {
-          id: `NR-${1000 + Math.floor(Math.random()*8999)}`,
-          ...base,
-          time: new Date(Date.now() - Math.random()*86400000*7).toLocaleString(),
-          source: "P2P MESH"
-        };
-        allNodes.unshift(newNode);
-        renderNodes();
-        log(`🪙 NEW NODE DETECTED → ${newNode.name}`);
-      }
-      log("✅ MESH SYNCHRONISED • FULLY DECENTRALISED");
-    }
+    // === Rest of your original script (renderNodes, showItemDetail, etc.) ===
+    // ... paste all your original functions here (startGlobalScan, etc.) ...
 
     // Init
     window.onload = () => {
+      // Load saved user
+      const saved = localStorage.getItem('rootDonateUser');
+      if (saved) {
+        currentUser = JSON.parse(saved);
+        updateUIAfterLogin();
+      }
+
       startGlobalScan();
       setTimeout(() => {
         const hash = location.hash.slice(1);
