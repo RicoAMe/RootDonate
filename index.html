@@ -143,10 +143,12 @@
       max-width: 520px;
       padding: 28px;
       position: relative;
+      max-height: 92vh;
+      overflow-y: auto;
     }
 
     .history-list { 
-      max-height: 420px; 
+      max-height: 300px; 
       overflow-y: auto; 
       margin-top: 15px; 
     }
@@ -214,6 +216,7 @@
   <div class="nodes-grid" id="grid"></div>
   <div class="log" id="log"></div>
 
+  <!-- AUTH, ITEM, DONATE, TOP-UP MODALS (unchanged) -->
   <!-- AUTH MODAL -->
   <div class="modal" id="authModal">
     <div class="modal-content">
@@ -235,7 +238,7 @@
     </div>
   </div>
 
-  <!-- ITEM DETAIL MODAL -->
+  <!-- ITEM DETAIL MODAL - NOW WITH DONATION HISTORY -->
   <div class="modal" id="itemModal">
     <div class="modal-content">
       <span onclick="closeItemModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
@@ -251,9 +254,14 @@
       
       <button onclick="copyShareLink()" style="width:100%;padding:12px;margin-bottom:10px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">📋 COPY LINK</button>
       <button onclick="showDonateModal()" style="width:100%;padding:16px;border:2px solid #0f0;background:transparent;color:#0f0;border-radius:50px;">💰 DONATE ROOT TOKENS</button>
+
+      <!-- New: Donation History for this find -->
+      <h3 style="margin:25px 0 10px;color:#0f0;">💰 DONATIONS RECEIVED</h3>
+      <div id="itemDonationHistory" class="history-list"></div>
     </div>
   </div>
 
+  <!-- DONATE, TOP-UP, REPORT, PROFILE MODALS (same as before) -->
   <!-- DONATE MODAL -->
   <div class="modal" id="donateModal">
     <div class="modal-content">
@@ -325,17 +333,16 @@
          TOP UP BALANCE WITH APPLE PAY
       </button>
       
-      <h3 style="margin:20px 0 10px;">📜 DONATION HISTORY</h3>
+      <h3 style="margin:20px 0 10px;">📜 YOUR DONATION HISTORY</h3>
       <div id="historyList" class="history-list"></div>
     </div>
   </div>
 
   <script>
-    // =============== MATRIX BACKGROUND ===============
+    // Matrix Rain (unchanged)
     const canvas = document.getElementById('matrix');
     const ctx = canvas.getContext('2d');
     let drops = [];
-
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -343,7 +350,6 @@
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
-
     function drawMatrix() {
       ctx.fillStyle = 'rgba(10,10,10,0.15)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -358,7 +364,7 @@
     }
     setInterval(drawMatrix, 40);
 
-    // =============== UTILITIES ===============
+    // Utilities (unchanged)
     function toBase64Url(obj) {
       const str = btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
       return str.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -374,11 +380,11 @@
       return `${location.origin}${location.pathname}#${toBase64Url(minimal)}`;
     }
 
-    // =============== APP STATE ===============
+    // App State
     let allNodes = [];
     let currentUser = null;
     let currentItem = null;
-    let donationHistory = [];
+    let donationHistory = []; // Global user history
 
     const logEl = document.getElementById('log');
     function log(msg) {
@@ -406,18 +412,12 @@
     }
 
     function updateBalanceDisplay() {
-      if (currentUser) {
-        document.getElementById('balanceDisplay').textContent = `${currentUser.balance} ROOT`;
-      }
+      if (currentUser) document.getElementById('balanceDisplay').textContent = `${currentUser.balance} ROOT`;
     }
 
-    // =============== AUTH ===============
-    function showAuthModal() { 
-      document.getElementById('authModal').style.display = 'flex'; 
-      switchAuthTab(0); 
-    }
+    // Auth, Profile, Top-up, Donate functions (unchanged - only key parts shown)
+    function showAuthModal() { document.getElementById('authModal').style.display = 'flex'; switchAuthTab(0); }
     function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
-
     function switchAuthTab(n) {
       document.getElementById('loginForm').style.display = n === 0 ? 'block' : 'none';
       document.getElementById('signupForm').style.display = n === 1 ? 'block' : 'none';
@@ -428,12 +428,7 @@
     function signup() {
       const handle = document.getElementById('signupUser').value.trim();
       if (!handle) return alert("Handle required");
-      currentUser = { 
-        handle: handle.startsWith('@') ? handle : '@' + handle, 
-        avatar: '🪙', 
-        joined: new Date().toLocaleDateString(), 
-        balance: 1250 
-      };
+      currentUser = { handle: handle.startsWith('@') ? handle : '@' + handle, avatar: '🪙', joined: new Date().toLocaleDateString(), balance: 1250 };
       saveData();
       updateUIAfterLogin();
       closeAuthModal();
@@ -443,12 +438,7 @@
     function login() {
       const handle = document.getElementById('loginUser').value.trim();
       if (!handle) return alert("Enter handle");
-      currentUser = { 
-        handle: handle.startsWith('@') ? handle : '@' + handle, 
-        avatar: '🪙', 
-        joined: "2025", 
-        balance: 980 
-      };
+      currentUser = { handle: handle.startsWith('@') ? handle : '@' + handle, avatar: '🪙', joined: "2025", balance: 980 };
       saveData();
       updateUIAfterLogin();
       closeAuthModal();
@@ -462,7 +452,6 @@
       updateBalanceDisplay();
     }
 
-    // =============== PROFILE & TOP-UP ===============
     function showProfile() {
       if (!currentUser) return;
       document.getElementById('profileInfo').innerHTML = `
@@ -482,58 +471,62 @@
       document.getElementById('profileModal').style.display = 'flex';
     }
 
-    function closeProfileModal() { 
-      document.getElementById('profileModal').style.display = 'none'; 
-    }
+    function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
 
-    function showTopUpModal() {
-      document.getElementById('topUpModal').style.display = 'flex';
-    }
-    function closeTopUpModal() {
-      document.getElementById('topUpModal').style.display = 'none';
-    }
-    function quickTopUp(amt) {
-      document.getElementById('topUpAmount').value = amt;
-    }
+    function showTopUpModal() { document.getElementById('topUpModal').style.display = 'flex'; }
+    function closeTopUpModal() { document.getElementById('topUpModal').style.display = 'none'; }
+    function quickTopUp(amt) { document.getElementById('topUpAmount').value = amt; }
     function confirmApplePayTopUp() {
       const amount = parseInt(document.getElementById('topUpAmount').value);
       if (!amount || amount <= 0) return alert("Enter a valid amount");
-      
-      if (confirm(` Apple Pay\n\nAdding: ${amount} ROOT\n\nConfirm payment?`)) {
+      if (confirm(` Apple Pay\n\nAdding: ${amount} ROOT\nConfirm?`)) {
         currentUser.balance += amount;
         updateBalanceDisplay();
         saveData();
-        log(` Apple Pay Top-up successful: +${amount} ROOT`);
-        alert(`✅ ${amount} ROOT added to your balance via Apple Pay!`);
+        log(` Apple Pay Top-up: +${amount} ROOT`);
+        alert(`✅ ${amount} ROOT added!`);
         closeTopUpModal();
         showProfile();
       }
     }
 
-    // =============== DONATE ===============
     function showDonateModal() {
       if (!currentUser) return alert("Please login first");
-      document.getElementById('donateTo').innerHTML = `To: <strong>${currentItem.name}</strong><br>by ${currentItem.source || 'Unknown'}`;
+      document.getElementById('donateTo').innerHTML = `To: <strong>${currentItem.name}</strong>`;
       document.getElementById('donorBalance').textContent = currentUser.balance;
       document.getElementById('donateModal').style.display = 'flex';
     }
-    function closeDonateModal() { 
-      document.getElementById('donateModal').style.display = 'none'; 
-    }
-    function quickAmount(amt) { 
-      document.getElementById('donateAmount').value = amt; 
-    }
+    function closeDonateModal() { document.getElementById('donateModal').style.display = 'none'; }
+    function quickAmount(amt) { document.getElementById('donateAmount').value = amt; }
 
     function confirmDonation() {
       const amount = parseInt(document.getElementById('donateAmount').value);
       if (!amount || amount > currentUser.balance) return alert("Insufficient balance");
+      
       currentUser.balance -= amount;
       updateBalanceDisplay();
+      
+      // Add to global history
       addToHistory("sent", amount, currentItem.source || "Node Owner", currentItem.name);
-      log(`💸 ${currentUser.handle} sent ${amount} ROOT`);
+      
+      // Add to item's own donation history
+      if (currentItem.donations) {
+        currentItem.donations.unshift({
+          from: currentUser.handle,
+          amount: amount,
+          time: new Date().toLocaleString()
+        });
+      }
+      
+      log(`💸 ${currentUser.handle} sent ${amount} ROOT to ${currentItem.name}`);
       closeDonateModal();
       closeItemModal();
       alert(`✅ ${amount} ROOT sent successfully!`);
+      
+      // Refresh item modal if open
+      if (document.getElementById('itemModal').style.display === 'flex') {
+        showItemDetail(currentItem);
+      }
     }
 
     function startApplePay() {
@@ -542,17 +535,32 @@
       if (confirm(` Apple Pay\n\nSending: ${amount} ROOT\nConfirm?`)) {
         currentUser.balance -= amount;
         updateBalanceDisplay();
+        
         addToHistory("sent", amount, currentItem.source || "Node Owner", currentItem.name);
-        log(` Apple Pay donation: ${amount} ROOT sent`);
+        
+        if (currentItem.donations) {
+          currentItem.donations.unshift({
+            from: currentUser.handle,
+            amount: amount,
+            time: new Date().toLocaleString()
+          });
+        }
+        
+        log(` Apple Pay: ${amount} ROOT sent to ${currentItem.name}`);
         closeDonateModal();
         closeItemModal();
         alert("✅ Apple Pay Payment Successful!");
+        
+        if (document.getElementById('itemModal').style.display === 'flex') {
+          showItemDetail(currentItem);
+        }
       }
     }
 
-    // =============== ITEM & REPORT ===============
     function showItemDetail(item) {
       currentItem = item;
+      if (!currentItem.donations) currentItem.donations = [];
+      
       document.getElementById('modalIcon').textContent = item.icon;
       document.getElementById('modalName').textContent = item.name;
       document.getElementById('modalLoc').innerHTML = `📍 ${item.loc}`;
@@ -560,11 +568,24 @@
       document.getElementById('modalValue').textContent = item.value;
       document.getElementById('modalMint').textContent = item.mint || 'Unknown';
       document.getElementById('shareUrl').innerHTML = `<strong>LINK:</strong><br><a href="${generateShareUrl(item)}" target="_blank" style="color:var(--neon);word-break:break-all;">${generateShareUrl(item)}</a>`;
+      
+      // Render item-specific donation history
+      let histHTML = '';
+      currentItem.donations.forEach(d => {
+        histHTML += `<div class="history-item">
+          <strong>→ ${d.amount} ROOT</strong> from <strong>${d.from}</strong><br>
+          <small>${d.time}</small>
+        </div>`;
+      });
+      document.getElementById('itemDonationHistory').innerHTML = histHTML || '<p style="opacity:0.6;padding:10px;">No donations yet. Be the first!</p>';
+      
       document.getElementById('itemModal').style.display = 'flex';
     }
+
     function closeItemModal() { 
       document.getElementById('itemModal').style.display = 'none'; 
     }
+
     function copyShareLink() {
       if (!currentItem) return;
       navigator.clipboard.writeText(generateShareUrl(currentItem));
@@ -592,16 +613,17 @@
         icon: "🪙",
         mint: "Community",
         source: currentUser.handle,
-        time: "Just now"
+        time: "Just now",
+        donations: []   // ← New: Each report starts with its own donation history
       };
       allNodes.unshift(newItem);
       renderNodes();
       closeReportModal();
       log(`📢 ${currentUser.handle} broadcasted new find`);
-      alert("✅ Find broadcasted to the mesh!");
+      alert("✅ Find broadcasted to the mesh! It now has its own donation history.");
     }
 
-    // =============== RENDERING ===============
+    // Rendering
     function renderNodes(filtered = allNodes) {
       const grid = document.getElementById('grid');
       grid.innerHTML = '';
@@ -614,6 +636,7 @@
           <h3>${item.name}</h3>
           <p>📍 ${item.loc}</p>
           <p style="color:#0f0;margin-top:8px;">${item.value}</p>
+          ${item.donations && item.donations.length ? `<small style="color:#0f0;">${item.donations.length} donations</small>` : ''}
         `;
         card.onclick = () => showItemDetail(item);
         grid.appendChild(card);
@@ -623,15 +646,22 @@
     function filterNodes() {
       const q = document.getElementById('searchInput').value.toLowerCase();
       const filtered = allNodes.filter(n => 
-        n.name.toLowerCase().includes(q) || 
-        n.loc.toLowerCase().includes(q)
+        n.name.toLowerCase().includes(q) || n.loc.toLowerCase().includes(q)
       );
       renderNodes(filtered);
     }
 
     const sampleData = [
-      { id: "NR-7842", name: "1909-S VDB Lincoln Cent", loc: "San Francisco Mint", value: "$1,250", icon: "🪙", mint: "USA", source: "@oldhoard", time: "2h ago" },
-      { id: "NR-3191", name: "1921 Morgan Silver Dollar", loc: "Peace Treaty Era", value: "$850", icon: "🌕", mint: "USA", source: "@silverstacker", time: "Yesterday" }
+      { 
+        id: "NR-7842", name: "1909-S VDB Lincoln Cent", loc: "San Francisco Mint", value: "$1,250", icon: "🪙", 
+        mint: "USA", source: "@oldhoard", time: "2h ago", donations: [
+          {from: "@coinlover", amount: 75, time: "1h ago"}
+        ]
+      },
+      { 
+        id: "NR-3191", name: "1921 Morgan Silver Dollar", loc: "Peace Treaty Era", value: "$850", icon: "🌕", 
+        mint: "USA", source: "@silverstacker", time: "Yesterday", donations: []
+      }
     ];
 
     function startGlobalScan() {
@@ -641,12 +671,8 @@
       log("✅ MESH SYNCHRONISED");
     }
 
-    function toggleLearnMode() { 
-      alert("ROOT DONATE v1.2 — Clean & Stable"); 
-    }
-    function setTab(n) { 
-      document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n)); 
-    }
+    function toggleLearnMode() { alert("ROOT DONATE v1.3 — Reports now have donation history!"); }
+    function setTab(n) { document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n)); }
     function resetScan() {
       if (confirm("Reset mesh?")) {
         allNodes = [];
@@ -655,7 +681,6 @@
       }
     }
 
-    // =============== INIT ===============
     window.onload = () => {
       loadData();
       if (currentUser) updateUIAfterLogin();
@@ -667,7 +692,7 @@
         if (decoded) setTimeout(() => showItemDetail(decoded), 800);
       }
 
-      log("🔓 ROOT DONATE v1.2 — Ready");
+      log("🔓 ROOT DONATE v1.3 — Report Donation History Enabled");
     };
   </script>
 </body>
