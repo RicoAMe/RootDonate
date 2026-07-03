@@ -266,6 +266,7 @@
     function closePlaceModal() { document.getElementById('placeModal').style.display = 'none'; }
 
     function copyShareLink() {
+      if (!currentPlace) return;
       navigator.clipboard.writeText(generateShareUrl(currentPlace));
       alert("✅ Base64 Share Link Copied!");
     }
@@ -305,27 +306,27 @@
     }
 
     function resetScan() {
-      if (confirm("Reset mesh?")) { startAutoSearch(); }
+      if (confirm("Reset mesh?")) startAutoSearch();
     }
 
-    // Auth (simplified)
-    function showAuthModal() { /* add your full auth modal if needed */ alert("Login demo – use any username"); login(); }
+    // Simple Auth
+    function showAuthModal() { alert("Demo Login\n\nUsername: any value"); login(); }
     function login() {
-      currentUser = { handle: "@you", balance: 980 };
+      currentUser = { handle: "@you", balance: 1250 };
       document.getElementById('authBtn').style.display = 'none';
       document.getElementById('userSection').style.display = 'block';
       document.getElementById('usernameDisplay').textContent = currentUser.handle;
       document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
-      log("🔓 Logged in");
+      log("🔓 Logged in successfully");
     }
 
-    function toggleLearnMode() { alert("ROOT DONATE — Donations, Share Links & Real Address Auto Search Active"); }
+    function toggleLearnMode() { alert("ROOT DONATE v1.8 — Clean & Fixed"); }
     function showReportModal() { alert("Report a new find coming soon..."); }
     function showProfile() { alert(`Profile\n${currentUser ? currentUser.handle : 'Guest'}\nBalance: ${currentUser ? currentUser.balance : 0} ROOT`); }
 
     window.onload = () => {
       startAutoSearch();
-      log("🔓 ROOT DONATE v1.8 — Donations + Base64 Share + Auto Address Search");
+      log("🔓 ROOT DONATE v1.8 — Fully Cleaned & Working");
     };
   </script>
 </body>
