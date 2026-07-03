@@ -34,9 +34,10 @@
       align-items: center; 
       border-bottom: 1px solid rgba(0,255,157,0.3); 
       background: rgba(10,10,10,0.98); 
+      z-index: 10;
     }
     .header h1 { 
-      font-size: 1.6rem; 
+      font-size: 1.65rem; 
       letter-spacing: 4px; 
       text-shadow: 0 0 20px var(--neon); 
     }
@@ -48,6 +49,7 @@
       flex-wrap: wrap; 
       border-bottom: 1px solid rgba(0,255,157,0.2); 
       background: rgba(10,10,10,0.98); 
+      z-index: 10;
     }
     .nav button { 
       background: transparent; 
@@ -228,14 +230,13 @@
   <div class="nodes-grid" id="grid"></div>
   <div class="log" id="log"></div>
 
-  <!-- IMPROVED REPORT MODAL -->
+  <!-- REPORT MODAL -->
   <div id="reportModal" class="modal">
     <div class="modal-content">
       <h2>📢 NEW REPORT</h2>
       <input type="text" id="reportTitle" placeholder="Find Title (e.g. 1795 Flowing Hair Dollar)">
       <input type="text" id="reportLocation" placeholder="Exact Location / Coordinates">
       <textarea id="reportDesc" rows="4" placeholder="Depth, soil type, associated items, notes..."></textarea>
-      
       <select id="reportType">
         <option value="Coin">Coin</option>
         <option value="Relic">Relic</option>
@@ -243,7 +244,6 @@
         <option value="Artifact">Artifact</option>
         <option value="Other">Other</option>
       </select>
-      
       <button onclick="simulatePhotoUpload()" style="margin:12px 0;">📸 Attach Photo (simulated)</button>
       <div id="photoPreview" style="margin:8px 0; color:#0f0; font-size:0.9rem;"></div>
 
@@ -306,6 +306,7 @@
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
+
     function drawMatrix() {
       ctx.fillStyle = 'rgba(10,10,10,0.12)'; 
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -331,7 +332,8 @@
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    const realPlacePool = [ /* same expanded pool as before */ 
+    // Full Global Place Pool
+    const realPlacePool = [
       { name: "California Mother Lode", loc: "California, USA", prob: "HIGH", exp: "Gold coins & nuggets", icon: "⛏️", dist: "8 km" },
       { name: "Gettysburg Battlefield", loc: "Pennsylvania, USA", prob: "VERY HIGH", exp: "Civil War relics", icon: "⚔️", dist: "35 km" },
       { name: "Bodie Ghost Town", loc: "California, USA", prob: "HIGH", exp: "Gold Rush coins", icon: "🏚️", dist: "91 km" },
@@ -339,7 +341,12 @@
       { name: "Machu Picchu", loc: "Cusco, Peru", prob: "HIGH", exp: "Inca artifacts", icon: "🏔️", dist: "650 km" },
       { name: "Angkor Wat", loc: "Siem Reap, Cambodia", prob: "MED", exp: "Khmer relics", icon: "🛕", dist: "890 km" },
       { name: "Gallipoli Trenches", loc: "Turkey", prob: "HIGH", exp: "WW1 relics", icon: "⚔️", dist: "140 km" },
-      { name: "Stonehenge", loc: "Wiltshire, UK", prob: "MED", exp: "Bronze Age items", icon: "🪨", dist: "67 km" }
+      { name: "Stonehenge", loc: "Wiltshire, UK", prob: "MED", exp: "Bronze Age items", icon: "🪨", dist: "67 km" },
+      { name: "Oak Island", loc: "Nova Scotia, Canada", prob: "VERY HIGH", exp: "Treasure chests", icon: "🪙", dist: "210 km" },
+      { name: "Pompeii Streets", loc: "Pompeii, Italy", prob: "MED", exp: "Ancient coins", icon: "🌋", dist: "280 km" },
+      { name: "Temple of Karnak", loc: "Luxor, Egypt", prob: "HIGH", exp: "Pharaonic relics", icon: "🪔", dist: "420 km" },
+      { name: "Great Wall Watchtowers", loc: "Beijing, China", prob: "MED", exp: "Ancient coins", icon: "🏯", dist: "180 km" },
+      { name: "Petra Ancient City", loc: "Jordan", prob: "HIGH", exp: "Nabataean coins", icon: "🏛️", dist: "410 km" }
     ];
 
     const addressDatabase = [
@@ -369,7 +376,7 @@
 
       setTimeout(() => {
         places = [];
-        let pool = [...realPlacePool];
+        const pool = [...realPlacePool];
         for (let i = 0; i < 128; i++) {
           const base = pool[i % pool.length];
           places.push({ 
@@ -528,11 +535,11 @@
     function closeReportModal() { document.getElementById('reportModal').style.display = 'none'; }
     function setTab(n) { document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n)); }
     function resetScan() { if(confirm("Reset global grid?")) startAutoAddressSearch(); }
-    function toggleLearnMode() { alert("ROOT DONATE GLOBAL v2.5 — Clean Theme + Enhanced Reporting"); }
+    function toggleLearnMode() { alert("ROOT DONATE GLOBAL v2.6 — Masterpiece Edition"); }
 
     window.onload = () => {
       startAutoAddressSearch();
-      log("🌍 ROOT DONATE v2.5 — Updated Theme & Report System Ready");
+      log("🌍 ROOT DONATE v2.6 — PERFECT MASTERPIECE LOADED");
     };
   </script>
 </body>
