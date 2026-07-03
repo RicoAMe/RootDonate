@@ -188,7 +188,7 @@
 <body>
 
   <div class="header">
-    <h1><i class="fas fa-globe"></i>ROOT DONATE</h1>
+    <h1><i class="fas fa-globe"></i> ROOT DONATE</h1>
     <div class="user-info" onclick="showProfile()">
       <div style="text-align:right;">
         <div id="usernameDisplay" style="font-weight:600;">@explorer</div>
@@ -351,6 +351,7 @@
 
     function closePlaceModal() { document.getElementById('placeModal').style.display = 'none'; }
 
+    // Share Link with Donation History
     function copyShareLink() {
       if (!currentPlace) return;
       const data = {
@@ -363,7 +364,7 @@
       const encoded = btoa(JSON.stringify(data));
       const shareUrl = `${window.location.origin}${window.location.pathname}#${encoded}`;
       navigator.clipboard.writeText(shareUrl);
-      alert("✅ Share link with donation history copied!");
+      alert("✅ Share link with full donation history copied!");
     }
 
     function loadFromHash() {
@@ -373,7 +374,13 @@
         const data = JSON.parse(atob(hash));
         let place = places.find(p => p.id === data.id);
         if (!place) {
-          place = { id: data.id, name: data.name, loc: data.loc || "Shared Location", icon: data.icon || "📍", donations: [] };
+          place = { 
+            id: data.id, 
+            name: data.name, 
+            loc: data.loc || "Shared Location", 
+            icon: data.icon || "📍", 
+            donations: [] 
+          };
           places.unshift(place);
           renderPlaces();
         }
@@ -442,7 +449,7 @@
       renderPlaces();
       document.getElementById('usernameDisplay').textContent = currentUser.handle;
       document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
-      log("🌍 EarthMesh Ready");
+      log("🌍 ROOT DONATE Ready");
       loadFromHash();
     };
   </script>
