@@ -210,12 +210,11 @@
     <i class="fas fa-satellite-dish"></i> <span id="scanText">SCANNING NEARBY HOTSPOTS...</span>
   </div>
 
-  <input type="text" id="searchInput" class="search-bar" placeholder="Search places or coins..." onkeyup="filterContent()">
+  <input type="text" id="searchInput" class="search-bar" placeholder="Search places..." onkeyup="filterContent()">
 
   <div class="nodes-grid" id="grid"></div>
   <div class="log" id="log"></div>
 
-  <!-- Modals (AUTH, ITEM, DONATE, etc.) - kept from your original -->
   <!-- AUTH MODAL -->
   <div class="modal" id="authModal">
     <div class="modal-content">
@@ -236,8 +235,6 @@
       </div>
     </div>
   </div>
-
-  <!-- Add your other modals (itemModal, donateModal, reportModal, etc.) here if needed -->
 
   <script>
     // Matrix Rain
@@ -269,7 +266,6 @@
     // App State
     let places = [];
     let currentUser = null;
-    let currentTab = 0;
 
     const logEl = document.getElementById('log');
     function log(msg) {
@@ -278,36 +274,21 @@
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    // Sample Places (LIVE FEED)
+    // Sample Places
     function loadSamplePlaces() {
       places = [
-        {
-          id: "SP-001", name: "Abandoned 1800s Railroad Yard", loc: "Central California",
-          probability: "HIGH", expected: "Gold Rush coins, railroad tokens",
-          icon: "🚂", time: "Scanned just now", distance: "4.2 km"
-        },
-        {
-          id: "SP-002", name: "Old Fairgrounds (1930s)", loc: "Texas Panhandle",
-          probability: "MED", expected: "Depression-era silver",
-          icon: "🎡", time: "Scanned 7m ago", distance: "12 km"
-        },
-        {
-          id: "SP-003", name: "Civil War Battlefield Edge", loc: "Virginia",
-          probability: "VERY HIGH", expected: "Rare coins & relics",
-          icon: "⚔️", time: "Scanned just now", distance: "28 km"
-        },
-        {
-          id: "SP-004", name: "Ghost Town Main Street", loc: "Nevada Desert",
-          probability: "HIGH", expected: "Silver dollars, tokens",
-          icon: "🏜️", time: "Scanned 15m ago", distance: "67 km"
-        }
+        { id: "SP-001", name: "Abandoned 1800s Railroad Yard", loc: "Central California", probability: "HIGH", expected: "Gold Rush coins, railroad tokens", icon: "🚂", time: "Scanned just now", distance: "4.2 km" },
+        { id: "SP-002", name: "Old Fairgrounds (1930s)", loc: "Texas Panhandle", probability: "MED", expected: "Depression-era silver", icon: "🎡", time: "Scanned 7m ago", distance: "12 km" },
+        { id: "SP-003", name: "Civil War Battlefield Edge", loc: "Virginia", probability: "VERY HIGH", expected: "Rare coins & relics", icon: "⚔️", time: "Scanned just now", distance: "28 km" },
+        { id: "SP-004", name: "Ghost Town Main Street", loc: "Nevada Desert", probability: "HIGH", expected: "Silver dollars, tokens", icon: "🏜️", time: "Scanned 15m ago", distance: "67 km" },
+        { id: "SP-005", name: "Old Mining Camp", loc: "Colorado Rockies", probability: "HIGH", expected: "Gold coins & nuggets", icon: "⛏️", time: "Scanned 22m ago", distance: "45 km" }
       ];
     }
 
-    function renderPlaces(filtered = places) {
+    function renderPlaces(filteredPlaces) {
       const grid = document.getElementById('grid');
       grid.innerHTML = '';
-      filtered.forEach(place => {
+      filteredPlaces.forEach(place => {
         const card = document.createElement('div');
         card.className = 'place-card';
         card.innerHTML = `
@@ -328,52 +309,64 @@
       });
     }
 
+    // Fixed Search Function
     function filterContent() {
-      const q = document.getElementById('searchInput').value.toLowerCase();
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      if (!query) {
+        renderPlaces(places);
+        return;
+      }
       const filtered = places.filter(p => 
-        p.name.toLowerCase().includes(q) || p.loc.toLowerCase().includes(q)
+        p.name.toLowerCase().includes(query) || 
+        p.loc.toLowerCase().includes(query) ||
+        p.expected.toLowerCase().includes(query)
       );
       renderPlaces(filtered);
     }
 
     function startAutoScan() {
-      document.getElementById('scanStatus').style.display = 'block';
-      document.getElementById('scanText').textContent = '🔍 GEO-MESH SCANNING...';
+      const status = document.getElementById('scanStatus');
+      const text = document.getElementById('scanText');
+      status.style.display = 'block';
+      text.textContent = '🔍 GEO-MESH SCANNING...';
       log("📡 STARTING LIVE PLACE SCAN...");
 
       setTimeout(() => {
-        document.getElementById('scanText').textContent = '✅ LIVE HOTSPOTS UPDATED';
         loadSamplePlaces();
-        renderPlaces();
+        renderPlaces(places);
+        text.textContent = '✅ LIVE HOTSPOTS UPDATED';
         log("🌍 LIVE FEED UPDATED — NEW PLACES LOADED");
-        setTimeout(() => document.getElementById('scanStatus').style.display = 'none', 2000);
-      }, 1600);
+        setTimeout(() => status.style.display = 'none', 1800);
+      }, 1400);
     }
 
     function setTab(n) {
-      currentTab = n;
-      document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n));
-      if (n === 0) renderPlaces();
+      document.querySelectorAll('.nav button').forEach((b, i) => b.classList.toggle('active', i === n));
+      if (n === 0) renderPlaces(places);
     }
 
     function resetScan() {
       if (confirm("Reset mesh?")) {
         loadSamplePlaces();
-        renderPlaces();
+        renderPlaces(places);
         log("🔄 MESH RESET & RE-SCAN COMPLETE");
       }
     }
 
-    // Basic Auth (simplified)
+    // Placeholder Auth Functions
     function showAuthModal() { document.getElementById('authModal').style.display = 'flex'; }
     function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
-    function switchAuthTab(n) { /* ... */ }
-    function login() { /* ... */ }
-    function signup() { /* ... */ }
+    function switchAuthTab(n) {}
+    function login() { alert("Logged in (demo)"); closeAuthModal(); }
+    function signup() { alert("Account created (demo)"); closeAuthModal(); }
+    function toggleLearnMode() { alert("ROOT DONATE v1.5 — Live Places Feed"); }
+    function showProfile() { alert("Profile view coming soon..."); }
+    function showReportModal() { alert("Report a new find coming soon..."); }
 
+    // Initialize
     window.onload = () => {
       loadSamplePlaces();
-      renderPlaces();
+      renderPlaces(places);
       log("🔓 ROOT DONATE v1.5 — LIVE PLACES FEED ACTIVE");
       log("📍 Auto-scanning nearby hunting locations...");
     };
