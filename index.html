@@ -201,7 +201,7 @@
   <div class="search-container">
     <input type="text" id="searchInput" class="search-bar" 
            placeholder="Search any place on Earth..." 
-           onkeyup="handleSearch()" autocomplete="off" spellcheck="true">
+           onkeyup="handleSearch()" autocomplete="off">
     <div id="suggestions" class="suggestions"></div>
   </div>
 
@@ -351,7 +351,7 @@
 
     function closePlaceModal() { document.getElementById('placeModal').style.display = 'none'; }
 
-    // Base64 Share Link with Donation History
+    // Base64 Share Link with Full Donation History
     function copyShareLink() {
       if (!currentPlace) return;
       const data = {
@@ -361,17 +361,18 @@
         icon: currentPlace.icon,
         donations: currentPlace.donations || []
       };
-      const encoded = btoa(JSON.stringify(data));
+      const encoded = btoa(encodeURIComponent(JSON.stringify(data))); // Safe Base64
       const shareUrl = `${window.location.origin}${window.location.pathname}#${encoded}`;
       navigator.clipboard.writeText(shareUrl);
-      alert("✅ Share link (Base64) with donation history copied!");
+      alert("✅ Base64 Share Link with donation history copied!");
     }
 
     function loadFromHash() {
       const hash = window.location.hash.substring(1);
       if (!hash) return;
       try {
-        const data = JSON.parse(atob(hash));
+        const decoded = decodeURIComponent(atob(hash));
+        const data = JSON.parse(decoded);
         let place = places.find(p => p.id === data.id);
         if (!place) {
           place = { 
@@ -386,8 +387,10 @@
         }
         place.donations = data.donations || [];
         showPlaceDetail(place);
-        log("📥 Loaded shared place with history");
-      } catch(e) {}
+        log("📥 Loaded shared place with full history");
+      } catch(e) {
+        console.error("Invalid share link");
+      }
     }
 
     function showDonateModal() {
