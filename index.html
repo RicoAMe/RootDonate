@@ -124,6 +124,10 @@
       color: white;
       border: 1px solid #000;
       font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
     }
   </style>
 </head>
@@ -222,9 +226,32 @@
       </div>
 
       <button onclick="confirmDonation()" style="width:100%;padding:14px;margin:10px 0;border:2px solid #0f0;background:transparent;color:#0f0;border-radius:50px;">SEND FROM WALLET</button>
-      <button onclick="startApplePay()" class="apple-pay-btn" style="width:100%;padding:16px;display:flex;align-items:center;justify-content:center;gap:8px;">
+      <button onclick="startApplePay()" class="apple-pay-btn" style="width:100%;padding:16px;">
         <i class="fab fa-apple"></i> PAY WITH APPLE PAY
       </button>
+    </div>
+  </div>
+
+  <!-- TOP-UP MODAL (Apple Pay to Profile Balance) -->
+  <div class="modal" id="topUpModal">
+    <div class="modal-content">
+      <span onclick="closeTopUpModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
+      <h2 style="text-align:center;color:#0f0;margin-bottom:20px;"> TOP UP BALANCE</h2>
+      <p style="text-align:center;margin-bottom:20px;">Add ROOT tokens instantly via Apple Pay</p>
+      
+      <input id="topUpAmount" type="number" value="100" style="width:100%;padding:14px;margin:15px 0;background:#111;border:1px solid #0f0;color:var(--neon);font-size:1.8rem;text-align:center;">
+      
+      <div style="display:flex;gap:10px;margin:15px 0;justify-content:center;">
+        <button onclick="quickTopUp(50)" style="padding:10px 20px;border:1px solid var(--neon);background:transparent;color:var(--neon);">50</button>
+        <button onclick="quickTopUp(100)" style="padding:10px 20px;border:1px solid var(--neon);background:transparent;color:var(--neon);">100</button>
+        <button onclick="quickTopUp(250)" style="padding:10px 20px;border:1px solid var(--neon);background:transparent;color:var(--neon);">250</button>
+        <button onclick="quickTopUp(500)" style="padding:10px 20px;border:1px solid var(--neon);background:transparent;color:var(--neon);">500</button>
+      </div>
+
+      <button onclick="confirmApplePayTopUp()" class="apple-pay-btn" style="width:100%;padding:18px;font-size:1.1rem;margin-top:10px;">
+        <i class="fab fa-apple"></i> CONFIRM WITH APPLE PAY
+      </button>
+      <p style="text-align:center;font-size:0.8rem;opacity:0.6;margin-top:15px;">Secure • Instant • No fees on ROOT network</p>
     </div>
   </div>
 
@@ -247,7 +274,12 @@
       <span onclick="closeProfileModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
       <h2 style="text-align:center;color:#ffd700;margin-bottom:20px;">🪙 YOUR PROFILE</h2>
       <div id="profileInfo" style="text-align:center;margin-bottom:25px;"></div>
-      <h3 style="margin:15px 0;">📜 DONATION HISTORY</h3>
+      
+      <button onclick="showTopUpModal()" style="width:100%;padding:14px;margin:10px 0;border:2px solid #0f0;background:transparent;color:#0f0;border-radius:50px;">
+         TOP UP BALANCE WITH APPLE PAY
+      </button>
+      
+      <h3 style="margin:20px 0 10px;">📜 DONATION HISTORY</h3>
       <div id="historyList" class="history-list"></div>
     </div>
   </div>
@@ -366,14 +398,13 @@
       updateBalanceDisplay();
     }
 
-    // Profile with Apple Pay Top-up
+    // Profile
     function showProfile() {
       if (!currentUser) return;
       document.getElementById('profileInfo').innerHTML = `
         <div class="avatar" style="margin:0 auto 15px;width:90px;height:90px;font-size:3rem;">${currentUser.avatar}</div>
         <h2>${currentUser.handle}</h2>
         <p>Joined ${currentUser.joined} • <strong style="color:#0f0;">${currentUser.balance} ROOT</strong></p>
-        <button onclick="topUpBalance()" style="margin-top:15px;padding:12px 24px;border:2px solid #0f0;background:transparent;color:#0f0;border-radius:50px;width:100%;"> Top Up Balance with Apple Pay</button>
       `;
       let html = '';
       donationHistory.forEach(h => {
@@ -387,22 +418,34 @@
       document.getElementById('profileModal').style.display = 'flex';
     }
 
-    function topUpBalance() {
-      const amount = prompt("Enter amount to add via Apple Pay:", "100");
-      const num = parseInt(amount);
-      if (num > 0) {
-        currentUser.balance += num;
+    function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
+
+    // Top-Up with Apple Pay (Profile Balance)
+    function showTopUpModal() {
+      document.getElementById('topUpModal').style.display = 'flex';
+    }
+    function closeTopUpModal() {
+      document.getElementById('topUpModal').style.display = 'none';
+    }
+    function quickTopUp(amt) {
+      document.getElementById('topUpAmount').value = amt;
+    }
+    function confirmApplePayTopUp() {
+      const amount = parseInt(document.getElementById('topUpAmount').value);
+      if (!amount || amount <= 0) return alert("Enter a valid amount");
+      
+      if (confirm(` Apple Pay\n\nAdding: ${amount} ROOT\n\nConfirm payment?`)) {
+        currentUser.balance += amount;
         updateBalanceDisplay();
         saveData();
-        log(` Apple Pay Top-up: +${num} ROOT`);
-        alert(`✅ ${num} ROOT added successfully via Apple Pay!`);
-        showProfile();
+        log(` Apple Pay Top-up successful: +${amount} ROOT`);
+        alert(`✅ ${amount} ROOT added to your balance via Apple Pay!`);
+        closeTopUpModal();
+        showProfile(); // refresh profile
       }
     }
 
-    function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
-
-    // Donate, Item, Report functions (cleaned)
+    // Donate functions
     function showDonateModal() {
       if (!currentUser) return alert("Please login first");
       document.getElementById('donateTo').innerHTML = `To: <strong>${currentItem.name}</strong><br>by ${currentItem.source || 'Unknown'}`;
@@ -427,11 +470,11 @@
     function startApplePay() {
       const amount = parseInt(document.getElementById('donateAmount').value);
       if (!amount || amount > currentUser.balance) return alert("Insufficient balance");
-      if (confirm(` Apple Pay\n\nAmount: ${amount} ROOT\nConfirm?`)) {
+      if (confirm(` Apple Pay\n\nSending: ${amount} ROOT\nConfirm?`)) {
         currentUser.balance -= amount;
         updateBalanceDisplay();
         addToHistory("sent", amount, currentItem.source || "Node Owner", currentItem.name);
-        log(` Apple Pay: ${amount} ROOT sent`);
+        log(` Apple Pay donation: ${amount} ROOT sent`);
         closeDonateModal();
         closeItemModal();
         alert("✅ Apple Pay Payment Successful!");
@@ -480,7 +523,7 @@
       renderNodes();
       closeReportModal();
       log(`📢 ${currentUser.handle} broadcasted new find`);
-      alert("✅ Find broadcasted!");
+      alert("✅ Find broadcasted to the mesh!");
     }
 
     // Rendering
@@ -520,7 +563,7 @@
       log("✅ MESH SYNCHRONISED");
     }
 
-    function toggleLearnMode() { alert("ROOT DONATE v1.0 - Production Ready"); }
+    function toggleLearnMode() { alert("ROOT DONATE v1.1 - Apple Pay Balance Top-up Enabled"); }
     function setTab(n) { document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n)); }
     function resetScan() {
       if (confirm("Reset mesh?")) {
@@ -542,7 +585,7 @@
         if (decoded) setTimeout(() => showItemDetail(decoded), 800);
       }
 
-      log("🔓 ROOT DONATE v1.0 PRODUCTION READY");
+      log("🔓 ROOT DONATE v1.1 - Apple Pay Top-up to Profile Balance Active");
     };
   </script>
 </body>
