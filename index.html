@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#0a0a0a">
   <title>EARTH MESH • ROOT DONATE</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
   <style>
     :root {
       --neon: #00ff9d;
@@ -283,7 +284,7 @@
   </div>
 
   <div class="search-container">
-    <input type="text" id="searchInput" class="search-bar" placeholder="Search any place on Earth..." onkeyup="autoCompleteSearch()" autocomplete="off">
+    <input type="text" id="searchInput" class="search-bar" placeholder="Search any place on Earth..." onkeyup="handleSearch()" autocomplete="off">
     <div id="suggestions" class="suggestions"></div>
   </div>
 
@@ -362,57 +363,58 @@
   </div>
 
   <script>
-    // Matrix Rain
+    // Matrix Rain Background
     const canvas = document.getElementById('matrix');
     const ctx = canvas.getContext('2d');
     let drops = [];
-    function resizeCanvas() { 
-      canvas.width = window.innerWidth; 
-      canvas.height = window.innerHeight; 
-      drops = Array(Math.floor(canvas.width / 14)).fill(1); 
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      drops = Array(Math.floor(canvas.width / 14)).fill(1);
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
     function drawMatrix() {
-      ctx.fillStyle = 'rgba(10,10,10,0.14)'; 
+      ctx.fillStyle = 'rgba(10,10,10,0.14)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#00ff9d'; 
+      ctx.fillStyle = '#00ff9d';
       ctx.font = '14px monospace';
       const chars = '01🌍🌎🌏🪙⚡₿$€£¥🔍📍';
       for (let i = 0; i < drops.length; i++) {
-        ctx.fillText(chars[Math.floor(Math.random()*chars.length)], i*14, drops[i]*14);
-        if (drops[i]*14 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * 14, drops[i] * 14);
+        if (drops[i] * 14 > canvas.height && Math.random() > 0.975) drops[i] = 0;
         drops[i]++;
       }
     }
     setInterval(drawMatrix, 35);
 
+    // Data
     let places = [];
     let currentUser = null;
     let currentPlace = null;
 
     const logEl = document.getElementById('log');
     function log(msg) {
-      const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       logEl.innerHTML += `<span style="opacity:0.6">[${time}]</span> ${msg}<br>`;
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    // Expanded real-world places
     const realPlacePool = [
-      { name: "California Mother Lode", loc: "Sierra Nevada, USA", prob: "HIGH", exp: "Gold coins & nuggets", icon: "⛏️", dist: "12 km" },
-      { name: "Gettysburg Battlefield", loc: "Pennsylvania, USA", prob: "VERY HIGH", exp: "Civil War relics", icon: "⚔️", dist: "42 km" },
-      { name: "Bodie Ghost Town", loc: "California, USA", prob: "HIGH", exp: "Gold Rush artifacts", icon: "🏚️", dist: "88 km" },
-      { name: "Roman Forum", loc: "Rome, Italy", prob: "HIGH", exp: "Ancient Roman coins", icon: "🏛️", dist: "22 km" },
-      { name: "Machu Picchu Terraces", loc: "Cusco, Peru", prob: "HIGH", exp: "Inca gold & pottery", icon: "🏔️", dist: "670 km" },
-      { name: "Angkor Wat Temples", loc: "Siem Reap, Cambodia", prob: "MED", exp: "Khmer empire relics", icon: "🛕", dist: "910 km" },
-      { name: "Gallipoli Battlefield", loc: "Çanakkale, Turkey", prob: "HIGH", exp: "WW1 relics", icon: "⚔️", dist: "155 km" },
-      { name: "Stonehenge", loc: "Wiltshire, UK", prob: "MED", exp: "Bronze Age tools", icon: "🪨", dist: "71 km" },
-      { name: "Oak Island Money Pit", loc: "Nova Scotia, Canada", prob: "VERY HIGH", exp: "Pirate treasure", icon: "🪙", dist: "245 km" },
-      { name: "Temple of Karnak", loc: "Luxor, Egypt", prob: "HIGH", exp: "Pharaonic artifacts", icon: "🪔", dist: "430 km" },
-      { name: "Pompeii Ruins", loc: "Naples, Italy", prob: "HIGH", exp: "Roman coins & jewelry", icon: "🌋", dist: "180 km" },
-      { name: "Great Wall Watchtowers", loc: "Beijing, China", prob: "MED", exp: "Ancient coins", icon: "🏯", dist: "520 km" }
+      { name: "California Mother Lode", loc: "Sierra Nevada, USA", prob: "HIGH", exp: "Gold coins & nuggets", icon: "⛏️" },
+      { name: "Gettysburg Battlefield", loc: "Pennsylvania, USA", prob: "VERY HIGH", exp: "Civil War relics", icon: "⚔️" },
+      { name: "Bodie Ghost Town", loc: "California, USA", prob: "HIGH", exp: "Gold Rush artifacts", icon: "🏚️" },
+      { name: "Roman Forum", loc: "Rome, Italy", prob: "HIGH", exp: "Ancient Roman coins", icon: "🏛️" },
+      { name: "Machu Picchu Terraces", loc: "Cusco, Peru", prob: "HIGH", exp: "Inca gold & pottery", icon: "🏔️" },
+      { name: "Angkor Wat Temples", loc: "Siem Reap, Cambodia", prob: "MED", exp: "Khmer empire relics", icon: "🛕" },
+      { name: "Gallipoli Battlefield", loc: "Çanakkale, Turkey", prob: "HIGH", exp: "WW1 relics", icon: "⚔️" },
+      { name: "Stonehenge", loc: "Wiltshire, UK", prob: "MED", exp: "Bronze Age tools", icon: "🪨" },
+      { name: "Oak Island Money Pit", loc: "Nova Scotia, Canada", prob: "VERY HIGH", exp: "Pirate treasure", icon: "🪙" },
+      { name: "Temple of Karnak", loc: "Luxor, Egypt", prob: "HIGH", exp: "Pharaonic artifacts", icon: "🪔" },
+      { name: "Pompeii Ruins", loc: "Naples, Italy", prob: "HIGH", exp: "Roman coins & jewelry", icon: "🌋" },
+      { name: "Great Wall Watchtowers", loc: "Beijing, China", prob: "MED", exp: "Ancient coins", icon: "🏯" }
     ];
 
     const addressDatabase = [
@@ -426,9 +428,10 @@
       { full: "Oak Island, Canada", city: "Nova Scotia" }
     ];
 
+    // Utility Functions
     function toBase64Url(obj) {
       const str = btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
-      return str.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+      return str.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
     }
 
     function generateShareUrl(place) {
@@ -436,6 +439,7 @@
       return `${location.origin}${location.pathname}#${toBase64Url(minimal)}`;
     }
 
+    // Core Functions
     function startAutoAddressSearch() {
       document.getElementById('scanStatus').style.display = 'block';
       document.getElementById('scanText').textContent = 'SATELLITE MESH SCANNING...';
@@ -446,11 +450,11 @@
         const pool = [...realPlacePool];
         for (let i = 0; i < 180; i++) {
           const base = pool[i % pool.length];
-          places.push({ 
-            ...base, 
-            id: `EM-${100000 + Math.floor(Math.random()*900000)}`, 
+          places.push({
+            ...base,
+            id: `EM-${100000 + Math.floor(Math.random() * 900000)}`,
             donations: [],
-            dist: `${Math.floor(Math.random()*450) + 3} km`
+            dist: `${Math.floor(Math.random() * 450) + 3} km`
           });
         }
         renderPlaces();
@@ -459,10 +463,10 @@
       }, 1350);
     }
 
-    function renderPlaces(filtered = places) {
+    function renderPlaces(filteredPlaces = places) {
       const grid = document.getElementById('grid');
       grid.innerHTML = '';
-      filtered.forEach(place => {
+      filteredPlaces.forEach(place => {
         const card = document.createElement('div');
         card.className = 'place-card';
         card.innerHTML = `
@@ -480,36 +484,43 @@
       });
     }
 
-    function autoCompleteSearch() {
-      const q = document.getElementById('searchInput').value.toLowerCase().trim();
-      const container = document.getElementById('suggestions');
+    function handleSearch() {
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      const suggestionsContainer = document.getElementById('suggestions');
 
-      if (q.length < 2) {
-        container.style.display = 'none';
+      if (query.length < 2) {
+        suggestionsContainer.style.display = 'none';
         renderPlaces();
         return;
       }
 
-      container.innerHTML = '';
+      // Show suggestions
+      suggestionsContainer.innerHTML = '';
       let hasResults = false;
 
       addressDatabase.filter(addr => 
-        addr.full.toLowerCase().includes(q) || 
-        addr.city.toLowerCase().includes(q)
+        addr.full.toLowerCase().includes(query) || addr.city.toLowerCase().includes(query)
       ).forEach(addr => {
         const div = document.createElement('div');
         div.className = 'suggestion-item';
         div.innerHTML = `<i class="fas fa-map-marker-alt"></i><div><strong>${addr.full}</strong></div>`;
         div.onclick = () => {
           document.getElementById('searchInput').value = addr.full;
-          container.style.display = 'none';
+          suggestionsContainer.style.display = 'none';
           startAutoAddressSearch();
         };
-        container.appendChild(div);
+        suggestionsContainer.appendChild(div);
         hasResults = true;
       });
 
-      container.style.display = hasResults ? 'block' : 'none';
+      suggestionsContainer.style.display = hasResults ? 'block' : 'none';
+
+      // Live filter on grid
+      const filtered = places.filter(place =>
+        place.name.toLowerCase().includes(query) ||
+        place.loc.toLowerCase().includes(query)
+      );
+      renderPlaces(filtered);
     }
 
     function showPlaceDetail(place) {
@@ -522,12 +533,13 @@
       document.getElementById('modalProb').textContent = place.prob;
       document.getElementById('modalExpected').textContent = place.exp;
 
-      let hist = place.donations.map(d => 
-        `<div class="history-item"><strong>💰 ${d.amount} ROOT</strong> from ${d.from}<br><small>${d.time}</small></div>`
-      ).join('');
-      
-      document.getElementById('placeDonationHistory').innerHTML = hist || '<p style="opacity:0.6;">No donations yet — be the first to support this site!</p>';
+      const histHTML = place.donations.length 
+        ? place.donations.map(d => 
+            `<div class="history-item"><strong>💰 ${d.amount} ROOT</strong> from ${d.from}<br><small>${d.time}</small></div>`
+          ).join('')
+        : '<p style="opacity:0.6;">No donations yet — be the first to support this site!</p>';
 
+      document.getElementById('placeDonationHistory').innerHTML = histHTML;
       document.getElementById('placeModal').style.display = 'flex';
     }
 
@@ -550,10 +562,10 @@
       if (!amount || amount > currentUser.balance) return alert("Invalid amount or insufficient balance");
       
       currentUser.balance -= amount;
-      currentPlace.donations.unshift({ 
-        from: currentUser.handle, 
-        amount, 
-        time: new Date().toLocaleString() 
+      currentPlace.donations.unshift({
+        from: currentUser.handle,
+        amount,
+        time: new Date().toLocaleString()
       });
 
       document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
@@ -566,24 +578,23 @@
 
     function applePayDonate() {
       if (!currentUser) return alert("Login required");
-      const amount = prompt("Enter ROOT amount for Apple Pay:", "150");
-      if (amount && !isNaN(amount)) {
-        const num = parseInt(amount);
-        if (num > currentUser.balance) return alert("Insufficient ROOT balance");
-        
-        currentUser.balance -= num;
-        currentPlace.donations.unshift({ 
-          from: currentUser.handle + " (Apple Pay)", 
-          amount: num, 
-          time: new Date().toLocaleString() 
-        });
+      const amountStr = prompt("Enter ROOT amount for Apple Pay:", "150");
+      if (!amountStr) return;
+      const num = parseInt(amountStr);
+      if (isNaN(num) || num > currentUser.balance) return alert("Insufficient ROOT balance");
+      
+      currentUser.balance -= num;
+      currentPlace.donations.unshift({
+        from: currentUser.handle + " (Apple Pay)",
+        amount: num,
+        time: new Date().toLocaleString()
+      });
 
-        document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
-        log(`🍎 Apple Pay donation of ${num} ROOT to ${currentPlace.name}`);
-        alert("✅ Apple Pay transaction successful!");
-        closePlaceModal();
-        showPlaceDetail(currentPlace);
-      }
+      document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
+      log(`🍎 Apple Pay donation of ${num} ROOT to ${currentPlace.name}`);
+      alert("✅ Apple Pay transaction successful!");
+      closePlaceModal();
+      showPlaceDetail(currentPlace);
     }
 
     function login() {
@@ -619,30 +630,31 @@
       startAutoAddressSearch();
     }
 
+    // Modal Controls
     function closePlaceModal() { document.getElementById('placeModal').style.display = 'none'; }
     function closeDonateModal() { document.getElementById('donateModal').style.display = 'none'; }
     function showAuthModal() { document.getElementById('authModal').style.display = 'flex'; }
     function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
     function showReportModal() { document.getElementById('reportModal').style.display = 'flex'; }
     function closeReportModal() { document.getElementById('reportModal').style.display = 'none'; }
-    function setTab(n) { 
-      document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n)); 
+    function setTab(n) {
+      document.querySelectorAll('.nav button').forEach((b, i) => b.classList.toggle('active', i === n));
     }
-    function resetScan() { 
-      if(confirm("Reset entire Earth Mesh?")) startAutoAddressSearch(); 
+    function resetScan() {
+      if (confirm("Reset entire Earth Mesh?")) startAutoAddressSearch();
     }
-    function toggleLearnMode() { 
-      alert("🌍 EARTH MESH v2.8 — Complete Single-File Project\n\nBuilt as a full cyberpunk treasure-hunting donation platform."); 
+    function toggleLearnMode() {
+      alert("🌍 EARTH MESH v2.9 — Clean & Polished Edition\n\nFull cyberpunk treasure-hunting donation platform.");
     }
-
     function showProfile() {
       alert(`Profile: ${currentUser.handle}\nBalance: ${currentUser.balance} ROOT\n\nTotal donated: 3420 ROOT`);
     }
 
+    // Initialize
     window.onload = () => {
       startAutoAddressSearch();
-      log("🌍 EARTH MESH v2.8 — Complete Project Loaded");
-      log("💡 Tip: Click any card to support a location");
+      log("🌍 EARTH MESH v2.9 — Clean & Complete Project Loaded");
+      log("💡 Tip: Start typing in the search bar for live filtering");
     };
   </script>
 </body>
