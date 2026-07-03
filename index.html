@@ -67,8 +67,6 @@
       outline: none;
     }
 
-    .search-bar::placeholder { color: #88a5b8; }
-
     .suggestions {
       position: absolute;
       top: 100%;
@@ -216,7 +214,7 @@
       <p id="modalLoc" style="opacity:0.8;margin-bottom:20px;"></p>
 
       <button onclick="copyShareLink()" style="background:transparent;border:1px solid #00b894;color:#00b894;width:100%;margin-bottom:10px;">
-        🔗 Share Link (Base64)
+        🔗 Share Link (with History)
       </button>
       <button onclick="showDonateModal()" class="primary">💰 Donate ROOT Tokens</button>
       <button onclick="applePayDonate()" class="apple-pay-btn">
@@ -269,7 +267,7 @@
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    // Real Place Search
+    // Real Search
     async function nominatimSearch(query) {
       if (query.length < 3) return [];
       try {
@@ -337,7 +335,6 @@
       document.getElementById('modalName').textContent = place.name;
       document.getElementById('modalLoc').textContent = place.loc;
 
-      // Donation History
       const histContainer = document.getElementById('donationHistory');
       if (place.donations.length === 0) {
         histContainer.innerHTML = `<p style="opacity:0.6;text-align:center;padding:20px;">No donations yet — be the first!</p>`;
@@ -355,13 +352,50 @@
 
     function closePlaceModal() { document.getElementById('placeModal').style.display = 'none'; }
 
-    // Base64 Share Link
+    // Share Link with Full Donation History (Base64)
     function copyShareLink() {
       if (!currentPlace) return;
-      const data = btoa(JSON.stringify({ id: currentPlace.id, name: currentPlace.name }));
-      const shareUrl = `${window.location.origin}${window.location.pathname}#${data}`;
+      const data = {
+        id: currentPlace.id,
+        name: currentPlace.name,
+        loc: currentPlace.loc,
+        icon: currentPlace.icon,
+        donations: currentPlace.donations || []
+      };
+      const encoded = btoa(JSON.stringify(data));
+      const shareUrl = `${window.location.origin}${window.location.pathname}#${encoded}`;
       navigator.clipboard.writeText(shareUrl);
-      alert("✅ Base64 Share Link Copied!");
+      alert("✅ Share link with donation history copied!");
+    }
+
+    // Load from URL hash (persisted data)
+    function loadFromHash() {
+      const hash = window.location.hash.substring(1);
+      if (!hash) return;
+
+      try {
+        const data = JSON.parse(atob(hash));
+        const existing = places.find(p => p.id === data.id);
+        
+        if (existing) {
+          existing.donations = data.donations || [];
+          showPlaceDetail(existing);
+        } else {
+          const newPlace = {
+            id: data.id,
+            name: data.name,
+            loc: data.loc || "Imported Location",
+            icon: data.icon || "📍",
+            donations: data.donations || []
+          };
+          places.unshift(newPlace);
+          renderPlaces();
+          showPlaceDetail(newPlace);
+        }
+        log("📥 Loaded shared place with donation history");
+      } catch(e) {
+        console.error("Invalid share link");
+      }
     }
 
     function showDonateModal() {
@@ -386,7 +420,7 @@
       document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
       log(`💰 ${amount} ROOT donated to ${currentPlace.name}`);
       closeDonateModal();
-      showPlaceDetail(currentPlace); // Refresh history
+      showPlaceDetail(currentPlace); // Refresh
     }
 
     function applePayDonate() {
@@ -425,7 +459,9 @@
       renderPlaces();
       document.getElementById('usernameDisplay').textContent = currentUser.handle;
       document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
-      log("🌍 EarthMesh Loaded - Share Link + Donation History Ready");
+      log("🌍 EarthMesh Loaded");
+
+      loadFromHash(); // Check for shared link
     };
   </script>
 </body>
