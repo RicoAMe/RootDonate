@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -228,7 +228,7 @@
     </div>
   </div>
 
-  <!-- REPORT MODAL (New & Improved) -->
+  <!-- REPORT MODAL -->
   <div class="modal" id="reportModal">
     <div class="modal-content">
       <span onclick="closeReportModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
@@ -253,7 +253,7 @@
   </div>
 
   <script>
-    // Matrix Rain
+    // === MATRIX ===
     const canvas = document.getElementById('matrix');
     const ctx = canvas.getContext('2d');
     let drops = [];
@@ -278,7 +278,7 @@
     }
     setInterval(drawMatrix, 40);
 
-    // Base64 Share Links
+    // === BASE64 SHARE ===
     function toBase64Url(obj) {
       const str = btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
       return str.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -289,13 +289,12 @@
       try { return JSON.parse(decodeURIComponent(escape(atob(str)))); }
       catch(e) { return null; }
     }
-
     function generateShareUrl(item) {
       const minimal = { id: item.id, name: item.name, loc: item.loc, value: item.value, icon: item.icon, mint: item.mint };
       return `${location.origin}${location.pathname}#${toBase64Url(minimal)}`;
     }
 
-    // App State
+    // === APP STATE ===
     let allNodes = [];
     let currentUser = null;
     let currentItem = null;
@@ -444,7 +443,7 @@
       alert("✅ Base64 share link copied!");
     }
 
-    // Report Modal
+    // Report
     function showReportModal() {
       if (!currentUser) return alert("Login to broadcast finds");
       document.getElementById('reportModal').style.display = 'flex';
