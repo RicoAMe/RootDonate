@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0a1f2f">
-  <title>ROOT DONATE • Global Discovery</title>
+  <title>EarthMesh • Global Discovery</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
   <style>
@@ -66,6 +66,8 @@
       font-size: 1.05rem;
       outline: none;
     }
+
+    .search-bar::placeholder { color: #88a5b8; }
 
     .suggestions {
       position: absolute;
@@ -199,7 +201,7 @@
   <div class="search-container">
     <input type="text" id="searchInput" class="search-bar" 
            placeholder="Search any place on Earth..." 
-           onkeyup="handleSearch()" autocomplete="off">
+           onkeyup="handleSearch()" autocomplete="off" spellcheck="true">
     <div id="suggestions" class="suggestions"></div>
   </div>
 
@@ -267,7 +269,6 @@
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    // Real Search
     async function nominatimSearch(query) {
       if (query.length < 3) return [];
       try {
@@ -336,23 +337,20 @@
       document.getElementById('modalLoc').textContent = place.loc;
 
       const histContainer = document.getElementById('donationHistory');
-      if (place.donations.length === 0) {
-        histContainer.innerHTML = `<p style="opacity:0.6;text-align:center;padding:20px;">No donations yet — be the first!</p>`;
-      } else {
-        histContainer.innerHTML = place.donations.map(d => `
-          <div class="history-item">
-            <strong>💰 ${d.amount} ROOT</strong> from ${d.from}<br>
-            <small>${d.time}</small>
-          </div>
-        `).join('');
-      }
-
+      histContainer.innerHTML = place.donations.length === 0 
+        ? `<p style="opacity:0.6;text-align:center;padding:20px;">No donations yet — be the first!</p>`
+        : place.donations.map(d => `
+            <div class="history-item">
+              <strong>💰 ${d.amount} ROOT</strong> from ${d.from}<br>
+              <small>${d.time}</small>
+            </div>
+          `).join('');
+      
       document.getElementById('placeModal').style.display = 'flex';
     }
 
     function closePlaceModal() { document.getElementById('placeModal').style.display = 'none'; }
 
-    // Share Link with Full Donation History (Base64)
     function copyShareLink() {
       if (!currentPlace) return;
       const data = {
@@ -368,34 +366,21 @@
       alert("✅ Share link with donation history copied!");
     }
 
-    // Load from URL hash (persisted data)
     function loadFromHash() {
       const hash = window.location.hash.substring(1);
       if (!hash) return;
-
       try {
         const data = JSON.parse(atob(hash));
-        const existing = places.find(p => p.id === data.id);
-        
-        if (existing) {
-          existing.donations = data.donations || [];
-          showPlaceDetail(existing);
-        } else {
-          const newPlace = {
-            id: data.id,
-            name: data.name,
-            loc: data.loc || "Imported Location",
-            icon: data.icon || "📍",
-            donations: data.donations || []
-          };
-          places.unshift(newPlace);
+        let place = places.find(p => p.id === data.id);
+        if (!place) {
+          place = { id: data.id, name: data.name, loc: data.loc || "Shared Location", icon: data.icon || "📍", donations: [] };
+          places.unshift(place);
           renderPlaces();
-          showPlaceDetail(newPlace);
         }
-        log("📥 Loaded shared place with donation history");
-      } catch(e) {
-        console.error("Invalid share link");
-      }
+        place.donations = data.donations || [];
+        showPlaceDetail(place);
+        log("📥 Loaded shared place with history");
+      } catch(e) {}
     }
 
     function showDonateModal() {
@@ -409,7 +394,7 @@
     function confirmDonation() {
       const amount = parseInt(document.getElementById('donateAmount').value);
       if (!amount || amount > currentUser.balance) return alert("Invalid amount");
-
+      
       currentUser.balance -= amount;
       currentPlace.donations.unshift({
         from: currentUser.handle,
@@ -420,7 +405,7 @@
       document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
       log(`💰 ${amount} ROOT donated to ${currentPlace.name}`);
       closeDonateModal();
-      showPlaceDetail(currentPlace); // Refresh
+      showPlaceDetail(currentPlace);
     }
 
     function applePayDonate() {
@@ -444,13 +429,11 @@
         document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
         document.getElementById('profileBalance').textContent = currentUser.balance;
         log(`💵 Topped up ${amount} ROOT`);
-        alert("✅ Balance updated");
       }
     }
 
     function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
 
-    // Initialize
     window.onload = () => {
       places = [
         { id: "EM-1001", name: "Machu Picchu", loc: "Cusco Region, Peru", icon: "🏔️", donations: [] },
@@ -459,9 +442,8 @@
       renderPlaces();
       document.getElementById('usernameDisplay').textContent = currentUser.handle;
       document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
-      log("🌍 EarthMesh Loaded");
-
-      loadFromHash(); // Check for shared link
+      log("🌍 EarthMesh Ready");
+      loadFromHash();
     };
   </script>
 </body>
