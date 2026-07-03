@@ -42,9 +42,6 @@
       font-size: 1.65rem;
       font-weight: 600;
       letter-spacing: 1px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
     }
 
     .user-info {
@@ -145,7 +142,6 @@
       padding: 12px;
       border-radius: 10px;
       margin-bottom: 10px;
-      font-size: 0.95rem;
     }
 
     button.primary {
@@ -182,12 +178,10 @@
       font-size: 0.9rem;
       overflow-y: auto;
       border-top: 1px solid #1e3a5f;
-      z-index: 10;
     }
 
     @media (max-width: 480px) {
       .nodes-grid { grid-template-columns: 1fr; padding: 0 12px 20px; }
-      .header h1 { font-size: 1.45rem; }
     }
   </style>
 </head>
@@ -222,7 +216,7 @@
       <p id="modalLoc" style="opacity:0.8;margin-bottom:20px;"></p>
 
       <button onclick="copyShareLink()" style="background:transparent;border:1px solid #00b894;color:#00b894;width:100%;margin-bottom:10px;">
-        🔗 Share Link
+        🔗 Share Link (Base64)
       </button>
       <button onclick="showDonateModal()" class="primary">💰 Donate ROOT Tokens</button>
       <button onclick="applePayDonate()" class="apple-pay-btn">
@@ -230,7 +224,7 @@
       </button>
 
       <h3 style="margin:25px 0 12px 0;">Donation History</h3>
-      <div id="donationHistory" style="max-height:240px; overflow-y:auto; padding-right:8px;"></div>
+      <div id="donationHistory" style="max-height:240px;overflow-y:auto;"></div>
 
       <button onclick="closePlaceModal()" style="background:transparent;border:1px solid #555;color:#aaa;width:100%;margin-top:20px;">
         Close
@@ -275,7 +269,7 @@
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    // Real Search
+    // Real Place Search
     async function nominatimSearch(query) {
       if (query.length < 3) return [];
       try {
@@ -296,7 +290,7 @@
       const container = document.getElementById('suggestions');
       if (q.length < 3) { container.style.display = 'none'; return; }
 
-      container.innerHTML = `<div style="padding:16px;color:#88a5b8;">Searching real places...</div>`;
+      container.innerHTML = `<div style="padding:16px;color:#88a5b8;">Searching...</div>`;
       container.style.display = 'block';
 
       const results = await nominatimSearch(q);
@@ -343,12 +337,12 @@
       document.getElementById('modalName').textContent = place.name;
       document.getElementById('modalLoc').textContent = place.loc;
 
-      // Render Donation History
-      const hist = document.getElementById('donationHistory');
+      // Donation History
+      const histContainer = document.getElementById('donationHistory');
       if (place.donations.length === 0) {
-        hist.innerHTML = `<p style="opacity:0.6;text-align:center;padding:20px;">No donations yet — be the first!</p>`;
+        histContainer.innerHTML = `<p style="opacity:0.6;text-align:center;padding:20px;">No donations yet — be the first!</p>`;
       } else {
-        hist.innerHTML = place.donations.map(d => `
+        histContainer.innerHTML = place.donations.map(d => `
           <div class="history-item">
             <strong>💰 ${d.amount} ROOT</strong> from ${d.from}<br>
             <small>${d.time}</small>
@@ -361,12 +355,13 @@
 
     function closePlaceModal() { document.getElementById('placeModal').style.display = 'none'; }
 
+    // Base64 Share Link
     function copyShareLink() {
       if (!currentPlace) return;
       const data = btoa(JSON.stringify({ id: currentPlace.id, name: currentPlace.name }));
       const shareUrl = `${window.location.origin}${window.location.pathname}#${data}`;
       navigator.clipboard.writeText(shareUrl);
-      alert("✅ Shareable link copied!");
+      alert("✅ Base64 Share Link Copied!");
     }
 
     function showDonateModal() {
@@ -379,7 +374,7 @@
 
     function confirmDonation() {
       const amount = parseInt(document.getElementById('donateAmount').value);
-      if (!amount || amount > currentUser.balance) return alert("Invalid amount or insufficient balance");
+      if (!amount || amount > currentUser.balance) return alert("Invalid amount");
 
       currentUser.balance -= amount;
       currentPlace.donations.unshift({
@@ -415,7 +410,7 @@
         document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
         document.getElementById('profileBalance').textContent = currentUser.balance;
         log(`💵 Topped up ${amount} ROOT`);
-        alert("✅ Balance topped up successfully");
+        alert("✅ Balance updated");
       }
     }
 
@@ -425,13 +420,12 @@
     window.onload = () => {
       places = [
         { id: "EM-1001", name: "Machu Picchu", loc: "Cusco Region, Peru", icon: "🏔️", donations: [] },
-        { id: "EM-1002", name: "Great Pyramid of Giza", loc: "Giza, Egypt", icon: "🪦", donations: [] },
-        { id: "EM-1003", name: "Angkor Wat", loc: "Siem Reap, Cambodia", icon: "🛕", donations: [] }
+        { id: "EM-1002", name: "Great Pyramid of Giza", loc: "Giza, Egypt", icon: "🪦", donations: [] }
       ];
       renderPlaces();
       document.getElementById('usernameDisplay').textContent = currentUser.handle;
       document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
-      log("🌍 EarthMesh Professional Edition Loaded");
+      log("🌍 EarthMesh Loaded - Share Link + Donation History Ready");
     };
   </script>
 </body>
