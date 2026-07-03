@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0a1f2f">
   <title>EarthMesh • Global Discovery</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css)">
 
   <style>
     :root {
@@ -23,7 +23,6 @@
       background: var(--dark);
       color: var(--text);
       min-height: 100vh;
-      overflow-x: hidden;
     }
 
     .header {
@@ -42,9 +41,6 @@
       font-size: 1.65rem;
       font-weight: 600;
       letter-spacing: 1px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
     }
 
     .user-info {
@@ -70,13 +66,10 @@
       outline: none;
     }
 
-    .search-bar::placeholder { color: #88a5b8; }
-
     .suggestions {
       position: absolute;
       top: 100%;
-      left: 0;
-      right: 0;
+      left: 0; right: 0;
       background: #13293d;
       border: 1px solid #00b894;
       border-radius: 16px;
@@ -96,7 +89,6 @@
       cursor: pointer;
       border-bottom: 1px solid #1e3a5f;
     }
-
     .suggestion-item:hover { background: #1e3a5f; }
 
     .nodes-grid {
@@ -112,20 +104,19 @@
       border-radius: 16px;
       padding: 20px;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.3s;
     }
-
     .place-card:hover {
       transform: translateY(-6px);
       border-color: var(--primary);
-      box-shadow: 0 10px 25px rgba(0, 184, 148, 0.2);
+      box-shadow: 0 10px 25px rgba(0,184,148,0.2);
     }
 
     .modal {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(10, 31, 47, 0.97);
+      background: rgba(10,31,47,0.97);
       z-index: 1000;
       align-items: center;
       justify-content: center;
@@ -141,6 +132,14 @@
       overflow-y: auto;
       padding: 24px;
       border: 1px solid #00b894;
+    }
+
+    .history-item {
+      background: #1e3a5f;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      font-size: 0.95rem;
     }
 
     button.primary {
@@ -170,21 +169,17 @@
 
     .log {
       position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      bottom: 0; left: 0; right: 0;
       height: 130px;
       background: #0a1f2f;
       padding: 12px 20px;
       font-size: 0.9rem;
       overflow-y: auto;
       border-top: 1px solid #1e3a5f;
-      z-index: 10;
     }
 
-    @media (max-width: 480px) {
+    [@media](https://x.com/media) (max-width: 480px) {
       .nodes-grid { grid-template-columns: 1fr; padding: 0 12px 20px; }
-      .header h1 { font-size: 1.45rem; }
     }
   </style>
 </head>
@@ -194,8 +189,8 @@
     <h1><i class="fas fa-globe"></i> EarthMesh</h1>
     <div class="user-info" onclick="showProfile()">
       <div style="text-align:right;">
-        <div id="usernameDisplay" style="font-weight:600;">Guest</div>
-        <div id="balanceDisplay" style="font-size:0.9rem;color:#00d2a0;">0 ROOT</div>
+        <div id="usernameDisplay" style="font-weight:600;">[@explorer](https://x.com/explorer)</div>
+        <div id="balanceDisplay" style="font-size:0.9rem;color:#00d2a0;">12450 ROOT</div>
       </div>
       <i class="fas fa-user-circle" style="font-size:2rem;color:#00b894;"></i>
     </div>
@@ -226,7 +221,10 @@
         <i class="fab fa-apple-pay"></i> Apple Pay
       </button>
 
-      <button onclick="closePlaceModal()" style="background:transparent;border:1px solid #555;color:#aaa;width:100%;margin-top:15px;">
+      <h3 style="margin:25px 0 12px 0;">Donation History</h3>
+      <div id="donationHistory" style="max-height:220px;overflow-y:auto;"></div>
+
+      <button onclick="closePlaceModal()" style="background:transparent;border:1px solid #555;color:#aaa;width:100%;margin-top:20px;">
         Close
       </button>
     </div>
@@ -235,9 +233,9 @@
   <!-- DONATE MODAL -->
   <div id="donateModal" class="modal">
     <div class="modal-content">
-      <h2>Donate to <span id="donateTo"></span></h2>
+      <h2>Support <span id="donateTo"></span></h2>
       <p>Balance: <strong id="donorBalance"></strong> ROOT</p>
-      <input type="number" id="donateAmount" value="100" style="width:100%;padding:14px;font-size:1.2rem;text-align:center;margin:15px 0;">
+      <input type="number" id="donateAmount" value="150" style="width:100%;padding:14px;font-size:1.2rem;text-align:center;margin:15px 0;">
       <button onclick="confirmDonation()" class="primary">Confirm Donation</button>
       <button onclick="closeDonateModal()" style="background:transparent;border:1px solid #00b894;color:#00b894;width:100%;">Cancel</button>
     </div>
@@ -247,7 +245,7 @@
   <div id="profileModal" class="modal">
     <div class="modal-content">
       <h2>Account</h2>
-      <p id="profileHandle"></p>
+      <p id="profileHandle" style="font-size:1.3rem;"></p>
       <p>Balance: <strong id="profileBalance"></strong> ROOT</p>
       
       <input type="number" id="topupAmount" placeholder="Top-up amount" style="width:100%;padding:12px;margin:15px 0;">
@@ -259,7 +257,7 @@
 
   <script>
     let places = [];
-    let currentUser = { handle: "@explorer", balance: 12450 };
+    let currentUser = { handle: "[@explorer](https://x.com/explorer)", balance: 12450 };
     let currentPlace = null;
 
     const logEl = document.getElementById('log');
@@ -269,7 +267,7 @@
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    // Free Nominatim Search
+    // Real Search (No API Key)
     async function nominatimSearch(query) {
       if (query.length < 3) return [];
       try {
@@ -288,10 +286,9 @@
     async function handleSearch() {
       const q = document.getElementById('searchInput').value.trim();
       const container = document.getElementById('suggestions');
-
       if (q.length < 3) { container.style.display = 'none'; return; }
 
-      container.innerHTML = `<div style="padding:16px;color:#88a5b8;">Searching real places...</div>`;
+      container.innerHTML = `<div style="padding:16px;color:#88a5b8;">Searching...</div>`;
       container.style.display = 'block';
 
       const results = await nominatimSearch(q);
@@ -304,8 +301,7 @@
         div.onclick = () => {
           document.getElementById('searchInput').value = place.full;
           container.style.display = 'none';
-
-          const newPlace = { id: `EM-${Date.now().toString().slice(-6)}`, name: place.name, loc: place.full, icon: place.icon };
+          const newPlace = { id: `EM-${Date.now().toString().slice(-6)}`, name: place.name, loc: place.full, icon: place.icon, donations: [] };
           places.unshift(newPlace);
           renderPlaces();
           log(`📍 Added: ${place.name}`);
@@ -332,56 +328,71 @@
 
     function showPlaceDetail(place) {
       currentPlace = place;
+      if (!place.donations) place.donations = [];
+
       document.getElementById('modalIcon').textContent = place.icon;
       document.getElementById('modalName').textContent = place.name;
       document.getElementById('modalLoc').textContent = place.loc;
+
+      // Donation History
+      const histContainer = document.getElementById('donationHistory');
+      if (place.donations.length === 0) {
+        histContainer.innerHTML = `<p style="opacity:0.6;text-align:center;padding:20px;">No donations yet. Be the first!</p>`;
+      } else {
+        histContainer.innerHTML = place.donations.map(d => `
+          <div class="history-item">
+            <strong>💰 ${d.amount} ROOT</strong> from ${d.from}<br>
+            <small>${d.time}</small>
+          </div>
+        `).join('');
+      }
+
       document.getElementById('placeModal').style.display = 'flex';
     }
 
     function closePlaceModal() { document.getElementById('placeModal').style.display = 'none'; }
 
-    // Share Link (Base64)
     function copyShareLink() {
       if (!currentPlace) return;
-      const data = btoa(JSON.stringify({ id: currentPlace.id, name: currentPlace.name }));
-      const shareUrl = `${window.location.origin}${window.location.pathname}#${data}`;
-      navigator.clipboard.writeText(shareUrl);
-      alert("✅ Shareable link copied!");
+      const data = btoa(JSON.stringify({id: [currentPlace.id](http://currentPlace.id), name: currentPlace.name}));
+      const url = `${window.location.origin}${window.location.pathname}#${data}`;
+      navigator.clipboard.writeText(url);
+      alert("✅ Shareable link copied to clipboard!");
     }
 
-    // Donation
     function showDonateModal() {
-      if (!currentUser) return alert("Please login");
+      if (!currentUser) return alert("Login required");
       document.getElementById('donateTo').textContent = currentPlace.name;
       document.getElementById('donorBalance').textContent = currentUser.balance;
-      document.getElementById('donateAmount').value = 150;
+      document.getElementById('donateAmount').value = "150";
       document.getElementById('donateModal').style.display = 'flex';
     }
 
     function confirmDonation() {
       const amount = parseInt(document.getElementById('donateAmount').value);
-      if (amount > currentUser.balance) return alert("Insufficient balance");
+      if (!amount || amount > currentUser.balance) return alert("Invalid amount");
+
       currentUser.balance -= amount;
+      currentPlace.donations.unshift({
+        from: currentUser.handle,
+        amount: amount,
+        time: new Date().toLocaleString()
+      });
+
       document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
       log(`💰 ${amount} ROOT donated to ${currentPlace.name}`);
       closeDonateModal();
-      alert("✅ Donation successful! Thank you.");
+      showPlaceDetail(currentPlace); // refresh history
     }
 
     function applePayDonate() {
       if (!currentUser) return alert("Login required");
       const amount = prompt("Enter amount for Apple Pay:", "200");
-      if (amount) {
-        currentUser.balance -= parseInt(amount);
-        document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
-        log(`🍎 Apple Pay: ${amount} ROOT donated`);
-        alert("✅ Apple Pay donation completed");
-      }
+      if (amount) confirmDonation();
     }
 
     function closeDonateModal() { document.getElementById('donateModal').style.display = 'none'; }
 
-    // Profile
     function showProfile() {
       document.getElementById('profileHandle').textContent = currentUser.handle;
       document.getElementById('profileBalance').textContent = currentUser.balance;
@@ -389,29 +400,26 @@
     }
 
     function topUpBalance() {
-      const amount = parseInt(document.getElementById('topupAmount').value);
-      if (amount > 0) {
-        currentUser.balance += amount;
+      const amt = parseInt(document.getElementById('topupAmount').value);
+      if (amt > 0) {
+        currentUser.balance += amt;
         document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
         document.getElementById('profileBalance').textContent = currentUser.balance;
-        log(`💵 Topped up ${amount} ROOT`);
-        alert("✅ Balance topped up successfully");
+        log(`💵 Topped up ${amt} ROOT`);
+        alert("✅ Balance updated");
       }
     }
 
     function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
 
-    // Init
+    // Initialize
     window.onload = () => {
       places = [
-        { id: "EM-1001", name: "Machu Picchu", loc: "Cusco Region, Peru", icon: "🏔️" },
-        { id: "EM-1002", name: "Great Pyramid of Giza", loc: "Giza, Egypt", icon: "🪦" },
-        { id: "EM-1003", name: "Angkor Wat", loc: "Siem Reap, Cambodia", icon: "🛕" }
+        { id: "EM-1001", name: "Machu Picchu", loc: "Cusco Region, Peru", icon: "🏔️", donations: [] },
+        { id: "EM-1002", name: "Great Pyramid of Giza", loc: "Giza, Egypt", icon: "🪦", donations: [] }
       ];
       renderPlaces();
-      document.getElementById('usernameDisplay').textContent = currentUser.handle;
-      document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
-      log("🌍 EarthMesh Professional Edition Loaded");
+      log("🌍 EarthMesh Professional Edition Ready");
     };
   </script>
 </body>
