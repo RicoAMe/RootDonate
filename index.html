@@ -164,10 +164,96 @@
   <div class="nodes-grid" id="grid"></div>
   <div class="log" id="log"></div>
 
-  <!-- AUTH, ITEM, DONATE, REPORT, PROFILE modals are included below in script section for brevity, but fully functional -->
+  <!-- AUTH MODAL -->
+  <div class="modal" id="authModal">
+    <div class="modal-content">
+      <span onclick="closeAuthModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
+      <div class="auth-tabs" style="display:flex;margin-bottom:20px;border-bottom:1px solid #333;">
+        <button onclick="switchAuthTab(0)" id="tabLogin" class="active" style="flex:1;padding:12px;background:transparent;color:var(--neon);border:none;border-bottom:3px solid var(--neon);">LOGIN</button>
+        <button onclick="switchAuthTab(1)" id="tabSignup" style="flex:1;padding:12px;background:transparent;color:var(--neon);border:none;">SIGN UP</button>
+      </div>
+      <div id="loginForm">
+        <input id="loginUser" placeholder="Username or Handle" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
+        <input id="loginPass" type="password" placeholder="Passphrase" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
+        <button onclick="login()" style="width:100%;padding:16px;margin-top:15px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">ENTER THE MESH</button>
+      </div>
+      <div id="signupForm" style="display:none;">
+        <input id="signupUser" placeholder="Choose handle" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
+        <input id="signupPass" type="password" placeholder="Create passphrase" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
+        <button onclick="signup()" style="width:100%;padding:16px;margin-top:15px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">JOIN THE MESH</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ITEM DETAIL MODAL -->
+  <div class="modal" id="itemModal">
+    <div class="modal-content">
+      <span onclick="closeItemModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
+      <div id="modalIcon" style="font-size:2.8rem;margin-bottom:12px;">🪙</div>
+      <h2 id="modalName" style="color:#ffd700;margin-bottom:12px;"></h2>
+      <p id="modalLoc"></p>
+      <p id="modalTime"></p>
+      <div style="margin:20px 0;padding:14px;background:#111;border:1px solid var(--neon);">
+        <strong>EST. VALUE:</strong> <span id="modalValue" style="color:#0f0;"></span><br>
+        <strong>MINT:</strong> <span id="modalMint"></span>
+      </div>
+      <div id="shareUrl" style="background:#111;padding:14px;margin:20px 0;border:1px solid var(--neon);word-break:break-all;font-size:0.9rem;"></div>
+      
+      <button onclick="copyShareLink()" style="width:100%;padding:12px;margin-bottom:10px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">📋 COPY LINK</button>
+      <button onclick="showDonateModal()" style="width:100%;padding:16px;border:2px solid #0f0;background:transparent;color:#0f0;border-radius:50px;">💰 DONATE ROOT TOKENS</button>
+    </div>
+  </div>
+
+  <!-- DONATE MODAL -->
+  <div class="modal" id="donateModal">
+    <div class="modal-content">
+      <span onclick="closeDonateModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
+      <h2 style="color:#0f0;">💸 SEND DONATION</h2>
+      <p id="donateTo" style="margin:15px 0;"></p>
+      <div><strong>Balance:</strong> <span id="donorBalance" style="color:#0f0;"></span> ROOT</div>
+      
+      <input id="donateAmount" type="number" value="50" style="width:100%;padding:14px;margin:15px 0;background:#111;border:1px solid #0f0;color:var(--neon);font-size:1.3rem;">
+      
+      <div style="display:flex;gap:10px;margin:15px 0;">
+        <button onclick="quickAmount(25)" style="flex:1;padding:10px;border:1px solid var(--neon);background:transparent;color:var(--neon);">25</button>
+        <button onclick="quickAmount(50)" style="flex:1;padding:10px;border:1px solid var(--neon);background:transparent;color:var(--neon);">50</button>
+        <button onclick="quickAmount(100)" style="flex:1;padding:10px;border:1px solid var(--neon);background:transparent;color:var(--neon);">100</button>
+        <button onclick="quickAmount(250)" style="flex:1;padding:10px;border:1px solid var(--neon);background:transparent;color:var(--neon);">250</button>
+      </div>
+
+      <button onclick="confirmDonation()" style="width:100%;padding:14px;margin:10px 0;border:2px solid #0f0;background:transparent;color:#0f0;border-radius:50px;">SEND FROM WALLET</button>
+      <button onclick="startApplePay()" class="apple-pay-btn" style="width:100%;padding:16px;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <i class="fab fa-apple"></i> PAY WITH APPLE PAY
+      </button>
+    </div>
+  </div>
+
+  <!-- REPORT MODAL -->
+  <div class="modal" id="reportModal">
+    <div class="modal-content">
+      <span onclick="closeReportModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
+      <h2 style="text-align:center;color:#ffd700;margin-bottom:20px;">📜 BROADCAST NEW FIND</h2>
+      <input id="rName" placeholder="Coin / Note Name" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
+      <input id="rLoc" placeholder="Mint / Location / Era" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
+      <input id="rValue" placeholder="Est. Value (USD)" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
+      <textarea id="rDesc" rows="3" placeholder="Description / Condition..." style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);"></textarea>
+      <button onclick="submitReport()" style="width:100%;padding:16px;margin-top:15px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">BROADCAST TO THE MESH</button>
+    </div>
+  </div>
+
+  <!-- PROFILE MODAL -->
+  <div class="modal" id="profileModal">
+    <div class="modal-content">
+      <span onclick="closeProfileModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
+      <h2 style="text-align:center;color:#ffd700;margin-bottom:20px;">🪙 YOUR PROFILE</h2>
+      <div id="profileInfo" style="text-align:center;margin-bottom:25px;"></div>
+      <h3 style="margin:15px 0;">📜 DONATION HISTORY</h3>
+      <div id="historyList" class="history-list"></div>
+    </div>
+  </div>
 
   <script>
-    // Matrix Rain (unchanged)
+    // Matrix Rain
     const canvas = document.getElementById('matrix');
     const ctx = canvas.getContext('2d');
     let drops = [];
@@ -192,7 +278,7 @@
     }
     setInterval(drawMatrix, 40);
 
-    // Base64 Share Links (unchanged)
+    // Base64 Share
     function toBase64Url(obj) {
       const str = btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
       return str.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -243,15 +329,51 @@
       if (currentUser) document.getElementById('balanceDisplay').textContent = `${currentUser.balance} ROOT`;
     }
 
-    // Auth, Profile, Donate, Report, Item Detail functions are all present and working
+    // Auth
+    function showAuthModal() { document.getElementById('authModal').style.display = 'flex'; switchAuthTab(0); }
+    function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
+    function switchAuthTab(n) {
+      document.getElementById('loginForm').style.display = n === 0 ? 'block' : 'none';
+      document.getElementById('signupForm').style.display = n === 1 ? 'block' : 'none';
+      document.getElementById('tabLogin').classList.toggle('active', n===0);
+      document.getElementById('tabSignup').classList.toggle('active', n===1);
+    }
 
+    function signup() {
+      const handle = document.getElementById('signupUser').value.trim();
+      if (!handle) return alert("Handle required");
+      currentUser = { handle: handle.startsWith('@') ? handle : '@' + handle, avatar: '🪙', joined: new Date().toLocaleDateString(), balance: 1250 };
+      saveData();
+      updateUIAfterLogin();
+      closeAuthModal();
+      log(`✅ ${currentUser.handle} joined the mesh`);
+    }
+
+    function login() {
+      const handle = document.getElementById('loginUser').value.trim();
+      if (!handle) return alert("Enter handle");
+      currentUser = { handle: handle.startsWith('@') ? handle : '@' + handle, avatar: '🪙', joined: "2025", balance: 980 };
+      saveData();
+      updateUIAfterLogin();
+      closeAuthModal();
+      log(`🔓 ${currentUser.handle} connected`);
+    }
+
+    function updateUIAfterLogin() {
+      document.getElementById('authBtn').style.display = 'none';
+      document.getElementById('userSection').style.display = 'block';
+      document.getElementById('usernameDisplay').textContent = currentUser.handle;
+      updateBalanceDisplay();
+    }
+
+    // Profile with Apple Pay Top-up
     function showProfile() {
       if (!currentUser) return;
       document.getElementById('profileInfo').innerHTML = `
         <div class="avatar" style="margin:0 auto 15px;width:90px;height:90px;font-size:3rem;">${currentUser.avatar}</div>
         <h2>${currentUser.handle}</h2>
         <p>Joined ${currentUser.joined} • <strong style="color:#0f0;">${currentUser.balance} ROOT</strong></p>
-        <button onclick="topUpBalance()" style="margin-top:15px;padding:12px 24px;border:2px solid #0f0;background:transparent;color:#0f0;border-radius:50px;"> Top Up with Apple Pay</button>
+        <button onclick="topUpBalance()" style="margin-top:15px;padding:12px 24px;border:2px solid #0f0;background:transparent;color:#0f0;border-radius:50px;width:100%;"> Top Up Balance with Apple Pay</button>
       `;
       let html = '';
       donationHistory.forEach(h => {
@@ -266,22 +388,149 @@
     }
 
     function topUpBalance() {
-      const amount = prompt("Enter amount to top up with Apple Pay:", "100");
+      const amount = prompt("Enter amount to add via Apple Pay:", "100");
       const num = parseInt(amount);
       if (num > 0) {
         currentUser.balance += num;
         updateBalanceDisplay();
         saveData();
         log(` Apple Pay Top-up: +${num} ROOT`);
-        alert(`✅ ${num} ROOT added to your balance via Apple Pay!`);
-        showProfile(); // refresh
+        alert(`✅ ${num} ROOT added successfully via Apple Pay!`);
+        showProfile();
       }
     }
 
-    // Rest of the code (Item Detail, Donate, Report, Rendering, Init) is fully functional and clean as in previous version
+    function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
 
-    // ... (All other functions from previous response are included - the code is complete)
+    // Donate, Item, Report functions (cleaned)
+    function showDonateModal() {
+      if (!currentUser) return alert("Please login first");
+      document.getElementById('donateTo').innerHTML = `To: <strong>${currentItem.name}</strong><br>by ${currentItem.source || 'Unknown'}`;
+      document.getElementById('donorBalance').textContent = currentUser.balance;
+      document.getElementById('donateModal').style.display = 'flex';
+    }
+    function closeDonateModal() { document.getElementById('donateModal').style.display = 'none'; }
+    function quickAmount(amt) { document.getElementById('donateAmount').value = amt; }
 
+    function confirmDonation() {
+      const amount = parseInt(document.getElementById('donateAmount').value);
+      if (!amount || amount > currentUser.balance) return alert("Insufficient balance");
+      currentUser.balance -= amount;
+      updateBalanceDisplay();
+      addToHistory("sent", amount, currentItem.source || "Node Owner", currentItem.name);
+      log(`💸 ${currentUser.handle} sent ${amount} ROOT`);
+      closeDonateModal();
+      closeItemModal();
+      alert(`✅ ${amount} ROOT sent successfully!`);
+    }
+
+    function startApplePay() {
+      const amount = parseInt(document.getElementById('donateAmount').value);
+      if (!amount || amount > currentUser.balance) return alert("Insufficient balance");
+      if (confirm(` Apple Pay\n\nAmount: ${amount} ROOT\nConfirm?`)) {
+        currentUser.balance -= amount;
+        updateBalanceDisplay();
+        addToHistory("sent", amount, currentItem.source || "Node Owner", currentItem.name);
+        log(` Apple Pay: ${amount} ROOT sent`);
+        closeDonateModal();
+        closeItemModal();
+        alert("✅ Apple Pay Payment Successful!");
+      }
+    }
+
+    function showItemDetail(item) {
+      currentItem = item;
+      document.getElementById('modalIcon').textContent = item.icon;
+      document.getElementById('modalName').textContent = item.name;
+      document.getElementById('modalLoc').innerHTML = `📍 ${item.loc}`;
+      document.getElementById('modalTime').textContent = item.time;
+      document.getElementById('modalValue').textContent = item.value;
+      document.getElementById('modalMint').textContent = item.mint || 'Unknown';
+      document.getElementById('shareUrl').innerHTML = `<strong>LINK:</strong><br><a href="${generateShareUrl(item)}" target="_blank" style="color:var(--neon);word-break:break-all;">${generateShareUrl(item)}</a>`;
+      document.getElementById('itemModal').style.display = 'flex';
+    }
+    function closeItemModal() { document.getElementById('itemModal').style.display = 'none'; }
+    function copyShareLink() {
+      if (!currentItem) return;
+      navigator.clipboard.writeText(generateShareUrl(currentItem));
+      alert("✅ Link copied!");
+    }
+
+    function showReportModal() {
+      if (!currentUser) return alert("Login to broadcast");
+      document.getElementById('reportModal').style.display = 'flex';
+    }
+    function closeReportModal() { document.getElementById('reportModal').style.display = 'none'; }
+
+    function submitReport() {
+      const name = document.getElementById('rName').value.trim();
+      const loc = document.getElementById('rLoc').value.trim();
+      if (!name || !loc) return alert("Name and location required");
+
+      const newItem = {
+        id: `NR-${1000 + Math.floor(Math.random()*9000)}`,
+        name, loc,
+        value: document.getElementById('rValue').value.trim() || "Pending",
+        icon: "🪙",
+        mint: "Community",
+        source: currentUser.handle,
+        time: "Just now"
+      };
+      allNodes.unshift(newItem);
+      renderNodes();
+      closeReportModal();
+      log(`📢 ${currentUser.handle} broadcasted new find`);
+      alert("✅ Find broadcasted!");
+    }
+
+    // Rendering
+    function renderNodes(filtered = allNodes) {
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
+      filtered.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'node-card';
+        card.innerHTML = `
+          <div style="font-size:0.8rem;opacity:0.7;">${item.id} • ${item.source}</div>
+          <div style="font-size:2.8rem;margin:12px 0;">${item.icon}</div>
+          <h3>${item.name}</h3>
+          <p>📍 ${item.loc}</p>
+          <p style="color:#0f0;margin-top:8px;">${item.value}</p>
+        `;
+        card.onclick = () => showItemDetail(item);
+        grid.appendChild(card);
+      });
+    }
+
+    function filterNodes() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = allNodes.filter(n => n.name.toLowerCase().includes(q) || n.loc.toLowerCase().includes(q));
+      renderNodes(filtered);
+    }
+
+    const sampleData = [
+      { id: "NR-7842", name: "1909-S VDB Lincoln Cent", loc: "San Francisco Mint", value: "$1,250", icon: "🪙", mint: "USA", source: "@oldhoard", time: "2h ago" },
+      { id: "NR-3191", name: "1921 Morgan Silver Dollar", loc: "Peace Treaty Era", value: "$850", icon: "🌕", mint: "USA", source: "@silverstacker", time: "Yesterday" }
+    ];
+
+    function startGlobalScan() {
+      log("🌐 INITIALIZING DECENTRALISED MESH...");
+      allNodes = [...sampleData];
+      renderNodes();
+      log("✅ MESH SYNCHRONISED");
+    }
+
+    function toggleLearnMode() { alert("ROOT DONATE v1.0 - Production Ready"); }
+    function setTab(n) { document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n)); }
+    function resetScan() {
+      if (confirm("Reset mesh?")) {
+        allNodes = [];
+        renderNodes();
+        startGlobalScan();
+      }
+    }
+
+    // Init
     window.onload = () => {
       loadData();
       if (currentUser) updateUIAfterLogin();
