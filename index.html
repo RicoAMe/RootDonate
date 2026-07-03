@@ -152,7 +152,7 @@
     <button onclick="resetScan()">RESET MESH</button>
   </div>
 
-  <input type="text" id="searchInput" class="search-bar" placeholder="Search coins..." onkeyup="filterNodes()">
+  <input type="text" id="searchInput" class="search-bar" placeholder="Search coins, nodes..." onkeyup="filterNodes()">
 
   <div class="nodes-grid" id="grid"></div>
   <div class="log" id="log"></div>
@@ -234,7 +234,7 @@
   </div>
 
   <script>
-    // === MATRIX BACKGROUND ===
+    // Matrix Rain
     const canvas = document.getElementById('matrix');
     const ctx = canvas.getContext('2d');
     let drops = [];
@@ -250,7 +250,7 @@
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = '#ffd700';
       ctx.font = '14px monospace';
-      const chars = '0123456789$€£¥₿🪙';
+      const chars = '0123456789$€£¥₿🪙⚡';
       for (let i = 0; i < drops.length; i++) {
         ctx.fillText(chars[Math.floor(Math.random()*chars.length)], i*14, drops[i]*14);
         if (drops[i]*14 > canvas.height && Math.random() > 0.975) drops[i] = 0;
@@ -259,10 +259,11 @@
     }
     setInterval(drawMatrix, 40);
 
-    // === APP STATE ===
+    // App State
     let allNodes = [];
     let currentUser = null;
     let currentItem = null;
+    let currentDonationTarget = null;
     let donationHistory = [];
 
     const logEl = document.getElementById('log');
@@ -285,10 +286,7 @@
     }
 
     function addToHistory(type, amount, target, itemName) {
-      donationHistory.unshift({
-        type, amount, target, item: itemName,
-        time: new Date().toLocaleString()
-      });
+      donationHistory.unshift({ type, amount, target, item: itemName, time: new Date().toLocaleString() });
       if (donationHistory.length > 30) donationHistory.pop();
       saveData();
     }
@@ -310,12 +308,7 @@
     function signup() {
       const handle = document.getElementById('signupUser').value.trim();
       if (!handle) return alert("Handle required");
-      currentUser = {
-        handle: handle.startsWith('@') ? handle : '@' + handle,
-        avatar: '🪙',
-        joined: new Date().toLocaleDateString(),
-        balance: 1250
-      };
+      currentUser = { handle: handle.startsWith('@') ? handle : '@' + handle, avatar: '🪙', joined: new Date().toLocaleDateString(), balance: 1250 };
       saveData();
       updateUIAfterLogin();
       closeAuthModal();
@@ -325,12 +318,7 @@
     function login() {
       const handle = document.getElementById('loginUser').value.trim();
       if (!handle) return alert("Enter handle");
-      currentUser = {
-        handle: handle.startsWith('@') ? handle : '@' + handle,
-        avatar: '🪙',
-        joined: "2025",
-        balance: 980
-      };
+      currentUser = { handle: handle.startsWith('@') ? handle : '@' + handle, avatar: '🪙', joined: "2025", balance: 980 };
       saveData();
       updateUIAfterLogin();
       closeAuthModal();
@@ -351,7 +339,6 @@
         <h2>${currentUser.handle}</h2>
         <p>Joined ${currentUser.joined} • <strong style="color:#0f0;">${currentUser.balance} ROOT</strong></p>
       `;
-      
       let html = '';
       donationHistory.forEach(h => {
         html += `<div class="history-item">
@@ -366,25 +353,24 @@
 
     function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
 
-    // Donate Flow
+    // Donate
     function showDonateModal() {
       if (!currentUser) return alert("Please login first");
       currentDonationTarget = currentItem;
-      document.getElementById('donateTo').innerHTML = `To: <strong>${currentItem.name}</strong><br>by ${currentItem.source}`;
+      document.getElementById('donateTo').innerHTML = `To: <strong>${currentItem.name}</strong><br>by ${currentItem.source || 'Unknown'}`;
       document.getElementById('donorBalance').textContent = currentUser.balance;
       document.getElementById('donateModal').style.display = 'flex';
     }
+
     function closeDonateModal() { document.getElementById('donateModal').style.display = 'none'; }
     function quickAmount(amt) { document.getElementById('donateAmount').value = amt; }
 
     function confirmDonation() {
       const amount = parseInt(document.getElementById('donateAmount').value);
       if (!amount || amount > currentUser.balance) return alert("Insufficient balance");
-      
       currentUser.balance -= amount;
       updateBalanceDisplay();
       addToHistory("sent", amount, currentItem.source || "Node Owner", currentItem.name);
-      
       log(`💸 ${currentUser.handle} sent ${amount} ROOT to ${currentItem.name}`);
       closeDonateModal();
       closeItemModal();
@@ -394,27 +380,91 @@
     function startApplePay() {
       const amount = parseInt(document.getElementById('donateAmount').value);
       if (!amount || amount > currentUser.balance) return alert("Insufficient balance");
-      
-      if (confirm(" Apple Pay\nPay " + amount + " ROOT to this node?")) {
+      if (confirm(` Apple Pay\nPay ${amount} ROOT to ${currentItem.name}?`)) {
         currentUser.balance -= amount;
         updateBalanceDisplay();
         addToHistory("sent", amount, currentItem.source || "Node Owner", currentItem.name);
-        
-        log(` Apple Pay: ${amount} ROOT sent`);
+        log(` Apple Pay: ${amount} ROOT sent to ${currentItem.name}`);
         closeDonateModal();
         closeItemModal();
         alert("✅ Apple Pay Authorized!");
       }
     }
 
-    // Rest of your original code (renderNodes, showItemDetail, report, matrix, etc.) remains functional
-    // ... (I kept the full structure clean - copy-paste ready) ...
+    // Item Detail
+    function showItemDetail(item) {
+      currentItem = item;
+      document.getElementById('modalIcon').textContent = item.icon;
+      document.getElementById('modalName').textContent = item.name;
+      document.getElementById('modalLoc').innerHTML = `📍 ${item.loc}`;
+      document.getElementById('modalTime').textContent = item.time;
+      document.getElementById('modalValue').textContent = item.value;
+      document.getElementById('modalMint').textContent = item.mint || 'Unknown';
+      document.getElementById('shareUrl').innerHTML = `<strong>LINK:</strong><br><a href="#" style="color:var(--neon);word-break:break-all;">${location.origin}${location.pathname}#${item.id}</a>`;
+      document.getElementById('itemModal').style.display = 'flex';
+    }
+    function closeItemModal() { document.getElementById('itemModal').style.display = 'none'; }
+    function copyShareLink() {
+      alert("✅ Decentralised link copied to clipboard!");
+    }
 
+    // Sample Data & Rendering
+    const sampleData = [
+      { id: "NR-7842", name: "1909-S VDB Lincoln Cent", loc: "San Francisco Mint", value: "$1,250", icon: "🪙", mint: "USA", source: "@oldhoard", time: "2h ago" },
+      { id: "NR-3191", name: "1921 Morgan Silver Dollar", loc: "Peace Treaty Era", value: "$850", icon: "🌕", mint: "USA", source: "@silverstacker", time: "Yesterday" },
+      { id: "NR-6624", name: "1943 Steel Penny", loc: "WWII Emergency Issue", value: "$95", icon: "🪙", mint: "USA", source: "@warcollect", time: "3d ago" }
+    ];
+
+    function renderNodes(filtered = allNodes) {
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
+      filtered.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'node-card';
+        card.innerHTML = `
+          <div style="font-size:0.8rem;opacity:0.7;">${item.id} • ${item.source}</div>
+          <div style="font-size:2.8rem;margin:12px 0;">${item.icon}</div>
+          <h3>${item.name}</h3>
+          <p>📍 ${item.loc}</p>
+          <p style="color:#0f0;margin-top:8px;">${item.value}</p>
+        `;
+        card.onclick = () => showItemDetail(item);
+        grid.appendChild(card);
+      });
+    }
+
+    function filterNodes() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = allNodes.filter(n => 
+        n.name.toLowerCase().includes(q) || n.loc.toLowerCase().includes(q)
+      );
+      renderNodes(filtered);
+    }
+
+    function startGlobalScan() {
+      log("🌐 INITIALIZING DECENTRALISED MESH...");
+      allNodes = [...sampleData];
+      renderNodes();
+      log("✅ MESH SYNCHRONISED");
+    }
+
+    function toggleLearnMode() { alert("📖 ROOT DONATE is a client-side P2P donation demo.\n\nBuilt for learning decentralized social nodes."); }
+    function setTab(n) { document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n)); }
+    function showReportModal() { alert("📢 Report Find coming soon..."); }
+    function resetScan() {
+      if (confirm("Reset mesh?")) {
+        allNodes = [];
+        renderNodes();
+        startGlobalScan();
+      }
+    }
+
+    // Init
     window.onload = () => {
       loadData();
       if (currentUser) updateUIAfterLogin();
-      startGlobalScan(); // your existing sample data function
-      log("🔓 ROOT DONATE SOCIAL NODE LOADED");
+      startGlobalScan();
+      log("🔓 ROOT DONATE SOCIAL NODE READY");
     };
   </script>
 </body>
