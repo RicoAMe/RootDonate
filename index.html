@@ -47,6 +47,13 @@
       gap: 10px;
     }
 
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
     .search-container {
       position: relative;
       margin: 16px 20px;
@@ -77,7 +84,7 @@
       max-height: 420px;
       overflow-y: auto;
       z-index: 200;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
       display: none;
     }
 
@@ -90,9 +97,7 @@
       border-bottom: 1px solid #1e3a5f;
     }
 
-    .suggestion-item:hover {
-      background: #1e3a5f;
-    }
+    .suggestion-item:hover { background: #1e3a5f; }
 
     .nodes-grid {
       padding: 0 20px 20px;
@@ -138,20 +143,29 @@
       border: 1px solid #00b894;
     }
 
-    button {
-      padding: 12px 24px;
-      border-radius: 50px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .primary {
+    button.primary {
       background: var(--primary);
       color: #000;
       border: none;
+      padding: 14px;
+      border-radius: 50px;
+      font-weight: 600;
       width: 100%;
       margin: 12px 0;
+    }
+
+    .apple-pay-btn {
+      background: #000;
+      color: white;
+      border: 1px solid white;
+      padding: 14px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-size: 1.1rem;
+      width: 100%;
     }
 
     .log {
@@ -159,7 +173,7 @@
       bottom: 0;
       left: 0;
       right: 0;
-      height: 140px;
+      height: 130px;
       background: #0a1f2f;
       padding: 12px 20px;
       font-size: 0.9rem;
@@ -169,10 +183,7 @@
     }
 
     @media (max-width: 480px) {
-      .nodes-grid {
-        grid-template-columns: 1fr;
-        padding: 0 12px 20px;
-      }
+      .nodes-grid { grid-template-columns: 1fr; padding: 0 12px 20px; }
       .header h1 { font-size: 1.45rem; }
     }
   </style>
@@ -181,41 +192,75 @@
 
   <div class="header">
     <h1><i class="fas fa-globe"></i> EarthMesh</h1>
-    <button onclick="showAuthModal()" id="authBtn" style="background:transparent; border:1px solid #00b894; color:#00b894;">
-      <i class="fas fa-user"></i> Login
-    </button>
+    <div class="user-info" onclick="showProfile()">
+      <div style="text-align:right;">
+        <div id="usernameDisplay" style="font-weight:600;">Guest</div>
+        <div id="balanceDisplay" style="font-size:0.9rem;color:#00d2a0;">0 ROOT</div>
+      </div>
+      <i class="fas fa-user-circle" style="font-size:2rem;color:#00b894;"></i>
+    </div>
   </div>
 
   <div class="search-container">
-    <input 
-      type="text" 
-      id="searchInput" 
-      class="search-bar" 
-      placeholder="Search any place on Earth..." 
-      onkeyup="handleSearch()"
-      autocomplete="off">
+    <input type="text" id="searchInput" class="search-bar" 
+           placeholder="Search any place on Earth..." 
+           onkeyup="handleSearch()" autocomplete="off">
     <div id="suggestions" class="suggestions"></div>
   </div>
 
   <div class="nodes-grid" id="grid"></div>
-
   <div class="log" id="log"></div>
 
-  <!-- Place Detail Modal -->
+  <!-- PLACE DETAIL MODAL -->
   <div id="placeModal" class="modal">
     <div class="modal-content">
-      <h2 id="modalName" style="margin-bottom:8px;"></h2>
-      <p id="modalLoc" style="opacity:0.8; margin-bottom:20px;"></p>
-      
-      <button onclick="closePlaceModal()" style="background:transparent; border:1px solid #00b894; color:#00b894; width:100%; margin-top:20px;">
+      <div style="font-size:4rem;text-align:center;margin:10px 0;" id="modalIcon"></div>
+      <h2 id="modalName"></h2>
+      <p id="modalLoc" style="opacity:0.8;margin-bottom:20px;"></p>
+
+      <button onclick="copyShareLink()" style="background:transparent;border:1px solid #00b894;color:#00b894;width:100%;margin-bottom:10px;">
+        🔗 Share Link
+      </button>
+      <button onclick="showDonateModal()" class="primary">💰 Donate ROOT Tokens</button>
+      <button onclick="applePayDonate()" class="apple-pay-btn">
+        <i class="fab fa-apple-pay"></i> Apple Pay
+      </button>
+
+      <button onclick="closePlaceModal()" style="background:transparent;border:1px solid #555;color:#aaa;width:100%;margin-top:15px;">
         Close
       </button>
     </div>
   </div>
 
+  <!-- DONATE MODAL -->
+  <div id="donateModal" class="modal">
+    <div class="modal-content">
+      <h2>Donate to <span id="donateTo"></span></h2>
+      <p>Balance: <strong id="donorBalance"></strong> ROOT</p>
+      <input type="number" id="donateAmount" value="100" style="width:100%;padding:14px;font-size:1.2rem;text-align:center;margin:15px 0;">
+      <button onclick="confirmDonation()" class="primary">Confirm Donation</button>
+      <button onclick="closeDonateModal()" style="background:transparent;border:1px solid #00b894;color:#00b894;width:100%;">Cancel</button>
+    </div>
+  </div>
+
+  <!-- PROFILE MODAL -->
+  <div id="profileModal" class="modal">
+    <div class="modal-content">
+      <h2>Account</h2>
+      <p id="profileHandle"></p>
+      <p>Balance: <strong id="profileBalance"></strong> ROOT</p>
+      
+      <input type="number" id="topupAmount" placeholder="Top-up amount" style="width:100%;padding:12px;margin:15px 0;">
+      <button onclick="topUpBalance()" class="primary">Top Up Balance</button>
+      
+      <button onclick="closeProfileModal()" style="background:transparent;border:1px solid #555;color:#aaa;width:100%;margin-top:10px;">Close</button>
+    </div>
+  </div>
+
   <script>
     let places = [];
-    let currentUser = null;
+    let currentUser = { handle: "@explorer", balance: 12450 };
+    let currentPlace = null;
 
     const logEl = document.getElementById('log');
     function log(msg) {
@@ -228,8 +273,8 @@
     async function nominatimSearch(query) {
       if (query.length < 3) return [];
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=10&addressdetails=1`, {
-          headers: { 'User-Agent': 'EarthMesh-Demo' }
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=8`, {
+          headers: { 'User-Agent': 'EarthMesh' }
         });
         const data = await res.json();
         return data.map(item => ({
@@ -237,21 +282,16 @@
           full: item.display_name,
           icon: "📍"
         }));
-      } catch(e) {
-        return [];
-      }
+      } catch(e) { return []; }
     }
 
     async function handleSearch() {
       const q = document.getElementById('searchInput').value.trim();
       const container = document.getElementById('suggestions');
 
-      if (q.length < 3) {
-        container.style.display = 'none';
-        return;
-      }
+      if (q.length < 3) { container.style.display = 'none'; return; }
 
-      container.innerHTML = `<div style="padding:16px; color:#88a5b8;">Searching...</div>`;
+      container.innerHTML = `<div style="padding:16px;color:#88a5b8;">Searching real places...</div>`;
       container.style.display = 'block';
 
       const results = await nominatimSearch(q);
@@ -260,17 +300,12 @@
       results.forEach(place => {
         const div = document.createElement('div');
         div.className = 'suggestion-item';
-        div.innerHTML = `<span style="font-size:1.5rem;">${place.icon}</span><div><strong>${place.name}</strong><br><small>${place.full}</small></div>`;
+        div.innerHTML = `<span style="font-size:1.6rem;">${place.icon}</span><div><strong>${place.name}</strong><br><small>${place.full}</small></div>`;
         div.onclick = () => {
           document.getElementById('searchInput').value = place.full;
           container.style.display = 'none';
 
-          const newPlace = {
-            id: `EM-${Date.now().toString().slice(-6)}`,
-            name: place.name,
-            loc: place.full,
-            icon: place.icon
-          };
+          const newPlace = { id: `EM-${Date.now().toString().slice(-6)}`, name: place.name, loc: place.full, icon: place.icon };
           places.unshift(newPlace);
           renderPlaces();
           log(`📍 Added: ${place.name}`);
@@ -286,9 +321,9 @@
         const card = document.createElement('div');
         card.className = 'place-card';
         card.innerHTML = `
-          <div style="font-size:3.2rem; text-align:center; margin:12px 0;">${place.icon}</div>
+          <div style="font-size:3.5rem;text-align:center;margin:12px 0;">${place.icon}</div>
           <h3>${place.name}</h3>
-          <p style="opacity:0.8; font-size:0.95rem;">${place.loc}</p>
+          <p style="opacity:0.8;">${place.loc}</p>
         `;
         card.onclick = () => showPlaceDetail(place);
         grid.appendChild(card);
@@ -296,31 +331,87 @@
     }
 
     function showPlaceDetail(place) {
+      currentPlace = place;
+      document.getElementById('modalIcon').textContent = place.icon;
       document.getElementById('modalName').textContent = place.name;
       document.getElementById('modalLoc').textContent = place.loc;
       document.getElementById('placeModal').style.display = 'flex';
     }
 
-    function closePlaceModal() {
-      document.getElementById('placeModal').style.display = 'none';
+    function closePlaceModal() { document.getElementById('placeModal').style.display = 'none'; }
+
+    // Share Link (Base64)
+    function copyShareLink() {
+      if (!currentPlace) return;
+      const data = btoa(JSON.stringify({ id: currentPlace.id, name: currentPlace.name }));
+      const shareUrl = `${window.location.origin}${window.location.pathname}#${data}`;
+      navigator.clipboard.writeText(shareUrl);
+      alert("✅ Shareable link copied!");
     }
 
-    function showAuthModal() {
-      alert("Login system ready (demo)");
+    // Donation
+    function showDonateModal() {
+      if (!currentUser) return alert("Please login");
+      document.getElementById('donateTo').textContent = currentPlace.name;
+      document.getElementById('donorBalance').textContent = currentUser.balance;
+      document.getElementById('donateAmount').value = 150;
+      document.getElementById('donateModal').style.display = 'flex';
     }
 
-    // Initial Load
+    function confirmDonation() {
+      const amount = parseInt(document.getElementById('donateAmount').value);
+      if (amount > currentUser.balance) return alert("Insufficient balance");
+      currentUser.balance -= amount;
+      document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
+      log(`💰 ${amount} ROOT donated to ${currentPlace.name}`);
+      closeDonateModal();
+      alert("✅ Donation successful! Thank you.");
+    }
+
+    function applePayDonate() {
+      if (!currentUser) return alert("Login required");
+      const amount = prompt("Enter amount for Apple Pay:", "200");
+      if (amount) {
+        currentUser.balance -= parseInt(amount);
+        document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
+        log(`🍎 Apple Pay: ${amount} ROOT donated`);
+        alert("✅ Apple Pay donation completed");
+      }
+    }
+
+    function closeDonateModal() { document.getElementById('donateModal').style.display = 'none'; }
+
+    // Profile
+    function showProfile() {
+      document.getElementById('profileHandle').textContent = currentUser.handle;
+      document.getElementById('profileBalance').textContent = currentUser.balance;
+      document.getElementById('profileModal').style.display = 'flex';
+    }
+
+    function topUpBalance() {
+      const amount = parseInt(document.getElementById('topupAmount').value);
+      if (amount > 0) {
+        currentUser.balance += amount;
+        document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
+        document.getElementById('profileBalance').textContent = currentUser.balance;
+        log(`💵 Topped up ${amount} ROOT`);
+        alert("✅ Balance topped up successfully");
+      }
+    }
+
+    function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
+
+    // Init
     window.onload = () => {
-      // Sample professional places
       places = [
         { id: "EM-1001", name: "Machu Picchu", loc: "Cusco Region, Peru", icon: "🏔️" },
-        { id: "EM-1002", name: "Great Pyramid of Giza", loc: "Cairo, Egypt", icon: "🪦" },
-        { id: "EM-1003", name: "Angkor Wat", loc: "Siem Reap, Cambodia", icon: "🛕" },
-        { id: "EM-1004", name: "Colosseum", loc: "Rome, Italy", icon: "🏛️" },
-        { id: "EM-1005", name: "Yosemite National Park", loc: "California, USA", icon: "🏞️" }
+        { id: "EM-1002", name: "Great Pyramid of Giza", loc: "Giza, Egypt", icon: "🪦" },
+        { id: "EM-1003", name: "Angkor Wat", loc: "Siem Reap, Cambodia", icon: "🛕" }
       ];
       renderPlaces();
-      log("🌍 EarthMesh initialized — Professional Edition");
+      document.getElementById('usernameDisplay').textContent = currentUser.handle;
+      document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
+      log("🌍 EarthMesh Professional Edition Loaded");
     };
   </script>
 </body>
