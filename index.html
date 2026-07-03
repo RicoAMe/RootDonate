@@ -3,626 +3,324 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#0a0a0a">
-  <title>EARTH MESH • ROOT DONATE</title>
+  <meta name="theme-color" content="#0a1f2f">
+  <title>EarthMesh • Global Discovery</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
   <style>
     :root {
-      --neon: #00ff9d;
-      --glow: #00ff9d88;
-      --accent: #ffd700;
-      --bg: #0a0a0a;
-      --card: rgba(15, 20, 18, 0.97);
+      --primary: #00b894;
+      --accent: #00d2a0;
+      --dark: #0a1f2f;
+      --card: #13293d;
+      --text: #e0f2f1;
     }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    
     body {
-      font-family: 'Courier New', monospace;
-      background: var(--bg);
-      color: var(--neon);
-      height: 100vh;
-      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--dark);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .header {
+      padding: 16px 20px;
+      background: rgba(10, 31, 47, 0.98);
+      border-bottom: 1px solid #1e3a5f;
       display: flex;
-      flex-direction: column;
-    }
-    canvas#matrix { 
-      position: fixed; 
-      inset: 0; 
-      z-index: -1; 
-      opacity: 0.15; 
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
 
-    .header { 
-      padding: 14px 20px; 
-      display: flex; 
-      justify-content: space-between; 
-      align-items: center; 
-      border-bottom: 1px solid rgba(0,255,157,0.3); 
-      background: rgba(10,10,10,0.98); 
-    }
-    .header h1 { 
-      font-size: 1.85rem; 
-      letter-spacing: 6px; 
-      text-shadow: 0 0 20px var(--neon); 
-      display: flex; 
-      align-items: center; 
-      gap: 12px;
+    .header h1 {
+      font-size: 1.65rem;
+      font-weight: 600;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
-    .nav { 
-      padding: 10px 20px; 
-      display: flex; 
-      gap: 8px; 
-      flex-wrap: wrap; 
-      border-bottom: 1px solid rgba(0,255,157,0.2); 
-      background: rgba(10,10,10,0.98); 
-    }
-    .nav button { 
-      background: transparent; 
-      border: 1px solid var(--neon); 
-      color: var(--neon); 
-      padding: 9px 18px; 
-      border-radius: 50px; 
-      cursor: pointer; 
-      transition: all 0.3s; 
-      font-size: 0.93rem; 
-    }
-    .nav button.active, .nav button:hover { 
-      background: var(--neon); 
-      color: #000; 
-      box-shadow: 0 0 20px var(--glow); 
+    .search-container {
+      position: relative;
+      margin: 16px 20px;
     }
 
-    .search-container { 
-      position: relative; 
-      margin: 14px 20px; 
+    .search-bar {
+      width: 100%;
+      padding: 16px 20px 16px 52px;
+      background: #1e3a5f;
+      border: 1px solid #00b894;
+      border-radius: 50px;
+      color: white;
+      font-size: 1.05rem;
+      outline: none;
     }
-    .search-bar { 
-      padding: 14px 24px; 
-      width: 100%; 
-      background: #111; 
-      border: 1px solid var(--neon); 
-      border-radius: 50px; 
-      color: var(--neon); 
-      font-family: inherit; 
-      font-size: 1rem;
-    }
+
+    .search-bar::placeholder { color: #88a5b8; }
+
     .suggestions {
-      position: absolute; 
-      top: 100%; left: 0; right: 0; 
-      background: #111; 
-      border: 1px solid var(--neon);
-      border-radius: 12px; 
-      margin-top: 4px; 
-      max-height: 420px; 
-      overflow-y: auto; 
-      z-index: 30; 
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #13293d;
+      border: 1px solid #00b894;
+      border-radius: 16px;
+      margin-top: 8px;
+      max-height: 420px;
+      overflow-y: auto;
+      z-index: 200;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
       display: none;
-      box-shadow: 0 0 20px var(--glow);
     }
+
     .suggestion-item {
-      padding: 12px 20px; 
-      cursor: pointer; 
-      border-bottom: 1px solid #222; 
-      display: flex; 
-      align-items: center; 
-      gap: 12px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #1e3a5f;
     }
-    .suggestion-item:hover { background: #1a1a1a; color: #fff; }
+
+    .suggestion-item:hover {
+      background: #1e3a5f;
+    }
 
     .nodes-grid {
-      flex: 1; 
-      padding: 16px 20px; 
-      overflow-y: auto;
-      display: grid; 
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+      padding: 0 20px 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 16px;
     }
 
     .place-card {
-      background: var(--card); 
-      border: 1px solid rgba(0,255,157,0.35);
-      border-radius: 16px; 
-      padding: 18px; 
-      cursor: pointer; 
-      transition: all 0.4s;
-      position: relative;
-      overflow: hidden;
-    }
-    .place-card:hover { 
-      transform: translateY(-8px); 
-      border-color: var(--neon); 
-      box-shadow: 0 0 30px var(--glow); 
-    }
-
-    .scan-bar { 
-      height: 3px; 
-      background: linear-gradient(90deg, #00ff9d, var(--accent)); 
-      margin: 12px 0; 
-      border-radius: 2px; 
-      animation: scanPulse 1.8s infinite; 
-    }
-    @keyframes scanPulse { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
-
-    .log { 
-      height: 160px; 
-      background: #0a0a0a; 
-      padding: 12px 20px; 
-      overflow-y: auto; 
-      font-size: 0.84rem; 
-      border-top: 1px solid rgba(0,255,157,0.3); 
-    }
-
-    .scan-status { 
-      text-align: center; 
-      padding: 12px; 
-      background: #111; 
-      border: 1px solid #0f0; 
-      margin: 10px 20px; 
-      border-radius: 8px; 
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse { 0%,100% { opacity: 0.8; } 50% { opacity: 1; } }
-
-    .modal { 
-      display: none; 
-      position: fixed; 
-      inset: 0; 
-      background: rgba(0,0,0,0.97); 
-      z-index: 100; 
-      align-items: center; 
-      justify-content: center; 
-      padding: 10px; 
-    }
-    .modal-content {
-      background: rgba(15,20,18,0.98); 
-      border: 2px solid var(--neon); 
+      background: var(--card);
+      border: 1px solid #1e3a5f;
       border-radius: 16px;
-      width: 100%; 
-      max-width: 560px; 
-      padding: 28px; 
-      max-height: 92vh; 
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .place-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--primary);
+      box-shadow: 0 10px 25px rgba(0, 184, 148, 0.2);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 31, 47, 0.97);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-content {
+      background: #13293d;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 560px;
+      max-height: 92vh;
       overflow-y: auto;
+      padding: 24px;
+      border: 1px solid #00b894;
     }
 
-    .history-item { 
-      padding: 12px; 
-      background: #111; 
-      margin-bottom: 8px; 
-      border-left: 4px solid var(--neon); 
+    button {
+      padding: 12px 24px;
+      border-radius: 50px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
     }
 
-    input, textarea, select { 
-      background: #111; 
-      border: 1px solid var(--neon); 
-      color: var(--neon); 
-      padding: 11px; 
-      border-radius: 8px; 
-      width: 100%; 
-      margin: 8px 0; 
-      font-family: inherit; 
-    }
-    button.primary { 
-      background: var(--accent); 
-      color: #000; 
-      border: none; 
-      padding: 13px 26px; 
-      border-radius: 50px; 
-      font-weight: bold; 
-      cursor: pointer; 
-      width: 100%; 
-      margin-top: 8px;
-    }
-    .apple-pay-btn {
-      background: #000;
-      color: white;
-      border: 1px solid #fff;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 1.1rem;
-      margin-top: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
+    .primary {
+      background: var(--primary);
+      color: #000;
+      border: none;
+      width: 100%;
+      margin: 12px 0;
     }
 
-    .globe-container {
-      height: 180px;
-      background: radial-gradient(circle at 50% 30%, #003322, #000);
-      border-radius: 12px;
-      margin: 15px 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 6rem;
-      border: 1px solid var(--neon);
+    .log {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 140px;
+      background: #0a1f2f;
+      padding: 12px 20px;
+      font-size: 0.9rem;
+      overflow-y: auto;
+      border-top: 1px solid #1e3a5f;
+      z-index: 10;
+    }
+
+    @media (max-width: 480px) {
+      .nodes-grid {
+        grid-template-columns: 1fr;
+        padding: 0 12px 20px;
+      }
+      .header h1 { font-size: 1.45rem; }
     }
   </style>
 </head>
 <body>
 
-  <canvas id="matrix"></canvas>
-
   <div class="header">
-    <h1>🌍 EARTH MESH</h1>
-    <div style="display:flex; align-items:center; gap:12px;">
-      <button onclick="toggleLearnMode()" style="padding:8px 16px; background:transparent; border:1px solid var(--neon); color:var(--neon); border-radius:50px;">📖 LEARN</button>
-      
-      <div id="userSection" style="display:none;" onclick="showProfile()">
-        <div style="display:flex; align-items:center; gap:8px; cursor:pointer;">
-          <div style="font-size:1.8rem;">👤</div>
-          <div>
-            <div id="usernameDisplay" style="font-weight:bold;"></div>
-            <div id="balanceDisplay" style="font-size:0.8rem;color:#0f0;">0 ROOT</div>
-          </div>
-        </div>
-      </div>
-      
-      <button onclick="showAuthModal()" id="authBtn" style="padding:8px 20px; border:1px solid var(--neon); background:transparent; color:var(--neon); border-radius:50px;">
-        <i class="fas fa-user"></i> LOGIN
-      </button>
-    </div>
-  </div>
-
-  <div class="nav">
-    <button class="active" onclick="setTab(0)">🌐 LIVE GRID</button>
-    <button onclick="setTab(1)">🔎 DEEP SEARCH</button>
-    <button onclick="startAutoAddressSearch()">📍 GLOBAL SCAN</button>
-    <button onclick="showReportModal()">📢 REPORT FIND</button>
-    <button onclick="resetScan()">RESET MESH</button>
-  </div>
-
-  <div id="scanStatus" class="scan-status" style="display:none;">
-    <i class="fas fa-satellite-dish"></i> <span id="scanText">CONNECTING TO GLOBAL MESH...</span>
+    <h1><i class="fas fa-globe"></i> EarthMesh</h1>
+    <button onclick="showAuthModal()" id="authBtn" style="background:transparent; border:1px solid #00b894; color:#00b894;">
+      <i class="fas fa-user"></i> Login
+    </button>
   </div>
 
   <div class="search-container">
-    <input type="text" id="searchInput" class="search-bar" placeholder="Search any place on Earth..." onkeyup="handleSearch()" autocomplete="off">
+    <input 
+      type="text" 
+      id="searchInput" 
+      class="search-bar" 
+      placeholder="Search any place on Earth..." 
+      onkeyup="handleSearch()"
+      autocomplete="off">
     <div id="suggestions" class="suggestions"></div>
   </div>
 
   <div class="nodes-grid" id="grid"></div>
+
   <div class="log" id="log"></div>
 
-  <!-- REPORT MODAL -->
-  <div id="reportModal" class="modal">
-    <div class="modal-content">
-      <h2>📢 REPORT NEW FIND</h2>
-      <div class="globe-container">🌍</div>
-      
-      <input type="text" id="reportTitle" placeholder="Title (e.g. 1889-CC Morgan Dollar)">
-      
-      <div class="search-container" style="margin:8px 0; position:relative;">
-        <input type="text" id="reportLocation" class="search-bar" placeholder="Location / Coordinates" onkeyup="reportLocationSearch()" autocomplete="off">
-        <div id="reportSuggestions" class="suggestions"></div>
-      </div>
-
-      <textarea id="reportDesc" rows="4" placeholder="Depth, conditions, associated finds..."></textarea>
-      
-      <select id="reportType">
-        <option value="Coin">Coin</option>
-        <option value="Relic">Relic</option>
-        <option value="Jewelry">Jewelry</option>
-        <option value="Artifact">Artifact</option>
-        <option value="Other">Other</option>
-      </select>
-      
-      <button onclick="simulatePhotoUpload()" style="margin:12px 0;width:100%;">📸 ATTACH PHOTO</button>
-      <div id="photoPreview" style="margin:8px 0; color:#0f0; font-size:0.9rem;"></div>
-
-      <div style="display:flex; gap:10px; margin-top:15px;">
-        <button onclick="submitReport()" class="primary">UPLOAD TO GLOBAL MESH</button>
-        <button onclick="closeReportModal()" style="background:transparent;border:1px solid var(--neon);color:var(--neon);padding:13px;">CANCEL</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- PLACE DETAIL MODAL -->
+  <!-- Place Detail Modal -->
   <div id="placeModal" class="modal">
     <div class="modal-content">
-      <div id="modalIcon" style="text-align:center;font-size:5.5rem;margin:15px 0;"></div>
-      <h2 id="modalName"></h2>
-      <p id="modalLoc" style="opacity:0.8;"></p>
-      <p><strong>Probability:</strong> <span id="modalProb" style="color:#0f0;"></span></p>
-      <p><strong>Expected Finds:</strong> <span id="modalExpected"></span></p>
-
-      <button onclick="copyShareLink()" style="margin:12px 0;width:100%;">🔗 COPY SHARE LINK</button>
-      <button onclick="showDonateModal()" class="primary">💰 DONATE ROOT TOKENS</button>
-      <button onclick="applePayDonate()" class="apple-pay-btn">
-        <i class="fab fa-apple-pay"></i> Apple Pay
+      <h2 id="modalName" style="margin-bottom:8px;"></h2>
+      <p id="modalLoc" style="opacity:0.8; margin-bottom:20px;"></p>
+      
+      <button onclick="closePlaceModal()" style="background:transparent; border:1px solid #00b894; color:#00b894; width:100%; margin-top:20px;">
+        Close
       </button>
-
-      <h3 style="margin:22px 0 10px 0;">Donation History</h3>
-      <div id="placeDonationHistory"></div>
-
-      <button onclick="closePlaceModal()" style="margin-top:15px;background:transparent;border:1px solid var(--neon);color:var(--neon);width:100%;">CLOSE</button>
-    </div>
-  </div>
-
-  <!-- DONATE MODAL -->
-  <div id="donateModal" class="modal">
-    <div class="modal-content">
-      <h2>Support <span id="donateTo"></span></h2>
-      <p>Balance: <strong id="donorBalance"></strong> ROOT</p>
-      <input type="number" id="donateAmount" placeholder="Amount in ROOT" style="font-size:1.5rem;text-align:center;">
-      <button onclick="confirmDonation()" class="primary">CONFIRM DONATION</button>
-      <button onclick="closeDonateModal()" style="margin-top:8px;background:transparent;border:1px solid var(--neon);color:var(--neon);width:100%;">CANCEL</button>
-    </div>
-  </div>
-
-  <!-- AUTH MODAL -->
-  <div id="authModal" class="modal">
-    <div class="modal-content">
-      <h2>ROOT ACCOUNT</h2>
-      <button onclick="login()" style="width:100%;margin:10px 0;">Login as @hunter</button>
-      <button onclick="signup()" style="width:100%;margin:10px 0;">Create New Account</button>
-      <button onclick="closeAuthModal()" style="background:transparent;border:1px solid var(--neon);color:var(--neon);width:100%;">Close</button>
     </div>
   </div>
 
   <script>
-    // Matrix Rain
-    const canvas = document.getElementById('matrix');
-    const ctx = canvas.getContext('2d');
-    let drops = [];
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      drops = Array(Math.floor(canvas.width / 14)).fill(1);
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    function drawMatrix() {
-      ctx.fillStyle = 'rgba(10,10,10,0.14)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#00ff9d';
-      ctx.font = '14px monospace';
-      const chars = '01🌍🌎🌏🪙⚡₿$€£¥🔍📍';
-      for (let i = 0; i < drops.length; i++) {
-        ctx.fillText(chars[Math.floor(Math.random() * chars.length)], i * 14, drops[i] * 14);
-        if (drops[i] * 14 > canvas.height && Math.random() > 0.975) drops[i] = 0;
-        drops[i]++;
-      }
-    }
-    setInterval(drawMatrix, 35);
-
     let places = [];
     let currentUser = null;
-    let currentPlace = null;
 
     const logEl = document.getElementById('log');
     function log(msg) {
-      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
       logEl.innerHTML += `<span style="opacity:0.6">[${time}]</span> ${msg}<br>`;
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    const realPlacePool = [
-      { name: "California Mother Lode", loc: "Sierra Nevada, USA", prob: "HIGH", exp: "Gold coins & nuggets", icon: "⛏️" },
-      { name: "Gettysburg Battlefield", loc: "Pennsylvania, USA", prob: "VERY HIGH", exp: "Civil War relics", icon: "⚔️" },
-      { name: "Bodie Ghost Town", loc: "California, USA", prob: "HIGH", exp: "Gold Rush artifacts", icon: "🏚️" },
-      { name: "Roman Forum", loc: "Rome, Italy", prob: "HIGH", exp: "Ancient Roman coins", icon: "🏛️" },
-      { name: "Machu Picchu Terraces", loc: "Cusco, Peru", prob: "HIGH", exp: "Inca gold & pottery", icon: "🏔️" },
-      { name: "Angkor Wat Temples", loc: "Siem Reap, Cambodia", prob: "MED", exp: "Khmer empire relics", icon: "🛕" },
-      { name: "Gallipoli Battlefield", loc: "Çanakkale, Turkey", prob: "HIGH", exp: "WW1 relics", icon: "⚔️" },
-      { name: "Stonehenge", loc: "Wiltshire, UK", prob: "MED", exp: "Bronze Age tools", icon: "🪨" },
-      { name: "Oak Island Money Pit", loc: "Nova Scotia, Canada", prob: "VERY HIGH", exp: "Pirate treasure", icon: "🪙" },
-      { name: "Temple of Karnak", loc: "Luxor, Egypt", prob: "HIGH", exp: "Pharaonic artifacts", icon: "🪔" },
-      { name: "Pompeii Ruins", loc: "Naples, Italy", prob: "HIGH", exp: "Roman coins & jewelry", icon: "🌋" },
-      { name: "Great Wall Watchtowers", loc: "Beijing, China", prob: "MED", exp: "Ancient coins", icon: "🏯" }
-    ];
-
-    const addressDatabase = [
-      { full: "California Mother Lode, USA", city: "California" },
-      { full: "Gettysburg Battlefield, PA", city: "Gettysburg" },
-      { full: "Bodie Ghost Town, CA", city: "Bodie" },
-      { full: "Roman Forum, Rome, Italy", city: "Rome" },
-      { full: "Machu Picchu, Peru", city: "Cusco" },
-      { full: "Angkor Wat, Cambodia", city: "Siem Reap" },
-      { full: "Stonehenge, UK", city: "Wiltshire" },
-      { full: "Oak Island, Canada", city: "Nova Scotia" },
-      { full: "Pompeii, Italy", city: "Naples" },
-      { full: "Great Wall, China", city: "Beijing" }
-    ];
-
-    function startAutoAddressSearch() {
-      document.getElementById('scanStatus').style.display = 'block';
-      document.getElementById('scanText').textContent = 'SATELLITE MESH SCANNING...';
-      log("🌍 GLOBAL EARTH MESH SCAN INITIATED");
-
-      setTimeout(() => {
-        places = realPlacePool.map(base => ({
-          ...base,
-          id: `EM-${100000 + Math.floor(Math.random() * 900000)}`,
-          donations: [],
-          dist: `${Math.floor(Math.random() * 450) + 3} km`
+    // Free Nominatim Search
+    async function nominatimSearch(query) {
+      if (query.length < 3) return [];
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=10&addressdetails=1`, {
+          headers: { 'User-Agent': 'EarthMesh-Demo' }
+        });
+        const data = await res.json();
+        return data.map(item => ({
+          name: item.name || item.display_name.split(',')[0],
+          full: item.display_name,
+          icon: "📍"
         }));
-        renderPlaces();
-        document.getElementById('scanStatus').style.display = 'none';
-        log(`✅ ${places.length} LOCATIONS SYNCED TO MESH`);
-      }, 1200);
+      } catch(e) {
+        return [];
+      }
     }
 
-    function renderPlaces(filtered = places) {
+    async function handleSearch() {
+      const q = document.getElementById('searchInput').value.trim();
+      const container = document.getElementById('suggestions');
+
+      if (q.length < 3) {
+        container.style.display = 'none';
+        return;
+      }
+
+      container.innerHTML = `<div style="padding:16px; color:#88a5b8;">Searching...</div>`;
+      container.style.display = 'block';
+
+      const results = await nominatimSearch(q);
+      container.innerHTML = '';
+
+      results.forEach(place => {
+        const div = document.createElement('div');
+        div.className = 'suggestion-item';
+        div.innerHTML = `<span style="font-size:1.5rem;">${place.icon}</span><div><strong>${place.name}</strong><br><small>${place.full}</small></div>`;
+        div.onclick = () => {
+          document.getElementById('searchInput').value = place.full;
+          container.style.display = 'none';
+
+          const newPlace = {
+            id: `EM-${Date.now().toString().slice(-6)}`,
+            name: place.name,
+            loc: place.full,
+            icon: place.icon
+          };
+          places.unshift(newPlace);
+          renderPlaces();
+          log(`📍 Added: ${place.name}`);
+        };
+        container.appendChild(div);
+      });
+    }
+
+    function renderPlaces() {
       const grid = document.getElementById('grid');
       grid.innerHTML = '';
-      filtered.forEach(place => {
+      places.forEach(place => {
         const card = document.createElement('div');
         card.className = 'place-card';
         card.innerHTML = `
-          <div style="display:flex;justify-content:space-between;font-size:0.8rem;opacity:0.7;">
-            <span>${place.id}</span><span style="color:#0f0;">${place.dist}</span>
-          </div>
-          <div style="font-size:3.8rem;margin:18px 0;text-align:center;">${place.icon}</div>
+          <div style="font-size:3.2rem; text-align:center; margin:12px 0;">${place.icon}</div>
           <h3>${place.name}</h3>
-          <p>📍 ${place.loc}</p>
-          <div class="scan-bar"></div>
-          <p><strong>PROBABILITY:</strong> <span style="color:#0f0;">${place.prob}</span></p>
+          <p style="opacity:0.8; font-size:0.95rem;">${place.loc}</p>
         `;
         card.onclick = () => showPlaceDetail(place);
         grid.appendChild(card);
       });
     }
 
-    function handleSearch() {
-      const q = document.getElementById('searchInput').value.toLowerCase().trim();
-      const container = document.getElementById('suggestions');
-
-      if (q.length < 2) {
-        container.style.display = 'none';
-        renderPlaces();
-        return;
-      }
-
-      container.innerHTML = '';
-      addressDatabase.filter(addr => addr.full.toLowerCase().includes(q) || addr.city.toLowerCase().includes(q))
-        .forEach(addr => {
-          const div = document.createElement('div');
-          div.className = 'suggestion-item';
-          div.innerHTML = `<i class="fas fa-map-marker-alt"></i><div><strong>${addr.full}</strong></div>`;
-          div.onclick = () => {
-            document.getElementById('searchInput').value = addr.full;
-            container.style.display = 'none';
-            startAutoAddressSearch();
-          };
-          container.appendChild(div);
-        });
-      container.style.display = 'block';
-
-      const filtered = places.filter(p => p.name.toLowerCase().includes(q) || p.loc.toLowerCase().includes(q));
-      renderPlaces(filtered);
-    }
-
-    function reportLocationSearch() {
-      const q = document.getElementById('reportLocation').value.toLowerCase().trim();
-      const container = document.getElementById('reportSuggestions');
-
-      if (q.length < 2) {
-        container.style.display = 'none';
-        return;
-      }
-
-      container.innerHTML = '';
-      addressDatabase.filter(addr => addr.full.toLowerCase().includes(q) || addr.city.toLowerCase().includes(q))
-        .forEach(addr => {
-          const div = document.createElement('div');
-          div.className = 'suggestion-item';
-          div.innerHTML = `<i class="fas fa-map-marker-alt"></i><div><strong>${addr.full}</strong></div>`;
-          div.onclick = () => {
-            document.getElementById('reportLocation').value = addr.full;
-            container.style.display = 'none';
-          };
-          container.appendChild(div);
-        });
-      container.style.display = 'block';
-    }
-
     function showPlaceDetail(place) {
-      currentPlace = place;
-      if (!place.donations) place.donations = [];
-      document.getElementById('modalIcon').textContent = place.icon;
       document.getElementById('modalName').textContent = place.name;
-      document.getElementById('modalLoc').textContent = `📍 ${place.loc}`;
-      document.getElementById('modalProb').textContent = place.prob;
-      document.getElementById('modalExpected').textContent = place.exp;
-
-      const hist = place.donations.length ? place.donations.map(d => 
-        `<div class="history-item"><strong>💰 ${d.amount} ROOT</strong> from ${d.from}<br><small>${d.time}</small></div>`
-      ).join('') : '<p style="opacity:0.6;">No donations yet — be the first to support this site!</p>';
-
-      document.getElementById('placeDonationHistory').innerHTML = hist;
+      document.getElementById('modalLoc').textContent = place.loc;
       document.getElementById('placeModal').style.display = 'flex';
     }
 
-    function copyShareLink() {
-      if (!currentPlace) return;
-      navigator.clipboard.writeText(`${location.origin}${location.pathname}#${currentPlace.id}`);
-      alert("✅ Shareable mesh link copied to clipboard!");
+    function closePlaceModal() {
+      document.getElementById('placeModal').style.display = 'none';
     }
 
-    function showDonateModal() {
-      if (!currentUser) return alert("Please login to donate ROOT tokens");
-      document.getElementById('donateTo').textContent = currentPlace.name;
-      document.getElementById('donorBalance').textContent = currentUser.balance + " ROOT";
-      document.getElementById('donateAmount').value = "75";
-      document.getElementById('donateModal').style.display = 'flex';
+    function showAuthModal() {
+      alert("Login system ready (demo)");
     }
 
-    function confirmDonation() {
-      const amount = parseInt(document.getElementById('donateAmount').value);
-      if (!amount || amount > currentUser.balance) return alert("Invalid amount or insufficient balance");
-      
-      currentUser.balance -= amount;
-      currentPlace.donations.unshift({ 
-        from: currentUser.handle, 
-        amount, 
-        time: new Date().toLocaleString() 
-      });
-
-      document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
-      log(`💸 ${amount} ROOT donated to ${currentPlace.name}`);
-      alert("✅ Donation confirmed. Thank you for supporting the Mesh!");
-      closeDonateModal();
-      closePlaceModal();
-      showPlaceDetail(currentPlace);
-    }
-
-    function applePayDonate() {
-      if (!currentUser) return alert("Login required");
-      const amount = prompt("Enter ROOT amount for Apple Pay:", "150");
-      if (amount && !isNaN(amount)) confirmDonation();
-    }
-
-    function login() {
-      currentUser = { handle: "@hunter", balance: 12450 };
-      document.getElementById('authBtn').style.display = 'none';
-      document.getElementById('userSection').style.display = 'block';
-      document.getElementById('usernameDisplay').textContent = currentUser.handle;
-      document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
-      closeAuthModal();
-      log(`🔓 Logged in as ${currentUser.handle}`);
-    }
-
-    function signup() {
-      currentUser = { handle: "@globalexplorer", balance: 8750 };
-      document.getElementById('authBtn').style.display = 'none';
-      document.getElementById('userSection').style.display = 'block';
-      document.getElementById('usernameDisplay').textContent = currentUser.handle;
-      document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
-      closeAuthModal();
-      log("✅ New ROOT account created");
-    }
-
-    function simulatePhotoUpload() {
-      document.getElementById('photoPreview').innerHTML = '✅ Photo successfully attached (simulated)';
-    }
-
-    function submitReport() {
-      const title = document.getElementById('reportTitle').value.trim();
-      if (!title) return alert("Please enter a report title");
-      alert("✅ Report successfully broadcast to the Global Mesh Network!");
-      closeReportModal();
-      log(`📢 New discovery reported: ${title}`);
-    }
-
-    function closePlaceModal() { document.getElementById('placeModal').style.display = 'none'; }
-    function closeDonateModal() { document.getElementById('donateModal').style.display = 'none'; }
-    function showAuthModal() { document.getElementById('authModal').style.display = 'flex'; }
-    function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
-    function showReportModal() { document.getElementById('reportModal').style.display = 'flex'; }
-    function closeReportModal() { document.getElementById('reportModal').style.display = 'none'; }
-    function setTab(n) { document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n)); }
-    function resetScan() { if(confirm("Reset entire Earth Mesh?")) startAutoAddressSearch(); }
-    function toggleLearnMode() { alert("🌍 EARTH MESH v3.0 — Final Polished Edition"); }
-    function showProfile() {
-      alert(`Profile: ${currentUser.handle}\nBalance: ${currentUser.balance} ROOT\n\nTotal donated: 3420 ROOT`);
-    }
-
+    // Initial Load
     window.onload = () => {
-      startAutoAddressSearch();
-      log("🌍 EARTH MESH v3.0 — Fully Polished & Ready");
+      // Sample professional places
+      places = [
+        { id: "EM-1001", name: "Machu Picchu", loc: "Cusco Region, Peru", icon: "🏔️" },
+        { id: "EM-1002", name: "Great Pyramid of Giza", loc: "Cairo, Egypt", icon: "🪦" },
+        { id: "EM-1003", name: "Angkor Wat", loc: "Siem Reap, Cambodia", icon: "🛕" },
+        { id: "EM-1004", name: "Colosseum", loc: "Rome, Italy", icon: "🏛️" },
+        { id: "EM-1005", name: "Yosemite National Park", loc: "California, USA", icon: "🏞️" }
+      ];
+      renderPlaces();
+      log("🌍 EarthMesh initialized — Professional Edition");
     };
   </script>
 </body>
