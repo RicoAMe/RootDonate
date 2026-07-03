@@ -37,138 +37,43 @@
 
     canvas#matrix { position: fixed; inset: 0; z-index: -1; opacity: 0.15; }
 
-    .header {
-      padding: 16px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid rgba(255,215,0,0.3);
-      background: rgba(10,10,10,0.98);
-    }
+    .header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,215,0,0.3); background: rgba(10,10,10,0.98); }
     .header h1 { font-size: 1.55rem; letter-spacing: 3px; text-shadow: 0 0 15px var(--neon); }
 
-    .user-info { display: flex; align-items: center; gap: 12px; cursor: pointer; }
-    .avatar {
-      width: 38px; height: 38px;
-      background: #222;
-      border: 2px solid var(--neon);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-    }
+    .nav { padding: 12px 20px; display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid rgba(255,215,0,0.2); background: rgba(10,10,10,0.98); }
+    .nav button { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 10px 20px; border-radius: 50px; cursor: pointer; transition: all 0.3s; }
+    .nav button.active, .nav button:hover { background: var(--neon); color: #000; box-shadow: 0 0 25px var(--glow); }
 
-    .nav { 
-      padding: 12px 20px; 
-      display: flex; 
-      gap: 8px; 
-      flex-wrap: wrap; 
-      border-bottom: 1px solid rgba(255,215,0,0.2); 
-      background: rgba(10,10,10,0.98); 
-    }
-    .nav button { 
-      background: transparent; 
-      border: 1px solid var(--neon); 
-      color: var(--neon); 
-      padding: 10px 20px; 
-      border-radius: 50px; 
-      cursor: pointer; 
-      transition: all 0.3s;
-    }
-    .nav button.active, .nav button:hover { 
-      background: var(--neon); 
-      color: #000; 
-      box-shadow: 0 0 25px var(--glow); 
-    }
-
-    .search-bar { 
-      margin: 16px 20px; 
-      padding: 14px 24px; 
-      width: calc(100% - 40px); 
-      background: #111; 
-      border: 1px solid var(--neon); 
-      border-radius: 50px; 
-      color: var(--neon); 
-      font-family: inherit;
-    }
+    .search-bar { margin: 16px 20px; padding: 14px 24px; width: calc(100% - 40px); background: #111; border: 1px solid var(--neon); border-radius: 50px; color: var(--neon); }
 
     .nodes-grid {
-      flex: 1;
-      padding: 16px 20px;
-      overflow-y: auto;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 16px;
+      flex: 1; padding: 16px 20px; overflow-y: auto;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;
     }
 
     .place-card {
-      background: var(--card);
-      border: 1px solid rgba(255,215,0,0.35);
-      border-radius: 16px;
-      padding: 18px;
-      cursor: pointer;
-      transition: all 0.4s;
+      background: var(--card); border: 1px solid rgba(255,215,0,0.35);
+      border-radius: 16px; padding: 18px; cursor: pointer; transition: all 0.4s;
     }
-    .place-card:hover {
-      transform: translateY(-4px);
-      border-color: var(--neon);
-      box-shadow: 0 0 25px var(--glow);
-    }
+    .place-card:hover { transform: translateY(-4px); border-color: var(--neon); box-shadow: 0 0 25px var(--glow); }
 
     .place-card .scan-bar {
-      height: 4px;
-      background: linear-gradient(90deg, #0f0, #ffd700);
-      margin: 12px 0;
-      border-radius: 2px;
-      animation: scanPulse 2s infinite;
+      height: 4px; background: linear-gradient(90deg, #0f0, #ffd700);
+      margin: 12px 0; border-radius: 2px; animation: scanPulse 2s infinite;
     }
+    @keyframes scanPulse { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
 
-    @keyframes scanPulse {
-      0%, 100% { opacity: 0.6; }
-      50% { opacity: 1; }
-    }
+    .log { height: 160px; background: #0a0a0a; padding: 12px 20px; overflow-y: auto; font-size: 0.85rem; border-top: 1px solid rgba(255,215,0,0.3); }
 
-    .log { 
-      height: 160px; 
-      background: #0a0a0a; 
-      padding: 12px 20px; 
-      overflow-y: auto; 
-      font-size: 0.85rem; 
-      border-top: 1px solid rgba(255,215,0,0.3); 
-    }
+    .scan-status { text-align: center; padding: 10px; background: #111; border: 1px solid #0f0; margin: 10px 20px; border-radius: 8px; }
 
-    .scan-status {
-      text-align: center;
-      padding: 10px;
-      background: #111;
-      border: 1px solid #0f0;
-      margin: 10px 20px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.96);
-      z-index: 100;
-      align-items: center;
-      justify-content: center;
-      padding: 10px;
-    }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.96); z-index: 100; align-items: center; justify-content: center; padding: 10px; }
     .modal-content {
-      background: rgba(20,20,15,0.98);
-      border: 2px solid var(--neon);
-      border-radius: 16px;
-      width: 100%;
-      max-width: 520px;
-      padding: 28px;
-      position: relative;
-      max-height: 92vh;
-      overflow-y: auto;
+      background: rgba(20,20,15,0.98); border: 2px solid var(--neon); border-radius: 16px;
+      width: 100%; max-width: 520px; padding: 28px; max-height: 92vh; overflow-y: auto;
     }
+
+    .history-item { padding: 12px; background: #111; margin-bottom: 8px; border-left: 4px solid #0f0; }
   </style>
 </head>
 <body>
@@ -178,20 +83,13 @@
   <div class="header">
     <h1>🌐 ROOT DONATE</h1>
     <div style="display:flex; align-items:center; gap:12px;">
-      <button onclick="toggleLearnMode()" style="padding:8px 16px; background:transparent; border:1px solid var(--neon); color:var(--neon); border-radius:50px; cursor:pointer;">
-        📖 LEARN MODE
-      </button>
-      
+      <button onclick="toggleLearnMode()" style="padding:8px 16px; background:transparent; border:1px solid var(--neon); color:var(--neon); border-radius:50px;">📖 LEARN MODE</button>
       <div id="userSection" style="display:none;">
         <div class="user-info" onclick="showProfile()">
           <div id="avatar" class="avatar">👤</div>
-          <div>
-            <div id="usernameDisplay" style="font-weight:bold;"></div>
-            <div id="balanceDisplay" style="font-size:0.8rem;color:#0f0;">0 ROOT</div>
-          </div>
+          <div><div id="usernameDisplay" style="font-weight:bold;"></div><div id="balanceDisplay" style="font-size:0.8rem;color:#0f0;">0 ROOT</div></div>
         </div>
       </div>
-      
       <button onclick="showAuthModal()" id="authBtn" style="padding:8px 20px; border:1px solid var(--neon); background:transparent; color:var(--neon); border-radius:50px;">
         <i class="fas fa-user"></i> LOGIN
       </button>
@@ -215,24 +113,39 @@
   <div class="nodes-grid" id="grid"></div>
   <div class="log" id="log"></div>
 
-  <!-- AUTH MODAL -->
-  <div class="modal" id="authModal">
+  <!-- PLACE DETAIL MODAL -->
+  <div class="modal" id="placeModal">
     <div class="modal-content">
-      <span onclick="closeAuthModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
-      <div style="display:flex;margin-bottom:20px;border-bottom:1px solid #333;">
-        <button onclick="switchAuthTab(0)" id="tabLogin" class="active" style="flex:1;padding:12px;background:transparent;color:var(--neon);border:none;border-bottom:3px solid var(--neon);">LOGIN</button>
-        <button onclick="switchAuthTab(1)" id="tabSignup" style="flex:1;padding:12px;background:transparent;color:var(--neon);border:none;">SIGN UP</button>
+      <span onclick="closePlaceModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
+      <div id="modalIcon" style="font-size:3.5rem;margin-bottom:10px;text-align:center;"></div>
+      <h2 id="modalName" style="color:#ffd700;text-align:center;"></h2>
+      <p id="modalLoc" style="text-align:center;"></p>
+      <div style="margin:20px 0;padding:15px;background:#111;border:1px solid var(--neon);border-radius:8px;">
+        <strong>PROBABILITY:</strong> <span id="modalProb" style="color:#0f0;"></span><br>
+        <strong>EXPECTED:</strong> <span id="modalExpected"></span>
       </div>
-      <div id="loginForm">
-        <input id="loginUser" placeholder="Username or Handle" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
-        <input id="loginPass" type="password" placeholder="Passphrase" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
-        <button onclick="login()" style="width:100%;padding:16px;margin-top:15px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">ENTER THE MESH</button>
-      </div>
-      <div id="signupForm" style="display:none;">
-        <input id="signupUser" placeholder="Choose handle" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
-        <input id="signupPass" type="password" placeholder="Create passphrase" style="width:100%;padding:14px;margin:10px 0;background:#111;border:1px solid var(--neon);color:var(--neon);">
-        <button onclick="signup()" style="width:100%;padding:16px;margin-top:15px;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">JOIN THE MESH</button>
-      </div>
+
+      <button onclick="copyShareLink()" style="width:100%;padding:12px;margin:8px 0;border:2px solid var(--neon);background:transparent;color:var(--neon);border-radius:50px;">📋 COPY SHARE LINK</button>
+      <button onclick="showDonateModal()" style="width:100%;padding:16px;border:2px solid #0f0;background:transparent;color:#0f0;border-radius:50px;">💰 DONATE WITH APPLE PAY</button>
+
+      <h3 style="margin:25px 0 10px;color:#0f0;">💰 DONATION HISTORY</h3>
+      <div id="placeDonationHistory" class="history-list" style="max-height:250px;overflow-y:auto;"></div>
+    </div>
+  </div>
+
+  <!-- DONATE MODAL -->
+  <div class="modal" id="donateModal">
+    <div class="modal-content">
+      <span onclick="closeDonateModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
+      <h2 style="color:#0f0;">💸 APPLE PAY DONATION</h2>
+      <p id="donateTo" style="margin:15px 0;font-weight:bold;"></p>
+      <div><strong>Your Balance:</strong> <span id="donorBalance" style="color:#0f0;"></span> ROOT</div>
+
+      <input id="donateAmount" type="number" value="50" style="width:100%;padding:14px;margin:15px 0;background:#111;border:1px solid #0f0;color:var(--neon);font-size:1.4rem;text-align:center;">
+
+      <button onclick="confirmApplePay()" style="width:100%;padding:18px;margin-top:15px;border:2px solid #0f0;background:transparent;color:#0f0;border-radius:50px;font-weight:bold;">
+        <i class="fab fa-apple"></i> CONFIRM WITH APPLE PAY
+      </button>
     </div>
   </div>
 
@@ -241,19 +154,12 @@
     const canvas = document.getElementById('matrix');
     const ctx = canvas.getContext('2d');
     let drops = [];
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      drops = Array(Math.floor(canvas.width / 14)).fill(1);
-    }
+    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; drops = Array(Math.floor(canvas.width / 14)).fill(1); }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
-
     function drawMatrix() {
-      ctx.fillStyle = 'rgba(10,10,10,0.15)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#ffd700';
-      ctx.font = '14px monospace';
+      ctx.fillStyle = 'rgba(10,10,10,0.15)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffd700'; ctx.font = '14px monospace';
       const chars = '0123456789$€£¥₿🪙⚡';
       for (let i = 0; i < drops.length; i++) {
         ctx.fillText(chars[Math.floor(Math.random()*chars.length)], i*14, drops[i]*14);
@@ -263,9 +169,20 @@
     }
     setInterval(drawMatrix, 40);
 
+    // Utilities
+    function toBase64Url(obj) {
+      const str = btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
+      return str.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    }
+    function generateShareUrl(place) {
+      const minimal = { id: place.id, name: place.name, loc: place.loc, icon: place.icon };
+      return `${location.origin}${location.pathname}#${toBase64Url(minimal)}`;
+    }
+
     // App State
     let places = [];
     let currentUser = null;
+    let currentPlace = null;
 
     const logEl = document.getElementById('log');
     function log(msg) {
@@ -274,101 +191,135 @@
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    // Sample Places
     function loadSamplePlaces() {
       places = [
-        { id: "SP-001", name: "Abandoned 1800s Railroad Yard", loc: "Central California", probability: "HIGH", expected: "Gold Rush coins, railroad tokens", icon: "🚂", time: "Scanned just now", distance: "4.2 km" },
-        { id: "SP-002", name: "Old Fairgrounds (1930s)", loc: "Texas Panhandle", probability: "MED", expected: "Depression-era silver", icon: "🎡", time: "Scanned 7m ago", distance: "12 km" },
-        { id: "SP-003", name: "Civil War Battlefield Edge", loc: "Virginia", probability: "VERY HIGH", expected: "Rare coins & relics", icon: "⚔️", time: "Scanned just now", distance: "28 km" },
-        { id: "SP-004", name: "Ghost Town Main Street", loc: "Nevada Desert", probability: "HIGH", expected: "Silver dollars, tokens", icon: "🏜️", time: "Scanned 15m ago", distance: "67 km" },
-        { id: "SP-005", name: "Old Mining Camp", loc: "Colorado Rockies", probability: "HIGH", expected: "Gold coins & nuggets", icon: "⛏️", time: "Scanned 22m ago", distance: "45 km" }
+        { id: "SP-001", name: "Abandoned 1800s Railroad Yard", loc: "Central California", probability: "HIGH", expected: "Gold Rush coins", icon: "🚂", distance: "4.2 km", donations: [] },
+        { id: "SP-002", name: "Old Fairgrounds (1930s)", loc: "Texas Panhandle", probability: "MED", expected: "Depression-era silver", icon: "🎡", distance: "12 km", donations: [] },
+        { id: "SP-003", name: "Civil War Battlefield Edge", loc: "Virginia", probability: "VERY HIGH", expected: "Rare coins & relics", icon: "⚔️", distance: "28 km", donations: [] }
       ];
     }
 
-    function renderPlaces(filteredPlaces) {
+    function renderPlaces(filtered = places) {
       const grid = document.getElementById('grid');
       grid.innerHTML = '';
-      filteredPlaces.forEach(place => {
+      filtered.forEach(place => {
         const card = document.createElement('div');
         card.className = 'place-card';
         card.innerHTML = `
           <div style="display:flex;justify-content:space-between;font-size:0.8rem;opacity:0.7;">
-            <span>${place.id}</span>
-            <span style="color:#0f0;">${place.distance}</span>
+            <span>${place.id}</span><span style="color:#0f0;">${place.distance}</span>
           </div>
           <div style="font-size:3rem;margin:12px 0;text-align:center;">${place.icon}</div>
           <h3>${place.name}</h3>
           <p>📍 ${place.loc}</p>
           <div class="scan-bar"></div>
-          <p><strong>PROBABILITY:</strong> <span style="color:#0f0;">${place.probability}</span></p>
-          <p style="font-size:0.9rem;">Expected: ${place.expected}</p>
-          <small>${place.time}</small>
+          <p><strong>PROB:</strong> <span style="color:#0f0;">${place.probability}</span></p>
         `;
-        card.onclick = () => alert(`📍 ${place.name}\n\nGreat spot for hunting!\nWould you like to navigate or report a find?`);
+        card.onclick = () => showPlaceDetail(place);
         grid.appendChild(card);
       });
     }
 
-    // Fixed Search Function
+    function showPlaceDetail(place) {
+      currentPlace = place;
+      if (!place.donations) place.donations = [];
+
+      document.getElementById('modalIcon').textContent = place.icon;
+      document.getElementById('modalName').textContent = place.name;
+      document.getElementById('modalLoc').textContent = `📍 ${place.loc}`;
+      document.getElementById('modalProb').textContent = place.probability;
+      document.getElementById('modalExpected').textContent = place.expected;
+
+      let hist = '';
+      place.donations.forEach(d => {
+        hist += `<div class="history-item"><strong>💰 ${d.amount} ROOT</strong> from ${d.from}<br><small>${d.time}</small></div>`;
+      });
+      document.getElementById('placeDonationHistory').innerHTML = hist || '<p style="opacity:0.6;padding:10px;">No donations yet. Be the first!</p>';
+
+      document.getElementById('placeModal').style.display = 'flex';
+    }
+
+    function closePlaceModal() { document.getElementById('placeModal').style.display = 'none'; }
+
+    function copyShareLink() {
+      if (!currentPlace) return;
+      navigator.clipboard.writeText(generateShareUrl(currentPlace));
+      alert("✅ Shareable link copied!");
+    }
+
+    function showDonateModal() {
+      if (!currentUser) return alert("Please login first");
+      document.getElementById('donateTo').textContent = `To: ${currentPlace.name}`;
+      document.getElementById('donorBalance').textContent = currentUser.balance;
+      document.getElementById('donateModal').style.display = 'flex';
+    }
+    function closeDonateModal() { document.getElementById('donateModal').style.display = 'none'; }
+
+    function confirmApplePay() {
+      const amount = parseInt(document.getElementById('donateAmount').value);
+      if (!amount || amount > currentUser.balance) return alert("Insufficient balance");
+
+      currentUser.balance -= amount;
+
+      // Add to place history
+      if (!currentPlace.donations) currentPlace.donations = [];
+      currentPlace.donations.unshift({
+        from: currentUser.handle,
+        amount: amount,
+        time: new Date().toLocaleString()
+      });
+
+      log(`💸 ${currentUser.handle} donated ${amount} ROOT to ${currentPlace.name} via Apple Pay`);
+      alert(`✅ Apple Pay Donation Successful! Thank you!`);
+      closeDonateModal();
+      closePlaceModal();
+      showPlaceDetail(currentPlace); // refresh
+    }
+
     function filterContent() {
-      const query = document.getElementById('searchInput').value.toLowerCase().trim();
-      if (!query) {
-        renderPlaces(places);
-        return;
-      }
-      const filtered = places.filter(p => 
-        p.name.toLowerCase().includes(query) || 
-        p.loc.toLowerCase().includes(query) ||
-        p.expected.toLowerCase().includes(query)
-      );
+      const q = document.getElementById('searchInput').value.toLowerCase().trim();
+      const filtered = q ? places.filter(p => p.name.toLowerCase().includes(q) || p.loc.toLowerCase().includes(q)) : places;
       renderPlaces(filtered);
     }
 
     function startAutoScan() {
-      const status = document.getElementById('scanStatus');
-      const text = document.getElementById('scanText');
-      status.style.display = 'block';
-      text.textContent = '🔍 GEO-MESH SCANNING...';
-      log("📡 STARTING LIVE PLACE SCAN...");
-
+      document.getElementById('scanStatus').style.display = 'block';
+      document.getElementById('scanText').textContent = '🔍 SCANNING...';
       setTimeout(() => {
         loadSamplePlaces();
-        renderPlaces(places);
-        text.textContent = '✅ LIVE HOTSPOTS UPDATED';
-        log("🌍 LIVE FEED UPDATED — NEW PLACES LOADED");
-        setTimeout(() => status.style.display = 'none', 1800);
+        renderPlaces();
+        document.getElementById('scanStatus').style.display = 'none';
+        log("🌍 LIVE PLACES UPDATED");
       }, 1400);
     }
 
     function setTab(n) {
-      document.querySelectorAll('.nav button').forEach((b, i) => b.classList.toggle('active', i === n));
-      if (n === 0) renderPlaces(places);
+      document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n));
+      if (n === 0) renderPlaces();
     }
 
     function resetScan() {
-      if (confirm("Reset mesh?")) {
-        loadSamplePlaces();
-        renderPlaces(places);
-        log("🔄 MESH RESET & RE-SCAN COMPLETE");
-      }
+      if (confirm("Reset?")) { loadSamplePlaces(); renderPlaces(); }
     }
 
-    // Placeholder Auth Functions
+    // Demo Auth
     function showAuthModal() { document.getElementById('authModal').style.display = 'flex'; }
     function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
-    function switchAuthTab(n) {}
-    function login() { alert("Logged in (demo)"); closeAuthModal(); }
-    function signup() { alert("Account created (demo)"); closeAuthModal(); }
-    function toggleLearnMode() { alert("ROOT DONATE v1.5 — Live Places Feed"); }
-    function showProfile() { alert("Profile view coming soon..."); }
-    function showReportModal() { alert("Report a new find coming soon..."); }
+    function login() {
+      currentUser = { handle: "@hunter", balance: 1250 };
+      document.getElementById('authBtn').style.display = 'none';
+      document.getElementById('userSection').style.display = 'block';
+      document.getElementById('usernameDisplay').textContent = currentUser.handle;
+      document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
+      closeAuthModal();
+      log("🔓 Logged in successfully");
+    }
+    function signup() { login(); }
 
-    // Initialize
     window.onload = () => {
       loadSamplePlaces();
-      renderPlaces(places);
-      log("🔓 ROOT DONATE v1.5 — LIVE PLACES FEED ACTIVE");
-      log("📍 Auto-scanning nearby hunting locations...");
+      renderPlaces();
+      log("🔓 ROOT DONATE v1.6 — Places + Apple Pay Donations");
     };
   </script>
 </body>
