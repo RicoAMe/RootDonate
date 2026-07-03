@@ -60,11 +60,39 @@
       font-size: 1.2rem;
     }
 
-    .nav { padding: 12px 20px; display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid rgba(255,215,0,0.2); background: rgba(10,10,10,0.98); }
-    .nav button { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 10px 20px; border-radius: 50px; cursor: pointer; }
-    .nav button.active, .nav button:hover { background: var(--neon); color: #000; box-shadow: 0 0 25px var(--glow); }
+    .nav { 
+      padding: 12px 20px; 
+      display: flex; 
+      gap: 8px; 
+      flex-wrap: wrap; 
+      border-bottom: 1px solid rgba(255,215,0,0.2); 
+      background: rgba(10,10,10,0.98); 
+    }
+    .nav button { 
+      background: transparent; 
+      border: 1px solid var(--neon); 
+      color: var(--neon); 
+      padding: 10px 20px; 
+      border-radius: 50px; 
+      cursor: pointer; 
+      transition: all 0.3s;
+    }
+    .nav button.active, .nav button:hover { 
+      background: var(--neon); 
+      color: #000; 
+      box-shadow: 0 0 25px var(--glow); 
+    }
 
-    .search-bar { margin: 16px 20px; padding: 14px 24px; width: calc(100% - 40px); background: #111; border: 1px solid var(--neon); border-radius: 50px; color: var(--neon); }
+    .search-bar { 
+      margin: 16px 20px; 
+      padding: 14px 24px; 
+      width: calc(100% - 40px); 
+      background: #111; 
+      border: 1px solid var(--neon); 
+      border-radius: 50px; 
+      color: var(--neon); 
+      font-family: inherit;
+    }
 
     .nodes-grid {
       flex: 1;
@@ -88,7 +116,14 @@
       box-shadow: 0 0 25px var(--glow);
     }
 
-    .log { height: 160px; background: #0a0a0a; padding: 12px 20px; overflow-y: auto; font-size: 0.85rem; border-top: 1px solid rgba(255,215,0,0.3); }
+    .log { 
+      height: 160px; 
+      background: #0a0a0a; 
+      padding: 12px 20px; 
+      overflow-y: auto; 
+      font-size: 0.85rem; 
+      border-top: 1px solid rgba(255,215,0,0.3); 
+    }
 
     .modal {
       display: none;
@@ -110,7 +145,11 @@
       position: relative;
     }
 
-    .history-list { max-height: 420px; overflow-y: auto; margin-top: 15px; }
+    .history-list { 
+      max-height: 420px; 
+      overflow-y: auto; 
+      margin-top: 15px; 
+    }
     .history-item {
       padding: 12px;
       background: #111;
@@ -128,6 +167,11 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
+      transition: all 0.3s;
+    }
+    .apple-pay-btn:hover {
+      background: #222;
+      transform: scale(1.02);
     }
   </style>
 </head>
@@ -138,13 +182,15 @@
   <div class="header">
     <h1>🌐 ROOT DONATE</h1>
     <div style="display:flex; align-items:center; gap:12px;">
-      <button class="learn-btn" onclick="toggleLearnMode()">📖 LEARN MODE</button>
+      <button onclick="toggleLearnMode()" style="padding:8px 16px; background:transparent; border:1px solid var(--neon); color:var(--neon); border-radius:50px; cursor:pointer;">
+        📖 LEARN MODE
+      </button>
       
       <div id="userSection" style="display:none;">
         <div class="user-info" onclick="showProfile()">
           <div id="avatar" class="avatar">👤</div>
           <div>
-            <div id="usernameDisplay"></div>
+            <div id="usernameDisplay" style="font-weight:bold;"></div>
             <div id="balanceDisplay" style="font-size:0.8rem;color:#0f0;">0 ROOT</div>
           </div>
         </div>
@@ -172,7 +218,7 @@
   <div class="modal" id="authModal">
     <div class="modal-content">
       <span onclick="closeAuthModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
-      <div class="auth-tabs" style="display:flex;margin-bottom:20px;border-bottom:1px solid #333;">
+      <div style="display:flex;margin-bottom:20px;border-bottom:1px solid #333;">
         <button onclick="switchAuthTab(0)" id="tabLogin" class="active" style="flex:1;padding:12px;background:transparent;color:var(--neon);border:none;border-bottom:3px solid var(--neon);">LOGIN</button>
         <button onclick="switchAuthTab(1)" id="tabSignup" style="flex:1;padding:12px;background:transparent;color:var(--neon);border:none;">SIGN UP</button>
       </div>
@@ -232,7 +278,7 @@
     </div>
   </div>
 
-  <!-- TOP-UP MODAL (Apple Pay to Profile Balance) -->
+  <!-- TOP-UP MODAL -->
   <div class="modal" id="topUpModal">
     <div class="modal-content">
       <span onclick="closeTopUpModal()" style="position:absolute;top:12px;right:20px;font-size:2.5rem;cursor:pointer;color:var(--neon);">×</span>
@@ -241,7 +287,7 @@
       
       <input id="topUpAmount" type="number" value="100" style="width:100%;padding:14px;margin:15px 0;background:#111;border:1px solid #0f0;color:var(--neon);font-size:1.8rem;text-align:center;">
       
-      <div style="display:flex;gap:10px;margin:15px 0;justify-content:center;">
+      <div style="display:flex;gap:10px;margin:15px 0;justify-content:center;flex-wrap:wrap;">
         <button onclick="quickTopUp(50)" style="padding:10px 20px;border:1px solid var(--neon);background:transparent;color:var(--neon);">50</button>
         <button onclick="quickTopUp(100)" style="padding:10px 20px;border:1px solid var(--neon);background:transparent;color:var(--neon);">100</button>
         <button onclick="quickTopUp(250)" style="padding:10px 20px;border:1px solid var(--neon);background:transparent;color:var(--neon);">250</button>
@@ -251,7 +297,7 @@
       <button onclick="confirmApplePayTopUp()" class="apple-pay-btn" style="width:100%;padding:18px;font-size:1.1rem;margin-top:10px;">
         <i class="fab fa-apple"></i> CONFIRM WITH APPLE PAY
       </button>
-      <p style="text-align:center;font-size:0.8rem;opacity:0.6;margin-top:15px;">Secure • Instant • No fees on ROOT network</p>
+      <p style="text-align:center;font-size:0.8rem;opacity:0.6;margin-top:15px;">Secure • Instant • No fees</p>
     </div>
   </div>
 
@@ -285,10 +331,11 @@
   </div>
 
   <script>
-    // Matrix Rain
+    // =============== MATRIX BACKGROUND ===============
     const canvas = document.getElementById('matrix');
     const ctx = canvas.getContext('2d');
     let drops = [];
+
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
@@ -296,6 +343,7 @@
     }
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
+
     function drawMatrix() {
       ctx.fillStyle = 'rgba(10,10,10,0.15)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -310,7 +358,7 @@
     }
     setInterval(drawMatrix, 40);
 
-    // Base64 Share
+    // =============== UTILITIES ===============
     function toBase64Url(obj) {
       const str = btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
       return str.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
@@ -326,7 +374,7 @@
       return `${location.origin}${location.pathname}#${toBase64Url(minimal)}`;
     }
 
-    // App State
+    // =============== APP STATE ===============
     let allNodes = [];
     let currentUser = null;
     let currentItem = null;
@@ -358,12 +406,18 @@
     }
 
     function updateBalanceDisplay() {
-      if (currentUser) document.getElementById('balanceDisplay').textContent = `${currentUser.balance} ROOT`;
+      if (currentUser) {
+        document.getElementById('balanceDisplay').textContent = `${currentUser.balance} ROOT`;
+      }
     }
 
-    // Auth
-    function showAuthModal() { document.getElementById('authModal').style.display = 'flex'; switchAuthTab(0); }
+    // =============== AUTH ===============
+    function showAuthModal() { 
+      document.getElementById('authModal').style.display = 'flex'; 
+      switchAuthTab(0); 
+    }
     function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
+
     function switchAuthTab(n) {
       document.getElementById('loginForm').style.display = n === 0 ? 'block' : 'none';
       document.getElementById('signupForm').style.display = n === 1 ? 'block' : 'none';
@@ -374,7 +428,12 @@
     function signup() {
       const handle = document.getElementById('signupUser').value.trim();
       if (!handle) return alert("Handle required");
-      currentUser = { handle: handle.startsWith('@') ? handle : '@' + handle, avatar: '🪙', joined: new Date().toLocaleDateString(), balance: 1250 };
+      currentUser = { 
+        handle: handle.startsWith('@') ? handle : '@' + handle, 
+        avatar: '🪙', 
+        joined: new Date().toLocaleDateString(), 
+        balance: 1250 
+      };
       saveData();
       updateUIAfterLogin();
       closeAuthModal();
@@ -384,7 +443,12 @@
     function login() {
       const handle = document.getElementById('loginUser').value.trim();
       if (!handle) return alert("Enter handle");
-      currentUser = { handle: handle.startsWith('@') ? handle : '@' + handle, avatar: '🪙', joined: "2025", balance: 980 };
+      currentUser = { 
+        handle: handle.startsWith('@') ? handle : '@' + handle, 
+        avatar: '🪙', 
+        joined: "2025", 
+        balance: 980 
+      };
       saveData();
       updateUIAfterLogin();
       closeAuthModal();
@@ -398,7 +462,7 @@
       updateBalanceDisplay();
     }
 
-    // Profile
+    // =============== PROFILE & TOP-UP ===============
     function showProfile() {
       if (!currentUser) return;
       document.getElementById('profileInfo').innerHTML = `
@@ -418,9 +482,10 @@
       document.getElementById('profileModal').style.display = 'flex';
     }
 
-    function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
+    function closeProfileModal() { 
+      document.getElementById('profileModal').style.display = 'none'; 
+    }
 
-    // Top-Up with Apple Pay (Profile Balance)
     function showTopUpModal() {
       document.getElementById('topUpModal').style.display = 'flex';
     }
@@ -441,19 +506,23 @@
         log(` Apple Pay Top-up successful: +${amount} ROOT`);
         alert(`✅ ${amount} ROOT added to your balance via Apple Pay!`);
         closeTopUpModal();
-        showProfile(); // refresh profile
+        showProfile();
       }
     }
 
-    // Donate functions
+    // =============== DONATE ===============
     function showDonateModal() {
       if (!currentUser) return alert("Please login first");
       document.getElementById('donateTo').innerHTML = `To: <strong>${currentItem.name}</strong><br>by ${currentItem.source || 'Unknown'}`;
       document.getElementById('donorBalance').textContent = currentUser.balance;
       document.getElementById('donateModal').style.display = 'flex';
     }
-    function closeDonateModal() { document.getElementById('donateModal').style.display = 'none'; }
-    function quickAmount(amt) { document.getElementById('donateAmount').value = amt; }
+    function closeDonateModal() { 
+      document.getElementById('donateModal').style.display = 'none'; 
+    }
+    function quickAmount(amt) { 
+      document.getElementById('donateAmount').value = amt; 
+    }
 
     function confirmDonation() {
       const amount = parseInt(document.getElementById('donateAmount').value);
@@ -481,6 +550,7 @@
       }
     }
 
+    // =============== ITEM & REPORT ===============
     function showItemDetail(item) {
       currentItem = item;
       document.getElementById('modalIcon').textContent = item.icon;
@@ -492,7 +562,9 @@
       document.getElementById('shareUrl').innerHTML = `<strong>LINK:</strong><br><a href="${generateShareUrl(item)}" target="_blank" style="color:var(--neon);word-break:break-all;">${generateShareUrl(item)}</a>`;
       document.getElementById('itemModal').style.display = 'flex';
     }
-    function closeItemModal() { document.getElementById('itemModal').style.display = 'none'; }
+    function closeItemModal() { 
+      document.getElementById('itemModal').style.display = 'none'; 
+    }
     function copyShareLink() {
       if (!currentItem) return;
       navigator.clipboard.writeText(generateShareUrl(currentItem));
@@ -503,7 +575,9 @@
       if (!currentUser) return alert("Login to broadcast");
       document.getElementById('reportModal').style.display = 'flex';
     }
-    function closeReportModal() { document.getElementById('reportModal').style.display = 'none'; }
+    function closeReportModal() { 
+      document.getElementById('reportModal').style.display = 'none'; 
+    }
 
     function submitReport() {
       const name = document.getElementById('rName').value.trim();
@@ -512,7 +586,8 @@
 
       const newItem = {
         id: `NR-${1000 + Math.floor(Math.random()*9000)}`,
-        name, loc,
+        name, 
+        loc,
         value: document.getElementById('rValue').value.trim() || "Pending",
         icon: "🪙",
         mint: "Community",
@@ -526,7 +601,7 @@
       alert("✅ Find broadcasted to the mesh!");
     }
 
-    // Rendering
+    // =============== RENDERING ===============
     function renderNodes(filtered = allNodes) {
       const grid = document.getElementById('grid');
       grid.innerHTML = '';
@@ -547,7 +622,10 @@
 
     function filterNodes() {
       const q = document.getElementById('searchInput').value.toLowerCase();
-      const filtered = allNodes.filter(n => n.name.toLowerCase().includes(q) || n.loc.toLowerCase().includes(q));
+      const filtered = allNodes.filter(n => 
+        n.name.toLowerCase().includes(q) || 
+        n.loc.toLowerCase().includes(q)
+      );
       renderNodes(filtered);
     }
 
@@ -563,8 +641,12 @@
       log("✅ MESH SYNCHRONISED");
     }
 
-    function toggleLearnMode() { alert("ROOT DONATE v1.1 - Apple Pay Balance Top-up Enabled"); }
-    function setTab(n) { document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n)); }
+    function toggleLearnMode() { 
+      alert("ROOT DONATE v1.2 — Clean & Stable"); 
+    }
+    function setTab(n) { 
+      document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n)); 
+    }
     function resetScan() {
       if (confirm("Reset mesh?")) {
         allNodes = [];
@@ -573,7 +655,7 @@
       }
     }
 
-    // Init
+    // =============== INIT ===============
     window.onload = () => {
       loadData();
       if (currentUser) updateUIAfterLogin();
@@ -585,7 +667,7 @@
         if (decoded) setTimeout(() => showItemDetail(decoded), 800);
       }
 
-      log("🔓 ROOT DONATE v1.1 - Apple Pay Top-up to Profile Balance Active");
+      log("🔓 ROOT DONATE v1.2 — Ready");
     };
   </script>
 </body>
