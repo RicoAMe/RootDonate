@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0a1f2f">
   <title>EarthMesh • Global Discovery</title>
-  <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css)">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 
   <style>
     :root {
@@ -23,6 +23,7 @@
       background: var(--dark);
       color: var(--text);
       min-height: 100vh;
+      overflow-x: hidden;
     }
 
     .header {
@@ -41,6 +42,9 @@
       font-size: 1.65rem;
       font-weight: 600;
       letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
     .user-info {
@@ -65,6 +69,8 @@
       font-size: 1.05rem;
       outline: none;
     }
+
+    .search-bar::placeholder { color: #88a5b8; }
 
     .suggestions {
       position: absolute;
@@ -104,7 +110,7 @@
       border-radius: 16px;
       padding: 20px;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.3s ease;
     }
     .place-card:hover {
       transform: translateY(-6px);
@@ -176,10 +182,12 @@
       font-size: 0.9rem;
       overflow-y: auto;
       border-top: 1px solid #1e3a5f;
+      z-index: 10;
     }
 
-    [@media](https://x.com/media) (max-width: 480px) {
+    @media (max-width: 480px) {
       .nodes-grid { grid-template-columns: 1fr; padding: 0 12px 20px; }
+      .header h1 { font-size: 1.45rem; }
     }
   </style>
 </head>
@@ -189,7 +197,7 @@
     <h1><i class="fas fa-globe"></i> EarthMesh</h1>
     <div class="user-info" onclick="showProfile()">
       <div style="text-align:right;">
-        <div id="usernameDisplay" style="font-weight:600;">[@explorer](https://x.com/explorer)</div>
+        <div id="usernameDisplay" style="font-weight:600;">@explorer</div>
         <div id="balanceDisplay" style="font-size:0.9rem;color:#00d2a0;">12450 ROOT</div>
       </div>
       <i class="fas fa-user-circle" style="font-size:2rem;color:#00b894;"></i>
@@ -222,7 +230,7 @@
       </button>
 
       <h3 style="margin:25px 0 12px 0;">Donation History</h3>
-      <div id="donationHistory" style="max-height:220px;overflow-y:auto;"></div>
+      <div id="donationHistory" style="max-height:240px; overflow-y:auto; padding-right:8px;"></div>
 
       <button onclick="closePlaceModal()" style="background:transparent;border:1px solid #555;color:#aaa;width:100%;margin-top:20px;">
         Close
@@ -257,7 +265,7 @@
 
   <script>
     let places = [];
-    let currentUser = { handle: "[@explorer](https://x.com/explorer)", balance: 12450 };
+    let currentUser = { handle: "@explorer", balance: 12450 };
     let currentPlace = null;
 
     const logEl = document.getElementById('log');
@@ -267,7 +275,7 @@
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    // Real Search (No API Key)
+    // Real Search
     async function nominatimSearch(query) {
       if (query.length < 3) return [];
       try {
@@ -288,7 +296,7 @@
       const container = document.getElementById('suggestions');
       if (q.length < 3) { container.style.display = 'none'; return; }
 
-      container.innerHTML = `<div style="padding:16px;color:#88a5b8;">Searching...</div>`;
+      container.innerHTML = `<div style="padding:16px;color:#88a5b8;">Searching real places...</div>`;
       container.style.display = 'block';
 
       const results = await nominatimSearch(q);
@@ -301,6 +309,7 @@
         div.onclick = () => {
           document.getElementById('searchInput').value = place.full;
           container.style.display = 'none';
+
           const newPlace = { id: `EM-${Date.now().toString().slice(-6)}`, name: place.name, loc: place.full, icon: place.icon, donations: [] };
           places.unshift(newPlace);
           renderPlaces();
@@ -334,12 +343,12 @@
       document.getElementById('modalName').textContent = place.name;
       document.getElementById('modalLoc').textContent = place.loc;
 
-      // Donation History
-      const histContainer = document.getElementById('donationHistory');
+      // Render Donation History
+      const hist = document.getElementById('donationHistory');
       if (place.donations.length === 0) {
-        histContainer.innerHTML = `<p style="opacity:0.6;text-align:center;padding:20px;">No donations yet. Be the first!</p>`;
+        hist.innerHTML = `<p style="opacity:0.6;text-align:center;padding:20px;">No donations yet — be the first!</p>`;
       } else {
-        histContainer.innerHTML = place.donations.map(d => `
+        hist.innerHTML = place.donations.map(d => `
           <div class="history-item">
             <strong>💰 ${d.amount} ROOT</strong> from ${d.from}<br>
             <small>${d.time}</small>
@@ -354,14 +363,14 @@
 
     function copyShareLink() {
       if (!currentPlace) return;
-      const data = btoa(JSON.stringify({id: [currentPlace.id](http://currentPlace.id), name: currentPlace.name}));
-      const url = `${window.location.origin}${window.location.pathname}#${data}`;
-      navigator.clipboard.writeText(url);
-      alert("✅ Shareable link copied to clipboard!");
+      const data = btoa(JSON.stringify({ id: currentPlace.id, name: currentPlace.name }));
+      const shareUrl = `${window.location.origin}${window.location.pathname}#${data}`;
+      navigator.clipboard.writeText(shareUrl);
+      alert("✅ Shareable link copied!");
     }
 
     function showDonateModal() {
-      if (!currentUser) return alert("Login required");
+      if (!currentUser) return alert("Please login");
       document.getElementById('donateTo').textContent = currentPlace.name;
       document.getElementById('donorBalance').textContent = currentUser.balance;
       document.getElementById('donateAmount').value = "150";
@@ -370,7 +379,7 @@
 
     function confirmDonation() {
       const amount = parseInt(document.getElementById('donateAmount').value);
-      if (!amount || amount > currentUser.balance) return alert("Invalid amount");
+      if (!amount || amount > currentUser.balance) return alert("Invalid amount or insufficient balance");
 
       currentUser.balance -= amount;
       currentPlace.donations.unshift({
@@ -382,7 +391,7 @@
       document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
       log(`💰 ${amount} ROOT donated to ${currentPlace.name}`);
       closeDonateModal();
-      showPlaceDetail(currentPlace); // refresh history
+      showPlaceDetail(currentPlace); // Refresh history
     }
 
     function applePayDonate() {
@@ -400,13 +409,13 @@
     }
 
     function topUpBalance() {
-      const amt = parseInt(document.getElementById('topupAmount').value);
-      if (amt > 0) {
-        currentUser.balance += amt;
+      const amount = parseInt(document.getElementById('topupAmount').value);
+      if (amount > 0) {
+        currentUser.balance += amount;
         document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
         document.getElementById('profileBalance').textContent = currentUser.balance;
-        log(`💵 Topped up ${amt} ROOT`);
-        alert("✅ Balance updated");
+        log(`💵 Topped up ${amount} ROOT`);
+        alert("✅ Balance topped up successfully");
       }
     }
 
@@ -416,10 +425,13 @@
     window.onload = () => {
       places = [
         { id: "EM-1001", name: "Machu Picchu", loc: "Cusco Region, Peru", icon: "🏔️", donations: [] },
-        { id: "EM-1002", name: "Great Pyramid of Giza", loc: "Giza, Egypt", icon: "🪦", donations: [] }
+        { id: "EM-1002", name: "Great Pyramid of Giza", loc: "Giza, Egypt", icon: "🪦", donations: [] },
+        { id: "EM-1003", name: "Angkor Wat", loc: "Siem Reap, Cambodia", icon: "🛕", donations: [] }
       ];
       renderPlaces();
-      log("🌍 EarthMesh Professional Edition Ready");
+      document.getElementById('usernameDisplay').textContent = currentUser.handle;
+      document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
+      log("🌍 EarthMesh Professional Edition Loaded");
     };
   </script>
 </body>
