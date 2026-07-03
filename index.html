@@ -216,7 +216,7 @@
       <p id="modalLoc" style="opacity:0.8;margin-bottom:20px;"></p>
 
       <button onclick="copyShareLink()" style="background:transparent;border:1px solid #00b894;color:#00b894;width:100%;margin-bottom:10px;">
-        🔗 Share Link (with History)
+        🔗 Share Link (Base64 + History)
       </button>
       <button onclick="showDonateModal()" class="primary">💰 Donate ROOT Tokens</button>
       <button onclick="applePayDonate()" class="apple-pay-btn">
@@ -351,7 +351,7 @@
 
     function closePlaceModal() { document.getElementById('placeModal').style.display = 'none'; }
 
-    // Share Link with Donation History
+    // Base64 Share Link with Donation History
     function copyShareLink() {
       if (!currentPlace) return;
       const data = {
@@ -364,7 +364,7 @@
       const encoded = btoa(JSON.stringify(data));
       const shareUrl = `${window.location.origin}${window.location.pathname}#${encoded}`;
       navigator.clipboard.writeText(shareUrl);
-      alert("✅ Share link with full donation history copied!");
+      alert("✅ Share link (Base64) with donation history copied!");
     }
 
     function loadFromHash() {
