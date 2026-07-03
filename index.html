@@ -4,9 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0a0a0a">
-  <title>ROOT DONATE • GLOBAL MESH</title>
+  <title>EARTH MESH • ROOT DONATE</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-
   <style>
     :root {
       --neon: #00ff9d;
@@ -25,7 +24,12 @@
       display: flex;
       flex-direction: column;
     }
-    canvas#matrix { position: fixed; inset: 0; z-index: -1; opacity: 0.12; }
+    canvas#matrix { 
+      position: fixed; 
+      inset: 0; 
+      z-index: -1; 
+      opacity: 0.15; 
+    }
 
     .header { 
       padding: 14px 20px; 
@@ -34,11 +38,15 @@
       align-items: center; 
       border-bottom: 1px solid rgba(0,255,157,0.3); 
       background: rgba(10,10,10,0.98); 
+      z-index: 10;
     }
     .header h1 { 
-      font-size: 1.65rem; 
-      letter-spacing: 4px; 
+      font-size: 1.8rem; 
+      letter-spacing: 6px; 
       text-shadow: 0 0 20px var(--neon); 
+      display: flex;
+      align-items: center;
+      gap: 12px;
     }
 
     .nav { 
@@ -48,6 +56,7 @@
       flex-wrap: wrap; 
       border-bottom: 1px solid rgba(0,255,157,0.2); 
       background: rgba(10,10,10,0.98); 
+      z-index: 9;
     }
     .nav button { 
       background: transparent; 
@@ -65,7 +74,10 @@
       box-shadow: 0 0 20px var(--glow); 
     }
 
-    .search-container { position: relative; margin: 14px 20px; }
+    .search-container { 
+      position: relative; 
+      margin: 14px 20px; 
+    }
     .search-bar { 
       padding: 14px 24px; 
       width: 100%; 
@@ -90,8 +102,12 @@
     .suggestion-item:hover { background: #1a1a1a; color: #fff; }
 
     .nodes-grid {
-      flex: 1; padding: 16px 20px; overflow-y: auto;
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;
+      flex: 1; 
+      padding: 16px 20px; 
+      overflow-y: auto;
+      display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); 
+      gap: 16px;
     }
 
     .place-card {
@@ -101,12 +117,26 @@
       padding: 18px; 
       cursor: pointer; 
       transition: all 0.4s;
+      position: relative;
+      overflow: hidden;
     }
     .place-card:hover { 
-      transform: translateY(-5px); 
+      transform: translateY(-8px); 
       border-color: var(--neon); 
-      box-shadow: 0 0 25px var(--glow); 
+      box-shadow: 0 0 30px var(--glow); 
     }
+    .place-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 40%;
+      height: 40%;
+      background: radial-gradient(circle, rgba(0,255,157,0.2) 0%, transparent 70%);
+      opacity: 0;
+      transition: all 0.6s;
+    }
+    .place-card:hover::before { opacity: 1; transform: scale(2); }
 
     .scan-bar { 
       height: 3px; 
@@ -118,21 +148,24 @@
     @keyframes scanPulse { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
 
     .log { 
-      height: 148px; 
+      height: 160px; 
       background: #0a0a0a; 
       padding: 12px 20px; 
       overflow-y: auto; 
       font-size: 0.84rem; 
       border-top: 1px solid rgba(0,255,157,0.3); 
     }
+
     .scan-status { 
       text-align: center; 
-      padding: 10px; 
+      padding: 12px; 
       background: #111; 
       border: 1px solid #0f0; 
       margin: 10px 20px; 
       border-radius: 8px; 
+      animation: pulse 2s infinite;
     }
+    @keyframes pulse { 0%,100% { opacity: 0.8; } 50% { opacity: 1; } }
 
     .modal { 
       display: none; 
@@ -149,8 +182,8 @@
       border: 2px solid var(--neon); 
       border-radius: 16px;
       width: 100%; 
-      max-width: 540px; 
-      padding: 26px; 
+      max-width: 560px; 
+      padding: 28px; 
       max-height: 92vh; 
       overflow-y: auto;
     }
@@ -196,6 +229,20 @@
       justify-content: center;
       gap: 8px;
     }
+
+    .globe-container {
+      position: relative;
+      height: 180px;
+      background: radial-gradient(circle at 50% 30%, #003322, #000);
+      border-radius: 12px;
+      margin: 15px 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 6rem;
+      border: 1px solid var(--neon);
+    }
   </style>
 </head>
 <body>
@@ -203,9 +250,10 @@
   <canvas id="matrix"></canvas>
 
   <div class="header">
-    <h1>🌍 ROOT DONATE</h1>
+    <h1>🌍 EARTH MESH</h1>
     <div style="display:flex; align-items:center; gap:12px;">
       <button onclick="toggleLearnMode()" style="padding:8px 16px; background:transparent; border:1px solid var(--neon); color:var(--neon); border-radius:50px;">📖 LEARN</button>
+      
       <div id="userSection" style="display:none;" onclick="showProfile()">
         <div style="display:flex; align-items:center; gap:8px; cursor:pointer;">
           <div style="font-size:1.8rem;">👤</div>
@@ -215,6 +263,7 @@
           </div>
         </div>
       </div>
+      
       <button onclick="showAuthModal()" id="authBtn" style="padding:8px 20px; border:1px solid var(--neon); background:transparent; color:var(--neon); border-radius:50px;">
         <i class="fas fa-user"></i> LOGIN
       </button>
@@ -222,15 +271,15 @@
   </div>
 
   <div class="nav">
-    <button class="active" onclick="setTab(0)">🌐 LIVE PLACES</button>
-    <button onclick="setTab(1)">🔎 DEEP NUMIS</button>
-    <button onclick="startAutoAddressSearch()">📍 AUTO LOCATE</button>
-    <button onclick="showReportModal()">📢 NEW REPORT</button>
-    <button onclick="resetScan()">RESET GRID</button>
+    <button class="active" onclick="setTab(0)">🌐 LIVE GRID</button>
+    <button onclick="setTab(1)">🔎 DEEP SEARCH</button>
+    <button onclick="startAutoAddressSearch()">📍 GLOBAL SCAN</button>
+    <button onclick="showReportModal()">📢 REPORT FIND</button>
+    <button onclick="resetScan()">RESET MESH</button>
   </div>
 
   <div id="scanStatus" class="scan-status" style="display:none;">
-    <i class="fas fa-satellite-dish"></i> <span id="scanText">SCANNING GLOBAL GRID...</span>
+    <i class="fas fa-satellite-dish"></i> <span id="scanText">CONNECTING TO GLOBAL MESH...</span>
   </div>
 
   <div class="search-container">
@@ -241,13 +290,14 @@
   <div class="nodes-grid" id="grid"></div>
   <div class="log" id="log"></div>
 
-  <!-- NEW REPORT MODAL - CLEANED & IMPROVED -->
+  <!-- REPORT MODAL -->
   <div id="reportModal" class="modal">
     <div class="modal-content">
-      <h2>📢 NEW REPORT</h2>
-      <input type="text" id="reportTitle" placeholder="Find Title (e.g. 1795 Flowing Hair Dollar)" autocomplete="off">
-      <input type="text" id="reportLocation" placeholder="Exact Location / Coordinates" autocomplete="off">
-      <textarea id="reportDesc" rows="4" placeholder="Depth, soil type, associated items, notes..."></textarea>
+      <h2>📢 REPORT NEW FIND</h2>
+      <div class="globe-container">🌍</div>
+      <input type="text" id="reportTitle" placeholder="Title (e.g. 1889-CC Morgan Dollar)">
+      <input type="text" id="reportLocation" placeholder="Location / Coordinates">
+      <textarea id="reportDesc" rows="4" placeholder="Depth, conditions, associated finds..."></textarea>
       
       <select id="reportType">
         <option value="Coin">Coin</option>
@@ -257,11 +307,11 @@
         <option value="Other">Other</option>
       </select>
       
-      <button onclick="simulatePhotoUpload()" style="margin:12px 0;">📸 Attach Photo (simulated)</button>
+      <button onclick="simulatePhotoUpload()" style="margin:12px 0;width:100%;">📸 ATTACH PHOTO</button>
       <div id="photoPreview" style="margin:8px 0; color:#0f0; font-size:0.9rem;"></div>
 
       <div style="display:flex; gap:10px; margin-top:15px;">
-        <button onclick="submitReport()" class="primary">SUBMIT TO GLOBAL MESH</button>
+        <button onclick="submitReport()" class="primary">UPLOAD TO GLOBAL MESH</button>
         <button onclick="closeReportModal()" style="background:transparent;border:1px solid var(--neon);color:var(--neon);padding:13px;">CANCEL</button>
       </div>
     </div>
@@ -270,17 +320,17 @@
   <!-- PLACE DETAIL MODAL -->
   <div id="placeModal" class="modal">
     <div class="modal-content">
-      <div id="modalIcon" style="text-align:center;font-size:4.8rem;margin:12px 0;"></div>
+      <div id="modalIcon" style="text-align:center;font-size:5.5rem;margin:15px 0;"></div>
       <h2 id="modalName"></h2>
       <p id="modalLoc" style="opacity:0.8;"></p>
       <p><strong>Probability:</strong> <span id="modalProb" style="color:#0f0;"></span></p>
-      <p><strong>Expected:</strong> <span id="modalExpected"></span></p>
+      <p><strong>Expected Finds:</strong> <span id="modalExpected"></span></p>
 
-      <button onclick="copyShareLink()" style="margin:12px 0;width:100%;">🔗 Copy Share Link</button>
+      <button onclick="copyShareLink()" style="margin:12px 0;width:100%;">🔗 COPY SHARE LINK</button>
       
-      <button onclick="showDonateModal()" class="primary">💰 DONATE ROOT</button>
+      <button onclick="showDonateModal()" class="primary">💰 DONATE ROOT TOKENS</button>
       <button onclick="applePayDonate()" class="apple-pay-btn">
-        <i class="fab fa-apple-pay"></i> Pay with Apple Pay
+        <i class="fab fa-apple-pay"></i> Apple Pay
       </button>
 
       <h3 style="margin:22px 0 10px 0;">Donation History</h3>
@@ -295,7 +345,7 @@
     <div class="modal-content">
       <h2>Support <span id="donateTo"></span></h2>
       <p>Balance: <strong id="donorBalance"></strong> ROOT</p>
-      <input type="number" id="donateAmount" placeholder="Amount" style="font-size:1.4rem;text-align:center;">
+      <input type="number" id="donateAmount" placeholder="Amount in ROOT" style="font-size:1.5rem;text-align:center;">
       <button onclick="confirmDonation()" class="primary">CONFIRM DONATION</button>
       <button onclick="closeDonateModal()" style="margin-top:8px;background:transparent;border:1px solid var(--neon);color:var(--neon);width:100%;">CANCEL</button>
     </div>
@@ -325,11 +375,11 @@
     resizeCanvas();
 
     function drawMatrix() {
-      ctx.fillStyle = 'rgba(10,10,10,0.12)'; 
+      ctx.fillStyle = 'rgba(10,10,10,0.14)'; 
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = '#00ff9d'; 
       ctx.font = '14px monospace';
-      const chars = '0123456789$€£¥₿🪙🌍⚡';
+      const chars = '01🌍🌎🌏🪙⚡₿$€£¥🔍📍';
       for (let i = 0; i < drops.length; i++) {
         ctx.fillText(chars[Math.floor(Math.random()*chars.length)], i*14, drops[i]*14);
         if (drops[i]*14 > canvas.height && Math.random() > 0.975) drops[i] = 0;
@@ -349,27 +399,31 @@
       logEl.scrollTop = logEl.scrollHeight;
     }
 
+    // Expanded real-world places
     const realPlacePool = [
-      { name: "California Mother Lode", loc: "California, USA", prob: "HIGH", exp: "Gold coins & nuggets", icon: "⛏️", dist: "8 km" },
-      { name: "Gettysburg Battlefield", loc: "Pennsylvania, USA", prob: "VERY HIGH", exp: "Civil War relics", icon: "⚔️", dist: "35 km" },
-      { name: "Bodie Ghost Town", loc: "California, USA", prob: "HIGH", exp: "Gold Rush coins", icon: "🏚️", dist: "91 km" },
-      { name: "Roman Forum", loc: "Rome, Italy", prob: "HIGH", exp: "Ancient Roman coins", icon: "🏛️", dist: "15 km" },
-      { name: "Machu Picchu", loc: "Cusco, Peru", prob: "HIGH", exp: "Inca artifacts", icon: "🏔️", dist: "650 km" },
-      { name: "Angkor Wat", loc: "Siem Reap, Cambodia", prob: "MED", exp: "Khmer relics", icon: "🛕", dist: "890 km" },
-      { name: "Gallipoli Trenches", loc: "Turkey", prob: "HIGH", exp: "WW1 relics", icon: "⚔️", dist: "140 km" },
-      { name: "Stonehenge", loc: "Wiltshire, UK", prob: "MED", exp: "Bronze Age items", icon: "🪨", dist: "67 km" },
-      { name: "Oak Island", loc: "Nova Scotia, Canada", prob: "VERY HIGH", exp: "Treasure chests", icon: "🪙", dist: "210 km" },
-      { name: "Temple of Karnak", loc: "Luxor, Egypt", prob: "HIGH", exp: "Pharaonic relics", icon: "🪔", dist: "420 km" }
+      { name: "California Mother Lode", loc: "Sierra Nevada, USA", prob: "HIGH", exp: "Gold coins & nuggets", icon: "⛏️", dist: "12 km" },
+      { name: "Gettysburg Battlefield", loc: "Pennsylvania, USA", prob: "VERY HIGH", exp: "Civil War relics", icon: "⚔️", dist: "42 km" },
+      { name: "Bodie Ghost Town", loc: "California, USA", prob: "HIGH", exp: "Gold Rush artifacts", icon: "🏚️", dist: "88 km" },
+      { name: "Roman Forum", loc: "Rome, Italy", prob: "HIGH", exp: "Ancient Roman coins", icon: "🏛️", dist: "22 km" },
+      { name: "Machu Picchu Terraces", loc: "Cusco, Peru", prob: "HIGH", exp: "Inca gold & pottery", icon: "🏔️", dist: "670 km" },
+      { name: "Angkor Wat Temples", loc: "Siem Reap, Cambodia", prob: "MED", exp: "Khmer empire relics", icon: "🛕", dist: "910 km" },
+      { name: "Gallipoli Battlefield", loc: "Çanakkale, Turkey", prob: "HIGH", exp: "WW1 relics", icon: "⚔️", dist: "155 km" },
+      { name: "Stonehenge", loc: "Wiltshire, UK", prob: "MED", exp: "Bronze Age tools", icon: "🪨", dist: "71 km" },
+      { name: "Oak Island Money Pit", loc: "Nova Scotia, Canada", prob: "VERY HIGH", exp: "Pirate treasure", icon: "🪙", dist: "245 km" },
+      { name: "Temple of Karnak", loc: "Luxor, Egypt", prob: "HIGH", exp: "Pharaonic artifacts", icon: "🪔", dist: "430 km" },
+      { name: "Pompeii Ruins", loc: "Naples, Italy", prob: "HIGH", exp: "Roman coins & jewelry", icon: "🌋", dist: "180 km" },
+      { name: "Great Wall Watchtowers", loc: "Beijing, China", prob: "MED", exp: "Ancient coins", icon: "🏯", dist: "520 km" }
     ];
 
     const addressDatabase = [
-      { full: "California Mother Lode, CA, USA", city: "California", country: "USA" },
-      { full: "Gettysburg, PA, USA", city: "Gettysburg", country: "USA" },
-      { full: "Bodie, California, USA", city: "Bodie", country: "USA" },
-      { full: "Rome, Italy", city: "Rome", country: "Italy" },
-      { full: "Machu Picchu, Peru", city: "Cusco", country: "Peru" },
-      { full: "Angkor Wat, Cambodia", city: "Siem Reap", country: "Cambodia" },
-      { full: "Stonehenge, UK", city: "Wiltshire", country: "UK" }
+      { full: "California Mother Lode, USA", city: "California" },
+      { full: "Gettysburg Battlefield, PA", city: "Gettysburg" },
+      { full: "Bodie Ghost Town, CA", city: "Bodie" },
+      { full: "Roman Forum, Rome, Italy", city: "Rome" },
+      { full: "Machu Picchu, Peru", city: "Cusco" },
+      { full: "Angkor Wat, Cambodia", city: "Siem Reap" },
+      { full: "Stonehenge, UK", city: "Wiltshire" },
+      { full: "Oak Island, Canada", city: "Nova Scotia" }
     ];
 
     function toBase64Url(obj) {
@@ -384,25 +438,25 @@
 
     function startAutoAddressSearch() {
       document.getElementById('scanStatus').style.display = 'block';
-      document.getElementById('scanText').textContent = 'SCANNING GLOBAL GRID...';
-      log("🌍 GLOBAL SCAN INITIATED");
+      document.getElementById('scanText').textContent = 'SATELLITE MESH SCANNING...';
+      log("🌍 GLOBAL EARTH MESH SCAN INITIATED");
 
       setTimeout(() => {
         places = [];
         const pool = [...realPlacePool];
-        for (let i = 0; i < 128; i++) {
+        for (let i = 0; i < 180; i++) {
           const base = pool[i % pool.length];
           places.push({ 
             ...base, 
-            id: `RD-${10000 + Math.floor(Math.random()*90000)}`, 
+            id: `EM-${100000 + Math.floor(Math.random()*900000)}`, 
             donations: [],
-            dist: `${Math.floor(Math.random()*280) + 2} km`
+            dist: `${Math.floor(Math.random()*450) + 3} km`
           });
         }
         renderPlaces();
         document.getElementById('scanStatus').style.display = 'none';
-        log(`✅ ${places.length} GLOBAL LOCATIONS LOADED`);
-      }, 1100);
+        log(`✅ ${places.length} LOCATIONS SYNCED TO MESH`);
+      }, 1350);
     }
 
     function renderPlaces(filtered = places) {
@@ -415,11 +469,11 @@
           <div style="display:flex;justify-content:space-between;font-size:0.8rem;opacity:0.7;">
             <span>${place.id}</span><span style="color:#0f0;">${place.dist}</span>
           </div>
-          <div style="font-size:3.2rem;margin:14px 0;text-align:center;">${place.icon}</div>
+          <div style="font-size:3.8rem;margin:18px 0;text-align:center;">${place.icon}</div>
           <h3>${place.name}</h3>
           <p>📍 ${place.loc}</p>
           <div class="scan-bar"></div>
-          <p><strong>PROB:</strong> <span style="color:#0f0;">${place.prob}</span></p>
+          <p><strong>PROBABILITY:</strong> <span style="color:#0f0;">${place.prob}</span></p>
         `;
         card.onclick = () => showPlaceDetail(place);
         grid.appendChild(card);
@@ -439,7 +493,10 @@
       container.innerHTML = '';
       let hasResults = false;
 
-      addressDatabase.filter(addr => addr.full.toLowerCase().includes(q) || addr.city.toLowerCase().includes(q)).forEach(addr => {
+      addressDatabase.filter(addr => 
+        addr.full.toLowerCase().includes(q) || 
+        addr.city.toLowerCase().includes(q)
+      ).forEach(addr => {
         const div = document.createElement('div');
         div.className = 'suggestion-item';
         div.innerHTML = `<i class="fas fa-map-marker-alt"></i><div><strong>${addr.full}</strong></div>`;
@@ -469,7 +526,7 @@
         `<div class="history-item"><strong>💰 ${d.amount} ROOT</strong> from ${d.from}<br><small>${d.time}</small></div>`
       ).join('');
       
-      document.getElementById('placeDonationHistory').innerHTML = hist || '<p style="opacity:0.6;">No donations yet — be the first!</p>';
+      document.getElementById('placeDonationHistory').innerHTML = hist || '<p style="opacity:0.6;">No donations yet — be the first to support this site!</p>';
 
       document.getElementById('placeModal').style.display = 'flex';
     }
@@ -477,39 +534,42 @@
     function copyShareLink() {
       if (!currentPlace) return;
       navigator.clipboard.writeText(generateShareUrl(currentPlace));
-      alert("✅ Share link copied!");
+      alert("✅ Shareable mesh link copied to clipboard!");
     }
 
     function showDonateModal() {
-      if (!currentUser) return alert("Login required");
+      if (!currentUser) return alert("Please login to donate ROOT tokens");
       document.getElementById('donateTo').textContent = currentPlace.name;
       document.getElementById('donorBalance').textContent = currentUser.balance + " ROOT";
-      document.getElementById('donateAmount').value = "50";
+      document.getElementById('donateAmount').value = "75";
       document.getElementById('donateModal').style.display = 'flex';
     }
 
     function confirmDonation() {
       const amount = parseInt(document.getElementById('donateAmount').value);
-      if (!amount || amount > currentUser.balance) return alert("Invalid amount");
+      if (!amount || amount > currentUser.balance) return alert("Invalid amount or insufficient balance");
       
       currentUser.balance -= amount;
-      currentPlace.donations.unshift({ from: currentUser.handle, amount, time: new Date().toLocaleString() });
+      currentPlace.donations.unshift({ 
+        from: currentUser.handle, 
+        amount, 
+        time: new Date().toLocaleString() 
+      });
 
       document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
-      log(`💸 Donated ${amount} ROOT to ${currentPlace.name}`);
-      alert("✅ Donation recorded. Thank you!");
+      log(`💸 ${amount} ROOT donated to ${currentPlace.name}`);
+      alert("✅ Donation confirmed. Thank you for supporting the Mesh!");
       closeDonateModal();
       closePlaceModal();
       showPlaceDetail(currentPlace);
     }
 
-    // Apple Pay Simulation
     function applePayDonate() {
       if (!currentUser) return alert("Login required");
-      const amount = prompt("Enter amount for Apple Pay (ROOT):", "100");
+      const amount = prompt("Enter ROOT amount for Apple Pay:", "150");
       if (amount && !isNaN(amount)) {
         const num = parseInt(amount);
-        if (num > currentUser.balance) return alert("Insufficient balance");
+        if (num > currentUser.balance) return alert("Insufficient ROOT balance");
         
         currentUser.balance -= num;
         currentPlace.donations.unshift({ 
@@ -519,8 +579,8 @@
         });
 
         document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
-        log(`🍎 Apple Pay: ${num} ROOT donated to ${currentPlace.name}`);
-        alert("✅ Apple Pay donation successful!");
+        log(`🍎 Apple Pay donation of ${num} ROOT to ${currentPlace.name}`);
+        alert("✅ Apple Pay transaction successful!");
         closePlaceModal();
         showPlaceDetail(currentPlace);
       }
@@ -537,25 +597,26 @@
     }
 
     function signup() {
-      currentUser = { handle: "@globalexplorer", balance: 5200 };
+      currentUser = { handle: "@globalexplorer", balance: 8750 };
       document.getElementById('authBtn').style.display = 'none';
       document.getElementById('userSection').style.display = 'block';
       document.getElementById('usernameDisplay').textContent = currentUser.handle;
       document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
       closeAuthModal();
-      log("✅ New account created");
+      log("✅ New ROOT account created");
     }
 
     function simulatePhotoUpload() {
-      document.getElementById('photoPreview').innerHTML = '✅ Photo attached successfully';
+      document.getElementById('photoPreview').innerHTML = '✅ Photo successfully attached (simulated)';
     }
 
     function submitReport() {
       const title = document.getElementById('reportTitle').value.trim();
-      if (!title) return alert("Please enter a title");
-      alert("✅ Report successfully submitted to the Global Mesh!");
+      if (!title) return alert("Please enter a report title");
+      alert("✅ Report successfully broadcast to the Global Mesh Network!");
       closeReportModal();
-      log(`📢 New report: ${title}`);
+      log(`📢 New discovery reported: ${title}`);
+      startAutoAddressSearch();
     }
 
     function closePlaceModal() { document.getElementById('placeModal').style.display = 'none'; }
@@ -564,13 +625,24 @@
     function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
     function showReportModal() { document.getElementById('reportModal').style.display = 'flex'; }
     function closeReportModal() { document.getElementById('reportModal').style.display = 'none'; }
-    function setTab(n) { document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n)); }
-    function resetScan() { if(confirm("Reset global grid?")) startAutoAddressSearch(); }
-    function toggleLearnMode() { alert("ROOT DONATE GLOBAL v2.7 — Cleaned + Apple Pay Ready"); }
+    function setTab(n) { 
+      document.querySelectorAll('.nav button').forEach((b,i) => b.classList.toggle('active', i===n)); 
+    }
+    function resetScan() { 
+      if(confirm("Reset entire Earth Mesh?")) startAutoAddressSearch(); 
+    }
+    function toggleLearnMode() { 
+      alert("🌍 EARTH MESH v2.8 — Complete Single-File Project\n\nBuilt as a full cyberpunk treasure-hunting donation platform."); 
+    }
+
+    function showProfile() {
+      alert(`Profile: ${currentUser.handle}\nBalance: ${currentUser.balance} ROOT\n\nTotal donated: 3420 ROOT`);
+    }
 
     window.onload = () => {
       startAutoAddressSearch();
-      log("🌍 ROOT DONATE v2.7 — Masterpiece Edition Loaded");
+      log("🌍 EARTH MESH v2.8 — Complete Project Loaded");
+      log("💡 Tip: Click any card to support a location");
     };
   </script>
 </body>
