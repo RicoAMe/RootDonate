@@ -38,7 +38,16 @@
     .nav button { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 10px 20px; border-radius: 50px; cursor: pointer; transition: all 0.3s; }
     .nav button.active, .nav button:hover { background: var(--neon); color: #000; box-shadow: 0 0 25px var(--glow); }
 
-    .search-bar { margin: 16px 20px; padding: 14px 24px; width: calc(100% - 40px); background: #111; border: 1px solid var(--neon); border-radius: 50px; color: var(--neon); }
+    .search-bar { 
+      margin: 16px 20px; 
+      padding: 14px 24px; 
+      width: calc(100% - 40px); 
+      background: #111; 
+      border: 1px solid var(--neon); 
+      border-radius: 50px; 
+      color: var(--neon); 
+      position: relative;
+    }
 
     .nodes-grid {
       flex: 1; padding: 16px 20px; overflow-y: auto;
@@ -50,12 +59,6 @@
       border-radius: 16px; padding: 18px; cursor: pointer; transition: all 0.4s;
     }
     .place-card:hover { transform: translateY(-4px); border-color: var(--neon); box-shadow: 0 0 25px var(--glow); }
-
-    .place-card .scan-bar {
-      height: 4px; background: linear-gradient(90deg, #0f0, #ffd700);
-      margin: 12px 0; border-radius: 2px; animation: scanPulse 2s infinite;
-    }
-    @keyframes scanPulse { 0%,100% { opacity: 0.6; } 50% { opacity: 1; } }
 
     .log { height: 160px; background: #0a0a0a; padding: 12px 20px; overflow-y: auto; font-size: 0.85rem; border-top: 1px solid rgba(255,215,0,0.3); }
     .scan-status { text-align: center; padding: 10px; background: #111; border: 1px solid #0f0; margin: 10px 20px; border-radius: 8px; }
@@ -100,10 +103,10 @@
   </div>
 
   <div id="scanStatus" class="scan-status" style="display:none;">
-    <i class="fas fa-satellite-dish"></i> <span id="scanText">DETECTING ADDRESS & SEARCHING...</span>
+    <i class="fas fa-satellite-dish"></i> <span id="scanText">DETECTING ADDRESS...</span>
   </div>
 
-  <input type="text" id="searchInput" class="search-bar" placeholder="Search places..." onkeyup="filterContent()">
+  <input type="text" id="searchInput" class="search-bar" placeholder="Type address or place..." onkeyup="autoCompleteAddress()" onfocus="showSuggestions()">
 
   <div class="nodes-grid" id="grid"></div>
   <div class="log" id="log"></div>
@@ -217,6 +220,28 @@
       logEl.scrollTop = logEl.scrollHeight;
     }
 
+    const addressSuggestions = [
+      "123 Main St, California", "45 Gold Rush Rd, Bodie CA", "Gettysburg Battlefield, PA",
+      "Atlantic City Boardwalk, NJ", "St Augustine Historic District, FL"
+    ];
+
+    function showSuggestions() {
+      // Could show dropdown, but for simplicity we just log
+      log("💡 Type address for auto-complete suggestions");
+    }
+
+    function autoCompleteAddress() {
+      const q = document.getElementById('searchInput').value.toLowerCase().trim();
+      if (q.length < 2) {
+        renderPlaces(places);
+        return;
+      }
+      const filtered = places.filter(p => 
+        p.loc.toLowerCase().includes(q) || p.name.toLowerCase().includes(q)
+      );
+      renderPlaces(filtered);
+    }
+
     const realPlacePool = [
       { name: "Old Gold Mine Tailings", loc: "California Mother Lode", prob: "HIGH", exp: "Gold coins & nuggets", icon: "⛏️", dist: "8 km" },
       { name: "Civil War Campsite", loc: "Gettysburg Area, PA", prob: "VERY HIGH", exp: "Buttons, coins, relics", icon: "⚔️", dist: "35 km" },
@@ -226,8 +251,8 @@
 
     function startAutoAddressSearch() {
       document.getElementById('scanStatus').style.display = 'block';
-      document.getElementById('scanText').textContent = 'DETECTING ADDRESS & SEARCHING...';
-      log("📡 AUTO ADDRESS SEARCH...");
+      document.getElementById('scanText').textContent = 'DETECTING YOUR ADDRESS...';
+      log("📡 AUTO ADDRESS SEARCH STARTED...");
 
       setTimeout(() => {
         places = [];
@@ -249,7 +274,7 @@
         }
         renderPlaces();
         document.getElementById('scanStatus').style.display = 'none';
-        log(`🌍 FOUND ${places.length} REAL PLACES NEAR YOU`);
+        log(`🌍 FOUND ${places.length} PLACES NEAR YOUR DETECTED ADDRESS`);
       }, 1400);
     }
 
@@ -317,17 +342,11 @@
       currentUser.balance -= amount;
       currentPlace.donations.unshift({ from: currentUser.handle, amount, time: new Date().toLocaleString() });
 
-      log(`💸 ${currentUser.handle} donated ${amount} ROOT`);
+      log(`💸 Donated ${amount} ROOT to ${currentPlace.name}`);
       alert("✅ Apple Pay Donation Successful!");
       closeDonateModal();
       closePlaceModal();
       showPlaceDetail(currentPlace);
-    }
-
-    function filterContent() {
-      const q = document.getElementById('searchInput').value.toLowerCase().trim();
-      const filtered = q ? places.filter(p => p.name.toLowerCase().includes(q) || p.loc.toLowerCase().includes(q)) : places;
-      renderPlaces(filtered);
     }
 
     function setTab(n) {
@@ -336,7 +355,7 @@
     }
 
     function resetScan() {
-      if (confirm("Reset?")) startAutoAddressSearch();
+      if (confirm("Reset mesh?")) startAutoAddressSearch();
     }
 
     // Auth
@@ -382,23 +401,23 @@
       if (!amount) return alert("Enter amount");
       currentUser.balance += amount;
       document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
-      log(` Top-up: +${amount} ROOT`);
-      alert(`✅ ${amount} ROOT added!`);
+      log(` Top-up +${amount} ROOT`);
+      alert(`✅ ${amount} ROOT added to balance!`);
       closeTopUpModal();
     }
 
     function showProfile() {
-      if (!currentUser) return;
-      alert(`Profile\n${currentUser.handle}\nBalance: ${currentUser.balance} ROOT\n\nClick OK to top up`);
+      if (!currentUser) return alert("Login first");
+      alert(`Profile\n${currentUser.handle}\nBalance: ${currentUser.balance} ROOT\n\nTap to top up`);
       showTopUpModal();
     }
 
-    function toggleLearnMode() { alert("ROOT DONATE — All features active"); }
-    function showReportModal() { alert("Report find coming soon..."); }
+    function toggleLearnMode() { alert("ROOT DONATE — Auto Address + Donations Active"); }
+    function showReportModal() { alert("Report a new find coming soon..."); }
 
     window.onload = () => {
       startAutoAddressSearch();
-      log("🔓 ROOT DONATE v1.9 — Full Features Ready");
+      log("🔓 ROOT DONATE v1.9 — Auto Address Search + Clean Profile");
     };
   </script>
 </body>
