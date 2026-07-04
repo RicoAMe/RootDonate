@@ -22,11 +22,7 @@
       --border: #1e3a5f;
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -39,7 +35,7 @@
 
     .header {
       padding: 16px 20px;
-      background: rgba(10, 31, 47, 0.98);
+      background: rgba(10,31,47,0.98);
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
@@ -65,10 +61,7 @@
       cursor: pointer;
     }
 
-    .search-container {
-      position: relative;
-      margin: 16px 20px;
-    }
+    .search-container { position: relative; margin: 16px 20px; }
 
     .search-bar {
       width: 100%;
@@ -84,18 +77,15 @@
 
     .search-bar:focus {
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(0, 210, 160, 0.2);
+      box-shadow: 0 0 0 3px rgba(0,210,160,0.2);
     }
 
-    .search-bar::placeholder {
-      color: #88a5b8;
-    }
+    .search-bar::placeholder { color: #88a5b8; }
 
     .suggestions {
       position: absolute;
       top: 100%;
-      left: 0;
-      right: 0;
+      left: 0; right: 0;
       background: var(--card);
       border: 1px solid var(--primary);
       border-radius: 16px;
@@ -103,7 +93,7 @@
       max-height: 420px;
       overflow-y: auto;
       z-index: 200;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
       display: none;
     }
 
@@ -116,9 +106,7 @@
       border-bottom: 1px solid var(--border);
     }
 
-    .suggestion-item:hover {
-      background: #1e3a5f;
-    }
+    .suggestion-item:hover { background: #1e3a5f; }
 
     .nodes-grid {
       padding: 0 20px 20px;
@@ -139,13 +127,10 @@
     .place-card:hover {
       transform: translateY(-6px);
       border-color: var(--primary);
-      box-shadow: 0 10px 25px rgba(0, 184, 148, 0.2);
+      box-shadow: 0 10px 25px rgba(0,184,148,0.2);
     }
 
-    .place-icon {
-      font-size: 2.4rem;
-      margin-bottom: 12px;
-    }
+    .place-icon { font-size: 2.4rem; margin-bottom: 12px; }
 
     .impact-bar {
       height: 6px;
@@ -158,14 +143,14 @@
     .impact-fill {
       height: 100%;
       background: linear-gradient(90deg, var(--primary), var(--accent));
-      transition: width 0.4s ease;
+      transition: width 0.5s ease;
     }
 
     .modal {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(10, 31, 47, 0.97);
+      background: rgba(10,31,47,0.97);
       z-index: 1000;
       align-items: center;
       justify-content: center;
@@ -214,10 +199,7 @@
       transition: all 0.2s ease;
     }
 
-    button.primary:hover {
-      background: var(--accent);
-      transform: translateY(-2px);
-    }
+    button.primary:hover { background: var(--accent); transform: translateY(-2px); }
 
     .apple-pay-btn {
       background: #000;
@@ -295,7 +277,7 @@
   </div>
 
   <div class="search-container">
-    <input type="text" id="searchInput" class="search-bar" placeholder="Search places with Apple Maps..." onkeyup="handleSearch(event)" autocomplete="off">
+    <input type="text" id="searchInput" class="search-bar" placeholder="Search places..." onkeyup="handleSearch(event)" autocomplete="off">
     <div id="suggestions" class="suggestions"></div>
   </div>
 
@@ -389,7 +371,6 @@
   </div>
 
   <script>
-    // ==================== FIREBASE CONFIG ====================
     const firebaseConfig = {
       apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
       authDomain: "rootdonate-61e61.firebaseapp.com",
@@ -416,38 +397,20 @@
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    // ==================== AUTH ====================
-    function showAuthModal() {
-      document.getElementById('authModal').style.display = 'flex';
-      isLoginMode = false;
-      updateAuthUI();
-    }
-
-    function closeAuthModal() {
-      document.getElementById('authModal').style.display = 'none';
-    }
-
+    // Auth Functions
+    function showAuthModal() { document.getElementById('authModal').style.display = 'flex'; isLoginMode = false; updateAuthUI(); }
+    function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
     function updateAuthUI() {
       document.getElementById('authTitle').textContent = isLoginMode ? "Sign In" : "Create Account";
       document.getElementById('authSubmitBtn').textContent = isLoginMode ? "Sign In" : "Sign Up";
-      document.getElementById('toggleBtn').textContent = isLoginMode 
-        ? "Need an account? Sign Up" 
-        : "Already have an account? Sign In";
+      document.getElementById('toggleBtn').textContent = isLoginMode ? "Need an account? Sign Up" : "Already have an account? Sign In";
     }
-
-    function toggleAuthMode() {
-      isLoginMode = !isLoginMode;
-      updateAuthUI();
-    }
+    function toggleAuthMode() { isLoginMode = !isLoginMode; updateAuthUI(); }
 
     async function handleAuth() {
       const email = document.getElementById('emailInput').value.trim();
       const password = document.getElementById('passwordInput').value;
-
-      if (!email || !password) {
-        alert("Please fill all fields");
-        return;
-      }
+      if (!email || !password) return alert("Please fill all fields");
 
       try {
         const userCredential = isLoginMode 
@@ -458,16 +421,12 @@
         await createUserProfileIfNotExists();
         closeAuthModal();
         initUser();
-      } catch (e) {
-        alert("Error: " + e.message);
-      }
+      } catch (e) { alert("Error: " + e.message); }
     }
 
     async function createUserProfileIfNotExists() {
       const userRef = db.collection("users").doc(currentUser.uid);
-      const doc = await userRef.get();
-      
-      if (!doc.exists) {
+      if (!(await userRef.get()).exists) {
         await userRef.set({
           handle: "@" + currentUser.email.split('@')[0],
           balance: 12450,
@@ -477,11 +436,9 @@
       }
     }
 
-    function logout() {
-      auth.signOut().then(() => location.reload());
-    }
+    function logout() { auth.signOut().then(() => location.reload()); }
 
-    // ==================== USER INIT ====================
+    // User Init
     async function initUser() {
       document.getElementById('authButton').style.display = 'none';
       document.getElementById('userInfo').style.display = 'flex';
@@ -489,22 +446,21 @@
 
       const userDoc = await db.collection("users").doc(currentUser.uid).get();
       const data = userDoc.data() || {};
-      
       document.getElementById('balanceDisplay').textContent = `${data.balance || 0} ROOT`;
 
       loadPlaces();
       log("✅ Signed in successfully • Welcome back!");
     }
 
-    // ==================== STARTER PLACES ====================
-    const sevenWonders = [
+    // Starter Places
+    const starterPlaces = [
       { name: "Great Pyramid of Giza", loc: "Giza, Egypt", icon: "🪦" },
       { name: "Hanging Gardens of Babylon", loc: "Al Hillah, Iraq", icon: "🌳" },
-      { name: "Statue of Zeus at Olympia", loc: "Olympia, Greece", icon: "🗿" },
-      { name: "Temple of Artemis at Ephesus", loc: "Selçuk, Turkey", icon: "🏛️" },
-      { name: "Mausoleum at Halicarnassus", loc: "Bodrum, Turkey", icon: "🏛️" },
-      { name: "Colossus of Rhodes", loc: "Rhodes, Greece", icon: "🗿" },
-      { name: "Lighthouse of Alexandria", loc: "Alexandria, Egypt", icon: "🏮" }
+      { name: "Machu Picchu", loc: "Cusco Region, Peru", icon: "🏔️" },
+      { name: "Taj Mahal", loc: "Agra, India", icon: "🏛️" },
+      { name: "Great Wall of China", loc: "Beijing, China", icon: "🏯" },
+      { name: "Colosseum", loc: "Rome, Italy", icon: "🏟️" },
+      { name: "Chichen Itza", loc: "Yucatán, Mexico", icon: "🗿" }
     ];
 
     async function loadPlaces() {
@@ -512,36 +468,34 @@
       places = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
       if (places.length === 0) {
-        for (const w of sevenWonders) {
+        for (const p of starterPlaces) {
           const newPlace = {
-            name: w.name,
-            loc: w.loc,
-            icon: w.icon,
+            name: p.name,
+            loc: p.loc,
+            icon: p.icon,
             donations: [],
-            impact: Math.floor(Math.random() * 70) + 25,
+            impact: Math.floor(Math.random() * 65) + 30,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
           };
           const ref = await db.collection("places").add(newPlace);
           newPlace.id = ref.id;
           places.push(newPlace);
         }
-        log("🌟 Seven Wonders added as starter places");
+        log("🌍 Starter places loaded");
       }
 
       renderPlaces();
       updateStats();
+      handleSharedLink();
     }
 
     function savePlace(place) {
-      if (place.id) {
-        db.collection("places").doc(place.id).set(place, { merge: true });
-      }
+      if (place.id) db.collection("places").doc(place.id).set(place, { merge: true });
     }
 
     function renderPlaces(filtered = places) {
       const grid = document.getElementById('grid');
       grid.innerHTML = '';
-
       filtered.forEach(place => {
         const card = document.createElement('div');
         card.className = 'place-card';
@@ -549,8 +503,8 @@
           <div class="place-icon">${place.icon}</div>
           <h3>${place.name}</h3>
           <p style="color:#88a5b8;">${place.loc}</p>
-          <div class="impact-bar"><div class="impact-fill" style="width:${place.impact || 0}%"></div></div>
-          <div style="text-align:right; margin-top:6px; font-size:0.9rem;">${place.impact || 0}% impact</div>
+          <div class="impact-bar"><div class="impact-fill" style="width:${place.impact||0}%"></div></div>
+          <div style="text-align:right; margin-top:6px; font-size:0.9rem;">${place.impact||0}% impact</div>
         `;
         card.onclick = () => showPlaceDetail(place);
         grid.appendChild(card);
@@ -561,9 +515,13 @@
       const total = places.reduce((sum, p) => sum + (p.impact || 0), 0);
       document.getElementById('totalDonated').textContent = Math.floor(total * 120);
       document.getElementById('placesCount').textContent = places.length;
+      
+      // Simple Level System
+      const level = Math.floor(total / 25) + 1;
+      document.getElementById('playerLevel').textContent = level;
     }
 
-    // ==================== SEARCH ====================
+    // Search
     function handleSearch(e) {
       const query = e.target.value.toLowerCase().trim();
       const suggestions = document.getElementById('suggestions');
@@ -581,10 +539,7 @@
       filtered.forEach(place => {
         const div = document.createElement('div');
         div.className = 'suggestion-item';
-        div.innerHTML = `
-          <span style="font-size:1.8rem;">${place.icon}</span>
-          <div><b>${place.name}</b><br><small>${place.loc}</small></div>
-        `;
+        div.innerHTML = `<span style="font-size:1.8rem;">${place.icon}</span><div><b>${place.name}</b><br><small>${place.loc}</small></div>`;
         div.onclick = () => {
           showPlaceDetail(place);
           suggestions.style.display = 'none';
@@ -596,7 +551,7 @@
       suggestions.style.display = filtered.length ? 'block' : 'none';
     }
 
-    // ==================== MODALS ====================
+    // Modals & Donation
     function showPlaceDetail(place) {
       currentPlace = place;
       document.getElementById('modalPlaceName').textContent = place.name;
@@ -616,11 +571,11 @@
 
     async function confirmDonation() {
       const amount = parseInt(document.getElementById('donateAmount').value) || 100;
-      if (!currentUser || !currentPlace) return alert("Error: Please sign in");
+      if (!currentUser || !currentPlace) return alert("Please sign in");
 
       const userRef = db.collection("users").doc(currentUser.uid);
       const userDoc = await userRef.get();
-      const balance = userDoc.data().balance || 0;
+      let balance = userDoc.data().balance || 0;
 
       if (balance < amount) return alert("Insufficient ROOT balance!");
 
@@ -629,7 +584,7 @@
         totalDonated: firebase.firestore.FieldValue.increment(amount)
       });
 
-      currentPlace.impact = Math.min(100, (currentPlace.impact || 0) + Math.floor(amount / 40));
+      currentPlace.impact = Math.min(100, (currentPlace.impact || 0) + Math.floor(amount / 35));
       currentPlace.donations = currentPlace.donations || [];
       currentPlace.donations.push({
         user: currentUser.email,
@@ -638,10 +593,9 @@
       });
 
       await savePlace(currentPlace);
-
       closeModals();
       log(`💰 Donated ${amount} ROOT to ${currentPlace.name}`);
-      
+
       await loadPlaces();
       await initUser();
     }
@@ -651,6 +605,7 @@
       confirmDonation();
     }
 
+    // Profile
     function showProfile() {
       if (!currentUser) return;
       document.getElementById('profileModal').style.display = 'flex';
@@ -663,22 +618,44 @@
         document.getElementById('profileTotalDonated').textContent = data.totalDonated || 0;
       });
 
-      const historyDiv = document.getElementById('donationHistory');
-      historyDiv.innerHTML = '<p style="color:#88a5b8;">Loading your donations...</p>';
+      loadDonationHistory();
+    }
 
-      setTimeout(() => {
-        historyDiv.innerHTML = `<div class="history-item">No donations yet.<br>Start donating to places!</div>`;
-      }, 600);
+    async function loadDonationHistory() {
+      const historyDiv = document.getElementById('donationHistory');
+      historyDiv.innerHTML = '<p style="color:#88a5b8;">Loading...</p>';
+
+      const userDoc = await db.collection("users").doc(currentUser.uid).get();
+      const data = userDoc.data() || {};
+
+      if (!data.totalDonated || data.totalDonated === 0) {
+        historyDiv.innerHTML = `<div class="history-item">No donations yet.<br>Start making an impact!</div>`;
+        return;
+      }
+
+      // Show donations from all places (simplified)
+      let html = '';
+      places.forEach(place => {
+        if (place.donations && place.donations.length) {
+          place.donations.forEach(d => {
+            if (d.user === currentUser.email) {
+              html += `<div class="history-item">Donated <strong>${d.amount} ROOT</strong> to <b>${place.name}</b><br><small>${new Date(d.timestamp).toLocaleDateString()}</small></div>`;
+            }
+          });
+        }
+      });
+
+      historyDiv.innerHTML = html || `<div class="history-item">No donations found.</div>`;
     }
 
     function topUpApplePay() {
-      const amount = prompt("Enter amount to top up with Apple Pay:", "2500");
+      const amount = prompt("Enter amount to top up:", "2500");
       if (!amount || isNaN(amount)) return;
 
       db.collection("users").doc(currentUser.uid).update({
         balance: firebase.firestore.FieldValue.increment(parseInt(amount))
       }).then(() => {
-        alert(`✅ Apple Pay • ${amount} ROOT added to your balance!`);
+        alert(`✅ ${amount} ROOT added!`);
         initUser();
         showProfile();
       });
@@ -696,7 +673,20 @@
       document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
     }
 
-    // ==================== AUTH STATE ====================
+    // Handle shared link
+    function handleSharedLink() {
+      const params = new URLSearchParams(window.location.search);
+      const share = params.get('share');
+      if (share) {
+        try {
+          const decoded = JSON.parse(atob(share));
+          const sharedPlace = places.find(p => p.id === decoded.p);
+          if (sharedPlace) showPlaceDetail(sharedPlace);
+        } catch(e) {}
+      }
+    }
+
+    // Auth State
     auth.onAuthStateChanged(user => {
       if (user) {
         currentUser = user;
@@ -708,7 +698,7 @@
     });
 
     window.onload = () => {
-      log("🌍 ROOT DONATE ready • Search & Donate");
+      log("🌍 ROOT DONATE ready • Search places & make impact");
     };
   </script>
 </body>
