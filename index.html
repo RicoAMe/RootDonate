@@ -382,7 +382,7 @@
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    // ==================== AUTH ====================
+    // Auth
     function showAuthModal() { document.getElementById('authModal').style.display = 'flex'; isLoginMode = false; updateAuthUI(); }
     function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
     function updateAuthUI() {
@@ -423,7 +423,7 @@
 
     function logout() { auth.signOut().then(() => location.reload()); }
 
-    // ==================== INIT USER ====================
+    // Init User
     async function initUser() {
       document.getElementById('authButton').style.display = 'none';
       document.getElementById('userInfo').style.display = 'flex';
@@ -437,15 +437,10 @@
       log("✅ Signed in successfully");
     }
 
-    // ==================== PLACES ====================
+    // Places
     async function loadPlaces() {
       const snap = await db.collection("places").get();
       places = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-      if (places.length === 0) {
-        log("🌍 Loading initial places...");
-        // You can add more places manually in Firebase if needed
-      }
 
       renderPlaces();
       updateStats();
@@ -477,7 +472,7 @@
       document.getElementById('playerLevel').textContent = Math.floor(total / 25) + 1;
     }
 
-    // ==================== APPLE MAPS STYLE SEARCH ====================
+    // Search (Apple Maps Style)
     async function handleSearch(e) {
       const query = e.target.value.trim();
       const suggestions = document.getElementById('suggestions');
@@ -501,9 +496,7 @@
         });
 
         suggestions.style.display = data.length ? 'block' : 'none';
-      } catch (err) {
-        console.error(err);
-      }
+      } catch (err) { console.error(err); }
     }
 
     async function addNewPlace(item) {
@@ -528,7 +521,7 @@
       log(`📍 New place added: ${name}`);
     }
 
-    // ==================== MODALS & DONATION ====================
+    // Modals & Donation
     function showPlaceDetail(place) {
       currentPlace = place;
       document.getElementById('modalPlaceName').textContent = place.name;
@@ -563,11 +556,7 @@
 
       currentPlace.impact = Math.min(100, (currentPlace.impact || 0) + Math.floor(amount / 30));
       currentPlace.donations = currentPlace.donations || [];
-      currentPlace.donations.push({
-        user: currentUser.email,
-        amount: amount,
-        timestamp: Date.now()
-      });
+      currentPlace.donations.push({ user: currentUser.email, amount: amount, timestamp: Date.now() });
 
       await db.collection("places").doc(currentPlace.id).set(currentPlace, { merge: true });
 
@@ -582,7 +571,7 @@
       confirmDonation();
     }
 
-    // ==================== PROFILE ====================
+    // Profile & Top Up
     function showProfile() {
       if (!currentUser) return;
       document.getElementById('profileModal').style.display = 'flex';
@@ -614,18 +603,21 @@
       db.collection("users").doc(currentUser.uid).update({
         balance: firebase.firestore.FieldValue.increment(parseInt(amount))
       }).then(() => {
-        alert(`✅ Apple Pay • ${amount} ROOT added!`);
+        alert(`✅ Apple Pay • ${amount} ROOT added to your balance!`);
         initUser();
         showProfile();
       });
     }
 
+    // Share Link (Base64)
     function copyShareLink() {
       if (!currentPlace) return;
       const data = { p: currentPlace.id };
       const encoded = btoa(JSON.stringify(data));
       const url = `${window.location.origin}?share=${encoded}`;
-      navigator.clipboard.writeText(url).then(() => alert("✅ Share link copied!"));
+      navigator.clipboard.writeText(url).then(() => {
+        alert("✅ Share link copied!\nAnyone with this link can view the place.");
+      });
     }
 
     function closeModals() {
@@ -638,13 +630,13 @@
       if (share) {
         try {
           const decoded = JSON.parse(atob(share));
-          const shared = places.find(p => p.id === decoded.p);
-          if (shared) showPlaceDetail(shared);
-        } catch(e) {}
+          const sharedPlace = places.find(p => p.id === decoded.p);
+          if (sharedPlace) showPlaceDetail(sharedPlace);
+        } catch(e) { console.error("Invalid share link"); }
       }
     }
 
-    // ==================== AUTH STATE ====================
+    // Auth State
     auth.onAuthStateChanged(user => {
       if (user) {
         currentUser = user;
@@ -656,7 +648,7 @@
     });
 
     window.onload = () => {
-      log("🌍 ROOT DONATE is ready • Search with Apple Maps style");
+      log("🌍 ROOT DONATE is ready");
     };
   </script>
 </body>
