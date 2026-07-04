@@ -108,11 +108,25 @@
       padding: 20px;
       cursor: pointer;
       transition: all 0.3s ease;
+      position: relative;
     }
     .place-card:hover {
       transform: translateY(-6px);
       border-color: var(--primary);
       box-shadow: 0 10px 25px rgba(0,184,148,0.2);
+    }
+
+    .impact-bar {
+      height: 6px;
+      background: #1e3a5f;
+      border-radius: 10px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+    .impact-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #00b894, #00d2a0);
+      transition: width 0.4s ease;
     }
 
     .modal {
@@ -153,6 +167,7 @@
       font-weight: 600;
       width: 100%;
       margin: 12px 0;
+      font-size: 1.1rem;
     }
 
     .apple-pay-btn {
@@ -172,12 +187,21 @@
     .log {
       position: fixed;
       bottom: 0; left: 0; right: 0;
-      height: 130px;
+      height: 140px;
       background: #0a1f2f;
       padding: 12px 20px;
       font-size: 0.9rem;
       overflow-y: auto;
       border-top: 1px solid #1e3a5f;
+    }
+
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      background: #1e3a5f;
+      padding: 12px;
+      border-radius: 12px;
+      margin: 15px 0;
     }
 
     @media (max-width: 480px) {
@@ -205,18 +229,31 @@
     <div id="suggestions" class="suggestions"></div>
   </div>
 
+  <div style="padding:0 20px 10px;">
+    <div class="stats">
+      <div><strong id="totalDonated">0</strong><br><small>TOTAL ROOT</small></div>
+      <div><strong id="placesCount">0</strong><br><small>PLACES</small></div>
+      <div><strong id="playerLevel">1</strong><br><small>LEVEL</small></div>
+    </div>
+  </div>
+
   <div class="nodes-grid" id="grid"></div>
   <div class="log" id="log"></div>
 
   <!-- PLACE DETAIL MODAL -->
   <div id="placeModal" class="modal">
     <div class="modal-content">
-      <div style="font-size:4rem;text-align:center;margin:10px 0;" id="modalIcon"></div>
+      <div style="font-size:4.5rem;text-align:center;margin:10px 0;" id="modalIcon"></div>
       <h2 id="modalName"></h2>
       <p id="modalLoc" style="opacity:0.8;margin-bottom:20px;"></p>
 
-      <button onclick="copyShareLink()" style="background:transparent;border:1px solid #00b894;color:#00b894;width:100%;margin-bottom:10px;">
-        🔗 Share Link (Base64 + History)
+      <div class="stats" style="font-size:0.95rem;">
+        <div><strong id="placeImpact">0</strong><br>IMPACT</div>
+        <div><strong id="placeDonors">0</strong><br>DONORS</div>
+      </div>
+
+      <button onclick="copyShareLink()" style="background:transparent;border:1px solid #00b894;color:#00b894;width:100%;margin:10px 0;">
+        🔗 Share with Full History
       </button>
       <button onclick="showDonateModal()" class="primary">💰 Donate ROOT Tokens</button>
       <button onclick="applePayDonate()" class="apple-pay-btn">
@@ -224,7 +261,7 @@
       </button>
 
       <h3 style="margin:25px 0 12px 0;">Donation History</h3>
-      <div id="donationHistory" style="max-height:240px;overflow-y:auto;"></div>
+      <div id="donationHistory" style="max-height:260px;overflow-y:auto;"></div>
 
       <button onclick="closePlaceModal()" style="background:transparent;border:1px solid #555;color:#aaa;width:100%;margin-top:20px;">
         Close
@@ -237,7 +274,7 @@
     <div class="modal-content">
       <h2>Support <span id="donateTo"></span></h2>
       <p>Balance: <strong id="donorBalance"></strong> ROOT</p>
-      <input type="number" id="donateAmount" value="150" style="width:100%;padding:14px;font-size:1.2rem;text-align:center;margin:15px 0;">
+      <input type="number" id="donateAmount" value="150" style="width:100%;padding:14px;font-size:1.2rem;text-align:center;margin:15px 0;border-radius:12px;border:1px solid #00b894;background:#1e3a5f;color:white;">
       <button onclick="confirmDonation()" class="primary">Confirm Donation</button>
       <button onclick="closeDonateModal()" style="background:transparent;border:1px solid #00b894;color:#00b894;width:100%;">Cancel</button>
     </div>
@@ -246,21 +283,30 @@
   <!-- PROFILE MODAL -->
   <div id="profileModal" class="modal">
     <div class="modal-content">
-      <h2>Account</h2>
-      <p id="profileHandle" style="font-size:1.3rem;"></p>
+      <h2>Explorer Profile</h2>
+      <p id="profileHandle" style="font-size:1.4rem;"></p>
       <p>Balance: <strong id="profileBalance"></strong> ROOT</p>
+      <p>Total Donated: <strong id="profileTotalDonated"></strong> ROOT</p>
+      <p>Level: <strong id="profileLevel"></strong></p>
       
-      <input type="number" id="topupAmount" placeholder="Top-up amount" style="width:100%;padding:12px;margin:15px 0;">
+      <input type="number" id="topupAmount" placeholder="Top-up amount (demo)" style="width:100%;padding:12px;margin:15px 0;border-radius:12px;">
       <button onclick="topUpBalance()" class="primary">Top Up Balance</button>
       
+      <button onclick="resetGame()" style="background:transparent;border:1px solid #f66;color:#f66;width:100%;margin-top:10px;">Reset Game (Keep Share Links)</button>
       <button onclick="closeProfileModal()" style="background:transparent;border:1px solid #555;color:#aaa;width:100%;margin-top:10px;">Close</button>
     </div>
   </div>
 
   <script>
     let places = [];
-    let currentUser = { handle: "@explorer", balance: 12450 };
+    let currentUser = { 
+      handle: "@explorer", 
+      balance: 12450,
+      totalDonated: 0,
+      level: 1
+    };
     let currentPlace = null;
+    let totalRootDonated = 0;
 
     const logEl = document.getElementById('log');
     function log(msg) {
@@ -273,7 +319,7 @@
       if (query.length < 3) return [];
       try {
         const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=8`, {
-          headers: { 'User-Agent': 'EarthMesh' }
+          headers: { 'User-Agent': 'ROOTDonateGame' }
         });
         const data = await res.json();
         return data.map(item => ({
@@ -289,7 +335,7 @@
       const container = document.getElementById('suggestions');
       if (q.length < 3) { container.style.display = 'none'; return; }
 
-      container.innerHTML = `<div style="padding:16px;color:#88a5b8;">Searching...</div>`;
+      container.innerHTML = `<div style="padding:16px;color:#88a5b8;">Searching global map...</div>`;
       container.style.display = 'block';
 
       const results = await nominatimSearch(q);
@@ -300,45 +346,73 @@
         div.className = 'suggestion-item';
         div.innerHTML = `<span style="font-size:1.6rem;">${place.icon}</span><div><strong>${place.name}</strong><br><small>${place.full}</small></div>`;
         div.onclick = () => {
-          document.getElementById('searchInput').value = place.full;
+          document.getElementById('searchInput').value = '';
           container.style.display = 'none';
 
-          const newPlace = { id: `EM-${Date.now().toString().slice(-6)}`, name: place.name, loc: place.full, icon: place.icon, donations: [] };
+          const newPlace = { 
+            id: `EM-${Date.now().toString().slice(-8)}`, 
+            name: place.name, 
+            loc: place.full, 
+            icon: place.icon, 
+            donations: [],
+            impact: 0
+          };
           places.unshift(newPlace);
+          saveGame();
           renderPlaces();
-          log(`📍 Added: ${place.name}`);
+          log(`🌍 Discovered: ${place.name}`);
         };
         container.appendChild(div);
       });
+    }
+
+    function calculateLevel() {
+      return Math.floor(Math.sqrt(currentUser.totalDonated / 500)) + 1;
+    }
+
+    function updateStats() {
+      document.getElementById('totalDonated').textContent = totalRootDonated.toLocaleString();
+      document.getElementById('placesCount').textContent = places.length;
+      currentUser.level = calculateLevel();
+      document.getElementById('playerLevel').textContent = currentUser.level;
     }
 
     function renderPlaces() {
       const grid = document.getElementById('grid');
       grid.innerHTML = '';
       places.forEach(place => {
+        const totalImpact = place.donations.reduce((sum, d) => sum + d.amount, 0);
         const card = document.createElement('div');
         card.className = 'place-card';
         card.innerHTML = `
           <div style="font-size:3.5rem;text-align:center;margin:12px 0;">${place.icon}</div>
           <h3>${place.name}</h3>
           <p style="opacity:0.8;">${place.loc}</p>
+          <div class="impact-bar"><div class="impact-fill" style="width:${Math.min(totalImpact/10, 100)}%"></div></div>
+          <small style="opacity:0.7;">${totalImpact} ROOT donated</small>
         `;
         card.onclick = () => showPlaceDetail(place);
         grid.appendChild(card);
       });
+      updateStats();
     }
 
     function showPlaceDetail(place) {
       currentPlace = place;
       if (!place.donations) place.donations = [];
+      if (!place.impact) place.impact = 0;
 
       document.getElementById('modalIcon').textContent = place.icon;
       document.getElementById('modalName').textContent = place.name;
       document.getElementById('modalLoc').textContent = place.loc;
 
+      const totalImpact = place.donations.reduce((sum, d) => sum + d.amount, 0);
+      document.getElementById('placeImpact').textContent = totalImpact;
+      document.getElementById('placeDonors').textContent = place.donations.length;
+
       const histContainer = document.getElementById('donationHistory');
       histContainer.innerHTML = place.donations.length === 0 
-        ? `<p style="opacity:0.6;text-align:center;padding:20px;">No donations yet — be the first!</p>`
+        ? `<p style="opacity:0.6;text-align:center;padding:30px;">No donations yet — be the first explorer!</p>`
         : place.donations.map(d => `
             <div class="history-item">
               <strong>💰 ${d.amount} ROOT</strong> from ${d.from}<br>
@@ -349,9 +423,10 @@
       document.getElementById('placeModal').style.display = 'flex';
     }
 
-    function closePlaceModal() { document.getElementById('placeModal').style.display = 'none'; }
+    function closePlaceModal() { 
+      document.getElementById('placeModal').style.display = 'none'; 
+    }
 
-    // Base64 Share Link with Full Donation History
     function copyShareLink() {
       if (!currentPlace) return;
       const data = {
@@ -361,10 +436,10 @@
         icon: currentPlace.icon,
         donations: currentPlace.donations || []
       };
-      const encoded = btoa(encodeURIComponent(JSON.stringify(data))); // Safe Base64
+      const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
       const shareUrl = `${window.location.origin}${window.location.pathname}#${encoded}`;
       navigator.clipboard.writeText(shareUrl);
-      alert("✅ Base64 Share Link with donation history copied!");
+      alert("✅ Share link with full donation history copied!\n\nAnyone can open it to continue the story.");
     }
 
     function loadFromHash() {
@@ -383,18 +458,18 @@
             donations: [] 
           };
           places.unshift(place);
-          renderPlaces();
         }
         place.donations = data.donations || [];
+        saveGame();
+        renderPlaces();
         showPlaceDetail(place);
-        log("📥 Loaded shared place with full history");
+        log("📥 Loaded shared legacy place");
       } catch(e) {
         console.error("Invalid share link");
       }
     }
 
     function showDonateModal() {
-      if (!currentUser) return alert("Please login");
       document.getElementById('donateTo').textContent = currentPlace.name;
       document.getElementById('donorBalance').textContent = currentUser.balance;
       document.getElementById('donateAmount').value = "150";
@@ -402,10 +477,16 @@
     }
 
     function confirmDonation() {
-      const amount = parseInt(document.getElementById('donateAmount').value);
-      if (!amount || amount > currentUser.balance) return alert("Invalid amount");
+      const amount = parseInt(document.getElementById('donateAmount').value) || 0;
+      if (amount <= 0 || amount > currentUser.balance) {
+        alert("Invalid amount or insufficient balance");
+        return;
+      }
       
       currentUser.balance -= amount;
+      currentUser.totalDonated += amount;
+      totalRootDonated += amount;
+
       currentPlace.donations.unshift({
         from: currentUser.handle,
         amount: amount,
@@ -413,47 +494,97 @@
       });
 
       document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
-      log(`💰 ${amount} ROOT donated to ${currentPlace.name}`);
+      log(`💰 Donated ${amount} ROOT to ${currentPlace.name} — Impact increased!`);
+      
       closeDonateModal();
       showPlaceDetail(currentPlace);
+      saveGame();
+      renderPlaces();
     }
 
     function applePayDonate() {
-      if (!currentUser) return alert("Login required");
-      const amount = prompt("Enter amount for Apple Pay:", "200");
-      if (amount) confirmDonation();
+      const amount = prompt("Enter amount for Apple Pay donation:", "200");
+      if (amount) {
+        document.getElementById('donateAmount').value = amount;
+        confirmDonation();
+      }
     }
 
-    function closeDonateModal() { document.getElementById('donateModal').style.display = 'none'; }
+    function closeDonateModal() { 
+      document.getElementById('donateModal').style.display = 'none'; 
+    }
 
     function showProfile() {
       document.getElementById('profileHandle').textContent = currentUser.handle;
       document.getElementById('profileBalance').textContent = currentUser.balance;
+      document.getElementById('profileTotalDonated').textContent = currentUser.totalDonated;
+      document.getElementById('profileLevel').textContent = currentUser.level;
       document.getElementById('profileModal').style.display = 'flex';
     }
 
     function topUpBalance() {
-      const amount = parseInt(document.getElementById('topupAmount').value);
+      const amount = parseInt(document.getElementById('topupAmount').value) || 0;
       if (amount > 0) {
         currentUser.balance += amount;
         document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
         document.getElementById('profileBalance').textContent = currentUser.balance;
-        log(`💵 Topped up ${amount} ROOT`);
+        log(`💵 Topped up ${amount} ROOT (demo)`);
+        saveGame();
       }
     }
 
-    function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
+    function closeProfileModal() { 
+      document.getElementById('profileModal').style.display = 'none'; 
+    }
+
+    function saveGame() {
+      localStorage.setItem('rootDonateGame', JSON.stringify({
+        places: places,
+        user: currentUser,
+        totalRootDonated: totalRootDonated
+      }));
+    }
+
+    function loadGame() {
+      const saved = localStorage.getItem('rootDonateGame');
+      if (saved) {
+        const data = JSON.parse(saved);
+        places = data.places || [];
+        currentUser = data.user || currentUser;
+        totalRootDonated = data.totalRootDonated || 0;
+      }
+    }
+
+    function resetGame() {
+      if (confirm("Reset all progress? Share links will still work.")) {
+        localStorage.removeItem('rootDonateGame');
+        location.reload();
+      }
+    }
 
     window.onload = () => {
-      places = [
-        { id: "EM-1001", name: "Machu Picchu", loc: "Cusco Region, Peru", icon: "🏔️", donations: [] },
-        { id: "EM-1002", name: "Great Pyramid of Giza", loc: "Giza, Egypt", icon: "🪦", donations: [] }
-      ];
+      loadGame();
+
+      // Add starter places if none exist
+      if (places.length === 0) {
+        places = [
+          { id: "EM-1001", name: "Machu Picchu", loc: "Cusco Region, Peru", icon: "🏔️", donations: [], impact: 2450 },
+          { id: "EM-1002", name: "Great Pyramid of Giza", loc: "Giza, Egypt", icon: "🪦", donations: [], impact: 1890 },
+          { id: "EM-1003", name: "Great Barrier Reef", loc: "Queensland, Australia", icon: "🐠", donations: [], impact: 3200 }
+        ];
+      }
+
       renderPlaces();
       document.getElementById('usernameDisplay').textContent = currentUser.handle;
       document.getElementById('balanceDisplay').textContent = currentUser.balance + " ROOT";
-      log("🌍 ROOT DONATE Ready");
+      
+      log("🌍 Welcome back to ROOT DONATE — Global Discovery Edition");
+      log("Permanent save enabled • Share links carry full history");
+
       loadFromHash();
+
+      // Auto-save every 30 seconds
+      setInterval(saveGame, 30000);
     };
   </script>
 </body>
