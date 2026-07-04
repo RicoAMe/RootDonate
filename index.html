@@ -30,7 +30,7 @@
       color: var(--text);
       min-height: 100vh;
       overflow-x: hidden;
-      line-height: 1.5;
+      line-height: 1.6;
     }
 
     .header {
@@ -45,21 +45,9 @@
       z-index: 100;
     }
 
-    .header h1 {
-      font-size: 1.65rem;
-      font-weight: 600;
-      letter-spacing: 1px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    .header h1 { font-size: 1.65rem; font-weight: 600; letter-spacing: 1px; display: flex; align-items: center; gap: 10px; }
 
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-    }
+    .user-info { display: flex; align-items: center; gap: 10px; cursor: pointer; }
 
     .search-container { position: relative; margin: 16px 20px; }
 
@@ -72,15 +60,12 @@
       color: white;
       font-size: 1.05rem;
       outline: none;
-      transition: all 0.3s ease;
     }
 
     .search-bar:focus {
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(0,210,160,0.2);
+      box-shadow: 0 0 0 3px rgba(0,210,160,0.25);
     }
-
-    .search-bar::placeholder { color: #88a5b8; }
 
     .suggestions {
       position: absolute;
@@ -130,7 +115,7 @@
       box-shadow: 0 10px 25px rgba(0,184,148,0.2);
     }
 
-    .place-icon { font-size: 2.4rem; margin-bottom: 12px; }
+    .place-icon { font-size: 2.5rem; margin-bottom: 12px; }
 
     .impact-bar {
       height: 6px;
@@ -196,7 +181,7 @@
       margin: 12px 0;
       font-size: 1.1rem;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s;
     }
 
     button.primary:hover { background: var(--accent); transform: translateY(-2px); }
@@ -277,7 +262,7 @@
   </div>
 
   <div class="search-container">
-    <input type="text" id="searchInput" class="search-bar" placeholder="Search places..." onkeyup="handleSearch(event)" autocomplete="off">
+    <input type="text" id="searchInput" class="search-bar" placeholder="Search places with Apple Maps..." onkeyup="handleSearch(event)" autocomplete="off">
     <div id="suggestions" class="suggestions"></div>
   </div>
 
@@ -397,7 +382,7 @@
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    // Auth Functions
+    // ==================== AUTH ====================
     function showAuthModal() { document.getElementById('authModal').style.display = 'flex'; isLoginMode = false; updateAuthUI(); }
     function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
     function updateAuthUI() {
@@ -438,7 +423,7 @@
 
     function logout() { auth.signOut().then(() => location.reload()); }
 
-    // User Init
+    // ==================== INIT USER ====================
     async function initUser() {
       document.getElementById('authButton').style.display = 'none';
       document.getElementById('userInfo').style.display = 'flex';
@@ -449,48 +434,22 @@
       document.getElementById('balanceDisplay').textContent = `${data.balance || 0} ROOT`;
 
       loadPlaces();
-      log("✅ Signed in successfully • Welcome back!");
+      log("✅ Signed in successfully");
     }
 
-    // Starter Places
-    const starterPlaces = [
-      { name: "Great Pyramid of Giza", loc: "Giza, Egypt", icon: "🪦" },
-      { name: "Hanging Gardens of Babylon", loc: "Al Hillah, Iraq", icon: "🌳" },
-      { name: "Machu Picchu", loc: "Cusco Region, Peru", icon: "🏔️" },
-      { name: "Taj Mahal", loc: "Agra, India", icon: "🏛️" },
-      { name: "Great Wall of China", loc: "Beijing, China", icon: "🏯" },
-      { name: "Colosseum", loc: "Rome, Italy", icon: "🏟️" },
-      { name: "Chichen Itza", loc: "Yucatán, Mexico", icon: "🗿" }
-    ];
-
+    // ==================== PLACES ====================
     async function loadPlaces() {
       const snap = await db.collection("places").get();
       places = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
       if (places.length === 0) {
-        for (const p of starterPlaces) {
-          const newPlace = {
-            name: p.name,
-            loc: p.loc,
-            icon: p.icon,
-            donations: [],
-            impact: Math.floor(Math.random() * 65) + 30,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          };
-          const ref = await db.collection("places").add(newPlace);
-          newPlace.id = ref.id;
-          places.push(newPlace);
-        }
-        log("🌍 Starter places loaded");
+        log("🌍 Loading initial places...");
+        // You can add more places manually in Firebase if needed
       }
 
       renderPlaces();
       updateStats();
       handleSharedLink();
-    }
-
-    function savePlace(place) {
-      if (place.id) db.collection("places").doc(place.id).set(place, { merge: true });
     }
 
     function renderPlaces(filtered = places) {
@@ -500,7 +459,7 @@
         const card = document.createElement('div');
         card.className = 'place-card';
         card.innerHTML = `
-          <div class="place-icon">${place.icon}</div>
+          <div class="place-icon">${place.icon || '📍'}</div>
           <h3>${place.name}</h3>
           <p style="color:#88a5b8;">${place.loc}</p>
           <div class="impact-bar"><div class="impact-fill" style="width:${place.impact||0}%"></div></div>
@@ -515,48 +474,66 @@
       const total = places.reduce((sum, p) => sum + (p.impact || 0), 0);
       document.getElementById('totalDonated').textContent = Math.floor(total * 120);
       document.getElementById('placesCount').textContent = places.length;
-      
-      // Simple Level System
-      const level = Math.floor(total / 25) + 1;
-      document.getElementById('playerLevel').textContent = level;
+      document.getElementById('playerLevel').textContent = Math.floor(total / 25) + 1;
     }
 
-    // Search
-    function handleSearch(e) {
-      const query = e.target.value.toLowerCase().trim();
+    // ==================== APPLE MAPS STYLE SEARCH ====================
+    async function handleSearch(e) {
+      const query = e.target.value.trim();
       const suggestions = document.getElementById('suggestions');
 
-      if (query.length < 2) {
+      if (query.length < 3) {
         suggestions.style.display = 'none';
         return;
       }
 
-      const filtered = places.filter(p => 
-        p.name.toLowerCase().includes(query) || p.loc.toLowerCase().includes(query)
-      );
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=8`);
+        const data = await res.json();
 
-      suggestions.innerHTML = '';
-      filtered.forEach(place => {
-        const div = document.createElement('div');
-        div.className = 'suggestion-item';
-        div.innerHTML = `<span style="font-size:1.8rem;">${place.icon}</span><div><b>${place.name}</b><br><small>${place.loc}</small></div>`;
-        div.onclick = () => {
-          showPlaceDetail(place);
-          suggestions.style.display = 'none';
-          document.getElementById('searchInput').value = '';
-        };
-        suggestions.appendChild(div);
-      });
+        suggestions.innerHTML = '';
+        data.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'suggestion-item';
+          div.innerHTML = `<span style="font-size:1.8rem;">📍</span><div><b>${item.display_name.split(',')[0]}</b><br><small>${item.display_name}</small></div>`;
+          div.onclick = () => addNewPlace(item);
+          suggestions.appendChild(div);
+        });
 
-      suggestions.style.display = filtered.length ? 'block' : 'none';
+        suggestions.style.display = data.length ? 'block' : 'none';
+      } catch (err) {
+        console.error(err);
+      }
     }
 
-    // Modals & Donation
+    async function addNewPlace(item) {
+      const name = item.display_name.split(',')[0];
+      const newPlace = {
+        name: name,
+        loc: item.display_name,
+        icon: '📍',
+        donations: [],
+        impact: 25,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+
+      const ref = await db.collection("places").add(newPlace);
+      newPlace.id = ref.id;
+      places.push(newPlace);
+
+      document.getElementById('suggestions').style.display = 'none';
+      document.getElementById('searchInput').value = '';
+      renderPlaces();
+      showPlaceDetail(newPlace);
+      log(`📍 New place added: ${name}`);
+    }
+
+    // ==================== MODALS & DONATION ====================
     function showPlaceDetail(place) {
       currentPlace = place;
       document.getElementById('modalPlaceName').textContent = place.name;
       document.getElementById('modalPlaceLoc').textContent = place.loc;
-      document.getElementById('modalPlaceIcon').textContent = place.icon;
+      document.getElementById('modalPlaceIcon').textContent = place.icon || '📍';
       document.getElementById('modalImpactFill').style.width = `${place.impact || 0}%`;
       document.getElementById('modalImpactText').textContent = `${place.impact || 0}% community impact`;
       document.getElementById('placeModal').style.display = 'flex';
@@ -584,7 +561,7 @@
         totalDonated: firebase.firestore.FieldValue.increment(amount)
       });
 
-      currentPlace.impact = Math.min(100, (currentPlace.impact || 0) + Math.floor(amount / 35));
+      currentPlace.impact = Math.min(100, (currentPlace.impact || 0) + Math.floor(amount / 30));
       currentPlace.donations = currentPlace.donations || [];
       currentPlace.donations.push({
         user: currentUser.email,
@@ -592,51 +569,33 @@
         timestamp: Date.now()
       });
 
-      await savePlace(currentPlace);
+      await db.collection("places").doc(currentPlace.id).set(currentPlace, { merge: true });
+
       closeModals();
       log(`💰 Donated ${amount} ROOT to ${currentPlace.name}`);
-
       await loadPlaces();
       await initUser();
     }
 
     function applePayDonate() {
-      alert("✅ Apple Pay • Donation processed successfully!");
+      alert("✅ Apple Pay • Donation successful!");
       confirmDonation();
     }
 
-    // Profile
+    // ==================== PROFILE ====================
     function showProfile() {
       if (!currentUser) return;
       document.getElementById('profileModal').style.display = 'flex';
-
-      db.collection("users").doc(currentUser.uid).get().then(doc => {
-        const data = doc.data() || {};
-        document.getElementById('profileUsername').textContent = data.handle || currentUser.email.split('@')[0];
-        document.getElementById('profileEmail').textContent = currentUser.email;
-        document.getElementById('profileBalance').textContent = data.balance || 0;
-        document.getElementById('profileTotalDonated').textContent = data.totalDonated || 0;
-      });
-
       loadDonationHistory();
     }
 
     async function loadDonationHistory() {
       const historyDiv = document.getElementById('donationHistory');
-      historyDiv.innerHTML = '<p style="color:#88a5b8;">Loading...</p>';
+      historyDiv.innerHTML = '<p style="color:#88a5b8;">Loading history...</p>';
 
-      const userDoc = await db.collection("users").doc(currentUser.uid).get();
-      const data = userDoc.data() || {};
-
-      if (!data.totalDonated || data.totalDonated === 0) {
-        historyDiv.innerHTML = `<div class="history-item">No donations yet.<br>Start making an impact!</div>`;
-        return;
-      }
-
-      // Show donations from all places (simplified)
       let html = '';
       places.forEach(place => {
-        if (place.donations && place.donations.length) {
+        if (place.donations) {
           place.donations.forEach(d => {
             if (d.user === currentUser.email) {
               html += `<div class="history-item">Donated <strong>${d.amount} ROOT</strong> to <b>${place.name}</b><br><small>${new Date(d.timestamp).toLocaleDateString()}</small></div>`;
@@ -645,17 +604,17 @@
         }
       });
 
-      historyDiv.innerHTML = html || `<div class="history-item">No donations found.</div>`;
+      historyDiv.innerHTML = html || `<div class="history-item">No donations yet.<br>Start donating!</div>`;
     }
 
     function topUpApplePay() {
-      const amount = prompt("Enter amount to top up:", "2500");
+      const amount = prompt("Enter amount to top up with Apple Pay:", "2500");
       if (!amount || isNaN(amount)) return;
 
       db.collection("users").doc(currentUser.uid).update({
         balance: firebase.firestore.FieldValue.increment(parseInt(amount))
       }).then(() => {
-        alert(`✅ ${amount} ROOT added!`);
+        alert(`✅ Apple Pay • ${amount} ROOT added!`);
         initUser();
         showProfile();
       });
@@ -673,20 +632,19 @@
       document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
     }
 
-    // Handle shared link
     function handleSharedLink() {
       const params = new URLSearchParams(window.location.search);
       const share = params.get('share');
       if (share) {
         try {
           const decoded = JSON.parse(atob(share));
-          const sharedPlace = places.find(p => p.id === decoded.p);
-          if (sharedPlace) showPlaceDetail(sharedPlace);
+          const shared = places.find(p => p.id === decoded.p);
+          if (shared) showPlaceDetail(shared);
         } catch(e) {}
       }
     }
 
-    // Auth State
+    // ==================== AUTH STATE ====================
     auth.onAuthStateChanged(user => {
       if (user) {
         currentUser = user;
@@ -698,7 +656,7 @@
     });
 
     window.onload = () => {
-      log("🌍 ROOT DONATE ready • Search places & make impact");
+      log("🌍 ROOT DONATE is ready • Search with Apple Maps style");
     };
   </script>
 </body>
