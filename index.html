@@ -28,7 +28,17 @@
       min-height: 100vh;
       overflow-x: hidden;
     }
-    .header { padding: 16px 20px; background: rgba(10,31,47,0.98); border-bottom: 1px solid #1e3a5f; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .header { 
+      padding: 16px 20px; 
+      background: rgba(10,31,47,0.98); 
+      border-bottom: 1px solid #1e3a5f; 
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between; 
+      position: sticky; 
+      top: 0; 
+      z-index: 100; 
+    }
     .header h1 { font-size: 1.65rem; font-weight: 600; letter-spacing: 1px; }
     .user-info { display: flex; align-items: center; gap: 10px; cursor: pointer; }
     .search-container { position: relative; margin: 16px 20px; }
@@ -70,8 +80,8 @@
       <button onclick="showAuthModal()" id="authButton" class="auth-btn">Sign In</button>
       <div class="user-info" onclick="showProfile()" id="userInfo" style="display:none;">
         <div style="text-align:right;">
-          <div id="usernameDisplay" style="font-weight:600;">@explorer</div>
-          <div id="balanceDisplay" style="font-size:0.9rem;color:#00d2a0;">12450 ROOT</div>
+          <div id="usernameDisplay" style="font-weight:600;"></div>
+          <div id="balanceDisplay" style="font-size:0.9rem;color:#00d2a0;"></div>
         </div>
         <i class="fas fa-user-circle" style="font-size:2rem;color:#00b894;"></i>
       </div>
@@ -175,7 +185,6 @@
     let currentUser = null;
     let places = [];
     let currentPlace = null;
-    let totalRootDonated = 0;
 
     const logEl = document.getElementById('log');
     function log(msg) {
@@ -186,15 +195,20 @@
 
     // ==================== AUTH ====================
     let isLoginMode = false;
-    function showAuthModal() { document.getElementById('authModal').style.display = 'flex'; isLoginMode = false; updateAuthUI(); }
-    function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
-    function toggleAuthMode() {
-      isLoginMode = !isLoginMode;
+
+    function showAuthModal() {
+      document.getElementById('authModal').style.display = 'flex';
+      isLoginMode = false;
       updateAuthUI();
     }
+    function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
     function updateAuthUI() {
       document.getElementById('authSubmitBtn').textContent = isLoginMode ? "Sign In" : "Sign Up";
       document.getElementById('toggleBtn').textContent = isLoginMode ? "Need an account? Sign Up" : "Already have an account? Sign In";
+    }
+    function toggleAuthMode() {
+      isLoginMode = !isLoginMode;
+      updateAuthUI();
     }
 
     async function handleAuth() {
@@ -219,14 +233,15 @@
       document.getElementById('authButton').style.display = 'none';
       document.getElementById('userInfo').style.display = 'flex';
       document.getElementById('usernameDisplay').textContent = currentUser.email.split('@')[0];
+      document.getElementById('balanceDisplay').textContent = "Loading...";
 
       db.collection("stats").doc("global").onSnapshot(doc => {
-        totalRootDonated = doc.data()?.total || 0;
-        document.getElementById('totalDonated').textContent = totalRootDonated.toLocaleString();
+        const total = doc.data()?.total || 0;
+        document.getElementById('totalDonated').textContent = total.toLocaleString();
       });
 
       loadPlaces();
-      log("✅ Signed in • Welcome back, Explorer!");
+      log("✅ Signed in successfully • Welcome back, Explorer!");
     }
 
     async function loadPlaces() {
@@ -242,7 +257,7 @@
       }, { merge: true });
     }
 
-    // ==================== SEARCH (Apple Maps style) ====================
+    // ==================== SEARCH ====================
     async function nominatimSearch(query) {
       if (query.length < 3) return [];
       try {
@@ -277,14 +292,7 @@
           document.getElementById('searchInput').value = '';
           container.style.display = 'none';
 
-          const newPlace = {
-            id: `place_${Date.now()}`,
-            name: place.name,
-            loc: place.full,
-            icon: place.icon,
-            donations: [],
-            impact: 0
-          };
+          const newPlace = { id: `place_${Date.now()}`, name: place.name, loc: place.full, icon: place.icon, donations: [], impact: 0 };
           places.unshift(newPlace);
           savePlace(newPlace);
           renderPlaces();
@@ -299,7 +307,7 @@
       const grid = document.getElementById('grid');
       grid.innerHTML = '';
       places.forEach(place => {
-        const total = place.donations ? place.donations.reduce((a, d) => a + d.amount, 0) : 0;
+        const total = place.donations ? place.donations.reduce((sum, d) => sum + d.amount, 0) : 0;
         const card = document.createElement('div');
         card.className = 'place-card';
         card.innerHTML = `
@@ -312,6 +320,7 @@
         card.onclick = () => showPlaceDetail(place);
         grid.appendChild(card);
       });
+      document.getElementById('placesCount').textContent = places.length;
     }
 
     function showPlaceDetail(place) {
@@ -325,7 +334,7 @@
       document.getElementById('placeDonors').textContent = place.donations ? place.donations.length : 0;
 
       const hist = document.getElementById('donationHistory');
-      hist.innerHTML = place.donations && place.donations.length 
+      hist.innerHTML = place.donations?.length 
         ? place.donations.map(d => `<div class="history-item"><strong>💰 ${d.amount} ROOT</strong> from ${d.from}<br><small>${d.time}</small></div>`).join('')
         : `<p style="opacity:0.6;text-align:center;padding:40px;">No donations yet — be the first!</p>`;
 
@@ -337,20 +346,19 @@
     function showDonateModal() {
       if (!currentUser) return alert("Please sign in to donate");
       document.getElementById('donateTo').textContent = currentPlace.name;
-      document.getElementById('donorBalance').textContent = "Loading...";
       db.collection("users").doc(currentUser.uid).get().then(doc => {
-        document.getElementById('donorBalance').textContent = doc.data().balance;
+        document.getElementById('donorBalance').textContent = doc.data().balance || 0;
       });
       document.getElementById('donateModal').style.display = 'flex';
     }
 
     async function confirmDonation() {
       const amount = parseInt(document.getElementById('donateAmount').value) || 0;
-      if (amount <= 0 || !currentUser) return;
+      if (amount <= 0 || !currentUser) return alert("Invalid amount");
 
       const userRef = db.collection("users").doc(currentUser.uid);
       const userDoc = await userRef.get();
-      if (amount > userDoc.data().balance) return alert("Insufficient balance");
+      if (amount > (userDoc.data().balance || 0)) return alert("Insufficient balance");
 
       await userRef.update({
         balance: firebase.firestore.FieldValue.increment(-amount),
@@ -384,12 +392,13 @@
     function closeDonateModal() { document.getElementById('donateModal').style.display = 'none'; }
 
     function showProfile() {
+      if (!currentUser) return;
       db.collection("users").doc(currentUser.uid).get().then(doc => {
-        const u = doc.data();
-        document.getElementById('profileHandle').textContent = u.handle;
-        document.getElementById('profileBalance').textContent = u.balance;
-        document.getElementById('profileTotalDonated').textContent = u.totalDonated;
-        document.getElementById('profileLevel').textContent = Math.floor(Math.sqrt(u.totalDonated / 500)) + 1;
+        const u = doc.data() || {};
+        document.getElementById('profileHandle').textContent = u.handle || currentUser.email.split('@')[0];
+        document.getElementById('profileBalance').textContent = u.balance || 0;
+        document.getElementById('profileTotalDonated').textContent = u.totalDonated || 0;
+        document.getElementById('profileLevel').textContent = Math.floor(Math.sqrt((u.totalDonated || 0) / 500)) + 1;
       });
       document.getElementById('profileModal').style.display = 'flex';
     }
@@ -400,14 +409,14 @@
         await db.collection("users").doc(currentUser.uid).update({
           balance: firebase.firestore.FieldValue.increment(amt)
         });
-        log(`💵 Topped up ${amt} ROOT`);
+        log(`💵 Topped up ${amt} ROOT (demo)`);
         showProfile();
       }
     }
 
     function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
 
-    // ==================== PUBLIC SHARE LINK (Base64) ====================
+    // ==================== SHARE LINK ====================
     function copyShareLink() {
       if (!currentPlace) return;
       const data = {
@@ -419,8 +428,7 @@
       };
       const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
       const shareUrl = `${window.location.origin}${window.location.pathname}#${encoded}`;
-      navigator.clipboard.writeText(shareUrl);
-      alert("✅ Share link copied!\nAnyone can open it to view full donation history.");
+      navigator.clipboard.writeText(shareUrl).then(() => alert("✅ Share link copied!\nAnyone can open it to see full history."));
     }
 
     function loadFromHash() {
@@ -439,7 +447,7 @@
         renderPlaces();
         showPlaceDetail(place);
         log("📥 Loaded shared place");
-      } catch(e) {}
+      } catch(e) { console.error("Invalid share link"); }
     }
 
     // ==================== INIT ====================
