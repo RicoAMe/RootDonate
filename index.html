@@ -20,9 +20,7 @@
       --card: #13293d;
       --text: #e0f2f1;
     }
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--dark);
@@ -30,192 +28,38 @@
       min-height: 100vh;
       overflow-x: hidden;
     }
-
-    .header {
-      padding: 16px 20px;
-      background: rgba(10, 31, 47, 0.98);
-      border-bottom: 1px solid #1e3a5f;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .header h1 {
-      font-size: 1.65rem;
-      font-weight: 600;
-      letter-spacing: 1px;
-    }
-
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      cursor: pointer;
-    }
-
-    /* Rest of your existing styles (unchanged) */
+    .header { padding: 16px 20px; background: rgba(10,31,47,0.98); border-bottom: 1px solid #1e3a5f; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+    .header h1 { font-size: 1.65rem; font-weight: 600; letter-spacing: 1px; }
+    .user-info { display: flex; align-items: center; gap: 10px; cursor: pointer; }
     .search-container { position: relative; margin: 16px 20px; }
     .search-bar {
-      width: 100%;
-      padding: 16px 20px 16px 52px;
-      background: #1e3a5f;
-      border: 1px solid #00b894;
-      border-radius: 50px;
-      color: white;
-      font-size: 1.05rem;
-      outline: none;
+      width: 100%; padding: 16px 20px 16px 52px; background: #1e3a5f; border: 1px solid #00b894;
+      border-radius: 50px; color: white; font-size: 1.05rem; outline: none;
     }
     .search-bar::placeholder { color: #88a5b8; }
-
     .suggestions {
-      position: absolute;
-      top: 100%; left: 0; right: 0;
-      background: #13293d;
-      border: 1px solid #00b894;
-      border-radius: 16px;
-      margin-top: 8px;
-      max-height: 420px;
-      overflow-y: auto;
-      z-index: 200;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-      display: none;
+      position: absolute; top: 100%; left: 0; right: 0; background: #13293d; border: 1px solid #00b894;
+      border-radius: 16px; margin-top: 8px; max-height: 420px; overflow-y: auto; z-index: 200;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4); display: none;
     }
-
-    .suggestion-item {
-      padding: 14px 20px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      cursor: pointer;
-      border-bottom: 1px solid #1e3a5f;
-    }
+    .suggestion-item { padding: 14px 20px; display: flex; align-items: center; gap: 14px; cursor: pointer; border-bottom: 1px solid #1e3a5f; }
     .suggestion-item:hover { background: #1e3a5f; }
-
-    .nodes-grid {
-      padding: 0 20px 20px;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 16px;
-    }
-
+    .nodes-grid { padding: 0 20px 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
     .place-card {
-      background: var(--card);
-      border: 1px solid #1e3a5f;
-      border-radius: 16px;
-      padding: 20px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      position: relative;
+      background: var(--card); border: 1px solid #1e3a5f; border-radius: 16px; padding: 20px;
+      cursor: pointer; transition: all 0.3s ease;
     }
-    .place-card:hover {
-      transform: translateY(-6px);
-      border-color: var(--primary);
-      box-shadow: 0 10px 25px rgba(0,184,148,0.2);
-    }
-
-    .impact-bar {
-      height: 6px;
-      background: #1e3a5f;
-      border-radius: 10px;
-      margin-top: 8px;
-      overflow: hidden;
-    }
-    .impact-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #00b894, #00d2a0);
-      transition: width 0.4s ease;
-    }
-
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(10,31,47,0.97);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-
-    .modal-content {
-      background: #13293d;
-      border-radius: 20px;
-      width: 100%;
-      max-width: 560px;
-      max-height: 92vh;
-      overflow-y: auto;
-      padding: 24px;
-      border: 1px solid #00b894;
-    }
-
-    .history-item {
-      background: #1e3a5f;
-      padding: 12px;
-      border-radius: 10px;
-      margin-bottom: 10px;
-    }
-
-    button.primary {
-      background: var(--primary);
-      color: #000;
-      border: none;
-      padding: 14px;
-      border-radius: 50px;
-      font-weight: 600;
-      width: 100%;
-      margin: 12px 0;
-      font-size: 1.1rem;
-    }
-
-    .apple-pay-btn {
-      background: #000;
-      color: white;
-      border: 1px solid white;
-      padding: 14px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      font-size: 1.1rem;
-      width: 100%;
-    }
-
-    .log {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      height: 140px;
-      background: #0a1f2f;
-      padding: 12px 20px;
-      font-size: 0.9rem;
-      overflow-y: auto;
-      border-top: 1px solid #1e3a5f;
-    }
-
-    .stats {
-      display: flex;
-      justify-content: space-around;
-      background: #1e3a5f;
-      padding: 12px;
-      border-radius: 12px;
-      margin: 15px 0;
-    }
-
-    .auth-btn {
-      padding: 8px 16px;
-      background: #1e3a5f;
-      border: 1px solid #00b894;
-      color: white;
-      border-radius: 50px;
-      font-size: 0.95rem;
-    }
-
-    @media (max-width: 480px) {
-      .nodes-grid { grid-template-columns: 1fr; padding: 0 12px 20px; }
-    }
+    .place-card:hover { transform: translateY(-6px); border-color: var(--primary); box-shadow: 0 10px 25px rgba(0,184,148,0.2); }
+    .impact-bar { height: 6px; background: #1e3a5f; border-radius: 10px; margin-top: 8px; overflow: hidden; }
+    .impact-fill { height: 100%; background: linear-gradient(90deg, #00b894, #00d2a0); transition: width 0.4s ease; }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(10,31,47,0.97); z-index: 1000; align-items: center; justify-content: center; padding: 16px; }
+    .modal-content { background: #13293d; border-radius: 20px; width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; padding: 24px; border: 1px solid #00b894; }
+    .history-item { background: #1e3a5f; padding: 12px; border-radius: 10px; margin-bottom: 10px; }
+    button.primary { background: var(--primary); color: #000; border: none; padding: 14px; border-radius: 50px; font-weight: 600; width: 100%; margin: 12px 0; font-size: 1.1rem; }
+    .apple-pay-btn { background: #000; color: white; border: 1px solid white; padding: 14px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1.1rem; width: 100%; }
+    .log { position: fixed; bottom: 0; left: 0; right: 0; height: 140px; background: #0a1f2f; padding: 12px 20px; font-size: 0.9rem; overflow-y: auto; border-top: 1px solid #1e3a5f; }
+    .stats { display: flex; justify-content: space-around; background: #1e3a5f; padding: 12px; border-radius: 12px; margin: 15px 0; }
+    .auth-btn { padding: 8px 16px; background: #1e3a5f; border: 1px solid #00b894; color: white; border-radius: 50px; font-size: 0.95rem; }
   </style>
 </head>
 <body>
@@ -234,11 +78,8 @@
     </div>
   </div>
 
-  <!-- Rest of your HTML remains the same (search, stats, grid, modals) -->
   <div class="search-container">
-    <input type="text" id="searchInput" class="search-bar" 
-           placeholder="Search any place on Earth..." 
-           onkeyup="handleSearch()" autocomplete="off">
+    <input type="text" id="searchInput" class="search-bar" placeholder="Search any place on Earth..." onkeyup="handleSearch()" autocomplete="off">
     <div id="suggestions" class="suggestions"></div>
   </div>
 
@@ -253,7 +94,7 @@
   <div class="nodes-grid" id="grid"></div>
   <div class="log" id="log"></div>
 
-  <!-- PLACE DETAIL MODAL (same as yours) -->
+  <!-- Place Modal -->
   <div id="placeModal" class="modal">
     <div class="modal-content">
       <div style="font-size:4.5rem;text-align:center;margin:10px 0;" id="modalIcon"></div>
@@ -265,24 +106,18 @@
         <div><strong id="placeDonors">0</strong><br>DONORS</div>
       </div>
 
-      <button onclick="copyShareLink()" style="background:transparent;border:1px solid #00b894;color:#00b894;width:100%;margin:10px 0;">
-        🔗 Share with Full History
-      </button>
+      <button onclick="copyShareLink()" style="background:transparent;border:1px solid #00b894;color:#00b894;width:100%;margin:10px 0;">🔗 Share with Full History</button>
       <button onclick="showDonateModal()" class="primary">💰 Donate ROOT Tokens</button>
-      <button onclick="applePayDonate()" class="apple-pay-btn">
-        <i class="fab fa-apple-pay"></i> Apple Pay
-      </button>
+      <button onclick="applePayDonate()" class="apple-pay-btn"><i class="fab fa-apple-pay"></i> Apple Pay</button>
 
       <h3 style="margin:25px 0 12px 0;">Donation History</h3>
       <div id="donationHistory" style="max-height:260px;overflow-y:auto;"></div>
 
-      <button onclick="closePlaceModal()" style="background:transparent;border:1px solid #555;color:#aaa;width:100%;margin-top:20px;">
-        Close
-      </button>
+      <button onclick="closePlaceModal()" style="background:transparent;border:1px solid #555;color:#aaa;width:100%;margin-top:20px;">Close</button>
     </div>
   </div>
 
-  <!-- DONATE MODAL (same) -->
+  <!-- Donate Modal -->
   <div id="donateModal" class="modal">
     <div class="modal-content">
       <h2>Support <span id="donateTo"></span></h2>
@@ -293,7 +128,7 @@
     </div>
   </div>
 
-  <!-- PROFILE MODAL (same) -->
+  <!-- Profile Modal -->
   <div id="profileModal" class="modal">
     <div class="modal-content">
       <h2>Explorer Profile</h2>
@@ -310,35 +145,28 @@
     </div>
   </div>
 
-  <!-- AUTH MODAL -->
+  <!-- Auth Modal -->
   <div id="authModal" class="modal">
     <div class="modal-content">
       <h2 id="authTitle">Welcome to ROOT DONATE</h2>
-      
-      <div id="authForm">
-        <input type="email" id="emailInput" placeholder="Email" style="width:100%;padding:14px;margin:10px 0;border-radius:12px;background:#1e3a5f;border:1px solid #00b894;color:white;">
-        <input type="password" id="passwordInput" placeholder="Password" style="width:100%;padding:14px;margin:10px 0;border-radius:12px;background:#1e3a5f;border:1px solid #00b894;color:white;">
-        
-        <button onclick="handleAuth()" id="authSubmitBtn" class="primary">Sign Up</button>
-        <button onclick="toggleAuthMode()" id="toggleBtn" style="background:transparent;border:1px solid #00b894;color:#00b894;width:100%;">Already have an account? Sign In</button>
-      </div>
-
+      <input type="email" id="emailInput" placeholder="Email" style="width:100%;padding:14px;margin:10px 0;border-radius:12px;background:#1e3a5f;border:1px solid #00b894;color:white;">
+      <input type="password" id="passwordInput" placeholder="Password" style="width:100%;padding:14px;margin:10px 0;border-radius:12px;background:#1e3a5f;border:1px solid #00b894;color:white;">
+      <button onclick="handleAuth()" id="authSubmitBtn" class="primary">Sign Up</button>
+      <button onclick="toggleAuthMode()" id="toggleBtn" style="background:transparent;border:1px solid #00b894;color:#00b894;width:100%;">Already have an account? Sign In</button>
       <button onclick="closeAuthModal()" style="background:transparent;border:1px solid #555;color:#aaa;width:100%;margin-top:15px;">Cancel</button>
     </div>
   </div>
 
   <script>
     // ==================== FIREBASE CONFIG ====================
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
-  authDomain: "rootdonate-61e61.firebaseapp.com",
-  projectId: "rootdonate-61e61",
-  storageBucket: "rootdonate-61e61.firebasestorage.app",
-  messagingSenderId: "754240963907",
-  appId: "1:754240963907:web:5417c2763d8f02108bdbf6",
-  measurementId: "G-0SC5R5ELT1"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
+      authDomain: "rootdonate-61e61.firebaseapp.com",
+      projectId: "rootdonate-61e61",
+      storageBucket: "rootdonate-61e61.firebasestorage.app",
+      messagingSenderId: "754240963907",
+      appId: "1:754240963907:web:5417c2763d8f02108bdbf6"
+    };
 
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
@@ -356,92 +184,54 @@ const firebaseConfig = {
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    // ==================== AUTH FUNCTIONS ====================
+    // ==================== AUTH ====================
     let isLoginMode = false;
-
-    function showAuthModal() {
-      document.getElementById('authModal').style.display = 'flex';
-      document.getElementById('authTitle').textContent = "Welcome to ROOT DONATE";
-      document.getElementById('authSubmitBtn').textContent = "Sign Up";
-      isLoginMode = false;
-    }
-
-    function closeAuthModal() {
-      document.getElementById('authModal').style.display = 'none';
-    }
-
+    function showAuthModal() { document.getElementById('authModal').style.display = 'flex'; isLoginMode = false; updateAuthUI(); }
+    function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
     function toggleAuthMode() {
       isLoginMode = !isLoginMode;
+      updateAuthUI();
+    }
+    function updateAuthUI() {
       document.getElementById('authSubmitBtn').textContent = isLoginMode ? "Sign In" : "Sign Up";
-      document.getElementById('toggleBtn').textContent = isLoginMode 
-        ? "Need an account? Sign Up" 
-        : "Already have an account? Sign In";
+      document.getElementById('toggleBtn').textContent = isLoginMode ? "Need an account? Sign Up" : "Already have an account? Sign In";
     }
 
     async function handleAuth() {
       const email = document.getElementById('emailInput').value.trim();
       const password = document.getElementById('passwordInput').value;
-
-      if (!email || !password) return alert("Please fill in all fields");
+      if (!email || !password) return alert("Please fill all fields");
 
       try {
-        let userCredential;
-        if (isLoginMode) {
-          userCredential = await auth.signInWithEmailAndPassword(email, password);
-        } else {
-          userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        }
+        const userCredential = isLoginMode 
+          ? await auth.signInWithEmailAndPassword(email, password)
+          : await auth.createUserWithEmailAndPassword(email, password);
         currentUser = userCredential.user;
         closeAuthModal();
         initUser();
-      } catch (error) {
-        alert("Error: " + error.message);
-      }
+      } catch (e) { alert("Error: " + e.message); }
     }
 
-    function logout() {
-      auth.signOut().then(() => {
-        location.reload();
-      });
-    }
+    function logout() { auth.signOut().then(() => location.reload()); }
 
-    // ==================== FIREBASE DATA SYNC ====================
+    // ==================== USER & DATA ====================
     async function initUser() {
       document.getElementById('authButton').style.display = 'none';
       document.getElementById('userInfo').style.display = 'flex';
       document.getElementById('usernameDisplay').textContent = currentUser.email.split('@')[0];
 
-      // Listen to global stats
       db.collection("stats").doc("global").onSnapshot(doc => {
-        if (doc.exists) {
-          totalRootDonated = doc.data().total || 0;
-          document.getElementById('totalDonated').textContent = totalRootDonated.toLocaleString();
-        }
+        totalRootDonated = doc.data()?.total || 0;
+        document.getElementById('totalDonated').textContent = totalRootDonated.toLocaleString();
       });
 
-      // Load or create user profile
-      const userRef = db.collection("users").doc(currentUser.uid);
-      const userDoc = await userRef.get();
-      
-      if (!userDoc.exists) {
-        await userRef.set({
-          handle: "@" + currentUser.email.split('@')[0],
-          balance: 12450,
-          totalDonated: 0,
-          level: 1
-        });
-      }
-
       loadPlaces();
-      log("✅ Signed in successfully • Welcome, Explorer!");
+      log("✅ Signed in • Welcome back, Explorer!");
     }
 
     async function loadPlaces() {
-      const snapshot = await db.collection("places").orderBy("updatedAt", "desc").get();
-      places = [];
-      snapshot.forEach(doc => {
-        places.push({ id: doc.id, ...doc.data() });
-      });
+      const snap = await db.collection("places").orderBy("updatedAt", "desc").get();
+      places = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       renderPlaces();
     }
 
@@ -452,70 +242,207 @@ const firebaseConfig = {
       }, { merge: true });
     }
 
-    // ==================== EXISTING FUNCTIONS (ADAPTED) ====================
-    async function confirmDonation() {
-      const amount = parseInt(document.getElementById('donateAmount').value) || 0;
-      if (!currentUser || amount <= 0) return alert("Please sign in and enter valid amount");
-
-      // Get current balance
-      const userRef = db.collection("users").doc(currentUser.uid);
-      const userDoc = await userRef.get();
-      let balance = userDoc.data().balance;
-
-      if (amount > balance) return alert("Insufficient balance");
-
-      // Update user
-      await userRef.update({
-        balance: firebase.firestore.FieldValue.increment(-amount),
-        totalDonated: firebase.firestore.FieldValue.increment(amount)
-      });
-
-      // Update place
-      currentPlace.donations = currentPlace.donations || [];
-      currentPlace.donations.unshift({
-        from: currentUser.email.split('@')[0],
-        amount: amount,
-        time: new Date().toLocaleString()
-      });
-      currentPlace.impact = (currentPlace.impact || 0) + amount;
-
-      await savePlace(currentPlace);
-
-      // Update global total
-      await db.collection("stats").doc("global").set({
-        total: firebase.firestore.FieldValue.increment(amount)
-      }, { merge: true });
-
-      log(`💰 Donated ${amount} ROOT to ${currentPlace.name}`);
-      
-      closeDonateModal();
-      showPlaceDetail(currentPlace);
-      loadPlaces();
+    // ==================== SEARCH (Apple Maps style) ====================
+    async function nominatimSearch(query) {
+      if (query.length < 3) return [];
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=8`, {
+          headers: { 'User-Agent': 'ROOTDonateApp' }
+        });
+        const data = await res.json();
+        return data.map(item => ({
+          name: item.name || item.display_name.split(',')[0],
+          full: item.display_name,
+          icon: "📍"
+        }));
+      } catch(e) { return []; }
     }
 
-    // ... (rest of your functions like search, renderPlaces, showPlaceDetail, etc. remain mostly the same)
+    async function handleSearch() {
+      const q = document.getElementById('searchInput').value.trim();
+      const container = document.getElementById('suggestions');
+      if (q.length < 3) { container.style.display = 'none'; return; }
 
-    // Example: renderPlaces adapted
+      container.style.display = 'block';
+      container.innerHTML = `<div style="padding:16px;color:#88a5b8;">Searching Earth...</div>`;
+
+      const results = await nominatimSearch(q);
+      container.innerHTML = '';
+
+      results.forEach(place => {
+        const div = document.createElement('div');
+        div.className = 'suggestion-item';
+        div.innerHTML = `<span style="font-size:1.6rem;">${place.icon}</span><div><strong>${place.name}</strong><br><small>${place.full}</small></div>`;
+        div.onclick = () => {
+          document.getElementById('searchInput').value = '';
+          container.style.display = 'none';
+
+          const newPlace = {
+            id: `place_${Date.now()}`,
+            name: place.name,
+            loc: place.full,
+            icon: place.icon,
+            donations: [],
+            impact: 0
+          };
+          places.unshift(newPlace);
+          savePlace(newPlace);
+          renderPlaces();
+          log(`🌍 Discovered: ${place.name}`);
+        };
+        container.appendChild(div);
+      });
+    }
+
+    // ==================== RENDER & MODALS ====================
     function renderPlaces() {
       const grid = document.getElementById('grid');
       grid.innerHTML = '';
       places.forEach(place => {
-        const totalImpact = place.donations ? place.donations.reduce((sum, d) => sum + d.amount, 0) : 0;
+        const total = place.donations ? place.donations.reduce((a, d) => a + d.amount, 0) : 0;
         const card = document.createElement('div');
         card.className = 'place-card';
         card.innerHTML = `
           <div style="font-size:3.5rem;text-align:center;margin:12px 0;">${place.icon || '📍'}</div>
           <h3>${place.name}</h3>
           <p style="opacity:0.8;">${place.loc}</p>
-          <div class="impact-bar"><div class="impact-fill" style="width:${Math.min(totalImpact/10, 100)}%"></div></div>
-          <small style="opacity:0.7;">${totalImpact} ROOT donated</small>
+          <div class="impact-bar"><div class="impact-fill" style="width:${Math.min(total/10,100)}%"></div></div>
+          <small style="opacity:0.7;">${total} ROOT donated</small>
         `;
         card.onclick = () => showPlaceDetail(place);
         grid.appendChild(card);
       });
     }
 
-    // Auth state listener
+    function showPlaceDetail(place) {
+      currentPlace = place;
+      document.getElementById('modalIcon').textContent = place.icon || '📍';
+      document.getElementById('modalName').textContent = place.name;
+      document.getElementById('modalLoc').textContent = place.loc;
+
+      const total = place.donations ? place.donations.reduce((a,d)=>a+d.amount,0) : 0;
+      document.getElementById('placeImpact').textContent = total;
+      document.getElementById('placeDonors').textContent = place.donations ? place.donations.length : 0;
+
+      const hist = document.getElementById('donationHistory');
+      hist.innerHTML = place.donations && place.donations.length 
+        ? place.donations.map(d => `<div class="history-item"><strong>💰 ${d.amount} ROOT</strong> from ${d.from}<br><small>${d.time}</small></div>`).join('')
+        : `<p style="opacity:0.6;text-align:center;padding:40px;">No donations yet — be the first!</p>`;
+
+      document.getElementById('placeModal').style.display = 'flex';
+    }
+
+    function closePlaceModal() { document.getElementById('placeModal').style.display = 'none'; }
+
+    function showDonateModal() {
+      if (!currentUser) return alert("Please sign in to donate");
+      document.getElementById('donateTo').textContent = currentPlace.name;
+      document.getElementById('donorBalance').textContent = "Loading...";
+      db.collection("users").doc(currentUser.uid).get().then(doc => {
+        document.getElementById('donorBalance').textContent = doc.data().balance;
+      });
+      document.getElementById('donateModal').style.display = 'flex';
+    }
+
+    async function confirmDonation() {
+      const amount = parseInt(document.getElementById('donateAmount').value) || 0;
+      if (amount <= 0 || !currentUser) return;
+
+      const userRef = db.collection("users").doc(currentUser.uid);
+      const userDoc = await userRef.get();
+      if (amount > userDoc.data().balance) return alert("Insufficient balance");
+
+      await userRef.update({
+        balance: firebase.firestore.FieldValue.increment(-amount),
+        totalDonated: firebase.firestore.FieldValue.increment(amount)
+      });
+
+      currentPlace.donations = currentPlace.donations || [];
+      currentPlace.donations.unshift({
+        from: currentUser.email.split('@')[0],
+        amount,
+        time: new Date().toLocaleString()
+      });
+
+      await savePlace(currentPlace);
+      await db.collection("stats").doc("global").set({ total: firebase.firestore.FieldValue.increment(amount) }, { merge: true });
+
+      log(`💰 Donated ${amount} ROOT to ${currentPlace.name}`);
+      closeDonateModal();
+      showPlaceDetail(currentPlace);
+      loadPlaces();
+    }
+
+    function applePayDonate() {
+      const amt = prompt("Enter Apple Pay amount:", "200");
+      if (amt) {
+        document.getElementById('donateAmount').value = amt;
+        confirmDonation();
+      }
+    }
+
+    function closeDonateModal() { document.getElementById('donateModal').style.display = 'none'; }
+
+    function showProfile() {
+      db.collection("users").doc(currentUser.uid).get().then(doc => {
+        const u = doc.data();
+        document.getElementById('profileHandle').textContent = u.handle;
+        document.getElementById('profileBalance').textContent = u.balance;
+        document.getElementById('profileTotalDonated').textContent = u.totalDonated;
+        document.getElementById('profileLevel').textContent = Math.floor(Math.sqrt(u.totalDonated / 500)) + 1;
+      });
+      document.getElementById('profileModal').style.display = 'flex';
+    }
+
+    async function topUpBalance() {
+      const amt = parseInt(document.getElementById('topupAmount').value) || 0;
+      if (amt > 0 && currentUser) {
+        await db.collection("users").doc(currentUser.uid).update({
+          balance: firebase.firestore.FieldValue.increment(amt)
+        });
+        log(`💵 Topped up ${amt} ROOT`);
+        showProfile();
+      }
+    }
+
+    function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
+
+    // ==================== PUBLIC SHARE LINK (Base64) ====================
+    function copyShareLink() {
+      if (!currentPlace) return;
+      const data = {
+        id: currentPlace.id,
+        name: currentPlace.name,
+        loc: currentPlace.loc,
+        icon: currentPlace.icon,
+        donations: currentPlace.donations || []
+      };
+      const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
+      const shareUrl = `${window.location.origin}${window.location.pathname}#${encoded}`;
+      navigator.clipboard.writeText(shareUrl);
+      alert("✅ Share link copied!\nAnyone can open it to view full donation history.");
+    }
+
+    function loadFromHash() {
+      const hash = window.location.hash.substring(1);
+      if (!hash) return;
+      try {
+        const decoded = JSON.parse(decodeURIComponent(atob(hash)));
+        let place = places.find(p => p.id === decoded.id);
+        if (!place) {
+          place = { ...decoded, donations: decoded.donations || [] };
+          places.unshift(place);
+          savePlace(place);
+        } else {
+          place.donations = decoded.donations || place.donations;
+        }
+        renderPlaces();
+        showPlaceDetail(place);
+        log("📥 Loaded shared place");
+      } catch(e) {}
+    }
+
+    // ==================== INIT ====================
     auth.onAuthStateChanged(user => {
       if (user) {
         currentUser = user;
@@ -526,8 +453,10 @@ const firebaseConfig = {
       }
     });
 
-    // Keep the rest of your original script functions (nominatimSearch, handleSearch, showPlaceDetail, etc.)
-    // You can copy-paste them here as they are mostly compatible.
+    window.onload = () => {
+      loadFromHash();
+      setInterval(() => { if (places.length) loadPlaces(); }, 30000);
+    };
   </script>
 </body>
 </html>
