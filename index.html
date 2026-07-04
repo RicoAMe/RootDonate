@@ -28,37 +28,17 @@
       min-height: 100vh;
       overflow-x: hidden;
     }
-    .header { 
-      padding: 16px 20px; 
-      background: rgba(10,31,47,0.98); 
-      border-bottom: 1px solid #1e3a5f; 
-      display: flex; 
-      align-items: center; 
-      justify-content: space-between; 
-      position: sticky; 
-      top: 0; 
-      z-index: 100; 
-    }
+    .header { padding: 16px 20px; background: rgba(10,31,47,0.98); border-bottom: 1px solid #1e3a5f; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
     .header h1 { font-size: 1.65rem; font-weight: 600; letter-spacing: 1px; }
     .user-info { display: flex; align-items: center; gap: 10px; cursor: pointer; }
     .search-container { position: relative; margin: 16px 20px; }
-    .search-bar {
-      width: 100%; padding: 16px 20px 16px 52px; background: #1e3a5f; border: 1px solid #00b894;
-      border-radius: 50px; color: white; font-size: 1.05rem; outline: none;
-    }
+    .search-bar { width: 100%; padding: 16px 20px 16px 52px; background: #1e3a5f; border: 1px solid #00b894; border-radius: 50px; color: white; font-size: 1.05rem; outline: none; }
     .search-bar::placeholder { color: #88a5b8; }
-    .suggestions {
-      position: absolute; top: 100%; left: 0; right: 0; background: #13293d; border: 1px solid #00b894;
-      border-radius: 16px; margin-top: 8px; max-height: 420px; overflow-y: auto; z-index: 200;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.4); display: none;
-    }
+    .suggestions { position: absolute; top: 100%; left: 0; right: 0; background: #13293d; border: 1px solid #00b894; border-radius: 16px; margin-top: 8px; max-height: 420px; overflow-y: auto; z-index: 200; box-shadow: 0 10px 30px rgba(0,0,0,0.4); display: none; }
     .suggestion-item { padding: 14px 20px; display: flex; align-items: center; gap: 14px; cursor: pointer; border-bottom: 1px solid #1e3a5f; }
     .suggestion-item:hover { background: #1e3a5f; }
     .nodes-grid { padding: 0 20px 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
-    .place-card {
-      background: var(--card); border: 1px solid #1e3a5f; border-radius: 16px; padding: 20px;
-      cursor: pointer; transition: all 0.3s ease;
-    }
+    .place-card { background: var(--card); border: 1px solid #1e3a5f; border-radius: 16px; padding: 20px; cursor: pointer; transition: all 0.3s ease; }
     .place-card:hover { transform: translateY(-6px); border-color: var(--primary); box-shadow: 0 10px 25px rgba(0,184,148,0.2); }
     .impact-bar { height: 6px; background: #1e3a5f; border-radius: 10px; margin-top: 8px; overflow: hidden; }
     .impact-fill { height: 100%; background: linear-gradient(90deg, #00b894, #00d2a0); transition: width 0.4s ease; }
@@ -104,80 +84,15 @@
   <div class="nodes-grid" id="grid"></div>
   <div class="log" id="log"></div>
 
-  <!-- Place Modal -->
-  <div id="placeModal" class="modal">
-    <div class="modal-content">
-      <div style="font-size:4.5rem;text-align:center;margin:10px 0;" id="modalIcon"></div>
-      <h2 id="modalName"></h2>
-      <p id="modalLoc" style="opacity:0.8;margin-bottom:20px;"></p>
-
-      <div class="stats" style="font-size:0.95rem;">
-        <div><strong id="placeImpact">0</strong><br>IMPACT</div>
-        <div><strong id="placeDonors">0</strong><br>DONORS</div>
-      </div>
-
-      <button onclick="copyShareLink()" style="background:transparent;border:1px solid #00b894;color:#00b894;width:100%;margin:10px 0;">🔗 Share with Full History</button>
-      <button onclick="showDonateModal()" class="primary">💰 Donate ROOT Tokens</button>
-      <button onclick="applePayDonate()" class="apple-pay-btn"><i class="fab fa-apple-pay"></i> Apple Pay</button>
-
-      <h3 style="margin:25px 0 12px 0;">Donation History</h3>
-      <div id="donationHistory" style="max-height:260px;overflow-y:auto;"></div>
-
-      <button onclick="closePlaceModal()" style="background:transparent;border:1px solid #555;color:#aaa;width:100%;margin-top:20px;">Close</button>
-    </div>
-  </div>
-
-  <!-- Donate Modal -->
-  <div id="donateModal" class="modal">
-    <div class="modal-content">
-      <h2>Support <span id="donateTo"></span></h2>
-      <p>Balance: <strong id="donorBalance"></strong> ROOT</p>
-      <input type="number" id="donateAmount" value="150" style="width:100%;padding:14px;font-size:1.2rem;text-align:center;margin:15px 0;border-radius:12px;border:1px solid #00b894;background:#1e3a5f;color:white;">
-      <button onclick="confirmDonation()" class="primary">Confirm Donation</button>
-      <button onclick="closeDonateModal()" style="background:transparent;border:1px solid #00b894;color:#00b894;width:100%;">Cancel</button>
-    </div>
-  </div>
-
-  <!-- Profile Modal -->
-  <div id="profileModal" class="modal">
-    <div class="modal-content">
-      <h2>Explorer Profile</h2>
-      <p id="profileHandle" style="font-size:1.4rem;"></p>
-      <p>Balance: <strong id="profileBalance"></strong> ROOT</p>
-      <p>Total Donated: <strong id="profileTotalDonated"></strong> ROOT</p>
-      <p>Level: <strong id="profileLevel"></strong></p>
-      
-      <input type="number" id="topupAmount" placeholder="Top-up amount (demo)" style="width:100%;padding:12px;margin:15px 0;border-radius:12px;">
-      <button onclick="topUpBalance()" class="primary">Top Up Balance</button>
-      
-      <button onclick="logout()" style="background:transparent;border:1px solid #f66;color:#f66;width:100%;margin-top:10px;">Sign Out</button>
-      <button onclick="closeProfileModal()" style="background:transparent;border:1px solid #555;color:#aaa;width:100%;margin-top:10px;">Close</button>
-    </div>
-  </div>
-
-  <!-- Auth Modal -->
-  <div id="authModal" class="modal">
-    <div class="modal-content">
-      <h2 id="authTitle">Welcome to ROOT DONATE</h2>
-      <input type="email" id="emailInput" placeholder="Email" style="width:100%;padding:14px;margin:10px 0;border-radius:12px;background:#1e3a5f;border:1px solid #00b894;color:white;">
-      <input type="password" id="passwordInput" placeholder="Password" style="width:100%;padding:14px;margin:10px 0;border-radius:12px;background:#1e3a5f;border:1px solid #00b894;color:white;">
-      <button onclick="handleAuth()" id="authSubmitBtn" class="primary">Sign Up</button>
-      <button onclick="toggleAuthMode()" id="toggleBtn" style="background:transparent;border:1px solid #00b894;color:#00b894;width:100%;">Already have an account? Sign In</button>
-      <button onclick="closeAuthModal()" style="background:transparent;border:1px solid #555;color:#aaa;width:100%;margin-top:15px;">Cancel</button>
-    </div>
-  </div>
+  <!-- Modals (unchanged) -->
+  <div id="placeModal" class="modal"> ... </div>
+  <div id="donateModal" class="modal"> ... </div>
+  <div id="profileModal" class="modal"> ... </div>
+  <div id="authModal" class="modal"> ... </div>
 
   <script>
     // ==================== FIREBASE CONFIG ====================
-    const firebaseConfig = {
-      apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
-      authDomain: "rootdonate-61e61.firebaseapp.com",
-      projectId: "rootdonate-61e61",
-      storageBucket: "rootdonate-61e61.firebasestorage.app",
-      messagingSenderId: "754240963907",
-      appId: "1:754240963907:web:5417c2763d8f02108bdbf6"
-    };
-
+    const firebaseConfig = { /* your config */ };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
@@ -193,23 +108,16 @@
       logEl.scrollTop = logEl.scrollHeight;
     }
 
-    // ==================== AUTH ====================
+    // ==================== AUTH & USER CREATION ====================
     let isLoginMode = false;
 
-    function showAuthModal() {
-      document.getElementById('authModal').style.display = 'flex';
-      isLoginMode = false;
-      updateAuthUI();
-    }
+    function showAuthModal() { document.getElementById('authModal').style.display = 'flex'; isLoginMode = false; updateAuthUI(); }
     function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
     function updateAuthUI() {
       document.getElementById('authSubmitBtn').textContent = isLoginMode ? "Sign In" : "Sign Up";
       document.getElementById('toggleBtn').textContent = isLoginMode ? "Need an account? Sign Up" : "Already have an account? Sign In";
     }
-    function toggleAuthMode() {
-      isLoginMode = !isLoginMode;
-      updateAuthUI();
-    }
+    function toggleAuthMode() { isLoginMode = !isLoginMode; updateAuthUI(); }
 
     async function handleAuth() {
       const email = document.getElementById('emailInput').value.trim();
@@ -220,33 +128,70 @@
         const userCredential = isLoginMode 
           ? await auth.signInWithEmailAndPassword(email, password)
           : await auth.createUserWithEmailAndPassword(email, password);
+        
         currentUser = userCredential.user;
+        await createUserProfileIfNotExists();
         closeAuthModal();
         initUser();
       } catch (e) { alert("Error: " + e.message); }
     }
 
+    async function createUserProfileIfNotExists() {
+      const userRef = db.collection("users").doc(currentUser.uid);
+      const doc = await userRef.get();
+      if (!doc.exists) {
+        await userRef.set({
+          handle: "@" + currentUser.email.split('@')[0],
+          balance: 12450,
+          totalDonated: 0
+        });
+      }
+    }
+
     function logout() { auth.signOut().then(() => location.reload()); }
 
-    // ==================== USER & DATA ====================
+    // ==================== INIT USER ====================
     async function initUser() {
       document.getElementById('authButton').style.display = 'none';
       document.getElementById('userInfo').style.display = 'flex';
       document.getElementById('usernameDisplay').textContent = currentUser.email.split('@')[0];
-      document.getElementById('balanceDisplay').textContent = "Loading...";
-
-      db.collection("stats").doc("global").onSnapshot(doc => {
-        const total = doc.data()?.total || 0;
-        document.getElementById('totalDonated').textContent = total.toLocaleString();
-      });
 
       loadPlaces();
       log("✅ Signed in successfully • Welcome back, Explorer!");
     }
 
+    // ==================== SEVEN WONDERS STARTER PLACES ====================
+    const sevenWonders = [
+      { name: "Great Pyramid of Giza", loc: "Giza, Egypt", icon: "🪦" },
+      { name: "Hanging Gardens of Babylon", loc: "Al Hillah, Iraq", icon: "🌳" },
+      { name: "Statue of Zeus at Olympia", loc: "Olympia, Greece", icon: "🗿" },
+      { name: "Temple of Artemis at Ephesus", loc: "Selçuk, Turkey", icon: "🏛️" },
+      { name: "Mausoleum at Halicarnassus", loc: "Bodrum, Turkey", icon: "🏛️" },
+      { name: "Colossus of Rhodes", loc: "Rhodes, Greece", icon: "🗿" },
+      { name: "Lighthouse of Alexandria", loc: "Alexandria, Egypt", icon: "🏮" }
+    ];
+
     async function loadPlaces() {
-      const snap = await db.collection("places").orderBy("updatedAt", "desc").get();
+      const snap = await db.collection("places").get();
       places = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      // Add Seven Wonders if no places exist
+      if (places.length === 0) {
+        for (const w of sevenWonders) {
+          const newPlace = {
+            id: `wonder_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+            name: w.name,
+            loc: w.loc,
+            icon: w.icon,
+            donations: [],
+            impact: 0
+          };
+          await savePlace(newPlace);
+          places.push(newPlace);
+        }
+        log("🌟 Seven Wonders of the World added as starters");
+      }
+
       renderPlaces();
     }
 
@@ -257,200 +202,12 @@
       }, { merge: true });
     }
 
-    // ==================== SEARCH ====================
-    async function nominatimSearch(query) {
-      if (query.length < 3) return [];
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=8`, {
-          headers: { 'User-Agent': 'ROOTDonateApp' }
-        });
-        const data = await res.json();
-        return data.map(item => ({
-          name: item.name || item.display_name.split(',')[0],
-          full: item.display_name,
-          icon: "📍"
-        }));
-      } catch(e) { return []; }
-    }
+    // ==================== REST OF YOUR FUNCTIONS (Search, Donate, Profile, etc.) ====================
+    // ... (keep all your existing functions: handleSearch, renderPlaces, showPlaceDetail, confirmDonation, applePayDonate, showProfile, topUpBalance, copyShareLink, loadFromHash, etc.)
 
-    async function handleSearch() {
-      const q = document.getElementById('searchInput').value.trim();
-      const container = document.getElementById('suggestions');
-      if (q.length < 3) { container.style.display = 'none'; return; }
+    // Make sure topUpBalance and showProfile are exactly as in the previous version
 
-      container.style.display = 'block';
-      container.innerHTML = `<div style="padding:16px;color:#88a5b8;">Searching Earth...</div>`;
-
-      const results = await nominatimSearch(q);
-      container.innerHTML = '';
-
-      results.forEach(place => {
-        const div = document.createElement('div');
-        div.className = 'suggestion-item';
-        div.innerHTML = `<span style="font-size:1.6rem;">${place.icon}</span><div><strong>${place.name}</strong><br><small>${place.full}</small></div>`;
-        div.onclick = () => {
-          document.getElementById('searchInput').value = '';
-          container.style.display = 'none';
-
-          const newPlace = { id: `place_${Date.now()}`, name: place.name, loc: place.full, icon: place.icon, donations: [], impact: 0 };
-          places.unshift(newPlace);
-          savePlace(newPlace);
-          renderPlaces();
-          log(`🌍 Discovered: ${place.name}`);
-        };
-        container.appendChild(div);
-      });
-    }
-
-    // ==================== RENDER & MODALS ====================
-    function renderPlaces() {
-      const grid = document.getElementById('grid');
-      grid.innerHTML = '';
-      places.forEach(place => {
-        const total = place.donations ? place.donations.reduce((sum, d) => sum + d.amount, 0) : 0;
-        const card = document.createElement('div');
-        card.className = 'place-card';
-        card.innerHTML = `
-          <div style="font-size:3.5rem;text-align:center;margin:12px 0;">${place.icon || '📍'}</div>
-          <h3>${place.name}</h3>
-          <p style="opacity:0.8;">${place.loc}</p>
-          <div class="impact-bar"><div class="impact-fill" style="width:${Math.min(total/10,100)}%"></div></div>
-          <small style="opacity:0.7;">${total} ROOT donated</small>
-        `;
-        card.onclick = () => showPlaceDetail(place);
-        grid.appendChild(card);
-      });
-      document.getElementById('placesCount').textContent = places.length;
-    }
-
-    function showPlaceDetail(place) {
-      currentPlace = place;
-      document.getElementById('modalIcon').textContent = place.icon || '📍';
-      document.getElementById('modalName').textContent = place.name;
-      document.getElementById('modalLoc').textContent = place.loc;
-
-      const total = place.donations ? place.donations.reduce((a,d)=>a+d.amount,0) : 0;
-      document.getElementById('placeImpact').textContent = total;
-      document.getElementById('placeDonors').textContent = place.donations ? place.donations.length : 0;
-
-      const hist = document.getElementById('donationHistory');
-      hist.innerHTML = place.donations?.length 
-        ? place.donations.map(d => `<div class="history-item"><strong>💰 ${d.amount} ROOT</strong> from ${d.from}<br><small>${d.time}</small></div>`).join('')
-        : `<p style="opacity:0.6;text-align:center;padding:40px;">No donations yet — be the first!</p>`;
-
-      document.getElementById('placeModal').style.display = 'flex';
-    }
-
-    function closePlaceModal() { document.getElementById('placeModal').style.display = 'none'; }
-
-    function showDonateModal() {
-      if (!currentUser) return alert("Please sign in to donate");
-      document.getElementById('donateTo').textContent = currentPlace.name;
-      db.collection("users").doc(currentUser.uid).get().then(doc => {
-        document.getElementById('donorBalance').textContent = doc.data().balance || 0;
-      });
-      document.getElementById('donateModal').style.display = 'flex';
-    }
-
-    async function confirmDonation() {
-      const amount = parseInt(document.getElementById('donateAmount').value) || 0;
-      if (amount <= 0 || !currentUser) return alert("Invalid amount");
-
-      const userRef = db.collection("users").doc(currentUser.uid);
-      const userDoc = await userRef.get();
-      if (amount > (userDoc.data().balance || 0)) return alert("Insufficient balance");
-
-      await userRef.update({
-        balance: firebase.firestore.FieldValue.increment(-amount),
-        totalDonated: firebase.firestore.FieldValue.increment(amount)
-      });
-
-      currentPlace.donations = currentPlace.donations || [];
-      currentPlace.donations.unshift({
-        from: currentUser.email.split('@')[0],
-        amount,
-        time: new Date().toLocaleString()
-      });
-
-      await savePlace(currentPlace);
-      await db.collection("stats").doc("global").set({ total: firebase.firestore.FieldValue.increment(amount) }, { merge: true });
-
-      log(`💰 Donated ${amount} ROOT to ${currentPlace.name}`);
-      closeDonateModal();
-      showPlaceDetail(currentPlace);
-      loadPlaces();
-    }
-
-    function applePayDonate() {
-      const amt = prompt("Enter Apple Pay amount:", "200");
-      if (amt) {
-        document.getElementById('donateAmount').value = amt;
-        confirmDonation();
-      }
-    }
-
-    function closeDonateModal() { document.getElementById('donateModal').style.display = 'none'; }
-
-    function showProfile() {
-      if (!currentUser) return;
-      db.collection("users").doc(currentUser.uid).get().then(doc => {
-        const u = doc.data() || {};
-        document.getElementById('profileHandle').textContent = u.handle || currentUser.email.split('@')[0];
-        document.getElementById('profileBalance').textContent = u.balance || 0;
-        document.getElementById('profileTotalDonated').textContent = u.totalDonated || 0;
-        document.getElementById('profileLevel').textContent = Math.floor(Math.sqrt((u.totalDonated || 0) / 500)) + 1;
-      });
-      document.getElementById('profileModal').style.display = 'flex';
-    }
-
-    async function topUpBalance() {
-      const amt = parseInt(document.getElementById('topupAmount').value) || 0;
-      if (amt > 0 && currentUser) {
-        await db.collection("users").doc(currentUser.uid).update({
-          balance: firebase.firestore.FieldValue.increment(amt)
-        });
-        log(`💵 Topped up ${amt} ROOT (demo)`);
-        showProfile();
-      }
-    }
-
-    function closeProfileModal() { document.getElementById('profileModal').style.display = 'none'; }
-
-    // ==================== SHARE LINK ====================
-    function copyShareLink() {
-      if (!currentPlace) return;
-      const data = {
-        id: currentPlace.id,
-        name: currentPlace.name,
-        loc: currentPlace.loc,
-        icon: currentPlace.icon,
-        donations: currentPlace.donations || []
-      };
-      const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
-      const shareUrl = `${window.location.origin}${window.location.pathname}#${encoded}`;
-      navigator.clipboard.writeText(shareUrl).then(() => alert("✅ Share link copied!\nAnyone can open it to see full history."));
-    }
-
-    function loadFromHash() {
-      const hash = window.location.hash.substring(1);
-      if (!hash) return;
-      try {
-        const decoded = JSON.parse(decodeURIComponent(atob(hash)));
-        let place = places.find(p => p.id === decoded.id);
-        if (!place) {
-          place = { ...decoded, donations: decoded.donations || [] };
-          places.unshift(place);
-          savePlace(place);
-        } else {
-          place.donations = decoded.donations || place.donations;
-        }
-        renderPlaces();
-        showPlaceDetail(place);
-        log("📥 Loaded shared place");
-      } catch(e) { console.error("Invalid share link"); }
-    }
-
-    // ==================== INIT ====================
+    // INIT
     auth.onAuthStateChanged(user => {
       if (user) {
         currentUser = user;
@@ -461,10 +218,7 @@
       }
     });
 
-    window.onload = () => {
-      loadFromHash();
-      setInterval(() => { if (places.length) loadPlaces(); }, 30000);
-    };
+    window.onload = () => { loadFromHash(); };
   </script>
 </body>
 </html>
