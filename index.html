@@ -69,6 +69,19 @@
         .btn-primary { background: var(--primary); color: #000; }
         .btn-secondary { background: #333; color: white; }
         
+        .apple-pay-btn {
+            background: black;
+            color: white;
+            height: 52px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        
         .error { color: #ff6666; text-align: center; margin: 10px 0; }
         
         .share-link {
@@ -92,7 +105,6 @@
             cursor: pointer;
             font-weight: 500;
         }
-        
         .amount-btn:hover { background: #27272f; }
     </style>
 </head>
@@ -136,6 +148,11 @@
             
             <button class="btn-primary" onclick="customDonate()">Custom Amount</button>
             
+            <!-- Apple Pay Button -->
+            <button class="apple-pay-btn" id="applePayBtn" onclick="startApplePay()" style="display:none;">
+                Pay with Apple Pay
+            </button>
+            
             <div style="margin-top:35px;">
                 <strong>Share this profile</strong>
                 <div class="share-link" id="shareLink">Generating link...</div>
@@ -163,14 +180,12 @@
         let currentProfile = null;
         let isLoginMode = false;
 
-        // Toggle between Sign Up and Login
         function toggleForm() {
             isLoginMode = !isLoginMode;
             document.getElementById('formTitle').textContent = isLoginMode ? 'Login' : 'Create Account';
             document.getElementById('errorMsg').textContent = '';
         }
 
-        // Handle Sign Up / Login
         function handleAuth() {
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value.trim();
@@ -183,24 +198,16 @@
                 return;
             }
 
-            if (isLoginMode) {
-                auth.signInWithEmailAndPassword(email, password)
-                    .then(userCredential => showCreatorProfileDemo(userCredential.user.email))
-                    .catch(err => errorMsg.textContent = err.message);
-            } else {
-                auth.createUserWithEmailAndPassword(email, password)
-                    .then(userCredential => showCreatorProfileDemo(userCredential.user.email))
-                    .catch(err => errorMsg.textContent = err.message);
-            }
+            const promise = isLoginMode 
+                ? auth.signInWithEmailAndPassword(email, password)
+                : auth.createUserWithEmailAndPassword(email, password);
+
+            promise.then(() => showCreatorProfileDemo())
+                   .catch(err => errorMsg.textContent = err.message);
         }
 
-        // Demo Creator Profile (replace with real data later)
-        function showCreatorProfileDemo(userEmail) {
-            currentProfile = {
-                name: "Alex Rivers",
-                id: "alexrivers",
-                total: "475"
-            };
+        function showCreatorProfileDemo() {
+            currentProfile = { name: "Alex Rivers", id: "alexrivers", total: "475" };
             
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('profileScreen').style.display = 'block';
@@ -210,9 +217,48 @@
             document.getElementById('totalRaised').textContent = `£${currentProfile.total}`;
             
             generateShareLink();
+            
+            // Show Apple Pay button on supported devices
+            if (window.ApplePaySession && ApplePaySession.canMakePayments()) {
+                document.getElementById('applePayBtn').style.display = 'block';
+            }
         }
 
-        // Generate Base64 Share Link
+        // ==================== APPLE PAY ====================
+        function startApplePay() {
+            if (!currentProfile) return;
+
+            const amount = prompt("Enter donation amount for Apple Pay (£):", "25");
+            if (!amount || isNaN(amount)) return;
+
+            const paymentRequest = {
+                countryCode: 'GB',
+                currencyCode: 'GBP',
+                supportedNetworks: ['visa', 'masterCard', 'amex', 'discover'],
+                merchantCapabilities: ['supports3DS'],
+                lineItems: [{ label: `Donation to ${currentProfile.name}`, amount: parseFloat(amount).toFixed(2) }],
+                total: { label: 'RootDonate', amount: parseFloat(amount).toFixed(2) }
+            };
+
+            const session = new ApplePaySession(3, paymentRequest);
+
+            session.onvalidatemerchant = (event) => {
+                // In real app, call your server to validate
+                session.completeMerchantValidation({});
+            };
+
+            session.onpaymentauthorized = (event) => {
+                // Here you would send payment token to your backend
+                console.log("Apple Pay Token:", event.payment.token);
+                session.completePayment(ApplePaySession.STATUS_SUCCESS);
+                
+                alert(`🎉 Thank you! £${parseFloat(amount).toFixed(2)} donated to ${currentProfile.name} via Apple Pay`);
+            };
+
+            session.begin();
+        }
+
+        // Share Link Functions
         function generateShareLink() {
             const data = btoa(JSON.stringify(currentProfile));
             const url = `${window.location.origin}${window.location.pathname}#data=${data}`;
@@ -222,8 +268,8 @@
         function copyShareLink() {
             const link = document.getElementById('shareLink').textContent;
             navigator.clipboard.writeText(link)
-                .then(() => alert("✅ Share link copied to clipboard!"))
-                .catch(() => alert("Failed to copy link"));
+                .then(() => alert("✅ Share link copied!"))
+                .catch(() => alert("Failed to copy"));
         }
 
         function quickDonate(amount) {
@@ -246,15 +292,13 @@
             });
         }
 
-        // Load shared profile from URL
+        // Load shared profile
         window.onload = function() {
             const hash = window.location.hash;
             if (hash.startsWith('#data=')) {
                 try {
-                    const base64 = hash.substring(6);
-                    const profile = JSON.parse(atob(base64));
+                    const profile = JSON.parse(atob(hash.substring(6)));
                     currentProfile = profile;
-                    
                     document.getElementById('authScreen').style.display = 'none';
                     document.getElementById('profileScreen').style.display = 'block';
                     
@@ -263,9 +307,11 @@
                     document.getElementById('totalRaised').textContent = `£${profile.total}`;
                     
                     generateShareLink();
-                } catch(e) {
-                    console.error("Invalid share link");
-                }
+                    
+                    if (window.ApplePaySession && ApplePaySession.canMakePayments()) {
+                        document.getElementById('applePayBtn').style.display = 'block';
+                    }
+                } catch(e) {}
             }
         };
     </script>
