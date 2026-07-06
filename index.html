@@ -8,6 +8,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
         body {
             font-family: 'Inter', sans-serif;
             background: #0a0a0f;
@@ -45,17 +46,25 @@
         }
         .btn-primary { background: #00ff9d; color: #000; }
         .btn-secondary { background: #333; color: white; }
-        .toggle { color: #00ff9d; cursor: pointer; text-align: center; margin-top: 20px; }
-        .profile { display: none; }
+        .toggle { 
+            color: #00ff9d; 
+            cursor: pointer; 
+            text-align: center; 
+            margin-top: 20px; 
+            text-decoration: underline;
+        }
+        .error { color: #ff6666; text-align: center; margin: 10px 0; }
     </style>
 </head>
 <body>
     <div class="container" id="authForm">
-        <h1 style="text-align:center;">RootDonate.co.uk</h1>
-        <h2 id="formTitle">Sign Up</h2>
+        <h1 style="text-align:center; margin-bottom:20px;">RootDonate.co.uk</h1>
+        <h2 id="formTitle" style="text-align:center;">Sign Up</h2>
 
         <input type="email" id="email" placeholder="Email address" required>
-        <input type="password" id="password" placeholder="Password" required>
+        <input type="password" id="password" placeholder="Password (min 6 characters)" required>
+
+        <div id="errorMsg" class="error"></div>
 
         <button class="btn-primary" onclick="handleAuth()">Sign Up</button>
         <button class="btn-secondary" onclick="toggleForm()">Already have an account? Login</button>
@@ -63,31 +72,28 @@
         <div class="toggle" onclick="toggleForm()" id="toggleText">Need an account? Sign Up</div>
     </div>
 
-    <!-- Profile / Donations -->
-    <div class="container profile" id="profilePage">
+    <!-- Profile Page -->
+    <div class="container" id="profilePage" style="display:none;">
         <h1>Welcome back!</h1>
-        <p id="userEmail"></p>
+        <p id="userEmail" style="color:#00ff9d; font-weight:500;"></p>
         
-        <h2>Your Donations</h2>
-        <p>£50 • £25 • £100 (Demo Data)</p>
+        <h2>Your Donations (Demo)</h2>
+        <p>£50 • £25 • £100</p>
         
         <button class="btn-primary" onclick="makeDonation()">Make New Donation</button>
         <button class="btn-secondary" onclick="logout()">Logout</button>
     </div>
 
     <script>
-        // === REPLACE WITH YOUR FIREBASE CONFIG ===
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
-  authDomain: "rootdonate-61e61.firebaseapp.com",
-  databaseURL: "https://rootdonate-61e61-default-rtdb.firebaseio.com",
-  projectId: "rootdonate-61e61",
-  storageBucket: "rootdonate-61e61.firebasestorage.app",
-  messagingSenderId: "754240963907",
-  appId: "1:754240963907:web:5417c2763d8f02108bdbf6",
-  measurementId: "G-0SC5R5ELT1"
-};
+        // Your Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
+            authDomain: "rootdonate-61e61.firebaseapp.com",
+            projectId: "rootdonate-61e61",
+            storageBucket: "rootdonate-61e61.firebasestorage.app",
+            messagingSenderId: "754240963907",
+            appId: "1:754240963907:web:5417c2763d8f02108bdbf6"
+        };
 
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
@@ -97,21 +103,32 @@ const firebaseConfig = {
         function toggleForm() {
             isLogin = !isLogin;
             document.getElementById('formTitle').textContent = isLogin ? 'Login' : 'Sign Up';
-            document.getElementById('toggleText').textContent = isLogin ? 'Need an account? Sign Up' : 'Already have an account? Login';
+            document.getElementById('toggleText').textContent = isLogin 
+                ? 'Need an account? Sign Up' 
+                : 'Already have an account? Login';
+            document.getElementById('errorMsg').textContent = '';
         }
 
         function handleAuth() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+
+            errorMsg.textContent = '';
+
+            if (!email || !password) {
+                errorMsg.textContent = "Please fill in all fields";
+                return;
+            }
 
             if (isLogin) {
                 auth.signInWithEmailAndPassword(email, password)
-                    .then(() => showProfile(email))
-                    .catch(err => alert(err.message));
+                    .then(userCredential => showProfile(userCredential.user.email))
+                    .catch(err => errorMsg.textContent = err.message);
             } else {
                 auth.createUserWithEmailAndPassword(email, password)
-                    .then(() => showProfile(email))
-                    .catch(err => alert(err.message));
+                    .then(userCredential => showProfile(userCredential.user.email))
+                    .catch(err => errorMsg.textContent = err.message);
             }
         }
 
@@ -122,19 +139,24 @@ const firebaseConfig = {
         }
 
         function logout() {
-            auth.signOut();
-            document.getElementById('authForm').style.display = 'block';
-            document.getElementById('profilePage').style.display = 'none';
+            auth.signOut().then(() => {
+                document.getElementById('authForm').style.display = 'block';
+                document.getElementById('profilePage').style.display = 'none';
+            });
         }
 
         function makeDonation() {
             const amount = prompt("Enter donation amount (£):", "25");
-            if (amount) alert(`Thank you! £${amount} donation recorded (Demo)`);
+            if (amount) {
+                alert(`Thank you! £${amount} donation recorded (Demo)`);
+            }
         }
 
-        // Auto login if already signed in
+        // Auto-login if user is already signed in
         auth.onAuthStateChanged(user => {
-            if (user) showProfile(user.email);
+            if (user) {
+                showProfile(user.email);
+            }
         });
     </script>
 </body>
