@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Root Donate • Quick Support</title>
+    <title>MonzoDonate • Support Creators</title>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
@@ -39,21 +41,10 @@
             text-align: center;
         }
         
-        h1 { 
-            margin: 0; 
-            font-size: 2.4rem; 
-            font-weight: 700; 
-        }
-        
-        .subtitle {
-            margin: 8px 0 0;
-            opacity: 0.9;
-            font-weight: 500;
-        }
-
+        h1 { margin: 0; font-size: 2.4rem; font-weight: 700; }
         .content { padding: 30px; }
 
-        input, select {
+        input {
             width: 100%;
             padding: 16px;
             margin: 12px 0;
@@ -75,57 +66,36 @@
             cursor: pointer;
         }
         
-        .btn-primary { 
-            background: var(--primary); 
-            color: #000; 
-        }
-        
-        .btn-secondary { 
-            background: #333; 
-            color: white; 
-        }
+        .btn-primary { background: var(--primary); color: #000; }
+        .btn-secondary { background: #333; color: white; }
+        .btn-danger { background: #ff4444; color: white; }
 
         .donation-node {
             background: #1c1c24;
             border-radius: 16px;
-            padding: 20px;
+            padding: 18px;
             margin: 15px 0;
             display: flex;
             align-items: center;
             gap: 15px;
         }
 
-        .donation-node:hover {
-            background: #27272f;
-            transform: translateY(-2px);
-        }
-
         .avatar {
-            width: 56px;
-            height: 56px;
+            width: 52px;
+            height: 52px;
             background: #00ff9d;
             color: #000;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 700;
         }
 
-        .node-info {
-            flex: 1;
-        }
-
-        .node-name {
-            font-weight: 600;
-            font-size: 1.1rem;
-        }
-
-        .node-username {
-            color: #00ff9d;
-            font-family: monospace;
-        }
+        .node-info { flex: 1; }
+        .node-name { font-weight: 600; font-size: 1.1rem; }
+        .node-username { color: #00ff9d; font-family: monospace; }
 
         .amount-btns {
             display: flex;
@@ -133,143 +103,217 @@
             flex-wrap: wrap;
             margin-top: 12px;
         }
-
         .amount-btn {
             background: #27272f;
-            padding: 10px 16px;
+            padding: 8px 16px;
             border-radius: 9999px;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             cursor: pointer;
         }
-
-        .amount-btn:hover {
-            background: var(--primary);
-            color: #000;
-        }
+        .amount-btn:hover { background: var(--primary); color: #000; }
 
         .monzo-link {
-            background: #1c1c24;
-            padding: 14px;
+            background: #27272f;
+            padding: 12px;
             border-radius: 12px;
+            font-size: 0.9rem;
             word-break: break-all;
-            font-family: monospace;
-            font-size: 0.95rem;
             margin: 10px 0;
+            font-family: monospace;
         }
 
-        .success {
-            color: #00ff9d;
-            text-align: center;
-            margin: 15px 0;
-            font-weight: 500;
-        }
+        .error { color: #ff6666; text-align: center; margin: 10px 0; }
+        .success { color: #00ff9d; text-align: center; margin: 15px 0; }
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <!-- Auth Screen -->
+    <div class="container" id="authScreen">
         <div class="header">
-            <h1>Root Donate</h1>
-            <p class="subtitle">Send support instantly via Monzo.me</p>
+            <h1>MonzoDonate</h1>
+            <p>Support creators instantly</p>
         </div>
-        
         <div class="content">
-            <!-- Add New Donation Node -->
-            <h3 style="margin: 10px 0 15px;">Create Donation Node</h3>
+            <h2 id="formTitle" style="text-align:center; margin-bottom:24px;">Create Account</h2>
             
-            <input type="text" id="creatorName" placeholder="Creator / Cause name (e.g. Alex Rivers)">
-            <input type="text" id="monzoUsername" placeholder="Monzo.me username (e.g. alexrivers)">
+            <input type="email" id="email" placeholder="Email address" required>
+            <input type="password" id="password" placeholder="Password (min 6 characters)" required>
             
-            <button class="btn-primary" onclick="addDonationNode()">Add Donation Node</button>
+            <div id="errorMsg" class="error"></div>
+            
+            <button class="btn-primary" onclick="handleAuth()">Continue</button>
+            <button class="btn-secondary" onclick="toggleForm()">Already have an account? Login</button>
+        </div>
+    </div>
 
-            <!-- Existing Nodes -->
+    <!-- Dashboard Screen -->
+    <div class="container" id="dashboardScreen" style="display:none;">
+        <div class="header">
+            <h1 id="userGreeting">MonzoDonate</h1>
+        </div>
+        <div class="content">
+            <h3 style="margin:10px 0 15px;">Your Donation Nodes</h3>
+            
             <div id="nodesContainer"></div>
 
-            <!-- Example Nodes -->
-            <h3 style="margin: 30px 0 15px;">Example Nodes</h3>
+            <!-- Add New Node -->
+            <h3 style="margin:25px 0 15px;">Add New Node</h3>
+            <input type="text" id="creatorName" placeholder="Creator / Cause name">
+            <input type="text" id="monzoUsername" placeholder="Monzo.me username (e.g. alexrivers)">
             
-            <div class="donation-node" onclick="openMonzo('example1')">
-                <div class="avatar">🌱</div>
-                <div class="node-info">
-                    <div class="node-name">Climate Action Fund</div>
-                    <div class="node-username">@climatefund</div>
-                </div>
-                <button class="btn-primary" style="width:auto; padding:10px 20px; font-size:0.95rem;">Donate</button>
-            </div>
-
-            <div class="donation-node" onclick="openMonzo('example2')">
-                <div class="avatar">🎨</div>
-                <div class="node-info">
-                    <div class="node-name">Indie Artist Collective</div>
-                    <div class="node-username">@indieart</div>
-                </div>
-                <button class="btn-primary" style="width:auto; padding:10px 20px; font-size:0.95rem;">Donate</button>
-            </div>
+            <button class="btn-primary" onclick="addDonationNode()">Add Node</button>
+            
+            <button class="btn-secondary" onclick="logout()" style="margin-top:30px;">Logout</button>
         </div>
     </div>
 
     <script>
-        let donationNodes = [];
+        // ==================== FIREBASE CONFIG ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
+            authDomain: "rootdonate-61e61.firebaseapp.com",
+            projectId: "rootdonate-61e61",
+            storageBucket: "rootdonate-61e61.firebasestorage.app",
+            messagingSenderId: "754240963907",
+            appId: "1:754240963907:web:5417c2763d8f02108bdbf6"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        let currentUserNodes = [];
+
+        function toggleForm() {
+            const title = document.getElementById('formTitle');
+            title.textContent = title.textContent === 'Create Account' ? 'Login' : 'Create Account';
+            document.getElementById('errorMsg').textContent = '';
+        }
+
+        function handleAuth() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+
+            if (!email || !password) {
+                errorMsg.textContent = "Please fill in all fields";
+                return;
+            }
+
+            const isLogin = document.getElementById('formTitle').textContent === 'Login';
+            const promise = isLogin 
+                ? auth.signInWithEmailAndPassword(email, password)
+                : auth.createUserWithEmailAndPassword(email, password);
+
+            promise.then(() => showDashboard())
+                   .catch(err => errorMsg.textContent = err.message);
+        }
+
+        function showDashboard() {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('dashboardScreen').style.display = 'block';
+            
+            const user = auth.currentUser;
+            document.getElementById('userGreeting').textContent = user ? `Hi, ${user.email.split('@')[0]}` : 'MonzoDonate';
+            
+            loadNodes();
+        }
+
+        function loadNodes() {
+            // In a real app, load from Firestore. Here we use localStorage per user
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            const key = `monzoNodes_${user.uid}`;
+            currentUserNodes = JSON.parse(localStorage.getItem(key)) || [];
+            renderNodes();
+        }
+
+        function saveNodes() {
+            const user = auth.currentUser;
+            if (!user) return;
+            const key = `monzoNodes_${user.uid}`;
+            localStorage.setItem(key, JSON.stringify(currentUserNodes));
+        }
+
+        function renderNodes() {
+            const container = document.getElementById('nodesContainer');
+            container.innerHTML = '';
+
+            if (currentUserNodes.length === 0) {
+                container.innerHTML = `<p style="text-align:center; color:#666; padding:20px;">No nodes yet. Add one above!</p>`;
+                return;
+            }
+
+            currentUserNodes.forEach((node, index) => {
+                const monzoUrl = `https://monzo.me/${node.username}`;
+                
+                const div = document.createElement('div');
+                div.className = 'donation-node';
+                div.innerHTML = `
+                    <div class="avatar">${node.name[0]}</div>
+                    <div class="node-info">
+                        <div class="node-name">${node.name}</div>
+                        <div class="node-username">@${node.username}</div>
+                        <div class="monzo-link">${monzoUrl}</div>
+                        
+                        <div class="amount-btns">
+                            <div class="amount-btn" onclick="quickDonate('${node.username}', 5)">£5</div>
+                            <div class="amount-btn" onclick="quickDonate('${node.username}', 10)">£10</div>
+                            <div class="amount-btn" onclick="quickDonate('${node.username}', 20)">£20</div>
+                            <div class="amount-btn" onclick="quickDonate('${node.username}', 50)">£50</div>
+                        </div>
+                    </div>
+                    <button class="btn-danger" style="width:auto; padding:8px 14px; font-size:0.85rem;" onclick="removeNode(${index})">Remove</button>
+                `;
+                container.appendChild(div);
+            });
+        }
 
         function addDonationNode() {
             const name = document.getElementById('creatorName').value.trim();
-            const username = document.getElementById('monzoUsername').value.trim().toLowerCase();
+            const username = document.getElementById('monzoUsername').value.trim().toLowerCase().replace('@', '');
 
             if (!name || !username) {
                 alert("Please enter both name and Monzo username");
                 return;
             }
 
-            donationNodes.push({ name, username });
-
+            currentUserNodes.push({ name, username });
+            saveNodes();
             renderNodes();
-            
+
             // Clear inputs
             document.getElementById('creatorName').value = '';
             document.getElementById('monzoUsername').value = '';
         }
 
-        function renderNodes() {
-            const container = document.getElementById('nodesContainer');
-            container.innerHTML = '<h3 style="margin: 25px 0 15px;">Your Donation Nodes</h3>';
-
-            donationNodes.forEach((node, index) => {
-                const monzoUrl = `https://monzo.me/${node.username}`;
-                
-                const nodeHTML = `
-                    <div class="donation-node">
-                        <div class="avatar">${node.name[0]}</div>
-                        <div class="node-info">
-                            <div class="node-name">${node.name}</div>
-                            <div class="node-username">@${node.username}</div>
-                            <div class="monzo-link">${monzoUrl}</div>
-                            
-                            <div class="amount-btns">
-                                <div class="amount-btn" onclick="sendMonzoDonation('${node.username}', 5)">£5</div>
-                                <div class="amount-btn" onclick="sendMonzoDonation('${node.username}', 10)">£10</div>
-                                <div class="amount-btn" onclick="sendMonzoDonation('${node.username}', 20)">£20</div>
-                                <div class="amount-btn" onclick="sendMonzoDonation('${node.username}', 50)">£50</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                container.innerHTML += nodeHTML;
-            });
+        function removeNode(index) {
+            if (confirm("Remove this donation node?")) {
+                currentUserNodes.splice(index, 1);
+                saveNodes();
+                renderNodes();
+            }
         }
 
-        function sendMonzoDonation(username, amount) {
+        function quickDonate(username, amount) {
             const url = `https://monzo.me/${username}?amount=${amount}`;
             window.open(url, '_blank');
         }
 
-        function openMonzo(example) {
-            let username = example === 'example1' ? 'climatefund' : 'indieart';
-            window.open(`https://monzo.me/${username}`, '_blank');
+        function logout() {
+            auth.signOut().then(() => {
+                document.getElementById('dashboardScreen').style.display = 'none';
+                document.getElementById('authScreen').style.display = 'block';
+                document.getElementById('errorMsg').textContent = '';
+            });
         }
 
-        // Allow pressing Enter in inputs
-        document.getElementById('monzoUsername').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') addDonationNode();
+        // Auto-login if already signed in
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                showDashboard();
+            }
         });
     </script>
 </body>
