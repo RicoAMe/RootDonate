@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RootDonate • Support Creators</title>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+    <title>Root Donate • Quick Support</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
@@ -26,7 +24,7 @@
         }
         
         .container {
-            max-width: 460px;
+            max-width: 480px;
             margin: 40px auto;
             background: var(--card);
             border-radius: 24px;
@@ -41,10 +39,21 @@
             text-align: center;
         }
         
-        h1 { margin: 0; font-size: 2.4rem; font-weight: 700; }
-        .content { padding: 30px; }
+        h1 { 
+            margin: 0; 
+            font-size: 2.4rem; 
+            font-weight: 700; 
+        }
         
-        input {
+        .subtitle {
+            margin: 8px 0 0;
+            opacity: 0.9;
+            font-weight: 500;
+        }
+
+        .content { padding: 30px; }
+
+        input, select {
             width: 100%;
             padding: 16px;
             margin: 12px 0;
@@ -54,7 +63,7 @@
             color: white;
             font-size: 1.05rem;
         }
-        
+
         button {
             width: 100%;
             padding: 16px;
@@ -66,254 +75,202 @@
             cursor: pointer;
         }
         
-        .btn-primary { background: var(--primary); color: #000; }
-        .btn-secondary { background: #333; color: white; }
+        .btn-primary { 
+            background: var(--primary); 
+            color: #000; 
+        }
         
-        .apple-pay-btn {
-            background: black;
-            color: white;
-            height: 52px;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 600;
+        .btn-secondary { 
+            background: #333; 
+            color: white; 
+        }
+
+        .donation-node {
+            background: #1c1c24;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .donation-node:hover {
+            background: #27272f;
+            transform: translateY(-2px);
+        }
+
+        .avatar {
+            width: 56px;
+            height: 56px;
+            background: #00ff9d;
+            color: #000;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 15px 0;
+            font-size: 1.5rem;
+            font-weight: 700;
         }
-        
-        .error { color: #ff6666; text-align: center; margin: 10px 0; }
-        
-        .share-link {
-            background: #1c1c24;
-            padding: 14px;
-            border-radius: 12px;
-            font-size: 0.95rem;
-            word-break: break-all;
-            margin: 15px 0;
+
+        .node-info {
+            flex: 1;
+        }
+
+        .node-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .node-username {
+            color: #00ff9d;
             font-family: monospace;
         }
-        
+
+        .amount-btns {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
         .amount-btn {
+            background: #27272f;
+            padding: 10px 16px;
+            border-radius: 9999px;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .amount-btn:hover {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .monzo-link {
             background: #1c1c24;
             padding: 14px;
-            margin: 8px 4px;
             border-radius: 12px;
-            display: inline-block;
-            width: calc(33% - 8px);
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 0.95rem;
+            margin: 10px 0;
+        }
+
+        .success {
+            color: #00ff9d;
             text-align: center;
-            cursor: pointer;
+            margin: 15px 0;
             font-weight: 500;
         }
-        .amount-btn:hover { background: #27272f; }
     </style>
 </head>
 <body>
 
-    <!-- Auth Screen -->
-    <div class="container" id="authScreen">
+    <div class="container">
         <div class="header">
-            <h1>RootDonate</h1>
-            <p>Support creators you love</p>
+            <h1>Root Donate</h1>
+            <p class="subtitle">Send support instantly via Monzo.me</p>
         </div>
+        
         <div class="content">
-            <h2 id="formTitle" style="text-align:center; margin-bottom:24px;">Create Account</h2>
+            <!-- Add New Donation Node -->
+            <h3 style="margin: 10px 0 15px;">Create Donation Node</h3>
             
-            <input type="email" id="email" placeholder="Email address" required>
-            <input type="password" id="password" placeholder="Password (min 6 characters)" required>
+            <input type="text" id="creatorName" placeholder="Creator / Cause name (e.g. Alex Rivers)">
+            <input type="text" id="monzoUsername" placeholder="Monzo.me username (e.g. alexrivers)">
             
-            <div id="errorMsg" class="error"></div>
-            
-            <button class="btn-primary" onclick="handleAuth()">Continue</button>
-            <button class="btn-secondary" onclick="toggleForm()">Already have an account? Login</button>
-        </div>
-    </div>
+            <button class="btn-primary" onclick="addDonationNode()">Add Donation Node</button>
 
-    <!-- Creator Profile Screen -->
-    <div class="container" id="profileScreen" style="display:none;">
-        <div class="header">
-            <h1 id="creatorName">Creator Name</h1>
-            <p id="creatorId">@username</p>
-        </div>
-        <div class="content">
-            <p style="text-align:center; font-size:1.1rem; margin-bottom:25px;">
-                Total raised: <strong id="totalRaised">£475</strong>
-            </p>
+            <!-- Existing Nodes -->
+            <div id="nodesContainer"></div>
+
+            <!-- Example Nodes -->
+            <h3 style="margin: 30px 0 15px;">Example Nodes</h3>
             
-            <h3 style="margin:10px 0 15px;">Quick Donate</h3>
-            <div onclick="quickDonate(10)" class="amount-btn">£10</div>
-            <div onclick="quickDonate(25)" class="amount-btn">£25</div>
-            <div onclick="quickDonate(50)" class="amount-btn">£50</div>
-            <div onclick="quickDonate(100)" class="amount-btn">£100</div>
-            
-            <button class="btn-primary" onclick="customDonate()">Custom Amount</button>
-            
-            <!-- Apple Pay Button -->
-            <button class="apple-pay-btn" id="applePayBtn" onclick="startApplePay()" style="display:none;">
-                Pay with Apple Pay
-            </button>
-            
-            <div style="margin-top:35px;">
-                <strong>Share this profile</strong>
-                <div class="share-link" id="shareLink">Generating link...</div>
-                <button class="btn-secondary" onclick="copyShareLink()">Copy Share Link</button>
+            <div class="donation-node" onclick="openMonzo('example1')">
+                <div class="avatar">🌱</div>
+                <div class="node-info">
+                    <div class="node-name">Climate Action Fund</div>
+                    <div class="node-username">@climatefund</div>
+                </div>
+                <button class="btn-primary" style="width:auto; padding:10px 20px; font-size:0.95rem;">Donate</button>
             </div>
-            
-            <button class="btn-secondary" onclick="logout()" style="margin-top:20px;">Logout</button>
+
+            <div class="donation-node" onclick="openMonzo('example2')">
+                <div class="avatar">🎨</div>
+                <div class="node-info">
+                    <div class="node-name">Indie Artist Collective</div>
+                    <div class="node-username">@indieart</div>
+                </div>
+                <button class="btn-primary" style="width:auto; padding:10px 20px; font-size:0.95rem;">Donate</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // ==================== FIREBASE CONFIG ====================
-        const firebaseConfig = {
-            apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
-            authDomain: "rootdonate-61e61.firebaseapp.com",
-            projectId: "rootdonate-61e61",
-            storageBucket: "rootdonate-61e61.firebasestorage.app",
-            messagingSenderId: "754240963907",
-            appId: "1:754240963907:web:5417c2763d8f02108bdbf6"
-        };
+        let donationNodes = [];
 
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
+        function addDonationNode() {
+            const name = document.getElementById('creatorName').value.trim();
+            const username = document.getElementById('monzoUsername').value.trim().toLowerCase();
 
-        let currentProfile = null;
-        let isLoginMode = false;
-
-        function toggleForm() {
-            isLoginMode = !isLoginMode;
-            document.getElementById('formTitle').textContent = isLoginMode ? 'Login' : 'Create Account';
-            document.getElementById('errorMsg').textContent = '';
-        }
-
-        function handleAuth() {
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const errorMsg = document.getElementById('errorMsg');
-
-            errorMsg.textContent = '';
-
-            if (!email || !password) {
-                errorMsg.textContent = "Please fill in all fields";
+            if (!name || !username) {
+                alert("Please enter both name and Monzo username");
                 return;
             }
 
-            const promise = isLoginMode 
-                ? auth.signInWithEmailAndPassword(email, password)
-                : auth.createUserWithEmailAndPassword(email, password);
+            donationNodes.push({ name, username });
 
-            promise.then(() => showCreatorProfileDemo())
-                   .catch(err => errorMsg.textContent = err.message);
+            renderNodes();
+            
+            // Clear inputs
+            document.getElementById('creatorName').value = '';
+            document.getElementById('monzoUsername').value = '';
         }
 
-        function showCreatorProfileDemo() {
-            currentProfile = { name: "Alex Rivers", id: "alexrivers", total: "475" };
-            
-            document.getElementById('authScreen').style.display = 'none';
-            document.getElementById('profileScreen').style.display = 'block';
-            
-            document.getElementById('creatorName').textContent = currentProfile.name;
-            document.getElementById('creatorId').textContent = `@${currentProfile.id}`;
-            document.getElementById('totalRaised').textContent = `£${currentProfile.total}`;
-            
-            generateShareLink();
-            
-            // Show Apple Pay button on supported devices
-            if (window.ApplePaySession && ApplePaySession.canMakePayments()) {
-                document.getElementById('applePayBtn').style.display = 'block';
-            }
-        }
+        function renderNodes() {
+            const container = document.getElementById('nodesContainer');
+            container.innerHTML = '<h3 style="margin: 25px 0 15px;">Your Donation Nodes</h3>';
 
-        // ==================== APPLE PAY ====================
-        function startApplePay() {
-            if (!currentProfile) return;
-
-            const amount = prompt("Enter donation amount for Apple Pay (£):", "25");
-            if (!amount || isNaN(amount)) return;
-
-            const paymentRequest = {
-                countryCode: 'GB',
-                currencyCode: 'GBP',
-                supportedNetworks: ['visa', 'masterCard', 'amex', 'discover'],
-                merchantCapabilities: ['supports3DS'],
-                lineItems: [{ label: `Donation to ${currentProfile.name}`, amount: parseFloat(amount).toFixed(2) }],
-                total: { label: 'RootDonate', amount: parseFloat(amount).toFixed(2) }
-            };
-
-            const session = new ApplePaySession(3, paymentRequest);
-
-            session.onvalidatemerchant = (event) => {
-                // In real app, call your server to validate
-                session.completeMerchantValidation({});
-            };
-
-            session.onpaymentauthorized = (event) => {
-                // Here you would send payment token to your backend
-                console.log("Apple Pay Token:", event.payment.token);
-                session.completePayment(ApplePaySession.STATUS_SUCCESS);
+            donationNodes.forEach((node, index) => {
+                const monzoUrl = `https://monzo.me/${node.username}`;
                 
-                alert(`🎉 Thank you! £${parseFloat(amount).toFixed(2)} donated to ${currentProfile.name} via Apple Pay`);
-            };
-
-            session.begin();
-        }
-
-        // Share Link Functions
-        function generateShareLink() {
-            const data = btoa(JSON.stringify(currentProfile));
-            const url = `${window.location.origin}${window.location.pathname}#data=${data}`;
-            document.getElementById('shareLink').textContent = url;
-        }
-
-        function copyShareLink() {
-            const link = document.getElementById('shareLink').textContent;
-            navigator.clipboard.writeText(link)
-                .then(() => alert("✅ Share link copied!"))
-                .catch(() => alert("Failed to copy"));
-        }
-
-        function quickDonate(amount) {
-            if (!currentProfile) return;
-            alert(`🎉 Thank you! £${amount} donated to ${currentProfile.name}`);
-        }
-
-        function customDonate() {
-            if (!currentProfile) return;
-            const amount = prompt("Enter donation amount (£):", "25");
-            if (amount && !isNaN(amount)) {
-                alert(`🎉 Thank you! £${parseFloat(amount).toFixed(2)} donated to ${currentProfile.name}`);
-            }
-        }
-
-        function logout() {
-            auth.signOut().then(() => {
-                document.getElementById('profileScreen').style.display = 'none';
-                document.getElementById('authScreen').style.display = 'block';
+                const nodeHTML = `
+                    <div class="donation-node">
+                        <div class="avatar">${node.name[0]}</div>
+                        <div class="node-info">
+                            <div class="node-name">${node.name}</div>
+                            <div class="node-username">@${node.username}</div>
+                            <div class="monzo-link">${monzoUrl}</div>
+                            
+                            <div class="amount-btns">
+                                <div class="amount-btn" onclick="sendMonzoDonation('${node.username}', 5)">£5</div>
+                                <div class="amount-btn" onclick="sendMonzoDonation('${node.username}', 10)">£10</div>
+                                <div class="amount-btn" onclick="sendMonzoDonation('${node.username}', 20)">£20</div>
+                                <div class="amount-btn" onclick="sendMonzoDonation('${node.username}', 50)">£50</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += nodeHTML;
             });
         }
 
-        // Load shared profile
-        window.onload = function() {
-            const hash = window.location.hash;
-            if (hash.startsWith('#data=')) {
-                try {
-                    const profile = JSON.parse(atob(hash.substring(6)));
-                    currentProfile = profile;
-                    document.getElementById('authScreen').style.display = 'none';
-                    document.getElementById('profileScreen').style.display = 'block';
-                    
-                    document.getElementById('creatorName').textContent = profile.name;
-                    document.getElementById('creatorId').textContent = `@${profile.id}`;
-                    document.getElementById('totalRaised').textContent = `£${profile.total}`;
-                    
-                    generateShareLink();
-                    
-                    if (window.ApplePaySession && ApplePaySession.canMakePayments()) {
-                        document.getElementById('applePayBtn').style.display = 'block';
-                    }
-                } catch(e) {}
-            }
-        };
+        function sendMonzoDonation(username, amount) {
+            const url = `https://monzo.me/${username}?amount=${amount}`;
+            window.open(url, '_blank');
+        }
+
+        function openMonzo(example) {
+            let username = example === 'example1' ? 'climatefund' : 'indieart';
+            window.open(`https://monzo.me/${username}`, '_blank');
+        }
+
+        // Allow pressing Enter in inputs
+        document.getElementById('monzoUsername').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') addDonationNode();
+        });
     </script>
 </body>
 </html>
