@@ -82,21 +82,15 @@
             <button class="btn-primary" onclick="lookupIP()">Get IP</button>
             <div id="ipResult" class="lookup-result"></div>
 
-            <!-- Domain Location on Apple Maps -->
+            <!-- Domain Location on Apple Maps with Autocomplete -->
             <h3 class="lookup-title">Domain Location (Apple Maps)</h3>
-            <input type="text" id="domainLocationInput" placeholder="example.com">
+            <div style="position:relative;">
+                <input type="text" id="domainLocationInput" placeholder="example.com or place name..." onkeyup="handleDomainLocationInput()" autocomplete="off">
+                <div id="domainAutocompleteList" class="autocomplete-list" style="display:none;"></div>
+            </div>
             <button class="btn-primary" onclick="lookupDomainLocation()">Show on Map</button>
             <div id="domainLocationResult" class="lookup-result"></div>
             <div id="map"></div>
-
-            <!-- Address Autocomplete -->
-            <h3 class="lookup-title">Address Lookup (Apple Maps Style)</h3>
-            <div style="position:relative;">
-                <input type="text" id="addressInput" placeholder="Type address..." onkeyup="handleAddressInput()" autocomplete="off">
-                <div id="autocompleteList" class="autocomplete-list" style="display:none;"></div>
-            </div>
-            <button class="btn-primary" onclick="confirmAddress()">Lookup Location</button>
-            <div id="addressResult" class="lookup-result"></div>
 
             <h3 class="history-title">Recent Donations</h3>
             <div id="historyContainer"></div>
@@ -242,18 +236,67 @@
             } catch { result.innerHTML = `<span class="error">Failed</span>`; }
         }
 
-        // Domain → Location on Apple Maps
+        // Domain Location with Apple Maps-style Autocomplete
+        let debounceTimer;
+        async function handleDomainLocationInput() {
+            clearTimeout(debounceTimer);
+            const input = document.getElementById('domainLocationInput');
+            const list = document.getElementById('domainAutocompleteList');
+            list.style.display = 'none';
+            list.innerHTML = '';
+
+            const q = input.value.trim();
+            if (q.length < 3) return;
+
+            debounceTimer = setTimeout(async () => {
+                try {
+                    // Use Nominatim for place/address autocomplete (Apple Maps style)
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=8`);
+                    const places = await res.json();
+                    places.forEach(p => {
+                        const div = document.createElement('div');
+                        div.className = 'autocomplete-item';
+                        div.textContent = p.display_name;
+                        div.onclick = () => {
+                            input.value = p.display_name;
+                            selectedPlace = p;
+                            list.style.display = 'none';
+                        };
+                        list.appendChild(div);
+                    });
+                    if (places.length) list.style.display = 'block';
+                } catch(e) {}
+            }, 400);
+        }
+
         async function lookupDomainLocation() {
-            const domain = document.getElementById('domainLocationInput').value.trim();
+            const inputVal = document.getElementById('domainLocationInput').value.trim();
             const resultDiv = document.getElementById('domainLocationResult');
-            if (!domain) return resultDiv.innerHTML = `<span class="error">Enter a domain</span>`;
+            if (!inputVal) return resultDiv.innerHTML = `<span class="error">Enter a domain or place</span>`;
 
-            resultDiv.innerHTML = 'Finding server location...';
+            resultDiv.innerHTML = 'Finding location...';
 
+            // If user selected from autocomplete (place), use it directly
+            if (selectedPlace && selectedPlace.display_name === inputVal) {
+                const lat = parseFloat(selectedPlace.lat);
+                const lon = parseFloat(selectedPlace.lon);
+
+                resultDiv.innerHTML = `
+                    <strong>${inputVal}</strong><br>
+                    ${selectedPlace.display_name}<br><br>
+                    <a href="https://maps.apple.com/?ll=${lat},${lon}" target="_blank" style="color:var(--primary)">→ Open in Apple Maps</a>
+                `;
+
+                updateMap(lat, lon);
+                return;
+            }
+
+            // Otherwise treat as domain → IP → geo
             try {
-                const dnsRes = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=A`);
+                const dnsRes = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(inputVal)}&type=A`);
                 const dnsData = await dnsRes.json();
-                const ip = dnsData.Answer.find(a => a.type === 1).data;
+                const ip = dnsData.Answer?.find(a => a.type === 1)?.data;
+                if (!ip) throw new Error("No IP");
 
                 const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
                 const geo = await geoRes.json();
@@ -261,57 +304,36 @@
                 const lat = parseFloat(geo.latitude), lon = parseFloat(geo.longitude);
 
                 resultDiv.innerHTML = `
-                    <strong>${domain}</strong><br>
+                    <strong>${inputVal}</strong><br>
                     IP: ${ip}<br>
                     ${geo.city}, ${geo.region}, ${geo.country_name}<br><br>
                     <a href="https://maps.apple.com/?ll=${lat},${lon}" target="_blank" style="color:var(--primary)">→ Open in Apple Maps</a>
                 `;
 
-                if (!mapInstance) {
-                    mapInstance = L.map('map').setView([lat, lon], 10);
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance);
-                } else mapInstance.setView([lat, lon], 10);
-                L.marker([lat, lon]).addTo(mapInstance);
+                updateMap(lat, lon);
             } catch (e) {
-                resultDiv.innerHTML = `<span class="error">Could not locate this domain.</span>`;
+                resultDiv.innerHTML = `<span class="error">Could not locate this domain/place.</span>`;
             }
         }
 
-        // Address Autocomplete
-        let debounceTimer;
-        async function handleAddressInput() {
-            clearTimeout(debounceTimer);
-            const input = document.getElementById('addressInput');
-            const list = document.getElementById('autocompleteList');
-            list.style.display = 'none'; list.innerHTML = '';
-
-            const q = input.value.trim();
-            if (q.length < 3) return;
-
-            debounceTimer = setTimeout(async () => {
-                try {
-                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=8`);
-                    const places = await res.json();
-                    places.forEach(p => {
-                        const div = document.createElement('div');
-                        div.className = 'autocomplete-item';
-                        div.textContent = p.display_name;
-                        div.onclick = () => { input.value = p.display_name; selectedPlace = p; list.style.display = 'none'; };
-                        list.appendChild(div);
-                    });
-                    if (places.length) list.style.display = 'block';
-                } catch(e){}
-            }, 400);
-        }
-
-        function confirmAddress() {
-            const resultDiv = document.getElementById('addressResult');
-            if (!selectedPlace) return resultDiv.innerHTML = `<span class="error">Select from suggestions first</span>`;
-            // ... same map logic as before ...
+        function updateMap(lat, lon) {
+            if (!mapInstance) {
+                mapInstance = L.map('map').setView([lat, lon], 10);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance);
+            } else {
+                mapInstance.setView([lat, lon], 10);
+            }
+            // Clear previous markers
+            mapInstance.eachLayer(layer => {
+                if (layer instanceof L.Marker) mapInstance.removeLayer(layer);
+            });
+            L.marker([lat, lon]).addTo(mapInstance);
         }
 
         document.addEventListener('click', e => {
-            if (!e.target.closest('#addressInput')) document.getElementById('autocompleteList').style.display = 'none';
+            if (!e.target.closest('#domainLocationInput')) {
+                document.getElementById('domainAutocompleteList').style.display = 'none';
+            }
         });
 
         function logout() {
