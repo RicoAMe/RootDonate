@@ -36,14 +36,16 @@
 
         .monzo-link { background:#27272f; padding:12px; border-radius:12px; font-size:0.9rem; word-break:break-all; margin:10px 0; font-family:monospace; }
 
-        #map { height:220px; border-radius:12px; margin-top:12px; }
+        #map { height:260px; border-radius:12px; margin-top:12px; }
 
-        .autocomplete-list { position:absolute; width:calc(100% - 60px); background:#1c1c24; border-radius:12px; max-height:260px; overflow-y:auto; z-index:100; box-shadow:0 10px 30px rgba(0,0,0,0.6); }
-        .autocomplete-item { padding:14px 16px; cursor:pointer; }
+        .autocomplete-list { position:absolute; width:calc(100% - 60px); background:#1c1c24; border-radius:12px; max-height:280px; overflow-y:auto; z-index:100; box-shadow:0 10px 30px rgba(0,0,0,0.6); }
+        .autocomplete-item { padding:14px 16px; cursor:pointer; border-bottom:1px solid #27272f; }
         .autocomplete-item:hover { background:#27272f; }
+        .autocomplete-item .type { font-size:0.8rem; color:#888; }
 
         .lookup-title { margin:30px 0 15px; font-size:1.1rem; }
         .error { color:#ff6666; text-align:center; margin:10px 0; }
+        .success { color:var(--primary); }
     </style>
 </head>
 <body>
@@ -76,20 +78,16 @@
             <input type="text" id="monzoUsername" placeholder="Monzo.me username">
             <button class="btn-primary" onclick="addDonationNode()">Add Node</button>
 
-            <!-- Domain IP Lookup -->
-            <h3 class="lookup-title">Domain IP Lookup</h3>
-            <input type="text" id="domainInput" placeholder="google.com">
-            <button class="btn-primary" onclick="lookupIP()">Get IP</button>
-            <div id="ipResult" class="lookup-result"></div>
-
-            <!-- Domain Location on Apple Maps with Autocomplete -->
-            <h3 class="lookup-title">Domain Location (Apple Maps)</h3>
+            <!-- Unified Apple Maps-style Search + Domain/IP Lookup -->
+            <h3 class="lookup-title">Unified Search • Domain • Location</h3>
             <div style="position:relative;">
-                <input type="text" id="domainLocationInput" placeholder="example.com or place name..." onkeyup="handleDomainLocationInput()" autocomplete="off">
-                <div id="domainAutocompleteList" class="autocomplete-list" style="display:none;"></div>
+                <input type="text" id="unifiedInput" placeholder="Search place, domain (google.com), or @username..." 
+                       onkeyup="handleUnifiedInput()" autocomplete="off">
+                <div id="unifiedAutocompleteList" class="autocomplete-list" style="display:none;"></div>
             </div>
-            <button class="btn-primary" onclick="lookupDomainLocation()">Show on Map</button>
-            <div id="domainLocationResult" class="lookup-result"></div>
+            <button class="btn-primary" onclick="performUnifiedLookup()">Search / Show on Map</button>
+            
+            <div id="unifiedResult" class="lookup-result"></div>
             <div id="map"></div>
 
             <h3 class="history-title">Recent Donations</h3>
@@ -111,7 +109,7 @@
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
-        let currentUserNodes = [], donationHistory = [], mapInstance, selectedPlace = null;
+        let currentUserNodes = [], donationHistory = [], mapInstance, selectedResult = null;
 
         function toggleForm() {
             const title = document.getElementById('formTitle');
@@ -223,116 +221,141 @@
             });
         }
 
-        // Domain IP Lookup
-        async function lookupIP() {
-            const domain = document.getElementById('domainInput').value.trim();
-            const result = document.getElementById('ipResult');
-            if (!domain) return result.innerHTML = `<span class="error">Enter a domain</span>`;
-            result.innerHTML = 'Resolving...';
-            try {
-                const res = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=A`);
-                const data = await res.json();
-                result.innerHTML = data.Answer ? `<strong>${domain}</strong><br><span style="color:var(--primary)">IP:</span> ${data.Answer.filter(a=>a.type===1).map(a=>a.data).join(', ')}` : `<span class="error">No IP found</span>`;
-            } catch { result.innerHTML = `<span class="error">Failed</span>`; }
-        }
-
-        // Domain Location with Apple Maps-style Autocomplete
+        // === UNIFIED APPLE MAPS-STYLE AUTOCOMPLETE + DOMAIN/IP LOOKUP ===
         let debounceTimer;
-        async function handleDomainLocationInput() {
+        async function handleUnifiedInput() {
             clearTimeout(debounceTimer);
-            const input = document.getElementById('domainLocationInput');
-            const list = document.getElementById('domainAutocompleteList');
+            const input = document.getElementById('unifiedInput');
+            const list = document.getElementById('unifiedAutocompleteList');
             list.style.display = 'none';
             list.innerHTML = '';
 
             const q = input.value.trim();
-            if (q.length < 3) return;
+            if (q.length < 2) return;
 
             debounceTimer = setTimeout(async () => {
                 try {
-                    // Use Nominatim for place/address autocomplete (Apple Maps style)
-                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=8`);
-                    const places = await res.json();
+                    // 1. Try place autocomplete (Apple Maps style)
+                    const placeRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6`);
+                    const places = await placeRes.json();
+
+                    // 2. Also check if it looks like a domain
+                    const isDomain = /^[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/.test(q);
+
                     places.forEach(p => {
                         const div = document.createElement('div');
                         div.className = 'autocomplete-item';
-                        div.textContent = p.display_name;
+                        div.innerHTML = `${p.display_name}<div class="type">📍 Place • ${p.type || 'location'}</div>`;
                         div.onclick = () => {
                             input.value = p.display_name;
-                            selectedPlace = p;
+                            selectedResult = {type: 'place', data: p};
                             list.style.display = 'none';
                         };
                         list.appendChild(div);
                     });
-                    if (places.length) list.style.display = 'block';
+
+                    if (isDomain) {
+                        const div = document.createElement('div');
+                        div.className = 'autocomplete-item';
+                        div.innerHTML = `${q}<div class="type">🌐 Domain / IP Lookup</div>`;
+                        div.onclick = () => {
+                            input.value = q;
+                            selectedResult = {type: 'domain', data: q};
+                            list.style.display = 'none';
+                        };
+                        list.appendChild(div);
+                    }
+
+                    if (places.length || isDomain) list.style.display = 'block';
                 } catch(e) {}
-            }, 400);
+            }, 350);
         }
 
-        async function lookupDomainLocation() {
-            const inputVal = document.getElementById('domainLocationInput').value.trim();
-            const resultDiv = document.getElementById('domainLocationResult');
-            if (!inputVal) return resultDiv.innerHTML = `<span class="error">Enter a domain or place</span>`;
+        async function performUnifiedLookup() {
+            const inputVal = document.getElementById('unifiedInput').value.trim();
+            const resultDiv = document.getElementById('unifiedResult');
+            if (!inputVal) return resultDiv.innerHTML = `<span class="error">Enter a place or domain</span>`;
 
-            resultDiv.innerHTML = 'Finding location...';
+            resultDiv.innerHTML = 'Searching...';
+            selectedResult = selectedResult || {};
 
-            // If user selected from autocomplete (place), use it directly
-            if (selectedPlace && selectedPlace.display_name === inputVal) {
-                const lat = parseFloat(selectedPlace.lat);
-                const lon = parseFloat(selectedPlace.lon);
-
-                resultDiv.innerHTML = `
-                    <strong>${inputVal}</strong><br>
-                    ${selectedPlace.display_name}<br><br>
-                    <a href="https://maps.apple.com/?ll=${lat},${lon}" target="_blank" style="color:var(--primary)">→ Open in Apple Maps</a>
-                `;
-
-                updateMap(lat, lon);
-                return;
-            }
-
-            // Otherwise treat as domain → IP → geo
             try {
+                // If place was selected from autocomplete
+                if (selectedResult.type === 'place' && selectedResult.data.display_name === inputVal) {
+                    const p = selectedResult.data;
+                    const lat = parseFloat(p.lat), lon = parseFloat(p.lon);
+
+                    resultDiv.innerHTML = `
+                        <strong>${inputVal}</strong><br>
+                        ${p.display_name}<br>
+                        <span class="success">📍 Located via OpenStreetMap</span><br><br>
+                        <a href="https://maps.apple.com/?ll=${lat},${lon}&q=${encodeURIComponent(inputVal)}" target="_blank" style="color:var(--primary)">→ Open in Apple Maps</a>
+                    `;
+                    updateMap(lat, lon, inputVal);
+                    return;
+                }
+
+                // Domain / IP lookup
                 const dnsRes = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(inputVal)}&type=A`);
                 const dnsData = await dnsRes.json();
                 const ip = dnsData.Answer?.find(a => a.type === 1)?.data;
-                if (!ip) throw new Error("No IP");
 
-                const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
-                const geo = await geoRes.json();
+                if (ip) {
+                    const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
+                    const geo = await geoRes.json();
 
-                const lat = parseFloat(geo.latitude), lon = parseFloat(geo.longitude);
+                    const lat = parseFloat(geo.latitude), lon = parseFloat(geo.longitude);
 
-                resultDiv.innerHTML = `
-                    <strong>${inputVal}</strong><br>
-                    IP: ${ip}<br>
-                    ${geo.city}, ${geo.region}, ${geo.country_name}<br><br>
-                    <a href="https://maps.apple.com/?ll=${lat},${lon}" target="_blank" style="color:var(--primary)">→ Open in Apple Maps</a>
-                `;
-
-                updateMap(lat, lon);
+                    resultDiv.innerHTML = `
+                        <strong>${inputVal}</strong><br>
+                        IP: <span style="color:var(--primary)">${ip}</span><br>
+                        ${geo.city || ''}, ${geo.region || ''}, ${geo.country_name || ''}<br><br>
+                        <a href="https://maps.apple.com/?ll=${lat},${lon}" target="_blank" style="color:var(--primary)">→ Open in Apple Maps</a>
+                    `;
+                    updateMap(lat, lon, inputVal);
+                } else {
+                    // Fallback to place search if no IP
+                    const placeRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(inputVal)}&limit=1`);
+                    const places = await placeRes.json();
+                    if (places.length) {
+                        const p = places[0];
+                        const lat = parseFloat(p.lat), lon = parseFloat(p.lon);
+                        resultDiv.innerHTML = `
+                            <strong>${inputVal}</strong><br>
+                            ${p.display_name}<br>
+                            <span class="success">📍 Place found</span><br><br>
+                            <a href="https://maps.apple.com/?ll=${lat},${lon}" target="_blank" style="color:var(--primary)">→ Open in Apple Maps</a>
+                        `;
+                        updateMap(lat, lon, inputVal);
+                    } else {
+                        throw new Error("Nothing found");
+                    }
+                }
             } catch (e) {
-                resultDiv.innerHTML = `<span class="error">Could not locate this domain/place.</span>`;
+                resultDiv.innerHTML = `<span class="error">Could not resolve domain or location.</span>`;
             }
         }
 
-        function updateMap(lat, lon) {
+        function updateMap(lat, lon, title = '') {
             if (!mapInstance) {
-                mapInstance = L.map('map').setView([lat, lon], 10);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance);
+                mapInstance = L.map('map').setView([lat, lon], 12);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap'
+                }).addTo(mapInstance);
             } else {
-                mapInstance.setView([lat, lon], 10);
+                mapInstance.setView([lat, lon], 12);
             }
-            // Clear previous markers
+            // Remove old markers
             mapInstance.eachLayer(layer => {
                 if (layer instanceof L.Marker) mapInstance.removeLayer(layer);
             });
-            L.marker([lat, lon]).addTo(mapInstance);
+            L.marker([lat, lon]).bindPopup(title || 'Location').addTo(mapInstance);
         }
 
+        // Close autocomplete on outside click
         document.addEventListener('click', e => {
-            if (!e.target.closest('#domainLocationInput')) {
-                document.getElementById('domainAutocompleteList').style.display = 'none';
+            if (!e.target.closest('#unifiedInput')) {
+                document.getElementById('unifiedAutocompleteList').style.display = 'none';
             }
         });
 
