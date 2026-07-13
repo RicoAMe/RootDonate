@@ -70,14 +70,11 @@
         .btn-secondary { background: #333; color: white; }
         .btn-danger { background: #ff4444; color: white; }
 
-        .donation-node {
+        .donation-node, .history-item {
             background: #1c1c24;
             border-radius: 16px;
             padding: 18px;
             margin: 15px 0;
-            display: flex;
-            align-items: center;
-            gap: 15px;
         }
 
         .avatar {
@@ -93,7 +90,7 @@
             font-weight: 700;
         }
 
-        .node-info { flex: 1; }
+        .node-info, .history-info { flex: 1; }
         .node-name { font-weight: 600; font-size: 1.1rem; }
         .node-username { color: #00ff9d; font-family: monospace; }
 
@@ -120,6 +117,16 @@
             word-break: break-all;
             margin: 10px 0;
             font-family: monospace;
+        }
+
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .history-title {
+            margin: 30px 0 15px;
+            font-size: 1.1rem;
         }
 
         .error { color: #ff6666; text-align: center; margin: 10px 0; }
@@ -150,11 +157,16 @@
     <!-- Dashboard Screen -->
     <div class="container" id="dashboardScreen" style="display:none;">
         <div class="header">
-            <h1 id="userGreeting">MonzoDonate</h1>
+            <h1 id="userGreeting">Root Donate</h1>
         </div>
         <div class="content">
-            <h3 style="margin:10px 0 15px;">Your Donation Nodes</h3>
-            
+
+            <!-- Search with Autocomplete -->
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Search creators or @usernames..." onkeyup="filterNodes()">
+            </div>
+
+            <h3>Your Donation Nodes</h3>
             <div id="nodesContainer"></div>
 
             <!-- Add New Node -->
@@ -163,7 +175,11 @@
             <input type="text" id="monzoUsername" placeholder="Monzo.me username (e.g. alexrivers)">
             
             <button class="btn-primary" onclick="addDonationNode()">Add Node</button>
-            
+
+            <!-- Donation History -->
+            <h3 class="history-title">Recent Donations</h3>
+            <div id="historyContainer"></div>
+
             <button class="btn-secondary" onclick="logout()" style="margin-top:30px;">Logout</button>
         </div>
     </div>
@@ -183,7 +199,9 @@
         const auth = firebase.auth();
 
         let currentUserNodes = [];
+        let donationHistory = [];
 
+        // Toggle Login / Signup
         function toggleForm() {
             const title = document.getElementById('formTitle');
             title.textContent = title.textContent === 'Create Account' ? 'Login' : 'Create Account';
@@ -214,60 +232,86 @@
             document.getElementById('dashboardScreen').style.display = 'block';
             
             const user = auth.currentUser;
-            document.getElementById('userGreeting').textContent = user ? `Hi, ${user.email.split('@')[0]}` : 'MonzoDonate';
+            document.getElementById('userGreeting').textContent = user ? `Hi, ${user.email.split('@')[0]}` : 'Root Donate';
             
-            loadNodes();
+            loadData();
         }
 
-        function loadNodes() {
-            // In a real app, load from Firestore. Here we use localStorage per user
+        function loadData() {
             const user = auth.currentUser;
             if (!user) return;
-            
-            const key = `monzoNodes_${user.uid}`;
-            currentUserNodes = JSON.parse(localStorage.getItem(key)) || [];
+
+            const nodeKey = `monzoNodes_${user.uid}`;
+            const historyKey = `donationHistory_${user.uid}`;
+
+            currentUserNodes = JSON.parse(localStorage.getItem(nodeKey)) || [];
+            donationHistory = JSON.parse(localStorage.getItem(historyKey)) || [];
+
             renderNodes();
+            renderHistory();
         }
 
         function saveNodes() {
             const user = auth.currentUser;
             if (!user) return;
-            const key = `monzoNodes_${user.uid}`;
-            localStorage.setItem(key, JSON.stringify(currentUserNodes));
+            localStorage.setItem(`monzoNodes_${user.uid}`, JSON.stringify(currentUserNodes));
         }
 
-        function renderNodes() {
+        function saveHistory() {
+            const user = auth.currentUser;
+            if (!user) return;
+            localStorage.setItem(`donationHistory_${user.uid}`, JSON.stringify(donationHistory));
+        }
+
+        function renderNodes(filteredNodes = currentUserNodes) {
             const container = document.getElementById('nodesContainer');
             container.innerHTML = '';
 
-            if (currentUserNodes.length === 0) {
-                container.innerHTML = `<p style="text-align:center; color:#666; padding:20px;">No nodes yet. Add one above!</p>`;
+            if (filteredNodes.length === 0) {
+                container.innerHTML = `<p style="text-align:center; color:#666; padding:20px;">No matching nodes found.</p>`;
                 return;
             }
 
-            currentUserNodes.forEach((node, index) => {
+            filteredNodes.forEach((node, index) => {
+                const originalIndex = currentUserNodes.indexOf(node);
                 const monzoUrl = `https://monzo.me/${node.username}`;
                 
                 const div = document.createElement('div');
                 div.className = 'donation-node';
                 div.innerHTML = `
-                    <div class="avatar">${node.name[0]}</div>
-                    <div class="node-info">
-                        <div class="node-name">${node.name}</div>
-                        <div class="node-username">@${node.username}</div>
-                        <div class="monzo-link">${monzoUrl}</div>
-                        
-                        <div class="amount-btns">
-                            <div class="amount-btn" onclick="quickDonate('${node.username}', 5)">£5</div>
-                            <div class="amount-btn" onclick="quickDonate('${node.username}', 10)">£10</div>
-                            <div class="amount-btn" onclick="quickDonate('${node.username}', 20)">£20</div>
-                            <div class="amount-btn" onclick="quickDonate('${node.username}', 50)">£50</div>
+                    <div style="display:flex; gap:15px; align-items:center;">
+                        <div class="avatar">${node.name[0]}</div>
+                        <div class="node-info">
+                            <div class="node-name">${node.name}</div>
+                            <div class="node-username">@${node.username}</div>
+                            <div class="monzo-link">${monzoUrl}</div>
+                            
+                            <div class="amount-btns">
+                                <div class="amount-btn" onclick="quickDonate('${node.username}', 5, ${originalIndex})">£5</div>
+                                <div class="amount-btn" onclick="quickDonate('${node.username}', 10, ${originalIndex})">£10</div>
+                                <div class="amount-btn" onclick="quickDonate('${node.username}', 20, ${originalIndex})">£20</div>
+                                <div class="amount-btn" onclick="quickDonate('${node.username}', 50, ${originalIndex})">£50</div>
+                            </div>
                         </div>
+                        <button class="btn-danger" style="width:auto; padding:8px 14px; font-size:0.85rem;" onclick="removeNode(${originalIndex})">Remove</button>
                     </div>
-                    <button class="btn-danger" style="width:auto; padding:8px 14px; font-size:0.85rem;" onclick="removeNode(${index})">Remove</button>
                 `;
                 container.appendChild(div);
             });
+        }
+
+        function filterNodes() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            if (!query) {
+                renderNodes();
+                return;
+            }
+
+            const filtered = currentUserNodes.filter(node => 
+                node.name.toLowerCase().includes(query) || 
+                node.username.toLowerCase().includes(query)
+            );
+            renderNodes(filtered);
         }
 
         function addDonationNode() {
@@ -283,7 +327,6 @@
             saveNodes();
             renderNodes();
 
-            // Clear inputs
             document.getElementById('creatorName').value = '';
             document.getElementById('monzoUsername').value = '';
         }
@@ -296,24 +339,63 @@
             }
         }
 
-        function quickDonate(username, amount) {
+        function quickDonate(username, amount, nodeIndex) {
             const url = `https://monzo.me/${username}?amount=${amount}`;
             window.open(url, '_blank');
+
+            // Add to history
+            donationHistory.unshift({
+                username,
+                amount,
+                timestamp: new Date().toISOString()
+            });
+
+            // Keep only last 10 donations
+            if (donationHistory.length > 10) donationHistory.pop();
+
+            saveHistory();
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('historyContainer');
+            container.innerHTML = '';
+
+            if (donationHistory.length === 0) {
+                container.innerHTML = `<p style="text-align:center; color:#666; padding:20px;">No donations yet.</p>`;
+                return;
+            }
+
+            donationHistory.forEach(item => {
+                const date = new Date(item.timestamp).toLocaleString('en-GB', { 
+                    month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+                });
+
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong>@${item.username}</strong><br>
+                            <small style="color:#888;">${date}</small>
+                        </div>
+                        <div style="font-size:1.3rem; font-weight:700; color:var(--primary);">£${item.amount}</div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
         }
 
         function logout() {
             auth.signOut().then(() => {
                 document.getElementById('dashboardScreen').style.display = 'none';
                 document.getElementById('authScreen').style.display = 'block';
-                document.getElementById('errorMsg').textContent = '';
             });
         }
 
-        // Auto-login if already signed in
+        // Auto-login
         auth.onAuthStateChanged(user => {
-            if (user) {
-                showDashboard();
-            }
+            if (user) showDashboard();
         });
     </script>
 </body>
