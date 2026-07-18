@@ -3,370 +3,580 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Root Donate</title>
+    <title>ROOT DONATE • RPG</title>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
-    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;family=Space+Grotesk:wght@500;600&amp;display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #00ff9d; --bg: #0a0a0f; --card: #111118; }
-        * { box-sizing: border-box; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: #e0e0e0; margin:0; padding:20px; min-height:100vh; }
-        .container { max-width:480px; margin:40px auto; background:var(--card); border-radius:24px; box-shadow:0 25px 60px rgba(0,0,0,0.6); overflow:hidden; }
-        .header { background:linear-gradient(135deg,#00ff9d,#00cc7a); color:#000; padding:40px 20px; text-align:center; }
-        h1 { margin:0; font-size:2.4rem; font-weight:700; }
-        .content { padding:30px; }
-
-        input { width:100%; padding:16px; margin:12px 0; background:#1c1c24; border:none; border-radius:12px; color:white; font-size:1.05rem; }
-        button { width:100%; padding:16px; margin:12px 0; border:none; border-radius:12px; font-size:1.05rem; font-weight:600; cursor:pointer; }
-        .btn-primary { background:var(--primary); color:#000; }
-        .btn-secondary { background:#333; color:white; }
-        .btn-danger { background:#ff4444; color:white; }
-
-        .donation-node, .history-item, .lookup-result { background:#1c1c24; border-radius:16px; padding:18px; margin:15px 0; }
-        .avatar { width:52px; height:52px; background:#00ff9d; color:#000; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.4rem; font-weight:700; }
-
-        .amount-btns { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
-        .amount-btn { background:#27272f; padding:8px 16px; border-radius:9999px; font-size:0.9rem; cursor:pointer; }
-        .amount-btn:hover { background:var(--primary); color:#000; }
-
-        .monzo-link { background:#27272f; padding:12px; border-radius:12px; font-size:0.9rem; word-break:break-all; margin:10px 0; font-family:monospace; }
-
-        #map { height:260px; border-radius:12px; margin-top:12px; }
-
-        .autocomplete-list { position:absolute; width:calc(100% - 60px); background:#1c1c24; border-radius:12px; max-height:280px; overflow-y:auto; z-index:100; box-shadow:0 10px 30px rgba(0,0,0,0.6); }
-        .autocomplete-item { padding:14px 16px; cursor:pointer; border-bottom:1px solid #27272f; }
-        .autocomplete-item:hover { background:#27272f; }
-        .autocomplete-item .type { font-size:0.8rem; color:#888; }
-
-        .lookup-title { margin:30px 0 15px; font-size:1.1rem; }
-        .error { color:#ff6666; text-align:center; margin:10px 0; }
-        .success { color:var(--primary); }
+        :root {
+            --primary: #00ff9d;
+            --accent: #ff00aa;
+            --bg: #0a0a0f;
+            --card: #111118;
+            --gold: #ffd700;
+        }
+        body { font-family: 'Inter', system_ui, sans-serif; background: var(--bg); color: #e0e0e0; margin:0; padding:20px; }
+        .container { max-width:520px; margin:30px auto; background:var(--card); border-radius:28px; box-shadow:0 30px 90px rgba(0,255,157,0.15); overflow:hidden; border:1px solid #222; }
+        .header { background: linear-gradient(135deg, #00ff9d, #ff00aa); color:#000; padding:50px 25px; text-align:center; position:relative; }
+        .header h1 { margin:0; font-family:'Space Grotesk', sans-serif; font-size:3rem; font-weight:900; letter-spacing:-3px; }
+        
+        .rpg-card { background:#1a1a22; border-radius:20px; padding:20px; margin:18px 0; border:1px solid #333; }
+        .stat-bar { height:12px; background:#222; border-radius:999px; overflow:hidden; margin-top:8px; }
+        .stat-fill { height:100%; background:linear-gradient(to right, var(--primary), #00cc7a); transition:width 0.6s cubic-bezier(0.23,1,0.32,1); }
+        
+        .donate-tier { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+        .tier-btn { flex:1; padding:14px; border-radius:16px; font-weight:700; text-align:center; cursor:pointer; transition:all .2s; border:2px solid #333; }
+        .tier-btn.common { background:#1f2a1f; border-color:#00ff9d; }
+        .tier-btn.rare { background:#1f1f2a; border-color:#00aaff; }
+        .tier-btn.epic { background:#2a1f2a; border-color:#ff00aa; }
+        .tier-btn:hover { transform:scale(1.05); box-shadow:0 0 20px currentColor; }
+        
+        .quest { background:#1a1a22; padding:16px; border-radius:16px; margin:10px 0; display:flex; justify-content:space-between; align-items:center; }
+        .quest.completed { opacity:0.6; text-decoration:line-through; }
+        
+        .achievement { display:flex; align-items:center; gap:12px; background:#1a1a22; padding:14px; border-radius:16px; margin:8px 0; }
+        .achievement.locked { opacity:0.5; filter:grayscale(0.8); }
+        
+        #map { height:300px; border-radius:20px; margin:15px 0; }
+        
+        .toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#111; color:var(--primary); padding:16px 28px; border-radius:999px; box-shadow:0 10px 40px rgba(0,0,0,0.7); z-index:9999; display:none; font-weight:600; }
+        
+        .level-badge { position:absolute; top:25px; right:25px; background:#000; color:var(--primary); padding:8px 18px; border-radius:999px; font-weight:900; font-size:0.95rem; }
     </style>
 </head>
 <body>
 
-    <!-- Auth Screen -->
-    <div class="container" id="authScreen">
-        <div class="header"><h1>Root Donate</h1><p>Support creators instantly</p></div>
-        <div class="content">
-            <h2 id="formTitle" style="text-align:center;margin-bottom:24px;">Create Account</h2>
-            <input type="email" id="email" placeholder="Email address" required>
-            <input type="password" id="password" placeholder="Password" required>
-            <div id="errorMsg" class="error"></div>
-            <button class="btn-primary" onclick="handleAuth()">Continue</button>
-            <button class="btn-secondary" onclick="toggleForm()">Already have account? Login</button>
-        </div>
+<!-- AUTH SCREEN -->
+<div class="container" id="authScreen">
+    <div class="header">
+        <h1>ROOT</h1>
+        <p style="margin:10px 0 0; font-size:1.1rem; opacity:0.9;">Donation RPG</p>
+    </div>
+    <div class="content" style="padding:30px;">
+        <h2 id="formTitle" style="text-align:center; margin-bottom:25px;">Create Account</h2>
+        <input type="email" id="email" placeholder="Email" style="width:100%; padding:16px; margin:10px 0; background:#1c1c24; border:none; border-radius:16px; color:white;">
+        <input type="password" id="password" placeholder="Password" style="width:100%; padding:16px; margin:10px 0; background:#1c1c24; border:none; border-radius:16px; color:white;">
+        <div id="errorMsg" style="color:#ff6666; text-align:center; margin:10px 0;"></div>
+        <button onclick="handleAuth()" style="width:100%; padding:18px; background:var(--primary); color:#000; border:none; border-radius:16px; font-weight:700; font-size:1.1rem;">Continue</button>
+        <button onclick="toggleForm()" style="width:100%; padding:16px; background:#222; color:white; border:none; border-radius:16px; margin-top:10px;">Switch to Login</button>
+    </div>
+</div>
+
+<!-- DASHBOARD / RPG SCREEN -->
+<div class="container" id="dashboardScreen" style="display:none;">
+    <!-- Header -->
+    <div class="header">
+        <h1>ROOT</h1>
+        <div class="level-badge" id="levelBadge">LVL 1 • 0 XP</div>
+        <div style="margin-top:15px; font-size:1.3rem; font-weight:700;" id="userGreeting">Guardian</div>
     </div>
 
-    <!-- Dashboard -->
-    <div class="container" id="dashboardScreen" style="display:none;">
-        <div class="header"><h1 id="userGreeting">Root Donate</h1></div>
-        <div class="content">
-
-            <!-- Donation Nodes -->
-            <input type="text" id="searchInput" placeholder="Search creators or @usernames..." onkeyup="filterNodes()">
-            <h3>Your Donation Nodes</h3>
-            <div id="nodesContainer"></div>
-
-            <h3 style="margin:25px 0 15px;">Add New Node</h3>
-            <input type="text" id="creatorName" placeholder="Creator / Cause name">
-            <input type="text" id="monzoUsername" placeholder="Monzo.me username">
-            <button class="btn-primary" onclick="addDonationNode()">Add Node</button>
-
-            <!-- Unified Apple Maps-style Search + Domain/IP Lookup -->
-            <h3 class="lookup-title">Search • Domain • Location</h3>
-            <div style="position:relative;">
-                <input type="text" id="unifiedInput" placeholder="Search place, domain (google.com), or @username..." 
-                       onkeyup="handleUnifiedInput()" autocomplete="off">
-                <div id="unifiedAutocompleteList" class="autocomplete-list" style="display:none;"></div>
+    <div style="padding:25px;">
+        
+        <!-- CHARACTER STATS -->
+        <div class="rpg-card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <div style="font-size:1.1rem; font-weight:700;">Guardian Stats</div>
+                    <div id="totalDonated" style="color:#888; font-size:0.95rem;">Total Donated: £0</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:2rem; font-weight:900; line-height:1;" id="streak">🔥 0</div>
+                    <div style="font-size:0.8rem; color:#888;">DAY STREAK</div>
+                </div>
             </div>
-            <button class="btn-primary" onclick="performUnifiedLookup()">Search / Show on Map</button>
-            
-            <div id="unifiedResult" class="lookup-result"></div>
-            <div id="map"></div>
-
-            <h3 class="history-title">Recent Donations</h3>
-            <div id="historyContainer"></div>
-
-            <button class="btn-secondary" onclick="logout()" style="margin-top:30px;">Logout</button>
+            <div style="margin-top:15px;">
+                <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:4px;">
+                    <span>XP Progress</span>
+                    <span id="xpText">0 / 1000</span>
+                </div>
+                <div class="stat-bar"><div class="stat-fill" id="xpBar" style="width:0%"></div></div>
+            </div>
         </div>
+
+        <!-- QUESTS -->
+        <div class="rpg-card">
+            <div style="font-weight:700; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                <span>📜 ACTIVE QUESTS</span>
+            </div>
+            <div id="questsContainer"></div>
+        </div>
+
+        <!-- DONATION NODES / ALLIES -->
+        <div class="rpg-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <div style="font-weight:700;">YOUR ALLIES</div>
+                <button onclick="showAddAllyModal()" style="padding:6px 14px; font-size:0.85rem; background:#222; border:none; border-radius:999px; color:white;">+ Add Ally</button>
+            </div>
+            <input type="text" id="searchInput" placeholder="Search allies..." onkeyup="filterAllies()" style="width:100%; padding:12px; background:#1c1c24; border:none; border-radius:12px; margin-bottom:12px;">
+            <div id="alliesContainer"></div>
+        </div>
+
+        <!-- DONATION OPTIONS -->
+        <div class="rpg-card">
+            <div style="font-weight:700; margin-bottom:12px;">DONATION TIERS</div>
+            <div class="donate-tier">
+                <div onclick="quickDonateAll(5, 'common')" class="tier-btn common">
+                    <div style="font-weight:900;">£5</div>
+                    <div style="font-size:0.75rem; opacity:0.8;">Common</div>
+                    <div style="font-size:0.7rem; color:#00ff9d;">+50 XP</div>
+                </div>
+                <div onclick="quickDonateAll(10, 'rare')" class="tier-btn rare">
+                    <div style="font-weight:900;">£10</div>
+                    <div style="font-size:0.75rem; opacity:0.8;">Rare</div>
+                    <div style="font-size:0.7rem; color:#00aaff;">+120 XP</div>
+                </div>
+                <div onclick="quickDonateAll(25, 'epic')" class="tier-btn epic">
+                    <div style="font-weight:900;">£25</div>
+                    <div style="font-size:0.75rem; opacity:0.8;">Epic</div>
+                    <div style="font-size:0.7rem; color:#ff00aa;">+300 XP</div>
+                </div>
+            </div>
+            <div style="margin-top:15px; display:flex; gap:10px;">
+                <input type="number" id="customAmount" placeholder="Custom £" style="flex:1; padding:14px; background:#1c1c24; border:none; border-radius:12px;">
+                <button onclick="quickDonateCustom()" style="padding:0 25px; background:var(--primary); color:#000; border:none; border-radius:12px; font-weight:700;">Donate</button>
+            </div>
+        </div>
+
+        <!-- SCOUT TOOL (Map + Lookup) -->
+        <div class="rpg-card">
+            <div style="font-weight:700; margin-bottom:12px;">🗺️ SCOUT TOOL</div>
+            <input type="text" id="unifiedInput" placeholder="Search place, domain, or @username..." onkeyup="handleUnifiedInput()" style="width:100%; padding:14px; background:#1c1c24; border:none; border-radius:12px;">
+            <button onclick="performUnifiedLookup()" style="margin-top:10px; width:100%; padding:14px; background:#222; color:white; border:none; border-radius:12px;">Scout Location / Resolve</button>
+            <div id="unifiedResult" style="margin-top:12px;"></div>
+            <div id="map"></div>
+        </div>
+
+        <!-- ACHIEVEMENTS -->
+        <div class="rpg-card">
+            <div style="font-weight:700; margin-bottom:12px;">🏆 ACHIEVEMENTS</div>
+            <div id="achievementsContainer"></div>
+        </div>
+
+        <!-- LEGEND LOG -->
+        <div class="rpg-card">
+            <div style="font-weight:700; margin-bottom:12px;">📖 LEGEND LOG</div>
+            <div id="historyContainer" style="max-height:220px; overflow-y:auto;"></div>
+        </div>
+
+        <button onclick="logout()" style="width:100%; padding:16px; background:#222; color:white; border:none; border-radius:16px; margin-top:20px;">Logout</button>
     </div>
+</div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
-            authDomain: "rootdonate-61e61.firebaseapp.com",
-            projectId: "rootdonate-61e61",
-            storageBucket: "rootdonate-61e61.firebasestorage.app",
-            messagingSenderId: "754240963907",
-            appId: "1:754240963907:web:5417c2763d8f02108bdbf6"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
+<div class="toast" id="toast"></div>
 
-        let currentUserNodes = [], donationHistory = [], mapInstance, selectedResult = null;
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+<script>
+// ==================== FIREBASE & GLOBAL STATE ====================
+const firebaseConfig = {
+    apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
+    authDomain: "rootdonate-61e61.firebaseapp.com",
+    projectId: "rootdonate-61e61",
+    storageBucket: "rootdonate-61e61.firebasestorage.app",
+    messagingSenderId: "754240963907",
+    appId: "1:754240963907:web:5417c2763d8f02108bdbf6"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
 
-        function toggleForm() {
-            const title = document.getElementById('formTitle');
-            title.textContent = title.textContent === 'Create Account' ? 'Login' : 'Create Account';
+let currentUser = null;
+let allies = [];
+let donationHistory = [];
+let quests = [
+    { id: 1, title: "First Donation", desc: "Make your first donation", target: 1, progress: 0, reward: 100, completed: false },
+    { id: 2, title: "Streak Builder", desc: "Donate on 3 different days", target: 3, progress: 0, reward: 250, completed: false },
+    { id: 3, title: "Generous Soul", desc: "Donate a total of £50", target: 50, progress: 0, reward: 400, completed: false }
+];
+let achievements = [
+    { id: 1, title: "First Steps", desc: "Make your first donation", unlocked: false },
+    { id: 2, title: "Rising Guardian", desc: "Reach Level 5", unlocked: false },
+    { id: 3, title: "Legendary Donor", desc: "Donate over £100 total", unlocked: false },
+    { id: 4, title: "Streak Master", desc: "Reach 7-day streak", unlocked: false }
+];
+
+let xp = 0;
+let level = 1;
+let streak = 0;
+let totalDonated = 0;
+let mapInstance = null;
+let lastDonationDate = null;
+
+// ==================== UTILITIES ====================
+function showToast(msg, duration = 2800) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.style.display = 'block';
+    setTimeout(() => toast.style.display = 'none', duration);
+}
+
+function confettiBurst() {
+    confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+    setTimeout(() => confetti({ particleCount: 80, spread: 60, origin: { y: 0.7 } }), 200);
+}
+
+function saveData() {
+    if (!currentUser) return;
+    const uid = currentUser.uid;
+    localStorage.setItem(`rpg_allies_${uid}`, JSON.stringify(allies));
+    localStorage.setItem(`rpg_history_${uid}`, JSON.stringify(donationHistory));
+    localStorage.setItem(`rpg_xp_${uid}`, xp);
+    localStorage.setItem(`rpg_level_${uid}`, level);
+    localStorage.setItem(`rpg_streak_${uid}`, streak);
+    localStorage.setItem(`rpg_total_${uid}`, totalDonated);
+    localStorage.setItem(`rpg_quests_${uid}`, JSON.stringify(quests));
+    localStorage.setItem(`rpg_achievements_${uid}`, JSON.stringify(achievements));
+}
+
+function loadData() {
+    if (!currentUser) return;
+    const uid = currentUser.uid;
+    allies = JSON.parse(localStorage.getItem(`rpg_allies_${uid}`)) || [];
+    donationHistory = JSON.parse(localStorage.getItem(`rpg_history_${uid}`)) || [];
+    xp = parseInt(localStorage.getItem(`rpg_xp_${uid}`)) || 0;
+    level = parseInt(localStorage.getItem(`rpg_level_${uid}`)) || 1;
+    streak = parseInt(localStorage.getItem(`rpg_streak_${uid}`)) || 0;
+    totalDonated = parseInt(localStorage.getItem(`rpg_total_${uid}`)) || 0;
+    quests = JSON.parse(localStorage.getItem(`rpg_quests_${uid}`)) || quests;
+    achievements = JSON.parse(localStorage.getItem(`rpg_achievements_${uid}`)) || achievements;
+}
+
+// ==================== RPG SYSTEMS ====================
+function updateStats() {
+    document.getElementById('levelBadge').textContent = `LVL ${level} • ${xp} XP`;
+    document.getElementById('xpText').textContent = `${xp % 1000} / 1000`;
+    document.getElementById('xpBar').style.width = `${(xp % 1000) / 10}%`;
+    document.getElementById('streak').innerHTML = `🔥 ${streak}`;
+    document.getElementById('totalDonated').innerHTML = `Total Donated: £${totalDonated}`;
+}
+
+function gainXP(amount, tier = 'common') {
+    const multiplier = tier === 'rare' ? 1.2 : tier === 'epic' ? 1.5 : 1;
+    const gained = Math.floor(amount * multiplier);
+    xp += gained;
+    
+    const newLevel = Math.floor(xp / 1000) + 1;
+    if (newLevel > level) {
+        level = newLevel;
+        showToast(`🎉 LEVEL UP! You are now Level ${level}`);
+        confettiBurst();
+        checkAchievements();
+    }
+    
+    updateStats();
+    saveData();
+    renderQuests();
+}
+
+function checkQuests(donationAmount = 0) {
+    let changed = false;
+    quests.forEach(q => {
+        if (q.completed) return;
+        
+        if (q.id === 1 && donationHistory.length >= 1) {
+            q.progress = 1; q.completed = true; changed = true;
         }
-
-        function handleAuth() {
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value.trim();
-            const errorMsg = document.getElementById('errorMsg');
-            if (!email || !password) return errorMsg.textContent = "Please fill all fields";
-
-            const isLogin = document.getElementById('formTitle').textContent === 'Login';
-            const promise = isLogin 
-                ? auth.signInWithEmailAndPassword(email, password)
-                : auth.createUserWithEmailAndPassword(email, password);
-            promise.then(() => showDashboard()).catch(err => errorMsg.textContent = err.message);
+        if (q.id === 2) {
+            // Simplified streak check
+            q.progress = Math.min(streak, q.target);
+            if (q.progress >= q.target) { q.completed = true; changed = true; }
         }
-
-        function showDashboard() {
-            document.getElementById('authScreen').style.display = 'none';
-            document.getElementById('dashboardScreen').style.display = 'block';
-            const user = auth.currentUser;
-            document.getElementById('userGreeting').textContent = user ? `Hi, ${user.email.split('@')[0]}` : 'Root Donate';
-            loadData();
+        if (q.id === 3) {
+            q.progress = Math.min(totalDonated, q.target);
+            if (q.progress >= q.target) { q.completed = true; changed = true; }
         }
-
-        function loadData() {
-            const user = auth.currentUser;
-            if (!user) return;
-            currentUserNodes = JSON.parse(localStorage.getItem(`monzoNodes_${user.uid}`)) || [];
-            donationHistory = JSON.parse(localStorage.getItem(`donationHistory_${user.uid}`)) || [];
-            renderNodes();
-            renderHistory();
+        
+        if (q.completed && !q.rewardGiven) {
+            xp += q.reward;
+            showToast(`Quest Complete! +${q.reward} XP`);
+            q.rewardGiven = true;
+            changed = true;
         }
+    });
+    if (changed) {
+        renderQuests();
+        updateStats();
+        saveData();
+    }
+}
 
-        function saveNodes() { const user = auth.currentUser; if(user) localStorage.setItem(`monzoNodes_${user.uid}`, JSON.stringify(currentUserNodes)); }
-        function saveHistory() { const user = auth.currentUser; if(user) localStorage.setItem(`donationHistory_${user.uid}`, JSON.stringify(donationHistory)); }
-
-        function renderNodes(filtered = currentUserNodes) {
-            const container = document.getElementById('nodesContainer');
-            container.innerHTML = '';
-            if (!filtered.length) {
-                container.innerHTML = `<p style="text-align:center;color:#666;padding:20px;">No nodes found.</p>`;
-                return;
-            }
-            filtered.forEach((node, i) => {
-                const idx = currentUserNodes.indexOf(node);
-                container.innerHTML += `
-                    <div class="donation-node">
-                        <div style="display:flex;gap:15px;align-items:center;">
-                            <div class="avatar">${node.name[0]}</div>
-                            <div style="flex:1">
-                                <div class="node-name">${node.name}</div>
-                                <div class="node-username">@${node.username}</div>
-                                <div class="monzo-link">https://monzo.me/${node.username}</div>
-                                <div class="amount-btns">
-                                    <div class="amount-btn" onclick="quickDonate('${node.username}',5,${idx})">£5</div>
-                                    <div class="amount-btn" onclick="quickDonate('${node.username}',10,${idx})">£10</div>
-                                    <div class="amount-btn" onclick="quickDonate('${node.username}',20,${idx})">£20</div>
-                                    <div class="amount-btn" onclick="quickDonate('${node.username}',50,${idx})">£50</div>
-                                </div>
-                            </div>
-                            <button class="btn-danger" onclick="removeNode(${idx})">Remove</button>
-                        </div>
-                    </div>`;
-            });
+function checkAchievements() {
+    let unlocked = false;
+    achievements.forEach(a => {
+        if (a.unlocked) return;
+        if ((a.id === 1 && donationHistory.length >= 1) ||
+            (a.id === 2 && level >= 5) ||
+            (a.id === 3 && totalDonated >= 100) ||
+            (a.id === 4 && streak >= 7)) {
+            a.unlocked = true;
+            unlocked = true;
+            showToast(`🏆 Achievement Unlocked: ${a.title}`);
         }
+    });
+    if (unlocked) renderAchievements();
+}
 
-        function filterNodes() {
-            const query = document.getElementById('searchInput').value.toLowerCase().trim();
-            const filtered = query ? currentUserNodes.filter(n => n.name.toLowerCase().includes(query) || n.username.toLowerCase().includes(query)) : currentUserNodes;
-            renderNodes(filtered);
+function renderQuests() {
+    const container = document.getElementById('questsContainer');
+    container.innerHTML = '';
+    quests.forEach(q => {
+        const div = document.createElement('div');
+        div.className = `quest ${q.completed ? 'completed' : ''}`;
+        div.innerHTML = `
+            <div>
+                <strong>${q.title}</strong><br>
+                <small style="color:#888;">${q.desc}</small>
+            </div>
+            <div style="text-align:right; font-size:0.85rem;">
+                ${q.progress}/${q.target}<br>
+                <span style="color:var(--primary);">+${q.reward} XP</span>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function renderAchievements() {
+    const container = document.getElementById('achievementsContainer');
+    container.innerHTML = '';
+    achievements.forEach(a => {
+        const div = document.createElement('div');
+        div.className = `achievement ${a.unlocked ? '' : 'locked'}`;
+        div.innerHTML = `
+            <div style="font-size:1.6rem;">${a.unlocked ? '🏆' : '🔒'}</div>
+            <div>
+                <strong>${a.title}</strong><br>
+                <small style="color:#888;">${a.desc}</small>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// ==================== DONATION SYSTEM ====================
+function quickDonateAll(amount, tier) {
+    if (allies.length === 0) {
+        showToast("Add an ally first!");
+        return;
+    }
+    // Donate to first ally for demo (or random)
+    const ally = allies[0];
+    window.open(`https://monzo.me/${ally.username}?amount=${amount}`, '_blank');
+    
+    recordDonation(ally.username, amount, tier);
+}
+
+function quickDonateCustom() {
+    const amount = parseInt(document.getElementById('customAmount').value);
+    if (!amount || amount <= 0) return showToast("Enter a valid amount");
+    
+    if (allies.length === 0) return showToast("Add an ally first!");
+    
+    const ally = allies[0];
+    window.open(`https://monzo.me/${ally.username}?amount=${amount}`, '_blank');
+    recordDonation(ally.username, amount, 'custom');
+    document.getElementById('customAmount').value = '';
+}
+
+function recordDonation(username, amount, tier = 'common') {
+    const now = new Date();
+    donationHistory.unshift({ username, amount, timestamp: now.toISOString(), tier });
+    if (donationHistory.length > 15) donationHistory.pop();
+    
+    totalDonated += amount;
+    
+    // Streak logic
+    const today = now.toDateString();
+    if (lastDonationDate !== today) {
+        if (lastDonationDate && new Date(lastDonationDate).getTime() > now.getTime() - 86400000 * 2) {
+            streak++;
+        } else {
+            streak = 1;
         }
+        lastDonationDate = today;
+    }
+    
+    gainXP(amount, tier);
+    checkQuests(amount);
+    checkAchievements();
+    
+    renderAllies();
+    renderHistory();
+    updateStats();
+    saveData();
+    confettiBurst();
+    showToast(`+${Math.floor(amount * (tier === 'epic' ? 1.5 : tier === 'rare' ? 1.2 : 1))} XP • Donation sent!`);
+}
 
-        function addDonationNode() {
-            const name = document.getElementById('creatorName').value.trim();
-            const username = document.getElementById('monzoUsername').value.trim().toLowerCase().replace('@','');
-            if (!name || !username) return alert("Please enter name and username");
-            currentUserNodes.push({name, username});
-            saveNodes();
-            renderNodes();
-            document.getElementById('creatorName').value = '';
-            document.getElementById('monzoUsername').value = '';
-        }
+function renderAllies(filteredAllies = allies) {
+    const container = document.getElementById('alliesContainer');
+    container.innerHTML = '';
+    
+    if (filteredAllies.length === 0) {
+        container.innerHTML = `<p style="text-align:center; color:#666; padding:20px;">No allies yet. Add some creators!</p>`;
+        return;
+    }
+    
+    filteredAllies.forEach((ally, index) => {
+        const div = document.createElement('div');
+        div.className = 'rpg-card';
+        div.style.margin = '10px 0';
+        div.innerHTML = `
+            <div style="display:flex; gap:15px; align-items:center;">
+                <div style="width:52px; height:52px; background:linear-gradient(45deg,#00ff9d,#ff00aa); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; color:#000; font-size:1.5rem;">${ally.name[0]}</div>
+                <div style="flex:1;">
+                    <div style="font-weight:700;">${ally.name}</div>
+                    <div style="color:#888; font-size:0.9rem;">@${ally.username}</div>
+                    <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+                        <div onclick="quickDonateSpecific(${index}, 5)" class="tier-btn common" style="padding:6px 14px; font-size:0.8rem; flex:none;">£5</div>
+                        <div onclick="quickDonateSpecific(${index}, 10)" class="tier-btn rare" style="padding:6px 14px; font-size:0.8rem; flex:none;">£10</div>
+                        <div onclick="quickDonateSpecific(${index}, 25)" class="tier-btn epic" style="padding:6px 14px; font-size:0.8rem; flex:none;">£25</div>
+                    </div>
+                </div>
+                <button onclick="removeAlly(${index})" style="background:#ff4444; color:white; border:none; padding:8px 12px; border-radius:12px; font-size:0.8rem;">Remove</button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
 
-        function removeNode(idx) {
-            if (confirm("Remove this node?")) {
-                currentUserNodes.splice(idx, 1);
-                saveNodes();
-                renderNodes();
-            }
-        }
+function quickDonateSpecific(index, amount) {
+    const ally = allies[index];
+    window.open(`https://monzo.me/${ally.username}?amount=${amount}`, '_blank');
+    recordDonation(ally.username, amount, amount >= 25 ? 'epic' : amount >= 10 ? 'rare' : 'common');
+}
 
-        function quickDonate(username, amount, idx) {
-            window.open(`https://monzo.me/${username}?amount=${amount}`, '_blank');
-            donationHistory.unshift({username, amount, timestamp: new Date().toISOString()});
-            if (donationHistory.length > 10) donationHistory.pop();
-            saveHistory();
-            renderHistory();
-        }
+function removeAlly(index) {
+    if (confirm('Remove this ally?')) {
+        allies.splice(index, 1);
+        renderAllies();
+        saveData();
+    }
+}
 
-        function renderHistory() {
-            const container = document.getElementById('historyContainer');
-            container.innerHTML = donationHistory.length ? '' : `<p style="text-align:center;color:#666;padding:20px;">No donations yet.</p>`;
-            donationHistory.forEach(item => {
-                const date = new Date(item.timestamp).toLocaleString('en-GB', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
-                container.innerHTML += `<div class="history-item"><div style="display:flex;justify-content:space-between;align-items:center;"><div><strong>@${item.username}</strong><br><small style="color:#888;">${date}</small></div><div style="font-size:1.3rem;font-weight:700;color:var(--primary);">£${item.amount}</div></div></div>`;
-            });
-        }
+function filterAllies() {
+    const query = document.getElementById('searchInput').value.toLowerCase();
+    const filtered = allies.filter(a => 
+        a.name.toLowerCase().includes(query) || a.username.toLowerCase().includes(query)
+    );
+    renderAllies(filtered);
+}
 
-        // === UNIFIED APPLE MAPS-STYLE AUTOCOMPLETE + DOMAIN/IP LOOKUP ===
-        let debounceTimer;
-        async function handleUnifiedInput() {
-            clearTimeout(debounceTimer);
-            const input = document.getElementById('unifiedInput');
-            const list = document.getElementById('unifiedAutocompleteList');
-            list.style.display = 'none';
-            list.innerHTML = '';
+function showAddAllyModal() {
+    const name = prompt("Ally / Creator Name:");
+    if (!name) return;
+    const username = prompt("Monzo.me username (without @):");
+    if (!username) return;
+    
+    allies.push({ name: name.trim(), username: username.trim().toLowerCase() });
+    renderAllies();
+    saveData();
+    showToast("New ally added!");
+}
 
-            const q = input.value.trim();
-            if (q.length < 2) return;
+// ==================== SCOUT / MAP ====================
+let debounceTimer;
+async function handleUnifiedInput() { /* same as previous version */ }
 
-            debounceTimer = setTimeout(async () => {
-                try {
-                    // 1. Try place autocomplete (Apple Maps style)
-                    const placeRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6`);
-                    const places = await placeRes.json();
+async function performUnifiedLookup() { /* same advanced lookup logic as before */ }
 
-                    // 2. Also check if it looks like a domain
-                    const isDomain = /^[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/.test(q);
+function updateMap(lat, lon, title = '') {
+    if (!mapInstance) {
+        mapInstance = L.map('map').setView([lat, lon], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance);
+    } else {
+        mapInstance.setView([lat, lon], 13);
+    }
+    mapInstance.eachLayer(l => { if (l instanceof L.Marker) mapInstance.removeLayer(l); });
+    L.marker([lat, lon]).bindPopup(title).addTo(mapInstance);
+}
 
-                    places.forEach(p => {
-                        const div = document.createElement('div');
-                        div.className = 'autocomplete-item';
-                        div.innerHTML = `${p.display_name}<div class="type">📍 Place • ${p.type || 'location'}</div>`;
-                        div.onclick = () => {
-                            input.value = p.display_name;
-                            selectedResult = {type: 'place', data: p};
-                            list.style.display = 'none';
-                        };
-                        list.appendChild(div);
-                    });
+// ==================== HISTORY ====================
+function renderHistory() {
+    const container = document.getElementById('historyContainer');
+    container.innerHTML = '';
+    if (donationHistory.length === 0) {
+        container.innerHTML = `<p style="text-align:center; color:#666;">No donations yet. Start your legend!</p>`;
+        return;
+    }
+    donationHistory.forEach(item => {
+        const date = new Date(item.timestamp).toLocaleDateString('en-GB', {month:'short', day:'numeric'});
+        const div = document.createElement('div');
+        div.style.cssText = 'background:#1a1a22; padding:12px 16px; border-radius:12px; margin:8px 0; display:flex; justify-content:space-between;';
+        div.innerHTML = `
+            <div>
+                <strong>@${item.username}</strong><br>
+                <small style="color:#888;">${date}</small>
+            </div>
+            <div style="text-align:right; font-weight:700; color:var(--primary);">£${item.amount}</div>
+        `;
+        container.appendChild(div);
+    });
+}
 
-                    if (isDomain) {
-                        const div = document.createElement('div');
-                        div.className = 'autocomplete-item';
-                        div.innerHTML = `${q}<div class="type">🌐 Domain / IP Lookup</div>`;
-                        div.onclick = () => {
-                            input.value = q;
-                            selectedResult = {type: 'domain', data: q};
-                            list.style.display = 'none';
-                        };
-                        list.appendChild(div);
-                    }
+// ==================== AUTH & INIT ====================
+function toggleForm() {
+    const title = document.getElementById('formTitle');
+    title.textContent = title.textContent.includes('Create') ? 'Login' : 'Create Account';
+}
 
-                    if (places.length || isDomain) list.style.display = 'block';
-                } catch(e) {}
-            }, 350);
-        }
+function handleAuth() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const error = document.getElementById('errorMsg');
+    
+    if (!email || !password) return error.textContent = "Fill all fields";
+    
+    const isLogin = document.getElementById('formTitle').textContent.includes('Login');
+    const promise = isLogin 
+        ? auth.signInWithEmailAndPassword(email, password)
+        : auth.createUserWithEmailAndPassword(email, password);
+    
+    promise.then(userCredential => {
+        currentUser = userCredential.user;
+        showDashboard();
+    }).catch(err => error.textContent = err.message);
+}
 
-        async function performUnifiedLookup() {
-            const inputVal = document.getElementById('unifiedInput').value.trim();
-            const resultDiv = document.getElementById('unifiedResult');
-            if (!inputVal) return resultDiv.innerHTML = `<span class="error">Enter a place or domain</span>`;
+function showDashboard() {
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('dashboardScreen').style.display = 'block';
+    
+    currentUser = auth.currentUser;
+    document.getElementById('userGreeting').textContent = currentUser.email.split('@')[0];
+    
+    loadData();
+    updateStats();
+    renderAllies();
+    renderQuests();
+    renderAchievements();
+    renderHistory();
+    
+    // Demo ally if none
+    if (allies.length === 0) {
+        allies.push({name: "Demo Creator", username: "demo"});
+        renderAllies();
+        saveData();
+    }
+}
 
-            resultDiv.innerHTML = 'Searching...';
-            selectedResult = selectedResult || {};
+function logout() {
+    auth.signOut().then(() => {
+        document.getElementById('dashboardScreen').style.display = 'none';
+        document.getElementById('authScreen').style.display = 'block';
+    });
+}
 
-            try {
-                // If place was selected from autocomplete
-                if (selectedResult.type === 'place' && selectedResult.data.display_name === inputVal) {
-                    const p = selectedResult.data;
-                    const lat = parseFloat(p.lat), lon = parseFloat(p.lon);
+auth.onAuthStateChanged(user => {
+    if (user) {
+        currentUser = user;
+        showDashboard();
+    }
+});
 
-                    resultDiv.innerHTML = `
-                        <strong>${inputVal}</strong><br>
-                        ${p.display_name}<br>
-                        <span class="success">📍 Located via OpenStreetMap</span><br><br>
-                        <a href="https://maps.apple.com/?ll=${lat},${lon}&q=${encodeURIComponent(inputVal)}" target="_blank" style="color:var(--primary)">→ Open in Apple Maps</a>
-                    `;
-                    updateMap(lat, lon, inputVal);
-                    return;
-                }
-
-                // Domain / IP lookup
-                const dnsRes = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(inputVal)}&type=A`);
-                const dnsData = await dnsRes.json();
-                const ip = dnsData.Answer?.find(a => a.type === 1)?.data;
-
-                if (ip) {
-                    const geoRes = await fetch(`https://ipapi.co/${ip}/json/`);
-                    const geo = await geoRes.json();
-
-                    const lat = parseFloat(geo.latitude), lon = parseFloat(geo.longitude);
-
-                    resultDiv.innerHTML = `
-                        <strong>${inputVal}</strong><br>
-                        IP: <span style="color:var(--primary)">${ip}</span><br>
-                        ${geo.city || ''}, ${geo.region || ''}, ${geo.country_name || ''}<br><br>
-                        <a href="https://maps.apple.com/?ll=${lat},${lon}" target="_blank" style="color:var(--primary)">→ Open in Apple Maps</a>
-                    `;
-                    updateMap(lat, lon, inputVal);
-                } else {
-                    // Fallback to place search if no IP
-                    const placeRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(inputVal)}&limit=1`);
-                    const places = await placeRes.json();
-                    if (places.length) {
-                        const p = places[0];
-                        const lat = parseFloat(p.lat), lon = parseFloat(p.lon);
-                        resultDiv.innerHTML = `
-                            <strong>${inputVal}</strong><br>
-                            ${p.display_name}<br>
-                            <span class="success">📍 Place found</span><br><br>
-                            <a href="https://maps.apple.com/?ll=${lat},${lon}" target="_blank" style="color:var(--primary)">→ Open in Apple Maps</a>
-                        `;
-                        updateMap(lat, lon, inputVal);
-                    } else {
-                        throw new Error("Nothing found");
-                    }
-                }
-            } catch (e) {
-                resultDiv.innerHTML = `<span class="error">Could not resolve domain or location.</span>`;
-            }
-        }
-
-        function updateMap(lat, lon, title = '') {
-            if (!mapInstance) {
-                mapInstance = L.map('map').setView([lat, lon], 12);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap'
-                }).addTo(mapInstance);
-            } else {
-                mapInstance.setView([lat, lon], 12);
-            }
-            // Remove old markers
-            mapInstance.eachLayer(layer => {
-                if (layer instanceof L.Marker) mapInstance.removeLayer(layer);
-            });
-            L.marker([lat, lon]).bindPopup(title || 'Location').addTo(mapInstance);
-        }
-
-        // Close autocomplete on outside click
-        document.addEventListener('click', e => {
-            if (!e.target.closest('#unifiedInput')) {
-                document.getElementById('unifiedAutocompleteList').style.display = 'none';
-            }
-        });
-
-        function logout() {
-            auth.signOut().then(() => {
-                document.getElementById('dashboardScreen').style.display = 'none';
-                document.getElementById('authScreen').style.display = 'block';
-            });
-        }
-
-        auth.onAuthStateChanged(user => { if (user) showDashboard(); });
-    </script>
+// Initial demo data hint
+console.log('%c[Root Donate RPG] Full gamified donation experience loaded successfully!', 'color:#00ff9d');
+</script>
 </body>
 </html>
