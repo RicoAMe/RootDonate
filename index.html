@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ROOT DONATE • RPG</title>
+    <title>ROOT DONATE • RPG • Map Nodes</title>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -11,159 +11,43 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Space+Grotesk:wght@500;600&display=swap" rel="stylesheet">
     
     <style>
-        :root {
-            --primary: #00ff9d;
-            --accent: #ff00aa;
-            --bg: #0a0a0f;
-            --card: #111118;
-        }
+        :root { --primary: #00ff9d; --accent: #ff00aa; --bg: #0a0a0f; --card: #111118; }
         * { box-sizing: border-box; }
-        body { 
-            font-family: 'Inter', system_ui, sans-serif; 
-            background: var(--bg); 
-            color: #e0e0e0; 
-            margin:0; 
-            padding:20px; 
-            min-height:100vh;
-        }
-        .container { 
-            max-width:520px; 
-            margin:30px auto; 
-            background:var(--card); 
-            border-radius:28px; 
-            box-shadow:0 30px 90px rgba(0,255,157,0.15); 
-            overflow:hidden; 
-            border:1px solid #222; 
-        }
-        .header { 
-            background: linear-gradient(135deg, #00ff9d, #ff00aa); 
-            color:#000; 
-            padding:50px 25px; 
-            text-align:center; 
-            position:relative; 
-        }
-        .header h1 { 
-            margin:0; 
-            font-family:'Space Grotesk', sans-serif; 
-            font-size:3rem; 
-            font-weight:900; 
-            letter-spacing:-3px; 
-        }
-        .rpg-card { 
-            background:#1a1a22; 
-            border-radius:20px; 
-            padding:20px; 
-            margin:18px 0; 
-            border:1px solid #333; 
-        }
-        .stat-bar { 
-            height:12px; 
-            background:#222; 
-            border-radius:999px; 
-            overflow:hidden; 
-            margin-top:8px; 
-        }
-        .stat-fill { 
-            height:100%; 
-            background:linear-gradient(to right, var(--primary), #00cc7a); 
-            transition:width 0.6s cubic-bezier(0.23,1,0.32,1); 
-        }
-        .donate-tier { 
-            display:flex; 
-            gap:10px; 
-            flex-wrap:wrap; 
-            margin-top:12px; 
-        }
-        .tier-btn { 
-            flex:1; 
-            padding:14px; 
-            border-radius:16px; 
-            font-weight:700; 
-            text-align:center; 
-            cursor:pointer; 
-            transition:all .2s; 
-            border:2px solid #333; 
-        }
+        body { font-family: 'Inter', system_ui, sans-serif; background: var(--bg); color: #e0e0e0; margin:0; padding:20px; }
+        .container { max-width:520px; margin:30px auto; background:var(--card); border-radius:28px; box-shadow:0 30px 90px rgba(0,255,157,0.15); overflow:hidden; border:1px solid #222; }
+        .header { background: linear-gradient(135deg, #00ff9d, #ff00aa); color:#000; padding:50px 25px; text-align:center; position:relative; }
+        .header h1 { margin:0; font-family:'Space Grotesk', sans-serif; font-size:3rem; font-weight:900; letter-spacing:-3px; }
+        .rpg-card { background:#1a1a22; border-radius:20px; padding:20px; margin:18px 0; border:1px solid #333; }
+        .stat-bar { height:12px; background:#222; border-radius:999px; overflow:hidden; margin-top:8px; }
+        .stat-fill { height:100%; background:linear-gradient(to right, var(--primary), #00cc7a); transition:width 0.6s cubic-bezier(0.23,1,0.32,1); }
+        .donate-tier { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+        .tier-btn { flex:1; padding:14px; border-radius:16px; font-weight:700; text-align:center; cursor:pointer; transition:all .2s; border:2px solid #333; }
         .tier-btn:hover { transform:scale(1.05); box-shadow:0 0 20px currentColor; }
         .tier-btn.common { background:#1f2a1f; border-color:#00ff9d; }
         .tier-btn.rare   { background:#1f1f2a; border-color:#00aaff; }
         .tier-btn.epic   { background:#2a1f2a; border-color:#ff00aa; }
-
-        .quest { 
-            background:#1a1a22; 
-            padding:16px; 
-            border-radius:16px; 
-            margin:10px 0; 
-            display:flex; 
-            justify-content:space-between; 
-            align-items:center; 
-        }
+        .quest { background:#1a1a22; padding:16px; border-radius:16px; margin:10px 0; display:flex; justify-content:space-between; align-items:center; }
         .quest.completed { opacity:0.6; text-decoration:line-through; }
-
-        .achievement { 
-            display:flex; 
-            align-items:center; 
-            gap:12px; 
-            background:#1a1a22; 
-            padding:14px; 
-            border-radius:16px; 
-            margin:8px 0; 
-        }
+        .achievement { display:flex; align-items:center; gap:12px; background:#1a1a22; padding:14px; border-radius:16px; margin:8px 0; }
         .achievement.locked { opacity:0.5; filter:grayscale(0.8); }
-
-        #map { height:300px; border-radius:20px; margin:15px 0; }
-        .toast { 
-            position:fixed; 
-            bottom:30px; 
-            left:50%; 
-            transform:translateX(-50%); 
-            background:#111; 
-            color:var(--primary); 
-            padding:16px 28px; 
-            border-radius:999px; 
-            box-shadow:0 10px 40px rgba(0,0,0,0.7); 
-            z-index:9999; 
-            display:none; 
-            font-weight:600; 
-        }
-        .level-badge { 
-            position:absolute; 
-            top:25px; 
-            right:25px; 
-            background:#000; 
-            color:var(--primary); 
-            padding:8px 18px; 
-            border-radius:999px; 
-            font-weight:900; 
-            font-size:0.95rem; 
-        }
-        .autocomplete-list { 
-            position:absolute; 
-            width:calc(100% - 50px); 
-            background:#1c1c24; 
-            border-radius:12px; 
-            max-height:280px; 
-            overflow-y:auto; 
-            z-index:1000; 
-            box-shadow:0 10px 30px rgba(0,0,0,0.6); 
-            margin-top:4px; 
-        }
-        .autocomplete-item { 
-            padding:14px 16px; 
-            cursor:pointer; 
-            border-bottom:1px solid #27272f; 
-        }
+        #map { height:340px; border-radius:20px; margin:15px 0; }
+        .toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#111; color:var(--primary); padding:16px 28px; border-radius:999px; box-shadow:0 10px 40px rgba(0,0,0,0.7); z-index:9999; display:none; font-weight:600; }
+        .level-badge { position:absolute; top:25px; right:25px; background:#000; color:var(--primary); padding:8px 18px; border-radius:999px; font-weight:900; font-size:0.95rem; }
+        .autocomplete-list { position:absolute; width:calc(100% - 50px); background:#1c1c24; border-radius:12px; max-height:280px; overflow-y:auto; z-index:1000; box-shadow:0 10px 30px rgba(0,0,0,0.6); margin-top:4px; }
+        .autocomplete-item { padding:14px 16px; cursor:pointer; border-bottom:1px solid #27272f; }
         .autocomplete-item:hover { background:#27272f; }
         .autocomplete-item .type { font-size:0.8rem; color:#888; }
+        .map-popup { font-size:0.95rem; }
+        .map-popup button { margin:4px 0; padding:6px 12px; font-size:0.85rem; }
     </style>
 </head>
 <body>
 
-<!-- AUTH -->
+<!-- AUTH SCREEN -->
 <div class="container" id="authScreen">
     <div class="header">
         <h1>ROOT</h1>
-        <p style="margin:10px 0 0; font-size:1.1rem; opacity:0.9;">Donation RPG</p>
+        <p style="margin:10px 0 0; font-size:1.1rem; opacity:0.9;">Donation RPG • Map Nodes</p>
     </div>
     <div style="padding:30px;">
         <h2 id="formTitle" style="text-align:center;margin-bottom:25px;">Create Account</h2>
@@ -184,10 +68,8 @@
     </div>
 
     <div style="padding:25px;">
-        <!-- Stats, Quests, Allies, Tiers, Scout, Achievements, Log – same clean structure as before -->
-        <!-- (Full sections kept from your version – only cleaned) -->
-
-        <!-- CHARACTER STATS -->
+        
+        <!-- STATS -->
         <div class="rpg-card">
             <div style="display:flex;justify-content:space-between;align-items:center;">
                 <div>
@@ -201,8 +83,7 @@
             </div>
             <div style="margin-top:15px;">
                 <div style="display:flex;justify-content:space-between;font-size:0.9rem;margin-bottom:4px;">
-                    <span>XP Progress</span>
-                    <span id="xpText">0 / 1000</span>
+                    <span>XP Progress</span><span id="xpText">0 / 1000</span>
                 </div>
                 <div class="stat-bar"><div id="xpBar" class="stat-fill" style="width:0%"></div></div>
             </div>
@@ -214,7 +95,7 @@
             <div id="questsContainer"></div>
         </div>
 
-        <!-- ALLIES -->
+        <!-- ALLIES LIST -->
         <div class="rpg-card">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
                 <div style="font-weight:700;">YOUR ALLIES</div>
@@ -238,16 +119,23 @@
             </div>
         </div>
 
-        <!-- SCOUT TOOL WITH AUTOCOMPLETE -->
-        <div class="rpg-card" style="position:relative;">
-            <div style="font-weight:700;margin-bottom:12px;">🗺️ SCOUT TOOL</div>
-            <input type="text" id="unifiedInput" placeholder="Search place, domain, or @username..." 
-                   onkeyup="handleUnifiedInput()" style="width:100%;padding:14px;background:#1c1c24;border:none;border-radius:12px;">
-            <div id="unifiedAutocompleteList" class="autocomplete-list" style="display:none;"></div>
-            
-            <button onclick="performUnifiedLookup()" style="margin-top:10px;width:100%;padding:14px;background:#222;color:white;border:none;border-radius:12px;">Scout / Resolve</button>
-            <div id="unifiedResult" style="margin-top:12px;"></div>
+        <!-- MAP NODES -->
+        <div class="rpg-card">
+            <div style="font-weight:700;margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                <span>🗺️ MAP NODES — Your Allies</span>
+                <button onclick="refreshMapNodes()" style="padding:4px 12px; font-size:0.8rem; background:#222; border:none; border-radius:999px; color:white;">Refresh Pins</button>
+            </div>
             <div id="map"></div>
+            <div style="font-size:0.8rem; color:#888; text-align:center; margin-top:8px;">Click any pin to donate instantly</div>
+        </div>
+
+        <!-- SCOUT TOOL (Autocomplete still works) -->
+        <div class="rpg-card" style="position:relative;">
+            <div style="font-weight:700;margin-bottom:12px;">🔍 SCOUT TOOL</div>
+            <input type="text" id="unifiedInput" placeholder="Search place, domain, or @username..." onkeyup="handleUnifiedInput()" style="width:100%;padding:14px;background:#1c1c24;border:none;border-radius:12px;">
+            <div id="unifiedAutocompleteList" class="autocomplete-list" style="display:none;"></div>
+            <button onclick="performUnifiedLookup()" style="margin-top:10px;width:100%;padding:14px;background:#222;color:white;border:none;border-radius:12px;">Scout Location / Resolve</button>
+            <div id="unifiedResult" style="margin-top:12px;"></div>
         </div>
 
         <!-- ACHIEVEMENTS & LOG -->
@@ -257,7 +145,7 @@
         </div>
         <div class="rpg-card">
             <div style="font-weight:700;margin-bottom:12px;">📖 LEGEND LOG</div>
-            <div id="historyContainer" style="max-height:220px;overflow-y:auto;"></div>
+            <div id="historyContainer" style="max-height:200px;overflow-y:auto;"></div>
         </div>
 
         <button onclick="logout()" style="width:100%;padding:16px;background:#222;color:white;border:none;border-radius:16px;margin-top:20px;">Logout</button>
@@ -268,17 +156,38 @@
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
 <script>
-// ==================== CONFIG & STATE ====================
-const firebaseConfig = { /* your config */ };
+// ==================== FIREBASE & STATE ====================
+const firebaseConfig = {
+    apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
+    authDomain: "rootdonate-61e61.firebaseapp.com",
+    projectId: "rootdonate-61e61",
+    storageBucket: "rootdonate-61e61.firebasestorage.app",
+    messagingSenderId: "754240963907",
+    appId: "1:754240963907:web:5417c2763d8f02108bdbf6"
+};
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 
 let currentUser = null;
-let allies = [], donationHistory = [], quests = [/* your quests */], achievements = [/* your achievements */];
+let allies = [];
+let donationHistory = [];
+let quests = [
+    { id:1, title:"First Donation", desc:"Make your first donation", target:1, progress:0, reward:100, completed:false },
+    { id:2, title:"Streak Builder", desc:"Donate on 3 different days", target:3, progress:0, reward:250, completed:false },
+    { id:3, title:"Generous Soul", desc:"Donate a total of £50", target:50, progress:0, reward:400, completed:false }
+];
+let achievements = [
+    { id:1, title:"First Steps", desc:"Make your first donation", unlocked:false },
+    { id:2, title:"Rising Guardian", desc:"Reach Level 5", unlocked:false },
+    { id:3, title:"Legendary Donor", desc:"Donate over £100 total", unlocked:false },
+    { id:4, title:"Streak Master", desc:"Reach 7-day streak", unlocked:false }
+];
+
 let xp = 0, level = 1, streak = 0, totalDonated = 0;
 let mapInstance = null, lastDonationDate = null, selectedResult = null;
+let mapMarkers = [];
 
-// ==================== UTILITIES (unchanged + improved) ====================
+// ==================== UTILITIES ====================
 function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg; t.style.display = 'block';
@@ -286,9 +195,279 @@ function showToast(msg) {
 }
 function confettiBurst() { confetti({particleCount:120,spread:80,origin:{y:0.6}}); }
 
-// Save / Load, updateStats, gainXP, checkQuests, etc. – kept from your version (cleaned)
+function saveData() {
+    if (!currentUser) return;
+    const uid = currentUser.uid;
+    localStorage.setItem(`rpg_allies_${uid}`, JSON.stringify(allies));
+    localStorage.setItem(`rpg_history_${uid}`, JSON.stringify(donationHistory));
+    localStorage.setItem(`rpg_xp_${uid}`, xp);
+    localStorage.setItem(`rpg_level_${uid}`, level);
+    localStorage.setItem(`rpg_streak_${uid}`, streak);
+    localStorage.setItem(`rpg_total_${uid}`, totalDonated);
+    localStorage.setItem(`rpg_quests_${uid}`, JSON.stringify(quests));
+    localStorage.setItem(`rpg_achievements_${uid}`, JSON.stringify(achievements));
+}
 
-// ==================== SCOUT TOOL – FULL AUTOCOMPLETE ====================
+function loadData() {
+    if (!currentUser) return;
+    const uid = currentUser.uid;
+    allies = JSON.parse(localStorage.getItem(`rpg_allies_${uid}`)) || [];
+    donationHistory = JSON.parse(localStorage.getItem(`rpg_history_${uid}`)) || [];
+    xp = parseInt(localStorage.getItem(`rpg_xp_${uid}`)) || 0;
+    level = parseInt(localStorage.getItem(`rpg_level_${uid}`)) || 1;
+    streak = parseInt(localStorage.getItem(`rpg_streak_${uid}`)) || 0;
+    totalDonated = parseInt(localStorage.getItem(`rpg_total_${uid}`)) || 0;
+    quests = JSON.parse(localStorage.getItem(`rpg_quests_${uid}`)) || quests;
+    achievements = JSON.parse(localStorage.getItem(`rpg_achievements_${uid}`)) || achievements;
+}
+
+// ==================== RPG SYSTEMS ====================
+function updateStats() {
+    document.getElementById('levelBadge').textContent = `LVL ${level} • ${xp} XP`;
+    document.getElementById('xpText').textContent = `${xp % 1000} / 1000`;
+    document.getElementById('xpBar').style.width = `${(xp % 1000)/10}%`;
+    document.getElementById('streak').innerHTML = `🔥 ${streak}`;
+    document.getElementById('totalDonated').innerHTML = `Total Donated: £${totalDonated}`;
+}
+
+function gainXP(amount, tier = 'common') {
+    const mult = tier === 'rare' ? 1.2 : tier === 'epic' ? 1.5 : 1;
+    const gained = Math.floor(amount * mult);
+    xp += gained;
+    const newLevel = Math.floor(xp / 1000) + 1;
+    if (newLevel > level) {
+        level = newLevel;
+        showToast(`🎉 LEVEL UP! You are now Level ${level}`);
+        confettiBurst();
+        checkAchievements();
+    }
+    updateStats();
+    saveData();
+    renderQuests();
+}
+
+function checkQuests(donationAmount = 0) {
+    let changed = false;
+    quests.forEach(q => {
+        if (q.completed) return;
+        if (q.id === 1 && donationHistory.length >= 1) { q.progress = 1; q.completed = true; changed = true; }
+        if (q.id === 2) { q.progress = Math.min(streak, q.target); if (q.progress >= q.target) { q.completed = true; changed = true; } }
+        if (q.id === 3) { q.progress = Math.min(totalDonated, q.target); if (q.progress >= q.target) { q.completed = true; changed = true; } }
+        if (q.completed && !q.rewardGiven) { xp += q.reward; showToast(`Quest Complete! +${q.reward} XP`); q.rewardGiven = true; changed = true; }
+    });
+    if (changed) { renderQuests(); updateStats(); saveData(); }
+}
+
+function checkAchievements() {
+    let unlocked = false;
+    achievements.forEach(a => {
+        if (a.unlocked) return;
+        if ((a.id===1 && donationHistory.length>=1) || (a.id===2 && level>=5) || (a.id===3 && totalDonated>=100) || (a.id===4 && streak>=7)) {
+            a.unlocked = true; unlocked = true; showToast(`🏆 Achievement Unlocked: ${a.title}`);
+        }
+    });
+    if (unlocked) renderAchievements();
+}
+
+function renderQuests() {
+    const c = document.getElementById('questsContainer'); c.innerHTML = '';
+    quests.forEach(q => {
+        const d = document.createElement('div');
+        d.className = `quest ${q.completed ? 'completed' : ''}`;
+        d.innerHTML = `<div><strong>${q.title}</strong><br><small style="color:#888">${q.desc}</small></div>
+                       <div style="text-align:right;font-size:0.85rem">${q.progress}/${q.target}<br><span style="color:var(--primary)">+${q.reward} XP</span></div>`;
+        c.appendChild(d);
+    });
+}
+
+function renderAchievements() {
+    const c = document.getElementById('achievementsContainer'); c.innerHTML = '';
+    achievements.forEach(a => {
+        const d = document.createElement('div');
+        d.className = `achievement ${a.unlocked ? '' : 'locked'}`;
+        d.innerHTML = `<div style="font-size:1.6rem">${a.unlocked ? '🏆' : '🔒'}</div>
+                       <div><strong>${a.title}</strong><br><small style="color:#888">${a.desc}</small></div>`;
+        c.appendChild(d);
+    });
+}
+
+// ==================== MAP NODES ====================
+function refreshMapNodes() {
+    if (!mapInstance) {
+        mapInstance = L.map('map').setView([51.505, -0.09], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance);
+    }
+    
+    // Clear old markers
+    mapMarkers.forEach(m => mapInstance.removeLayer(m));
+    mapMarkers = [];
+
+    allies.forEach((ally, index) => {
+        if (ally.lat && ally.lon) {
+            const marker = L.marker([ally.lat, ally.lon]).addTo(mapInstance);
+            
+            const popupContent = `
+                <div class="map-popup">
+                    <strong>${ally.name}</strong><br>
+                    <small>@${ally.username}</small><br><br>
+                    <button onclick="quickDonateFromMap(${index},5)" style="background:#1f2a1f;border:1px solid #00ff9d;color:#00ff9d;padding:6px 12px;border-radius:8px;margin:3px;">£5</button>
+                    <button onclick="quickDonateFromMap(${index},10)" style="background:#1f1f2a;border:1px solid #00aaff;color:#00aaff;padding:6px 12px;border-radius:8px;margin:3px;">£10</button>
+                    <button onclick="quickDonateFromMap(${index},25)" style="background:#2a1f2a;border:1px solid #ff00aa;color:#ff00aa;padding:6px 12px;border-radius:8px;margin:3px;">£25</button>
+                </div>
+            `;
+            
+            marker.bindPopup(popupContent);
+            mapMarkers.push(marker);
+        }
+    });
+    
+    // Auto-fit if we have markers
+    if (mapMarkers.length > 0) {
+        const group = L.featureGroup(mapMarkers);
+        mapInstance.fitBounds(group.getBounds().pad(0.2));
+    }
+}
+
+function quickDonateFromMap(index, amount) {
+    const ally = allies[index];
+    window.open(`https://monzo.me/${ally.username}?amount=${amount}`, '_blank');
+    recordDonation(ally.username, amount, amount >= 25 ? 'epic' : amount >= 10 ? 'rare' : 'common');
+    // Close popup after donation
+    setTimeout(() => {
+        if (mapInstance) mapInstance.closePopup();
+    }, 300);
+}
+
+// ==================== ALLIES ====================
+function renderAllies(filtered = allies) {
+    const container = document.getElementById('alliesContainer');
+    container.innerHTML = '';
+    
+    if (filtered.length === 0) {
+        container.innerHTML = `<p style="text-align:center;color:#666;padding:20px;">No allies yet. Add creators to see them on the map!</p>`;
+        return;
+    }
+    
+    filtered.forEach((ally, index) => {
+        const div = document.createElement('div');
+        div.className = 'rpg-card';
+        div.style.margin = '10px 0';
+        div.innerHTML = `
+            <div style="display:flex;gap:15px;align-items:center;">
+                <div style="width:52px;height:52px;background:linear-gradient(45deg,#00ff9d,#ff00aa);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;color:#000;font-size:1.5rem;">${ally.name[0]}</div>
+                <div style="flex:1;">
+                    <div style="font-weight:700;">${ally.name}</div>
+                    <div style="color:#888;font-size:0.9rem;">@${ally.username}</div>
+                    ${ally.lat ? `<div style="font-size:0.75rem;color:#00ff9d;margin-top:4px;">📍 On map</div>` : ''}
+                    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+                        <div onclick="quickDonateSpecific(${index},5)" class="tier-btn common" style="padding:6px 14px;font-size:0.8rem;flex:none;">£5</div>
+                        <div onclick="quickDonateSpecific(${index},10)" class="tier-btn rare" style="padding:6px 14px;font-size:0.8rem;flex:none;">£10</div>
+                        <div onclick="quickDonateSpecific(${index},25)" class="tier-btn epic" style="padding:6px 14px;font-size:0.8rem;flex:none;">£25</div>
+                    </div>
+                </div>
+                <button onclick="removeAlly(${index})" style="background:#ff4444;color:white;border:none;padding:8px 12px;border-radius:12px;font-size:0.8rem;">Remove</button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+    
+    // Refresh map pins whenever allies list changes
+    setTimeout(refreshMapNodes, 100);
+}
+
+function filterAllies() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const filtered = allies.filter(a => a.name.toLowerCase().includes(q) || a.username.toLowerCase().includes(q));
+    renderAllies(filtered);
+}
+
+async function showAddAllyModal() {
+    const name = prompt("Creator / Ally Name:");
+    if (!name) return;
+    const username = prompt("Monzo.me username (without @):");
+    if (!username) return;
+    
+    let lat = null, lon = null;
+    const location = prompt("Location (city/country) for map pin? (optional)", name);
+    
+    if (location) {
+        try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`);
+            const data = await res.json();
+            if (data[0]) {
+                lat = parseFloat(data[0].lat);
+                lon = parseFloat(data[0].lon);
+            }
+        } catch(e) {}
+    }
+    
+    allies.push({ name: name.trim(), username: username.trim().toLowerCase(), lat, lon });
+    renderAllies();
+    saveData();
+    showToast("New ally added to list & map!");
+}
+
+// ==================== DONATION ====================
+function quickDonateAll(amount, tier) {
+    if (allies.length === 0) return showToast("Add an ally first!");
+    const ally = allies[0];
+    window.open(`https://monzo.me/${ally.username}?amount=${amount}`, '_blank');
+    recordDonation(ally.username, amount, tier);
+}
+
+function quickDonateCustom() {
+    const amt = parseInt(document.getElementById('customAmount').value);
+    if (!amt || amt <= 0) return showToast("Enter valid amount");
+    if (allies.length === 0) return showToast("Add an ally first!");
+    const ally = allies[0];
+    window.open(`https://monzo.me/${ally.username}?amount=${amt}`, '_blank');
+    recordDonation(ally.username, amt, 'custom');
+    document.getElementById('customAmount').value = '';
+}
+
+function quickDonateSpecific(index, amount) {
+    const ally = allies[index];
+    window.open(`https://monzo.me/${ally.username}?amount=${amount}`, '_blank');
+    recordDonation(ally.username, amount, amount >= 25 ? 'epic' : amount >= 10 ? 'rare' : 'common');
+}
+
+function removeAlly(index) {
+    if (confirm('Remove this ally?')) {
+        allies.splice(index, 1);
+        renderAllies();
+        saveData();
+    }
+}
+
+function recordDonation(username, amount, tier = 'common') {
+    const now = new Date();
+    donationHistory.unshift({ username, amount, timestamp: now.toISOString(), tier });
+    if (donationHistory.length > 15) donationHistory.pop();
+    
+    totalDonated += amount;
+    
+    const today = now.toDateString();
+    if (lastDonationDate !== today) {
+        if (lastDonationDate && (new Date(lastDonationDate).getTime() > now.getTime() - 86400000*2)) {
+            streak++;
+        } else {
+            streak = 1;
+        }
+        lastDonationDate = today;
+    }
+    
+    gainXP(amount, tier);
+    checkQuests(amount);
+    checkAchievements();
+    renderAllies();
+    renderHistory();
+    updateStats();
+    saveData();
+    confettiBurst();
+    showToast(`+${Math.floor(amount * (tier==='epic'?1.5:tier==='rare'?1.2:1))} XP • Donation sent!`);
+}
+
+// ==================== SCOUT TOOL (Autocomplete) ====================
 let debounceTimer;
 async function handleUnifiedInput() {
     clearTimeout(debounceTimer);
@@ -302,7 +481,6 @@ async function handleUnifiedInput() {
 
     debounceTimer = setTimeout(async () => {
         try {
-            // Places
             const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=6`);
             const places = await res.json();
 
@@ -318,7 +496,6 @@ async function handleUnifiedInput() {
                 list.appendChild(div);
             });
 
-            // Domain hint
             if (/^[a-zA-Z0-9-]+\.[a-zA-Z]{2,}/.test(q)) {
                 const div = document.createElement('div');
                 div.className = 'autocomplete-item';
@@ -347,29 +524,40 @@ async function performUnifiedLookup() {
     try {
         if (selectedResult.type === 'place') {
             const p = selectedResult.data;
-            const lat = parseFloat(p.lat), lon = parseFloat(p.lon);
             resultDiv.innerHTML = `<strong>${val}</strong><br>${p.display_name}<br><span style="color:var(--primary)">📍 Found</span>`;
-            updateMap(lat, lon, val);
+            if (!mapInstance) {
+                mapInstance = L.map('map').setView([parseFloat(p.lat), parseFloat(p.lon)], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance);
+            } else {
+                mapInstance.setView([parseFloat(p.lat), parseFloat(p.lon)], 13);
+            }
             return;
         }
 
-        // Domain / IP
         const dns = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(val)}&type=A`);
         const dnsData = await dns.json();
         const ip = dnsData.Answer?.find(a => a.type === 1)?.data;
 
         if (ip) {
             const geo = await (await fetch(`https://ipapi.co/${ip}/json/`)).json();
-            const lat = parseFloat(geo.latitude), lon = parseFloat(geo.longitude);
             resultDiv.innerHTML = `<strong>${val}</strong><br>IP: ${ip}<br>${geo.city || ''}, ${geo.country_name || ''}`;
-            updateMap(lat, lon, val);
+            if (!mapInstance) {
+                mapInstance = L.map('map').setView([parseFloat(geo.latitude), parseFloat(geo.longitude)], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance);
+            } else {
+                mapInstance.setView([parseFloat(geo.latitude), parseFloat(geo.longitude)], 13);
+            }
         } else {
-            // Fallback place search
             const places = await (await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(val)}&limit=1`)).json();
             if (places[0]) {
                 const p = places[0];
-                updateMap(parseFloat(p.lat), parseFloat(p.lon), val);
                 resultDiv.innerHTML = `<strong>${val}</strong><br>${p.display_name}<br><span style="color:var(--primary)">📍 Place found</span>`;
+                if (!mapInstance) {
+                    mapInstance = L.map('map').setView([parseFloat(p.lat), parseFloat(p.lon)], 13);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance);
+                } else {
+                    mapInstance.setView([parseFloat(p.lat), parseFloat(p.lon)], 13);
+                }
             } else throw new Error();
         }
     } catch(e) {
@@ -377,20 +565,89 @@ async function performUnifiedLookup() {
     }
 }
 
-function updateMap(lat, lon, title = '') {
-    if (!mapInstance) {
-        mapInstance = L.map('map').setView([lat, lon], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance);
-    } else mapInstance.setView([lat, lon], 13);
-    mapInstance.eachLayer(l => { if (l instanceof L.Marker) mapInstance.removeLayer(l); });
-    L.marker([lat, lon]).bindPopup(title).addTo(mapInstance);
+// ==================== HISTORY ====================
+function renderHistory() {
+    const c = document.getElementById('historyContainer'); c.innerHTML = '';
+    if (donationHistory.length === 0) {
+        c.innerHTML = `<p style="text-align:center;color:#666;">No donations yet. Start your legend!</p>`;
+        return;
+    }
+    donationHistory.forEach(item => {
+        const d = new Date(item.timestamp).toLocaleDateString('en-GB', {month:'short', day:'numeric'});
+        const div = document.createElement('div');
+        div.style.cssText = 'background:#1a1a22;padding:12px 16px;border-radius:12px;margin:8px 0;display:flex;justify-content:space-between;';
+        div.innerHTML = `<div><strong>@${item.username}</strong><br><small style="color:#888">${d}</small></div>
+                         <div style="text-align:right;font-weight:700;color:var(--primary);">£${item.amount}</div>`;
+        c.appendChild(div);
+    });
 }
 
-// ==================== REST OF YOUR RPG LOGIC (cleaned) ====================
-// ... (All your existing functions: renderAllies, quickDonate*, recordDonation, etc.)
+// ==================== AUTH & INIT ====================
+function toggleForm() {
+    const title = document.getElementById('formTitle');
+    title.textContent = title.textContent.includes('Create') ? 'Login' : 'Create Account';
+}
 
-// Init
-auth.onAuthStateChanged(user => { if (user) { currentUser = user; showDashboard(); }});
+function handleAuth() {
+    const email = document.getElementById('email').value.trim();
+    const pass = document.getElementById('password').value.trim();
+    const err = document.getElementById('errorMsg');
+    if (!email || !pass) return err.textContent = "Fill all fields";
+
+    const isLogin = document.getElementById('formTitle').textContent.includes('Login');
+    const promise = isLogin 
+        ? auth.signInWithEmailAndPassword(email, pass)
+        : auth.createUserWithEmailAndPassword(email, pass);
+
+    promise.then(cred => {
+        currentUser = cred.user;
+        showDashboard();
+    }).catch(e => err.textContent = e.message);
+}
+
+function showDashboard() {
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('dashboardScreen').style.display = 'block';
+    
+    currentUser = auth.currentUser;
+    document.getElementById('userGreeting').textContent = currentUser.email.split('@')[0];
+    
+    loadData();
+    updateStats();
+    renderAllies();
+    renderQuests();
+    renderAchievements();
+    renderHistory();
+    
+    // Initialize map and show nodes
+    setTimeout(() => {
+        if (!mapInstance) {
+            mapInstance = L.map('map').setView([20, 0], 2);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance);
+        }
+        refreshMapNodes();
+    }, 300);
+    
+    if (allies.length === 0) {
+        allies.push({name: "Demo Creator", username: "demo", lat: 51.5074, lon: -0.1278});
+        renderAllies();
+        saveData();
+    }
+}
+
+function logout() {
+    auth.signOut().then(() => {
+        document.getElementById('dashboardScreen').style.display = 'none';
+        document.getElementById('authScreen').style.display = 'block';
+    });
+}
+
+auth.onAuthStateChanged(user => {
+    if (user) {
+        currentUser = user;
+        showDashboard();
+    }
+});
 </script>
 </body>
 </html>
