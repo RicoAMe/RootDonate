@@ -168,19 +168,11 @@
         }
         
         button { font-family: inherit; }
-        
-        @media (max-width: 480px) {
-            body { padding: 8px; }
-            .container { border-radius: 24px; }
-            .header { padding: 40px 16px 28px; }
-            .header h1 { font-size: 2.5rem; }
-            .content { padding: 20px; }
-        }
     </style>
 </head>
 <body>
 
-    <!-- SIGN UP SCREEN -->
+    <!-- SIGN UP -->
     <div class="container" id="signupScreen">
         <div class="header">
             <h1>ROOT</h1>
@@ -216,10 +208,10 @@
         </div>
 
         <div class="content">
-            <!-- Autocomplete Search -->
+            <!-- Real Autocomplete Search from Created Profiles -->
             <div class="search-container">
                 <span class="search-icon">🔍</span>
-                <input type="text" id="searchInput" placeholder="Search users..." autocomplete="off">
+                <input type="text" id="searchInput" placeholder="Search created profiles..." autocomplete="off">
                 <div class="autocomplete-results" id="autocompleteResults"></div>
             </div>
 
@@ -302,6 +294,7 @@
             confetti({ particleCount: 180, spread: 100, origin: { y: 0.6 } });
         }
 
+        // Load all created profiles
         async function loadAllUsers() {
             try {
                 const snapshot = await db.collection('users').get();
@@ -310,7 +303,7 @@
                     ...doc.data()
                 })).filter(u => u.displayName);
             } catch (e) {
-                console.error("Failed to load users:", e);
+                console.error("Failed to load profiles:", e);
             }
         }
 
@@ -383,14 +376,14 @@
                 div.innerHTML = `
                     <div class="result-avatar">${user.displayName ? user.displayName[0].toUpperCase() : '👤'}</div>
                     <div>
-                        <strong>${user.displayName || 'Unknown'}</strong><br>
+                        <strong>${user.displayName}</strong><br>
                         <small style="color:#888;">${user.email || ''}</small>
                     </div>
                 `;
                 div.onclick = () => {
                     document.getElementById('searchInput').value = '';
                     container.style.display = 'none';
-                    startApplePay(10, user.displayName || 'User');
+                    startApplePay(10, user.displayName);
                 };
                 container.appendChild(div);
             });
@@ -409,7 +402,7 @@
             }
 
             btn.disabled = true;
-            btn.textContent = "Creating Profile...";
+            btn.textContent = "Creating...";
             errorEl.textContent = "";
 
             try {
@@ -463,12 +456,12 @@
         // Live Autocomplete Search
         document.getElementById('searchInput').addEventListener('input', function () {
             const q = this.value.toLowerCase().trim();
-            const container = document.getElementById('autocompleteResults');
-            if (!q) return container.style.display = 'none';
-
+            if (!q) {
+                document.getElementById('autocompleteResults').style.display = 'none';
+                return;
+            }
             const filtered = allUsers.filter(user => 
-                (user.displayName && user.displayName.toLowerCase().includes(q)) ||
-                (user.email && user.email.toLowerCase().includes(q))
+                user.displayName && user.displayName.toLowerCase().includes(q)
             );
             renderSearchResults(filtered);
         });
