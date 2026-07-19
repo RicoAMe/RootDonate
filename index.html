@@ -48,7 +48,6 @@
             padding: 48px 20px 32px;
             text-align: center;
         }
-        
         .header h1 {
             font-family: 'Space Grotesk', sans-serif;
             font-size: 2.9rem;
@@ -59,8 +58,7 @@
         .content { padding: 24px; }
         
         .avatar {
-            width: 96px;
-            height: 96px;
+            width: 96px; height: 96px;
             background: linear-gradient(135deg, #00ff9d, #ff00aa);
             border-radius: 50%;
             margin: 0 auto 16px;
@@ -81,17 +79,10 @@
             border: 1px solid #2a2a32;
         }
         
-        .balance {
-            font-size: 2.4rem;
-            font-weight: 800;
-            color: var(--primary);
-        }
+        .balance { font-size: 2.4rem; font-weight: 800; color: var(--primary); }
         
-        /* Search Bar */
-        .search-container {
-            position: relative;
-            margin-bottom: 24px;
-        }
+        /* Search */
+        .search-container { position: relative; margin-bottom: 24px; }
         #searchInput {
             width: 100%;
             padding: 18px 20px 18px 52px;
@@ -112,9 +103,7 @@
         }
         .autocomplete-results {
             position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
+            top: 100%; left: 0; right: 0;
             background: #1a1a22;
             border-radius: 20px;
             margin-top: 8px;
@@ -133,12 +122,9 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        .result-item:hover, .result-item.active {
-            background: #25252e;
-        }
+        .result-item:hover, .result-item.active { background: #25252e; }
         .result-avatar {
-            width: 48px;
-            height: 48px;
+            width: 48px; height: 48px;
             border-radius: 50%;
             background: linear-gradient(135deg, #00ff9d, #ff00aa);
             display: flex;
@@ -149,20 +135,10 @@
         }
         
         .apple-pay-button, .withdraw-button {
-            border: none;
-            border-radius: 16px;
-            padding: 18px 24px;
-            font-size: 1.15rem;
-            font-weight: 700;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            height: 68px;
-            margin: 12px 0;
+            border: none; border-radius: 16px; padding: 18px 24px;
+            font-size: 1.15rem; font-weight: 700; width: 100%;
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            cursor: pointer; transition: all 0.25s ease; height: 68px; margin: 12px 0;
         }
         .apple-pay-button { background: #000; color: white; }
         .apple-pay-button:hover { background: #111; transform: translateY(-3px); }
@@ -172,42 +148,23 @@
         .withdraw-button:hover { background: #ff33bb; transform: translateY(-3px); }
         
         .quick-amounts {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-top: 16px;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px;
         }
         .quick-amounts button {
-            background: #1f1f26;
-            border: 1px solid #333;
-            color: white;
-            border-radius: 16px;
-            padding: 16px 8px;
-            font-weight: 700;
-            transition: all 0.2s;
+            background: #1f1f26; border: 1px solid #333; color: white;
+            border-radius: 16px; padding: 16px 8px; font-weight: 700; transition: all 0.2s;
         }
         .quick-amounts button.active,
         .quick-amounts button:hover {
-            background: var(--primary);
-            color: #000;
-            transform: scale(1.05);
+            background: var(--primary); color: #000; transform: scale(1.05);
         }
         
         .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #111;
-            color: var(--primary);
-            padding: 16px 32px;
-            border-radius: 999px;
-            font-weight: 700;
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            background: #111; color: var(--primary); padding: 16px 32px;
+            border-radius: 999px; font-weight: 700;
             box-shadow: 0 10px 40px rgba(0,0,0,0.7);
-            z-index: 10000;
-            display: none;
-            max-width: 90%;
-            text-align: center;
+            z-index: 10000; display: none; max-width: 90%; text-align: center;
         }
         
         button { font-family: inherit; }
@@ -223,7 +180,7 @@
 </head>
 <body>
 
-    <!-- SIGN UP SCREEN -->
+    <!-- SIGN UP -->
     <div class="container" id="signupScreen">
         <div class="header">
             <h1>ROOT</h1>
@@ -244,7 +201,7 @@
             
             <div id="errorMsg" style="color:#ff6666; text-align:center; margin:16px 0; min-height:24px;"></div>
             
-            <button onclick="completeSignup()" 
+            <button id="createBtn" onclick="completeSignup()" 
                     style="width:100%; padding:18px; background:var(--primary); color:#000; border:none; border-radius:16px; font-weight:700; font-size:1.15rem;">
                 Create Profile & Enable Apple Pay
             </button>
@@ -260,14 +217,12 @@
         </div>
 
         <div class="content">
-            <!-- Autocomplete Search -->
             <div class="search-container">
                 <span class="search-icon">🔍</span>
                 <input type="text" id="searchInput" placeholder="Search people or causes..." autocomplete="off">
                 <div class="autocomplete-results" id="autocompleteResults"></div>
             </div>
 
-            <!-- Balance -->
             <div class="rpg-card">
                 <div style="color:#888; font-size:0.9rem;">YOUR DONATED BALANCE</div>
                 <div id="balanceAmount" class="balance">$0</div>
@@ -276,7 +231,6 @@
                 </button>
             </div>
 
-            <!-- Stats -->
             <div class="rpg-card">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
@@ -290,7 +244,6 @@
                 </div>
             </div>
 
-            <!-- Quick Donate -->
             <div class="rpg-card">
                 <div style="font-weight:700; margin-bottom:16px; font-size:1.2rem;">🍎 Quick Apple Pay</div>
                 <p style="color:#888; margin-bottom:16px;">Tap any amount to donate instantly</p>
@@ -306,8 +259,7 @@
                 </button>
             </div>
 
-            <button onclick="logout()" 
-                    style="width:100%; padding:18px; background:#222; color:white; border:none; border-radius:16px; font-weight:600;">
+            <button onclick="logout()" style="width:100%; padding:18px; background:#222; color:white; border:none; border-radius:16px; font-weight:600;">
                 Sign Out
             </button>
         </div>
@@ -318,7 +270,6 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     
     <script>
-        // ==================== FIREBASE CONFIG ====================
         const firebaseConfig = {
             apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
             authDomain: "rootdonate-61e61.firebaseapp.com",
@@ -335,7 +286,6 @@
         let currentUser = null;
         let userDocRef = null;
 
-        // Demo profiles for search
         const demoProfiles = [
             { name: "Alex Rivera", handle: "@alexdoesgood", avatar: "🌍", cause: "Climate Action" },
             { name: "Maya Chen", handle: "@mayashelter", avatar: "🏠", cause: "Homeless Support" },
@@ -344,53 +294,41 @@
             { name: "Taylor Brooks", handle: "@taylorgives", avatar: "🧸", cause: "Children's Hospital" }
         ];
 
-        // ==================== UTILITIES ====================
         function showToast(msg, color = '#00ff9d') {
-            const toast = document.getElementById('toast');
-            toast.textContent = msg;
-            toast.style.color = color;
-            toast.style.display = 'block';
-            setTimeout(() => toast.style.display = 'none', 2800);
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.color = color;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 2800);
         }
 
         function confettiBurst() {
             confetti({ particleCount: 180, spread: 100, origin: { y: 0.6 } });
         }
 
-        // ==================== FIRESTORE ====================
         async function loadUserData() {
             if (!userDocRef) return;
-            try {
-                const doc = await userDocRef.get();
-                const data = doc.data() || {};
-                const total = data.totalDonated || 0;
-                document.getElementById('totalDonated').textContent = '$' + total;
-                document.getElementById('balanceAmount').textContent = '$' + total;
-            } catch (e) {
-                console.error(e);
-            }
+            const doc = await userDocRef.get();
+            const data = doc.data() || {};
+            const total = data.totalDonated || 0;
+            document.getElementById('totalDonated').textContent = '$' + total;
+            document.getElementById('balanceAmount').textContent = '$' + total;
         }
 
         async function updateDonatedAmount(amount) {
             if (!userDocRef) return;
-            try {
-                await userDocRef.update({
-                    totalDonated: firebase.firestore.FieldValue.increment(amount),
-                    lastDonation: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                await loadUserData();
-            } catch (e) {
-                console.error(e);
-            }
+            await userDocRef.update({
+                totalDonated: firebase.firestore.FieldValue.increment(amount),
+                lastDonation: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            await loadUserData();
         }
 
-        // ==================== APPLE PAY ====================
         function startApplePay(amount = 5, recipient = "General Fund") {
             if (!window.ApplePaySession || !ApplePaySession.canMakePayments()) {
-                showToast("Apple Pay is not available on this device", "#ff6666");
+                showToast("Apple Pay not available", "#ff6666");
                 return;
             }
-
             const request = {
                 countryCode: "US",
                 currencyCode: "USD",
@@ -398,9 +336,7 @@
                 merchantCapabilities: ["supports3DS"],
                 total: { label: `ROOT • ${recipient}`, amount: amount.toFixed(2) }
             };
-
             const session = new ApplePaySession(4, request);
-
             session.onvalidatemerchant = () => session.completeMerchantValidation({});
             session.onpaymentauthorized = () => {
                 setTimeout(async () => {
@@ -419,55 +355,31 @@
             startApplePay(amount);
         }
 
-        // ==================== WITHDRAW ====================
         function requestWithdraw() {
-            const balance = parseFloat(document.getElementById('balanceAmount').textContent.replace('$', '')) || 0;
+            const balance = parseFloat(document.getElementById('balanceAmount').textContent.replace('$','')) || 0;
             if (balance <= 0) return showToast("No balance available", "#ff6666");
-            
-            const amount = prompt(`How much would you like to withdraw? (Max: $${balance})`, balance);
+            const amount = prompt(`How much to withdraw? (Max $${balance})`, balance);
             if (amount && parseFloat(amount) > 0) {
-                showToast(`💸 Withdrawal request of $${parseFloat(amount)} submitted! (Demo)`, '#00ff9d');
+                showToast(`💸 Withdrawal request submitted!`, '#00ff9d');
             }
         }
 
-        // ==================== AUTOCOMPLETE SEARCH ====================
-        function renderSearchResults(filtered) {
-            const container = document.getElementById('autocompleteResults');
-            container.innerHTML = '';
-            if (!filtered.length) {
-                container.style.display = 'none';
-                return;
-            }
-
-            filtered.forEach(profile => {
-                const div = document.createElement('div');
-                div.className = 'result-item';
-                div.innerHTML = `
-                    <div class="result-avatar">${profile.avatar}</div>
-                    <div>
-                        <strong>${profile.name}</strong><br>
-                        <small style="color:#888;">${profile.handle} • ${profile.cause}</small>
-                    </div>
-                `;
-                div.onclick = () => {
-                    document.getElementById('searchInput').value = '';
-                    container.style.display = 'none';
-                    startApplePay(10, profile.name);
-                };
-                container.appendChild(div);
-            });
-            container.style.display = 'block';
-        }
-
-        // ==================== AUTH ====================
+        // ==================== CREATE PROFILE ====================
         async function completeSignup() {
+            const btn = document.getElementById('createBtn');
+            const errorEl = document.getElementById('errorMsg');
+            
             const name = document.getElementById('displayName').value.trim() || "Guardian";
             const email = document.getElementById('email').value.trim();
 
             if (!email) {
-                document.getElementById('errorMsg').textContent = "Please enter an email";
+                errorEl.textContent = "Please enter an email";
                 return;
             }
+
+            btn.disabled = true;
+            btn.textContent = "Creating Profile...";
+            errorEl.textContent = "";
 
             try {
                 const userCredential = await auth.signInAnonymously();
@@ -490,7 +402,17 @@
                 await loadUserData();
             } catch (e) {
                 console.error(e);
-                showToast("Failed to create profile", "#ff6666");
+                let msg = "Failed to create profile";
+                if (e.code === 'auth/operation-not-allowed') {
+                    msg = "Anonymous auth is not enabled in Firebase Console";
+                } else if (e.code === 'auth/network-request-failed') {
+                    msg = "Network error. Check your connection.";
+                }
+                errorEl.textContent = msg;
+                showToast(msg, "#ff6666");
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Create Profile & Enable Apple Pay";
             }
         }
 
@@ -498,7 +420,7 @@
             auth.signOut().then(() => location.reload());
         }
 
-        // Auto-login
+        // Auto login
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentUser = user;
@@ -510,24 +432,44 @@
             }
         });
 
-        // Search Input
+        // Search
         document.getElementById('searchInput').addEventListener('input', function () {
-            const query = this.value.toLowerCase().trim();
-            if (!query) {
-                document.getElementById('autocompleteResults').style.display = 'none';
-                return;
-            }
+            const q = this.value.toLowerCase().trim();
+            const container = document.getElementById('autocompleteResults');
+            if (!q) return container.style.display = 'none';
+
             const filtered = demoProfiles.filter(p => 
-                p.name.toLowerCase().includes(query) || 
-                p.cause.toLowerCase().includes(query)
+                p.name.toLowerCase().includes(q) || p.cause.toLowerCase().includes(q)
             );
             renderSearchResults(filtered);
         });
 
-        // Auto-focus
-        window.onload = () => {
-            setTimeout(() => document.getElementById('displayName').focus(), 600);
-        };
+        function renderSearchResults(filtered) {
+            const container = document.getElementById('autocompleteResults');
+            container.innerHTML = '';
+            if (!filtered.length) return container.style.display = 'none';
+
+            filtered.forEach(profile => {
+                const div = document.createElement('div');
+                div.className = 'result-item';
+                div.innerHTML = `
+                    <div class="result-avatar">${profile.avatar}</div>
+                    <div>
+                        <strong>${profile.name}</strong><br>
+                        <small style="color:#888;">${profile.handle} • ${profile.cause}</small>
+                    </div>
+                `;
+                div.onclick = () => {
+                    document.getElementById('searchInput').value = '';
+                    container.style.display = 'none';
+                    startApplePay(10, profile.name);
+                };
+                container.appendChild(div);
+            });
+            container.style.display = 'block';
+        }
+
+        window.onload = () => setTimeout(() => document.getElementById('displayName').focus(), 600);
     </script>
 </body>
 </html>
