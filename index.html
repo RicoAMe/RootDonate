@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ROOT DONATE • Quick Apple Pay Profile</title>
+    <title>ROOT DONATE • Quick Apple Pay</title>
     
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -19,139 +19,228 @@
             --accent: #ff00aa;
             --bg: #0a0a0f;
             --card: #111118;
+            --border: #222226;
         }
         
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
         
         body {
             font-family: 'Inter', system-ui, sans-serif;
             background: var(--bg);
             color: #e0e0e0;
             line-height: 1.6;
-            padding: 12px;
-            min-height: 100vh;
+            padding: 16px 12px;
+            min-height: 100dvh;
+            -webkit-tap-highlight-color: transparent;
         }
         
         .container {
             max-width: 520px;
             margin: 0 auto;
             background: var(--card);
-            border-radius: 28px;
-            box-shadow: 0 25px 80px rgba(0, 255, 157, 0.15);
+            border-radius: 32px;
+            box-shadow: 0 30px 90px rgba(0, 255, 157, 0.12);
             overflow: hidden;
-            border: 1px solid #222;
+            border: 1px solid var(--border);
         }
         
         .header {
-            background: linear-gradient(135deg, #00ff9d, #ff00aa);
+            background: linear-gradient(135deg, #00ff9d 0%, #ff00aa 100%);
             color: #000;
-            padding: 48px 20px 32px;
+            padding: 52px 24px 40px;
             text-align: center;
+            position: relative;
         }
+        
         .header h1 {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 2.9rem;
+            font-size: clamp(2.4rem, 8vw, 3.2rem);
             font-weight: 700;
-            letter-spacing: -2px;
+            letter-spacing: -2.5px;
+            line-height: 1;
         }
         
-        .content { padding: 24px; }
+        .content {
+            padding: 28px 24px;
+        }
         
         .avatar {
-            width: 96px; height: 96px;
+            width: 108px;
+            height: 108px;
             background: linear-gradient(135deg, #00ff9d, #ff00aa);
             border-radius: 50%;
-            margin: 0 auto 16px;
+            margin: 0 auto 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.5rem;
+            font-size: 3rem;
             color: #000;
             font-weight: 700;
-            border: 6px solid #1a1a22;
+            border: 7px solid #1a1a22;
+            box-shadow: 0 10px 30px rgba(0, 255, 157, 0.3);
         }
         
         .rpg-card {
             background: #1a1a22;
-            border-radius: 20px;
-            padding: 24px;
+            border-radius: 24px;
+            padding: 28px;
             margin-bottom: 20px;
-            border: 1px solid #2a2a32;
+            border: 1px solid var(--border);
         }
         
-        .balance { font-size: 2.4rem; font-weight: 800; color: var(--primary); }
+        .balance {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -1px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 18px 20px;
+            margin: 12px 0;
+            background: #1c1c24;
+            border: 1px solid #333;
+            border-radius: 18px;
+            color: white;
+            font-size: 1.05rem;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(0, 255, 157, 0.15);
+        }
+        
+        button {
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
         
         .share-btn {
-            background: #00ff9d;
+            background: var(--primary);
             color: #000;
             border: none;
-            border-radius: 16px;
-            padding: 16px;
+            border-radius: 18px;
+            padding: 18px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .apple-pay-button,
+        .withdraw-button {
+            border: none;
+            border-radius: 18px;
+            padding: 20px 24px;
+            font-size: 1.15rem;
             font-weight: 700;
             width: 100%;
-            margin: 16px 0;
-            cursor: pointer;
-            font-size: 1.05rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            height: 72px;
+            margin: 12px 0;
         }
         
-        .apple-pay-button, .withdraw-button {
-            border: none; border-radius: 16px; padding: 18px 24px;
-            font-size: 1.15rem; font-weight: 700; width: 100%;
-            display: flex; align-items: center; justify-content: center; gap: 12px;
-            cursor: pointer; transition: all 0.25s ease; height: 68px; margin: 12px 0;
+        .apple-pay-button {
+            background: #000;
+            color: white;
         }
-        .apple-pay-button { background: #000; color: white; }
-        .apple-pay-button:hover { background: #111; transform: translateY(-3px); }
-        .apple-pay-button::before { content: ""; font-size: 1.7rem; }
         
-        .withdraw-button { background: #ff00aa; color: #000; }
-        .withdraw-button:hover { background: #ff33bb; transform: translateY(-3px); }
+        .apple-pay-button::before {
+            content: "";
+            font-size: 1.9rem;
+        }
+        
+        .withdraw-button {
+            background: var(--accent);
+            color: #000;
+        }
         
         .quick-amounts {
-            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin: 20px 0;
         }
+        
         .quick-amounts button {
-            background: #1f1f26; border: 1px solid #333; color: white;
-            border-radius: 16px; padding: 16px 8px; font-weight: 700; transition: all 0.2s;
+            background: #1f1f26;
+            border: 1px solid #333;
+            color: white;
+            border-radius: 18px;
+            padding: 18px 12px;
+            font-weight: 700;
+            font-size: 1.1rem;
         }
+        
         .quick-amounts button.active,
         .quick-amounts button:hover {
-            background: var(--primary); color: #000; transform: scale(1.05);
+            background: var(--primary);
+            color: #000;
+            transform: scale(1.06);
         }
         
         .toast {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: #111; color: var(--primary); padding: 16px 32px;
-            border-radius: 999px; font-weight: 700;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
-            z-index: 10000; display: none; max-width: 90%; text-align: center;
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #111;
+            color: var(--primary);
+            padding: 16px 32px;
+            border-radius: 999px;
+            font-weight: 700;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.8);
+            z-index: 10000;
+            display: none;
+            max-width: 92%;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        @media (max-width: 480px) {
+            .container { border-radius: 28px; }
+            .header { padding: 48px 20px 36px; }
+            .content { padding: 24px 20px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- SIGN UP -->
+    <!-- SIGN UP SCREEN -->
     <div class="container" id="signupScreen">
         <div class="header">
             <h1>ROOT DONATE</h1>
-            <p style="margin-top:12px; font-size:1.1rem;">Quick Apple Pay Profile</p>
+            <p style="margin-top:14px; font-size:1.15rem; opacity:0.95;">Quick Apple Pay Profile</p>
         </div>
         <div class="content">
-            <div style="text-align:center; margin-bottom:32px;">
+            <div style="text-align:center; margin-bottom:36px;">
                 <div class="avatar">🌱</div>
-                <h2 style="font-size:1.6rem; margin-bottom:8px;">Create your profile</h2>
-                <p style="color:#888;">One tap donations with Apple Pay</p>
+                <h2 style="font-size:1.65rem; margin-bottom:8px;">Create your profile</h2>
+                <p style="color:#aaa;">One-tap donations with Apple Pay</p>
             </div>
 
-            <input type="text" id="displayName" placeholder="Display Name (e.g. Guardian)" 
-                   style="width:100%; padding:18px; margin:12px 0; background:#1c1c24; border:none; border-radius:16px; color:white; font-size:1.05rem;">
-            <input type="email" id="email" placeholder="Email" 
-                   style="width:100%; padding:18px; margin:12px 0; background:#1c1c24; border:none; border-radius:16px; color:white; font-size:1.05rem;">
+            <input type="text" id="displayName" placeholder="Display Name (e.g. Guardian)" autocomplete="name">
+            <input type="email" id="email" placeholder="Email Address" autocomplete="email">
             
-            <div id="errorMsg" style="color:#ff6666; text-align:center; margin:16px 0; min-height:24px;"></div>
+            <div id="errorMsg" style="color:#ff6666; text-align:center; margin:18px 0; min-height:28px; font-size:0.95rem;"></div>
             
             <button id="createBtn" onclick="completeSignup()" 
-                    style="width:100%; padding:18px; background:var(--primary); color:#000; border:none; border-radius:16px; font-weight:700; font-size:1.15rem;">
+                    style="width:100%; padding:20px; background:var(--primary); color:#000; border:none; border-radius:18px; font-weight:700; font-size:1.2rem;">
                 Create Profile & Enable Apple Pay
             </button>
         </div>
@@ -161,12 +250,12 @@
     <div class="container" id="profileScreen" style="display:none;">
         <div class="header">
             <h1>ROOT DONATE</h1>
-            <div id="userGreeting" style="font-size:1.4rem; font-weight:700; margin-top:12px;">Guardian</div>
-            <div style="font-size:0.9rem; opacity:0.8;">Apple Pay Ready ✓</div>
+            <div id="userGreeting" style="font-size:1.5rem; font-weight:700; margin-top:14px;">Guardian</div>
+            <div style="font-size:0.95rem; opacity:0.85; margin-top:4px;">✓ Apple Pay Ready</div>
         </div>
 
         <div class="content">
-            <!-- Share Link -->
+            <!-- Share -->
             <div class="rpg-card">
                 <button onclick="shareProfile()" class="share-btn">
                     🔗 Share My Profile Link
@@ -175,9 +264,9 @@
 
             <!-- Balance -->
             <div class="rpg-card">
-                <div style="color:#888; font-size:0.9rem;">YOUR DONATED BALANCE</div>
+                <div style="color:#888; font-size:0.95rem; margin-bottom:8px;">YOUR BALANCE</div>
                 <div id="balanceAmount" class="balance">$0</div>
-                <button onclick="requestWithdraw()" class="withdraw-button" style="margin-top:16px;">
+                <button onclick="requestWithdraw()" class="withdraw-button" style="margin-top:20px;">
                     💸 Withdraw Funds
                 </button>
             </div>
@@ -186,20 +275,20 @@
             <div class="rpg-card">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
-                        <div style="color:#888; font-size:0.9rem;">TOTAL DONATED</div>
-                        <div id="totalDonated" style="font-size:2.2rem; font-weight:800; color:var(--primary);">$0</div>
+                        <div style="color:#888; font-size:0.95rem;">TOTAL DONATED</div>
+                        <div id="totalDonated" style="font-size:2.4rem; font-weight:800; color:var(--primary);">$0</div>
                     </div>
                     <div style="text-align:right;">
-                        <div id="streak" style="font-size:2rem; font-weight:900;">🔥 0</div>
-                        <div style="font-size:0.85rem; color:#888;">day streak</div>
+                        <div id="streak" style="font-size:2.2rem; font-weight:900;">🔥 0</div>
+                        <div style="font-size:0.9rem; color:#888;">day streak</div>
                     </div>
                 </div>
             </div>
 
             <!-- Quick Donate -->
             <div class="rpg-card">
-                <div style="font-weight:700; margin-bottom:16px; font-size:1.2rem;">🍎 Quick Apple Pay</div>
-                <p style="color:#888; margin-bottom:16px;">Tap any amount to donate instantly</p>
+                <div style="font-weight:700; margin-bottom:12px; font-size:1.25rem;">🍎 Quick Apple Pay</div>
+                <p style="color:#aaa; margin-bottom:20px;">Tap any amount to donate instantly</p>
                 
                 <div class="quick-amounts" id="amountGrid">
                     <button onclick="quickDonate(5)" class="active">$5</button>
@@ -212,7 +301,8 @@
                 </button>
             </div>
 
-            <button onclick="logout()" style="width:100%; padding:18px; background:#222; color:white; border:none; border-radius:16px; font-weight:600;">
+            <button onclick="logout()" 
+                    style="width:100%; padding:18px; background:#222; color:#ccc; border:none; border-radius:18px; font-weight:600; font-size:1.05rem;">
                 Sign Out
             </button>
         </div>
@@ -223,6 +313,7 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     
     <script>
+        // Firebase Config (same as yours)
         const firebaseConfig = {
             apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
             authDomain: "rootdonate-61e61.firebaseapp.com",
@@ -244,11 +335,11 @@
             t.textContent = msg;
             t.style.color = color;
             t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 2800);
+            setTimeout(() => t.style.display = 'none', 3000);
         }
 
         function confettiBurst() {
-            confetti({ particleCount: 180, spread: 100, origin: { y: 0.6 } });
+            confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
         }
 
         async function loadUserData() {
@@ -271,7 +362,7 @@
 
         function startApplePay(amount = 5, recipient = "General Fund") {
             if (!window.ApplePaySession || !ApplePaySession.canMakePayments()) {
-                showToast("Apple Pay not available", "#ff6666");
+                showToast("Apple Pay not available on this device", "#ff6666");
                 return;
             }
             const request = {
@@ -287,45 +378,39 @@
                 setTimeout(async () => {
                     session.completePayment(ApplePaySession.STATUS_SUCCESS);
                     await updateDonatedAmount(amount);
-                    showToast(`✅ $${amount} sent to ${recipient}!`, '#00ff9d');
+                    showToast(`✅ $${amount} donated successfully!`, '#00ff9d');
                     confettiBurst();
-                }, 800);
+                }, 700);
             };
             session.begin();
         }
 
         function quickDonate(amount) {
-            document.querySelectorAll('#amountGrid button').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            document.querySelectorAll('#amountGrid button').forEach(b => b.classList.remove('active'));
+            event.currentTarget.classList.add('active');
             startApplePay(amount);
         }
 
         function requestWithdraw() {
             const balance = parseFloat(document.getElementById('balanceAmount').textContent.replace('$','')) || 0;
             if (balance <= 0) return showToast("No balance available", "#ff6666");
-            const amount = prompt(`How much to withdraw? (Max $${balance})`, balance);
+            
+            const amount = prompt(`Enter amount to withdraw (Max $${balance})`, balance);
             if (amount && parseFloat(amount) > 0) {
-                showToast(`💸 Withdrawal request submitted!`, '#00ff9d');
+                showToast(`💸 Withdrawal request of $${parseFloat(amount)} submitted`, '#00ff9d');
             }
         }
 
-        // Share Profile Link using Base64
         function shareProfile() {
             if (!currentUser) return showToast("Please create profile first", "#ff6666");
             
-            const profileData = {
-                uid: currentUser.uid,
-                name: document.getElementById('userGreeting').textContent
-            };
-            
+            const profileData = { uid: currentUser.uid, name: document.getElementById('userGreeting').textContent };
             const encoded = btoa(JSON.stringify(profileData));
             const shareLink = `${window.location.origin}${window.location.pathname}?p=${encoded}`;
             
             navigator.clipboard.writeText(shareLink).then(() => {
-                showToast("✅ Profile link copied to clipboard!", '#00ff9d');
-            }).catch(() => {
-                showToast("Link: " + shareLink, '#00ff9d');
-            });
+                showToast("✅ Profile link copied!", '#00ff9d');
+            }).catch(() => showToast(shareLink));
         }
 
         async function completeSignup() {
@@ -335,7 +420,7 @@
             const email = document.getElementById('email').value.trim();
 
             if (!email) {
-                errorEl.textContent = "Please enter an email";
+                errorEl.textContent = "Please enter your email";
                 return;
             }
 
@@ -364,10 +449,9 @@
                 await loadUserData();
             } catch (e) {
                 console.error(e);
-                let msg = "";
-                if (e.code === 'auth/operation-not-allowed') msg = "Enable Anonymous Auth in Firebase Console";
-                errorEl.textContent = msg;
-                showToast(msg, "#ff6666");
+                errorEl.textContent = e.code === 'auth/operation-not-allowed' 
+                    ? "Enable Anonymous Auth in Firebase" 
+                    : "Something went wrong";
             } finally {
                 btn.disabled = false;
                 btn.textContent = "Create Profile & Enable Apple Pay";
@@ -389,7 +473,8 @@
             }
         });
 
-        window.onload = () => setTimeout(() => document.getElementById('displayName').focus(), 600);
+        // Auto-focus on load
+        window.onload = () => setTimeout(() => document.getElementById('displayName').focus(), 500);
     </script>
 </body>
 </html>
