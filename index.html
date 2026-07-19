@@ -81,56 +81,17 @@
         
         .balance { font-size: 2.4rem; font-weight: 800; color: var(--primary); }
         
-        .search-container { position: relative; margin-bottom: 24px; }
-        #searchInput {
-            width: 100%;
-            padding: 18px 20px 18px 52px;
-            background: #1c1c24;
+        .share-btn {
+            background: #00ff9d;
+            color: #000;
             border: none;
-            border-radius: 20px;
-            color: white;
-            font-size: 1.05rem;
-            outline: none;
-        }
-        .search-icon {
-            position: absolute;
-            left: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 1.4rem;
-            color: #666;
-        }
-        .autocomplete-results {
-            position: absolute;
-            top: 100%; left: 0; right: 0;
-            background: #1a1a22;
-            border-radius: 20px;
-            margin-top: 8px;
-            max-height: 340px;
-            overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-            z-index: 1000;
-            display: none;
-            border: 1px solid #333;
-        }
-        .result-item {
-            padding: 16px 20px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
+            border-radius: 16px;
+            padding: 16px;
+            font-weight: 700;
+            width: 100%;
+            margin: 16px 0;
             cursor: pointer;
-            transition: all 0.2s;
-        }
-        .result-item:hover { background: #25252e; }
-        .result-avatar {
-            width: 48px; height: 48px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #00ff9d, #ff00aa);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.4rem;
-            flex-shrink: 0;
+            font-size: 1.05rem;
         }
         
         .apple-pay-button, .withdraw-button {
@@ -205,12 +166,14 @@
         </div>
 
         <div class="content">
-            <div class="search-container">
-                <span class="search-icon">🔍</span>
-                <input type="text" id="searchInput" placeholder="Search created profiles..." autocomplete="off">
-                <div class="autocomplete-results" id="autocompleteResults"></div>
+            <!-- Share Link -->
+            <div class="rpg-card">
+                <button onclick="shareProfile()" class="share-btn">
+                    🔗 Share My Profile Link
+                </button>
             </div>
 
+            <!-- Balance -->
             <div class="rpg-card">
                 <div style="color:#888; font-size:0.9rem;">YOUR DONATED BALANCE</div>
                 <div id="balanceAmount" class="balance">$0</div>
@@ -219,6 +182,7 @@
                 </button>
             </div>
 
+            <!-- Stats -->
             <div class="rpg-card">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
@@ -232,6 +196,7 @@
                 </div>
             </div>
 
+            <!-- Quick Donate -->
             <div class="rpg-card">
                 <div style="font-weight:700; margin-bottom:16px; font-size:1.2rem;">🍎 Quick Apple Pay</div>
                 <p style="color:#888; margin-bottom:16px;">Tap any amount to donate instantly</p>
@@ -273,7 +238,6 @@
 
         let currentUser = null;
         let userDocRef = null;
-        let allUsers = [];
 
         function showToast(msg, color = '#00ff9d') {
             const t = document.getElementById('toast');
@@ -285,18 +249,6 @@
 
         function confettiBurst() {
             confetti({ particleCount: 180, spread: 100, origin: { y: 0.6 } });
-        }
-
-        async function loadAllUsers() {
-            try {
-                const snapshot = await db.collection('users').get();
-                allUsers = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                })).filter(u => u.displayName);
-            } catch (e) {
-                console.error("Failed to load profiles:", e);
-            }
         }
 
         async function loadUserData() {
@@ -357,29 +309,23 @@
             }
         }
 
-        function renderSearchResults(filtered) {
-            const container = document.getElementById('autocompleteResults');
-            container.innerHTML = '';
-            if (!filtered.length) return container.style.display = 'none';
-
-            filtered.forEach(user => {
-                const div = document.createElement('div');
-                div.className = 'result-item';
-                div.innerHTML = `
-                    <div class="result-avatar">${user.displayName ? user.displayName[0].toUpperCase() : '👤'}</div>
-                    <div>
-                        <strong>${user.displayName}</strong><br>
-                        <small style="color:#888;">${user.email || ''}</small>
-                    </div>
-                `;
-                div.onclick = () => {
-                    document.getElementById('searchInput').value = '';
-                    container.style.display = 'none';
-                    startApplePay(10, user.displayName);
-                };
-                container.appendChild(div);
+        // Share Profile Link using Base64
+        function shareProfile() {
+            if (!currentUser) return showToast("Please create profile first", "#ff6666");
+            
+            const profileData = {
+                uid: currentUser.uid,
+                name: document.getElementById('userGreeting').textContent
+            };
+            
+            const encoded = btoa(JSON.stringify(profileData));
+            const shareLink = `${window.location.origin}${window.location.pathname}?p=${encoded}`;
+            
+            navigator.clipboard.writeText(shareLink).then(() => {
+                showToast("✅ Profile link copied to clipboard!", '#00ff9d');
+            }).catch(() => {
+                showToast("Link: " + shareLink, '#00ff9d');
             });
-            container.style.display = 'block';
         }
 
         async function completeSignup() {
@@ -416,13 +362,10 @@
                 document.getElementById('userGreeting').textContent = name;
 
                 await loadUserData();
-                await loadAllUsers();
             } catch (e) {
                 console.error(e);
-                let msg = "Failed to create profile. Check Firebase Console.";
-                if (e.code === 'auth/operation-not-allowed') {
-                    msg = "Please enable Anonymous Auth in Firebase Console";
-                }
+                let msg = "Failed to create profile";
+                if (e.code === 'auth/operation-not-allowed') msg = "Enable Anonymous Auth in Firebase Console";
                 errorEl.textContent = msg;
                 showToast(msg, "#ff6666");
             } finally {
@@ -443,20 +386,7 @@
                 document.getElementById('profileScreen').style.display = 'block';
                 document.getElementById('userGreeting').textContent = user.displayName || "Guardian";
                 await loadUserData();
-                await loadAllUsers();
             }
-        });
-
-        document.getElementById('searchInput').addEventListener('input', function () {
-            const q = this.value.toLowerCase().trim();
-            if (!q) {
-                document.getElementById('autocompleteResults').style.display = 'none';
-                return;
-            }
-            const filtered = allUsers.filter(user => 
-                user.displayName && user.displayName.toLowerCase().includes(q)
-            );
-            renderSearchResults(filtered);
         });
 
         window.onload = () => setTimeout(() => document.getElementById('displayName').focus(), 600);
