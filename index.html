@@ -107,7 +107,7 @@
             background: #1a1a22;
             border-radius: 20px;
             margin-top: 8px;
-            max-height: 320px;
+            max-height: 340px;
             overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0,0,0,0.6);
             z-index: 1000;
@@ -193,9 +193,8 @@
                 <p style="color:#888;">One tap donations with Apple Pay</p>
             </div>
 
-            <input type="text" id="displayName" placeholder="Display Name (e.g. Guardian)" 
+            <input type="text" id="displayName" placeholder="Display Name" 
                    style="width:100%; padding:18px; margin:12px 0; background:#1c1c24; border:none; border-radius:16px; color:white; font-size:1.05rem;">
-            
             <input type="email" id="email" placeholder="Email" 
                    style="width:100%; padding:18px; margin:12px 0; background:#1c1c24; border:none; border-radius:16px; color:white; font-size:1.05rem;">
             
@@ -217,12 +216,14 @@
         </div>
 
         <div class="content">
+            <!-- Real Search -->
             <div class="search-container">
                 <span class="search-icon">🔍</span>
-                <input type="text" id="searchInput" placeholder="Search people or causes..." autocomplete="off">
+                <input type="text" id="searchInput" placeholder="Search users or causes..." autocomplete="off">
                 <div class="autocomplete-results" id="autocompleteResults"></div>
             </div>
 
+            <!-- Balance & Stats -->
             <div class="rpg-card">
                 <div style="color:#888; font-size:0.9rem;">YOUR DONATED BALANCE</div>
                 <div id="balanceAmount" class="balance">$0</div>
@@ -244,6 +245,7 @@
                 </div>
             </div>
 
+            <!-- Quick Donate -->
             <div class="rpg-card">
                 <div style="font-weight:700; margin-bottom:16px; font-size:1.2rem;">🍎 Quick Apple Pay</div>
                 <p style="color:#888; margin-bottom:16px;">Tap any amount to donate instantly</p>
@@ -285,14 +287,7 @@
 
         let currentUser = null;
         let userDocRef = null;
-
-        const demoProfiles = [
-            { name: "Alex Rivera", handle: "@alexdoesgood", avatar: "🌍", cause: "Climate Action" },
-            { name: "Maya Chen", handle: "@mayashelter", avatar: "🏠", cause: "Homeless Support" },
-            { name: "Jordan Hale", handle: "@jordantech", avatar: "💻", cause: "STEM Education" },
-            { name: "Sam Kim", handle: "@sambuilds", avatar: "🏗️", cause: "Disaster Relief" },
-            { name: "Taylor Brooks", handle: "@taylorgives", avatar: "🧸", cause: "Children's Hospital" }
-        ];
+        let allUsers = [];
 
         function showToast(msg, color = '#00ff9d') {
             const t = document.getElementById('toast');
@@ -304,6 +299,19 @@
 
         function confettiBurst() {
             confetti({ particleCount: 180, spread: 100, origin: { y: 0.6 } });
+        }
+
+        // Load all users for search
+        async function loadAllUsers() {
+            try {
+                const snapshot = await db.collection('users').get();
+                allUsers = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                })).filter(u => u.displayName);
+            } catch (e) {
+                console.error("Failed to load users:", e);
+            }
         }
 
         async function loadUserData() {
@@ -342,7 +350,7 @@
                 setTimeout(async () => {
                     session.completePayment(ApplePaySession.STATUS_SUCCESS);
                     await updateDonatedAmount(amount);
-                    showToast(`✅ $${amount} donated to ${recipient}!`, '#00ff9d');
+                    showToast(`✅ $${amount} sent to ${recipient}!`, '#00ff9d');
                     confettiBurst();
                 }, 800);
             };
@@ -364,11 +372,35 @@
             }
         }
 
-        // ==================== CREATE PROFILE ====================
+        // Real-time Search from Firestore
+        function renderSearchResults(filtered) {
+            const container = document.getElementById('autocompleteResults');
+            container.innerHTML = '';
+            if (!filtered.length) return container.style.display = 'none';
+
+            filtered.forEach(user => {
+                const div = document.createElement('div');
+                div.className = 'result-item';
+                div.innerHTML = `
+                    <div class="result-avatar">${user.displayName ? user.displayName[0].toUpperCase() : '👤'}</div>
+                    <div>
+                        <strong>${user.displayName || 'Unknown User'}</strong><br>
+                        <small style="color:#888;">${user.email || ''}</small>
+                    </div>
+                `;
+                div.onclick = () => {
+                    document.getElementById('searchInput').value = '';
+                    container.style.display = 'none';
+                    startApplePay(10, user.displayName || 'User');
+                };
+                container.appendChild(div);
+            });
+            container.style.display = 'block';
+        }
+
         async function completeSignup() {
             const btn = document.getElementById('createBtn');
             const errorEl = document.getElementById('errorMsg');
-            
             const name = document.getElementById('displayName').value.trim() || "Guardian";
             const email = document.getElementById('email').value.trim();
 
@@ -378,7 +410,7 @@
             }
 
             btn.disabled = true;
-            btn.textContent = "Creating Profile...";
+            btn.textContent = "Creating...";
             errorEl.textContent = "";
 
             try {
@@ -400,14 +432,11 @@
                 document.getElementById('userGreeting').textContent = name;
 
                 await loadUserData();
+                await loadAllUsers(); // Load users for search
             } catch (e) {
                 console.error(e);
                 let msg = "Failed to create profile";
-                if (e.code === 'auth/operation-not-allowed') {
-                    msg = "Anonymous auth is not enabled in Firebase Console";
-                } else if (e.code === 'auth/network-request-failed') {
-                    msg = "Network error. Check your connection.";
-                }
+                if (e.code === 'auth/operation-not-allowed') msg = "Enable Anonymous Auth in Firebase Console";
                 errorEl.textContent = msg;
                 showToast(msg, "#ff6666");
             } finally {
@@ -420,7 +449,6 @@
             auth.signOut().then(() => location.reload());
         }
 
-        // Auto login
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentUser = user;
@@ -429,45 +457,22 @@
                 document.getElementById('profileScreen').style.display = 'block';
                 document.getElementById('userGreeting').textContent = user.displayName || "Guardian";
                 await loadUserData();
+                await loadAllUsers();
             }
         });
 
-        // Search
+        // Live Search
         document.getElementById('searchInput').addEventListener('input', function () {
             const q = this.value.toLowerCase().trim();
             const container = document.getElementById('autocompleteResults');
             if (!q) return container.style.display = 'none';
 
-            const filtered = demoProfiles.filter(p => 
-                p.name.toLowerCase().includes(q) || p.cause.toLowerCase().includes(q)
+            const filtered = allUsers.filter(user => 
+                (user.displayName && user.displayName.toLowerCase().includes(q)) ||
+                (user.email && user.email.toLowerCase().includes(q))
             );
             renderSearchResults(filtered);
         });
-
-        function renderSearchResults(filtered) {
-            const container = document.getElementById('autocompleteResults');
-            container.innerHTML = '';
-            if (!filtered.length) return container.style.display = 'none';
-
-            filtered.forEach(profile => {
-                const div = document.createElement('div');
-                div.className = 'result-item';
-                div.innerHTML = `
-                    <div class="result-avatar">${profile.avatar}</div>
-                    <div>
-                        <strong>${profile.name}</strong><br>
-                        <small style="color:#888;">${profile.handle} • ${profile.cause}</small>
-                    </div>
-                `;
-                div.onclick = () => {
-                    document.getElementById('searchInput').value = '';
-                    container.style.display = 'none';
-                    startApplePay(10, profile.name);
-                };
-                container.appendChild(div);
-            });
-            container.style.display = 'block';
-        }
 
         window.onload = () => setTimeout(() => document.getElementById('displayName').focus(), 600);
     </script>
