@@ -364,7 +364,7 @@
                 await loadUserData();
             } catch (e) {
                 console.error(e);
-                let msg = "Failed to create profile";
+                let msg = "";
                 if (e.code === 'auth/operation-not-allowed') msg = "Enable Anonymous Auth in Firebase Console";
                 errorEl.textContent = msg;
                 showToast(msg, "#ff6666");
