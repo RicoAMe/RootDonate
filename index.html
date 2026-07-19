@@ -32,6 +32,7 @@
             color: #e0e0e0;
             margin: 0;
             padding: 16px;
+            line-height: 1.5;
         }
         
         .container {
@@ -68,41 +69,54 @@
             border: 1px solid #333;
         }
         
+        .stat-bar {
+            height: 10px;
+            background: #222;
+            border-radius: 999px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        
+        .stat-fill {
+            height: 100%;
+            background: linear-gradient(to right, var(--primary), #00cc7a);
+            transition: width 0.5s ease;
+        }
+        
         .apple-pay-btn {
-            background: black;
+            background: #000;
             color: white;
             border: none;
-            border-radius: 12px;
-            padding: 14px 20px;
+            border-radius: 14px;
+            padding: 16px 20px;
             font-size: 1.05rem;
-            font-weight: 600;
+            font-weight: 700;
             width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
             margin: 8px 0;
             cursor: pointer;
+            transition: all 0.2s ease;
         }
         
         .apple-pay-btn:hover {
             background: #111;
+            transform: translateY(-1px);
         }
         
-        .stat-bar { height: 10px; background: #222; border-radius: 999px; overflow: hidden; margin-top: 8px; }
-        .stat-fill { height: 100%; background: linear-gradient(to right, var(--primary), #00cc7a); transition: width 0.5s ease; }
-        
-        .donate-tier { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
         .tier-btn {
             flex: 1;
-            min-width: 100px;
-            padding: 14px 10px;
+            min-width: 95px;
+            padding: 14px 8px;
             border-radius: 14px;
             font-weight: 700;
             text-align: center;
             cursor: pointer;
             transition: all 0.2s;
             border: 2px solid #333;
+            font-size: 0.92rem;
         }
         
         .tier-btn:hover { transform: translateY(-2px); box-shadow: 0 0 15px currentColor; }
@@ -126,20 +140,35 @@
             display: none;
             font-weight: 600;
             max-width: 90%;
+            text-align: center;
+        }
+        
+        .level-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #000;
+            color: var(--primary);
+            padding: 6px 14px;
+            border-radius: 999px;
+            font-weight: 800;
+            font-size: 0.85rem;
         }
         
         /* Mobile optimizations */
         @media (max-width: 600px) {
             body { padding: 12px; }
             .container { margin: 10px auto; border-radius: 20px; }
+            .header { padding: 35px 16px; }
             .header h1 { font-size: 2.4rem; }
             #map { height: 280px; }
+            .apple-pay-btn { padding: 18px 16px; font-size: 1rem; }
         }
     </style>
 </head>
 <body>
 
-    <!-- AUTH SCREEN (unchanged) -->
+    <!-- AUTH SCREEN -->
     <div class="container" id="authScreen">
         <div class="header">
             <h1>ROOT</h1>
@@ -164,24 +193,79 @@
         </div>
 
         <div style="padding:8px 0;">
-            <!-- STATS, QUESTS, ALLIES, MAP, ACHIEVEMENTS, HISTORY (same as before) -->
-            <!-- ... (omitted for brevity - same as your previous version) ... -->
-
-            <!-- DONATION TIERS with Apple Pay -->
+            
+            <!-- STATS -->
             <div class="rpg-card">
-                <div style="font-weight:700; margin-bottom:10px;">DONATE WITH APPLE PAY</div>
-                <button onclick="quickDonateAll(5,'common')" class="apple-pay-btn">Apple Pay • $5</button>
-                <button onclick="quickDonateAll(10,'rare')" class="apple-pay-btn">Apple Pay • $10</button>
-                <button onclick="quickDonateAll(25,'epic')" class="apple-pay-btn">Apple Pay • $25</button>
-                
-                <div style="margin-top:14px; display:flex; gap:10px;">
-                    <input type="number" id="customAmount" placeholder="Custom amount" style="flex:1; padding:14px; background:#1c1c24; border:none; border-radius:12px;">
-                    <button onclick="quickDonateCustom()" class="apple-pay-btn" style="width:auto; padding:0 24px;">Apple Pay</button>
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <div style="font-size:1.1rem; font-weight:700;">Guardian Stats</div>
+                        <div id="totalDonated" style="color:#888; font-size:0.95rem;">Total Donated: $0</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div id="streak" style="font-size:1.8rem; font-weight:900; line-height:1;">🔥 0</div>
+                        <div style="font-size:0.75rem; color:#888;">DAY STREAK</div>
+                    </div>
+                </div>
+                <div style="margin-top:14px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:4px;">
+                        <span>XP Progress</span><span id="xpText">0 / 1000</span>
+                    </div>
+                    <div class="stat-bar"><div id="xpBar" class="stat-fill" style="width:0%"></div></div>
                 </div>
             </div>
 
-            <!-- Ally cards also use Apple Pay buttons -->
-            <!-- (See renderAllies() in script) -->
+            <!-- QUESTS -->
+            <div class="rpg-card">
+                <div style="font-weight:700; margin-bottom:10px;">📜 ACTIVE QUESTS</div>
+                <div id="questsContainer"></div>
+            </div>
+
+            <!-- ALLIES -->
+            <div class="rpg-card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+                    <div style="font-weight:700;">YOUR ALLIES</div>
+                    <button onclick="showAddAllyModal()" style="padding:8px 16px; font-size:0.85rem; background:#222; border:none; border-radius:999px; color:white;">+ Add Ally</button>
+                </div>
+                <input type="text" id="searchInput" placeholder="Search allies..." onkeyup="filterAllies()" style="width:100%; padding:12px; background:#1c1c24; border:none; border-radius:12px; margin-bottom:10px;">
+                <div id="alliesContainer"></div>
+            </div>
+
+            <!-- DONATION TIERS - Apple Pay Focused -->
+            <div class="rpg-card">
+                <div style="font-weight:700; margin-bottom:10px;">🍎 DONATE WITH APPLE PAY</div>
+                
+                <button onclick="quickDonateAll(5,'common')" class="apple-pay-btn">Apple Pay • $5 <small style="opacity:0.8">(+50 XP)</small></button>
+                <button onclick="quickDonateAll(10,'rare')" class="apple-pay-btn">Apple Pay • $10 <small style="opacity:0.8">(+120 XP)</small></button>
+                <button onclick="quickDonateAll(25,'epic')" class="apple-pay-btn">Apple Pay • $25 <small style="opacity:0.8">(+300 XP)</small></button>
+                
+                <div style="margin-top:14px; display:flex; gap:10px; flex-wrap:wrap;">
+                    <input type="number" id="customAmount" placeholder="Custom amount" style="flex:1; min-width:120px; padding:14px; background:#1c1c24; border:none; border-radius:12px;">
+                    <button onclick="quickDonateCustom()" class="apple-pay-btn" style="width:auto; padding:0 22px; flex-shrink:0;">Apple Pay</button>
+                </div>
+            </div>
+
+            <!-- MAP NODES -->
+            <div class="rpg-card">
+                <div style="font-weight:700; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <span>🗺️ MAP NODES — Your Allies</span>
+                    <button onclick="refreshMapNodes()" style="padding:6px 14px; font-size:0.8rem; background:#222; border:none; border-radius:999px; color:white;">Refresh Pins</button>
+                </div>
+                <div id="map"></div>
+                <div style="font-size:0.8rem; color:#888; text-align:center; margin-top:8px;">Tap any pin to donate with Apple Pay</div>
+            </div>
+
+            <!-- ACHIEVEMENTS & HISTORY -->
+            <div class="rpg-card">
+                <div style="font-weight:700; margin-bottom:10px;">🏆 ACHIEVEMENTS</div>
+                <div id="achievementsContainer"></div>
+            </div>
+            
+            <div class="rpg-card">
+                <div style="font-weight:700; margin-bottom:10px;">📖 LEGEND LOG</div>
+                <div id="historyContainer" style="max-height:180px; overflow-y:auto;"></div>
+            </div>
+
+            <button onclick="logout()" style="width:calc(100% - 28px); margin:16px 14px; padding:16px; background:#222; color:white; border:none; border-radius:14px;">Logout</button>
         </div>
     </div>
 
@@ -190,27 +274,290 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     
     <script>
-        // ==================== FIREBASE & CORE (same as before) ====================
-        const firebaseConfig = { /* your config */ };
+        // ==================== FIREBASE ====================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
+            authDomain: "rootdonate-61e61.firebaseapp.com",
+            projectId: "rootdonate-61e61",
+            storageBucket: "rootdonate-61e61.firebasestorage.app",
+            messagingSenderId: "754240963907",
+            appId: "1:754240963907:web:5417c2763d8f02108bdbf6"
+        };
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
 
         let currentUser = null;
         let allies = [];
         let donationHistory = [];
-        // quests, achievements, xp, level, streak, totalDonated, mapInstance... (same variables)
+        let quests = [
+            { id:1, title:"First Donation", desc:"Make your first donation", target:1, progress:0, reward:100, completed:false },
+            { id:2, title:"Streak Builder", desc:"Donate on 3 different days", target:3, progress:0, reward:250, completed:false },
+            { id:3, title:"Generous Soul", desc:"Donate a total of $50", target:50, progress:0, reward:400, completed:false }
+        ];
+        let achievements = [
+            { id:1, title:"First Steps", desc:"Make your first donation", unlocked:false },
+            { id:2, title:"Rising Guardian", desc:"Reach Level 5", unlocked:false },
+            { id:3, title:"Legendary Donor", desc:"Donate over $100 total", unlocked:false },
+            { id:4, title:"Streak Master", desc:"Reach 7-day streak", unlocked:false }
+        ];
+
+        let xp = 0, level = 1, streak = 0, totalDonated = 0;
+        let mapInstance = null, lastDonationDate = null;
+
+        // ==================== UTILITIES ====================
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 2800);
+        }
+
+        function confettiBurst() {
+            confetti({ particleCount: 140, spread: 90, origin: { y: 0.6 } });
+        }
+
+        function saveData() {
+            if (!currentUser) return;
+            const uid = currentUser.uid;
+            localStorage.setItem(`rpg_allies_${uid}`, JSON.stringify(allies));
+            localStorage.setItem(`rpg_history_${uid}`, JSON.stringify(donationHistory));
+            localStorage.setItem(`rpg_xp_${uid}`, xp);
+            localStorage.setItem(`rpg_level_${uid}`, level);
+            localStorage.setItem(`rpg_streak_${uid}`, streak);
+            localStorage.setItem(`rpg_total_${uid}`, totalDonated);
+            localStorage.setItem(`rpg_quests_${uid}`, JSON.stringify(quests));
+            localStorage.setItem(`rpg_achievements_${uid}`, JSON.stringify(achievements));
+        }
+
+        function loadData() {
+            if (!currentUser) return;
+            const uid = currentUser.uid;
+            allies = JSON.parse(localStorage.getItem(`rpg_allies_${uid}`)) || [];
+            donationHistory = JSON.parse(localStorage.getItem(`rpg_history_${uid}`)) || [];
+            xp = parseInt(localStorage.getItem(`rpg_xp_${uid}`)) || 0;
+            level = parseInt(localStorage.getItem(`rpg_level_${uid}`)) || 1;
+            streak = parseInt(localStorage.getItem(`rpg_streak_${uid}`)) || 0;
+            totalDonated = parseInt(localStorage.getItem(`rpg_total_${uid}`)) || 0;
+            quests = JSON.parse(localStorage.getItem(`rpg_quests_${uid}`)) || quests;
+            achievements = JSON.parse(localStorage.getItem(`rpg_achievements_${uid}`)) || achievements;
+        }
+
+        // ==================== RPG SYSTEMS ====================
+        function updateStats() {
+            document.getElementById('levelBadge').textContent = `LVL ${level} • ${xp} XP`;
+            document.getElementById('xpText').textContent = `${xp % 1000} / 1000`;
+            document.getElementById('xpBar').style.width = `${(xp % 1000) / 10}%`;
+            document.getElementById('streak').innerHTML = `🔥 ${streak}`;
+            document.getElementById('totalDonated').innerHTML = `Total Donated: $${totalDonated}`;
+        }
+
+        function gainXP(amount, tier = 'common') {
+            const mult = tier === 'rare' ? 1.2 : tier === 'epic' ? 1.5 : 1;
+            const gained = Math.floor(amount * mult);
+            xp += gained;
+            const newLevel = Math.floor(xp / 1000) + 1;
+            if (newLevel > level) {
+                level = newLevel;
+                showToast(`🎉 LEVEL UP! You are now Level ${level}`);
+                confettiBurst();
+                checkAchievements();
+            }
+            updateStats();
+            saveData();
+            renderQuests();
+        }
+
+        function checkQuests(donationAmount = 0) {
+            let changed = false;
+            quests.forEach(q => {
+                if (q.completed) return;
+                if (q.id === 1 && donationHistory.length >= 1) { q.progress = 1; q.completed = true; changed = true; }
+                if (q.id === 2) { q.progress = Math.min(streak, q.target); if (q.progress >= q.target) { q.completed = true; changed = true; } }
+                if (q.id === 3) { q.progress = Math.min(totalDonated, q.target); if (q.progress >= q.target) { q.completed = true; changed = true; } }
+                if (q.completed && !q.rewardGiven) {
+                    xp += q.reward;
+                    showToast(`Quest Complete! +${q.reward} XP`);
+                    q.rewardGiven = true;
+                    changed = true;
+                }
+            });
+            if (changed) {
+                renderQuests();
+                updateStats();
+                saveData();
+            }
+        }
+
+        function checkAchievements() {
+            let unlocked = false;
+            achievements.forEach(a => {
+                if (a.unlocked) return;
+                if ((a.id === 1 && donationHistory.length >= 1) ||
+                    (a.id === 2 && level >= 5) ||
+                    (a.id === 3 && totalDonated >= 100) ||
+                    (a.id === 4 && streak >= 7)) {
+                    a.unlocked = true;
+                    unlocked = true;
+                    showToast(`🏆 Achievement Unlocked: ${a.title}`);
+                }
+            });
+            if (unlocked) renderAchievements();
+        }
+
+        function renderQuests() {
+            const c = document.getElementById('questsContainer');
+            c.innerHTML = '';
+            quests.forEach(q => {
+                const d = document.createElement('div');
+                d.className = `quest ${q.completed ? 'completed' : ''}`;
+                d.innerHTML = `
+                    <div><strong>${q.title}</strong><br><small style="color:#888">${q.desc}</small></div>
+                    <div style="text-align:right; font-size:0.85rem">${q.progress}/${q.target}<br><span style="color:var(--primary)">+${q.reward} XP</span></div>
+                `;
+                c.appendChild(d);
+            });
+        }
+
+        function renderAchievements() {
+            const c = document.getElementById('achievementsContainer');
+            c.innerHTML = '';
+            achievements.forEach(a => {
+                const d = document.createElement('div');
+                d.className = `achievement ${a.unlocked ? '' : 'locked'}`;
+                d.innerHTML = `
+                    <div style="font-size:1.5rem">${a.unlocked ? '🏆' : '🔒'}</div>
+                    <div><strong>${a.title}</strong><br><small style="color:#888">${a.desc}</small></div>
+                `;
+                c.appendChild(d);
+            });
+        }
+
+        // ==================== MAP ====================
+        function refreshMapNodes() {
+            if (!mapInstance) {
+                mapInstance = L.map('map').setView([20, 0], 2);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance);
+            }
+            
+            mapInstance.eachLayer(layer => {
+                if (layer instanceof L.Marker) mapInstance.removeLayer(layer);
+            });
+
+            allies.forEach((ally, index) => {
+                if (ally.lat && ally.lon) {
+                    const marker = L.marker([ally.lat, ally.lon]).addTo(mapInstance);
+                    
+                    const popupContent = `
+                        <div style="font-size:0.95rem; min-width:180px">
+                            <strong>${ally.name}</strong><br>
+                            <small>@${ally.username}</small><br><br>
+                            <button onclick="quickDonateFromMap(${index},5)" style="margin:3px; padding:8px 12px; border-radius:10px; background:#000; color:white; border:none; width:100%;">Apple Pay $5</button>
+                            <button onclick="quickDonateFromMap(${index},10)" style="margin:3px; padding:8px 12px; border-radius:10px; background:#000; color:white; border:none; width:100%;">Apple Pay $10</button>
+                            <button onclick="quickDonateFromMap(${index},25)" style="margin:3px; padding:8px 12px; border-radius:10px; background:#000; color:white; border:none; width:100%;">Apple Pay $25</button>
+                        </div>
+                    `;
+                    marker.bindPopup(popupContent);
+                }
+            });
+        }
+
+        function quickDonateFromMap(index, amount) {
+            const ally = allies[index];
+            triggerApplePay(amount, amount >= 25 ? 'epic' : amount >= 10 ? 'rare' : 'common', ally.username);
+            if (mapInstance) mapInstance.closePopup();
+        }
+
+        // ==================== ALLIES ====================
+        function renderAllies(filtered = allies) {
+            const container = document.getElementById('alliesContainer');
+            container.innerHTML = '';
+            
+            if (filtered.length === 0) {
+                container.innerHTML = `<p style="text-align:center; color:#666; padding:16px;">No allies yet. Add creators to see them on the map!</p>`;
+                return;
+            }
+            
+            filtered.forEach((ally, index) => {
+                const div = document.createElement('div');
+                div.className = 'rpg-card';
+                div.style.margin = '10px 0';
+                div.innerHTML = `
+                    <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+                        <div style="width:48px; height:48px; background:linear-gradient(45deg,#00ff9d,#ff00aa); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; color:#000; font-size:1.4rem; flex-shrink:0;">${ally.name[0]}</div>
+                        <div style="flex:1; min-width:140px;">
+                            <div style="font-weight:700;">${ally.name}</div>
+                            <div style="color:#888; font-size:0.9rem;">@${ally.username}</div>
+                            <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+                                <button onclick="quickDonateSpecific(${index},5)" class="apple-pay-btn" style="padding:10px 14px; font-size:0.9rem; flex:none; width:auto;">Apple Pay $5</button>
+                                <button onclick="quickDonateSpecific(${index},10)" class="apple-pay-btn" style="padding:10px 14px; font-size:0.9rem; flex:none; width:auto;">Apple Pay $10</button>
+                                <button onclick="quickDonateSpecific(${index},25)" class="apple-pay-btn" style="padding:10px 14px; font-size:0.9rem; flex:none; width:auto;">Apple Pay $25</button>
+                            </div>
+                        </div>
+                        <button onclick="removeAlly(${index})" style="background:#ff4444; color:white; border:none; padding:8px 14px; border-radius:10px; font-size:0.8rem; flex-shrink:0;">Remove</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            
+            setTimeout(refreshMapNodes, 150);
+        }
+
+        function filterAllies() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = allies.filter(a => a.name.toLowerCase().includes(q) || a.username.toLowerCase().includes(q));
+            renderAllies(filtered);
+        }
+
+        async function showAddAllyModal() {
+            const name = prompt("Creator / Ally Name:");
+            if (!name) return;
+            
+            const username = prompt("Username / Handle:");
+            if (!username) return;
+            
+            let lat = null, lon = null;
+            const location = prompt("Location for map pin? (optional)", name);
+            
+            if (location) {
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`);
+                    const data = await res.json();
+                    if (data[0]) {
+                        lat = parseFloat(data[0].lat);
+                        lon = parseFloat(data[0].lon);
+                    }
+                } catch(e) {}
+            }
+            
+            allies.push({
+                name: name.trim(),
+                username: username.trim(),
+                platform: "applepay",
+                lat, lon
+            });
+            
+            renderAllies();
+            saveData();
+            showToast("New ally added!");
+        }
+
+        function removeAlly(index) {
+            if (confirm('Remove this ally?')) {
+                allies.splice(index, 1);
+                renderAllies();
+                saveData();
+            }
+        }
 
         // ==================== APPLE PAY DONATION ====================
         function triggerApplePay(amount, tier = 'common', username = 'ally') {
-            // Realistic simulation
             showToast(`💳 Apple Pay • $${amount} to @${username}...`);
             
             setTimeout(() => {
                 showToast(`✅ Apple Pay Successful! $${amount} sent.`);
                 confettiBurst();
-                
                 recordDonation(username, amount, tier, 'applepay');
-            }, 800);
+            }, 900);
         }
 
         function quickDonateAll(amount, tier) {
@@ -233,28 +580,119 @@
             triggerApplePay(amount, amount >= 25 ? 'epic' : amount >= 10 ? 'rare' : 'common', ally.username);
         }
 
-        function quickDonateFromMap(index, amount) {
-            const ally = allies[index];
-            triggerApplePay(amount, amount >= 25 ? 'epic' : amount >= 10 ? 'rare' : 'common', ally.username);
-            if (mapInstance) mapInstance.closePopup();
+        function recordDonation(username, amount, tier = 'common', platform = 'applepay') {
+            const now = new Date();
+            donationHistory.unshift({ username, amount, timestamp: now.toISOString(), tier, platform });
+            if (donationHistory.length > 15) donationHistory.pop();
+            
+            totalDonated += amount;
+            
+            const today = now.toDateString();
+            if (lastDonationDate !== today) {
+                if (lastDonationDate && (new Date(lastDonationDate).getTime() > now.getTime() - 86400000 * 2)) {
+                    streak++;
+                } else {
+                    streak = 1;
+                }
+                lastDonationDate = today;
+            }
+            
+            gainXP(amount, tier);
+            checkQuests(amount);
+            checkAchievements();
+            renderAllies();
+            renderHistory();
+            updateStats();
+            saveData();
         }
 
-        // Update renderAllies to show Apple Pay buttons
-        function renderAllies(filtered = allies) {
-            // ... same as before ...
-            // Replace donation buttons with:
-            // <button onclick="quickDonateSpecific(${index},5)" class="apple-pay-btn" style="padding:10px;">Apple Pay $5</button>
-            // (You can keep tier buttons too or replace them)
+        function renderHistory() {
+            const c = document.getElementById('historyContainer');
+            c.innerHTML = '';
+            if (donationHistory.length === 0) {
+                c.innerHTML = `<p style="text-align:center; color:#666;">No donations yet. Start your legend!</p>`;
+                return;
+            }
+            donationHistory.forEach(item => {
+                const d = new Date(item.timestamp).toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
+                const div = document.createElement('div');
+                div.style.cssText = 'background:#1a1a22; padding:12px 16px; border-radius:12px; margin:8px 0; display:flex; justify-content:space-between; align-items:center;';
+                div.innerHTML = `
+                    <div><strong>@${item.username}</strong><br><small style="color:#888">${d} • Apple Pay</small></div>
+                    <div style="text-align:right; font-weight:700; color:var(--primary);">$${item.amount}</div>
+                `;
+                c.appendChild(div);
+            });
         }
 
-        // recordDonation, updateStats, quests, etc. remain the same
-
-        // ... (rest of your script: auth, map, allies, history, etc.)
-
-        // Demo ally uses Apple Pay by default
-        if (allies.length === 0) {
-            allies.push({ name: "Demo Creator", username: "demo", platform: "applepay", lat: 51.5074, lon: -0.1278 });
+        // ==================== AUTH ====================
+        function toggleForm() {
+            const title = document.getElementById('formTitle');
+            title.textContent = title.textContent.includes('Create') ? 'Login' : 'Create Account';
         }
+
+        function handleAuth() {
+            const email = document.getElementById('email').value.trim();
+            const pass = document.getElementById('password').value.trim();
+            const err = document.getElementById('errorMsg');
+            if (!email || !pass) return err.textContent = "Please fill all fields";
+
+            const isLogin = document.getElementById('formTitle').textContent.includes('Login');
+            const promise = isLogin 
+                ? auth.signInWithEmailAndPassword(email, pass)
+                : auth.createUserWithEmailAndPassword(email, pass);
+
+            promise.then(cred => {
+                currentUser = cred.user;
+                showDashboard();
+            }).catch(e => {
+                err.textContent = e.message;
+            });
+        }
+
+        function showDashboard() {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('dashboardScreen').style.display = 'block';
+            
+            currentUser = auth.currentUser;
+            document.getElementById('userGreeting').textContent = currentUser.email.split('@')[0];
+            
+            loadData();
+            updateStats();
+            renderAllies();
+            renderQuests();
+            renderAchievements();
+            renderHistory();
+            
+            setTimeout(() => {
+                if (!mapInstance) {
+                    mapInstance = L.map('map').setView([20, 0], 2);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance);
+                }
+                refreshMapNodes();
+            }, 300);
+            
+            if (allies.length === 0) {
+                allies.push({ name: "Demo Creator", username: "demo", platform: "applepay", lat: 51.5074, lon: -0.1278 });
+                renderAllies();
+                saveData();
+            }
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                document.getElementById('dashboardScreen').style.display = 'none';
+                document.getElementById('authScreen').style.display = 'block';
+                document.getElementById('errorMsg').textContent = '';
+            });
+        }
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUser = user;
+                showDashboard();
+            }
+        });
     </script>
 </body>
 </html>
