@@ -180,7 +180,7 @@
 </head>
 <body>
 
-    <!-- SIGN UP -->
+    <!-- SIGN UP SCREEN -->
     <div class="container" id="signupScreen">
         <div class="header">
             <h1>ROOT</h1>
@@ -193,7 +193,7 @@
                 <p style="color:#888;">One tap donations with Apple Pay</p>
             </div>
 
-            <input type="text" id="displayName" placeholder="Display Name" 
+            <input type="text" id="displayName" placeholder="Display Name (e.g. Guardian)" 
                    style="width:100%; padding:18px; margin:12px 0; background:#1c1c24; border:none; border-radius:16px; color:white; font-size:1.05rem;">
             <input type="email" id="email" placeholder="Email" 
                    style="width:100%; padding:18px; margin:12px 0; background:#1c1c24; border:none; border-radius:16px; color:white; font-size:1.05rem;">
@@ -216,14 +216,14 @@
         </div>
 
         <div class="content">
-            <!-- Real Search -->
+            <!-- Autocomplete Search -->
             <div class="search-container">
                 <span class="search-icon">🔍</span>
-                <input type="text" id="searchInput" placeholder="Search users or causes..." autocomplete="off">
+                <input type="text" id="searchInput" placeholder="Search users..." autocomplete="off">
                 <div class="autocomplete-results" id="autocompleteResults"></div>
             </div>
 
-            <!-- Balance & Stats -->
+            <!-- Balance -->
             <div class="rpg-card">
                 <div style="color:#888; font-size:0.9rem;">YOUR DONATED BALANCE</div>
                 <div id="balanceAmount" class="balance">$0</div>
@@ -232,6 +232,7 @@
                 </button>
             </div>
 
+            <!-- Stats -->
             <div class="rpg-card">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
@@ -301,7 +302,6 @@
             confetti({ particleCount: 180, spread: 100, origin: { y: 0.6 } });
         }
 
-        // Load all users for search
         async function loadAllUsers() {
             try {
                 const snapshot = await db.collection('users').get();
@@ -372,7 +372,6 @@
             }
         }
 
-        // Real-time Search from Firestore
         function renderSearchResults(filtered) {
             const container = document.getElementById('autocompleteResults');
             container.innerHTML = '';
@@ -384,7 +383,7 @@
                 div.innerHTML = `
                     <div class="result-avatar">${user.displayName ? user.displayName[0].toUpperCase() : '👤'}</div>
                     <div>
-                        <strong>${user.displayName || 'Unknown User'}</strong><br>
+                        <strong>${user.displayName || 'Unknown'}</strong><br>
                         <small style="color:#888;">${user.email || ''}</small>
                     </div>
                 `;
@@ -410,7 +409,7 @@
             }
 
             btn.disabled = true;
-            btn.textContent = "Creating...";
+            btn.textContent = "Creating Profile...";
             errorEl.textContent = "";
 
             try {
@@ -432,7 +431,7 @@
                 document.getElementById('userGreeting').textContent = name;
 
                 await loadUserData();
-                await loadAllUsers(); // Load users for search
+                await loadAllUsers();
             } catch (e) {
                 console.error(e);
                 let msg = "Failed to create profile";
@@ -461,7 +460,7 @@
             }
         });
 
-        // Live Search
+        // Live Autocomplete Search
         document.getElementById('searchInput').addEventListener('input', function () {
             const q = this.value.toLowerCase().trim();
             const container = document.getElementById('autocompleteResults');
