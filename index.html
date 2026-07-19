@@ -8,6 +8,7 @@
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
@@ -41,182 +42,81 @@
             border: 1px solid #222;
         }
         
-        .header {
-            background: linear-gradient(135deg, #00ff9d, #ff00aa);
-            color: #000;
-            padding: 48px 20px 32px;
-            text-align: center;
-            position: relative;
-        }
-        
-        .header h1 {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 2.9rem;
-            font-weight: 700;
-            letter-spacing: -2px;
-        }
+        .header { background: linear-gradient(135deg, #00ff9d, #ff00aa); color: #000; padding: 48px 20px 32px; text-align: center; }
+        .header h1 { font-family: 'Space Grotesk', sans-serif; font-size: 2.9rem; font-weight: 700; letter-spacing: -2px; }
         
         .content { padding: 24px; }
+        .rpg-card { background: #1a1a22; border-radius: 20px; padding: 24px; margin-bottom: 20px; border: 1px solid #2a2a32; }
         
-        .profile-header {
-            text-align: center;
-            margin-bottom: 32px;
+        .balance { font-size: 2.4rem; font-weight: 800; color: var(--primary); }
+        
+        .apple-pay-button, .withdraw-button {
+            border: none; border-radius: 16px; padding: 18px 24px; font-size: 1.15rem; font-weight: 700;
+            width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px;
+            cursor: pointer; transition: all 0.25s ease; height: 68px; margin: 12px 0;
         }
         
-        .avatar {
-            width: 96px;
-            height: 96px;
-            background: linear-gradient(135deg, #00ff9d, #ff00aa);
-            border-radius: 50%;
-            margin: 0 auto 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
-            color: #000;
-            font-weight: 700;
-            border: 6px solid #1a1a22;
-        }
-        
-        .rpg-card {
-            background: #1a1a22;
-            border-radius: 20px;
-            padding: 24px;
-            margin-bottom: 20px;
-            border: 1px solid #2a2a32;
-        }
-        
-        .apple-pay-button {
-            background: #000;
-            color: white;
-            border: none;
-            border-radius: 16px;
-            padding: 18px 24px;
-            font-size: 1.15rem;
-            font-weight: 700;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            height: 68px;
-            margin: 12px 0;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
-        }
-        
-        .apple-pay-button:hover { 
-            background: #111; 
-            transform: translateY(-3px); 
-        }
+        .apple-pay-button { background: #000; color: white; }
+        .apple-pay-button:hover { background: #111; transform: translateY(-3px); }
         .apple-pay-button::before { content: ""; font-size: 1.7rem; }
         
-        .quick-amounts {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-top: 16px;
-        }
+        .withdraw-button { background: #ff00aa; color: #000; }
+        .withdraw-button:hover { background: #ff33bb; transform: translateY(-3px); }
         
-        .quick-amounts button {
-            background: #1f1f26;
-            border: 1px solid #333;
-            color: white;
-            border-radius: 16px;
-            padding: 16px 8px;
-            font-weight: 700;
-            font-size: 1.05rem;
-            transition: all 0.2s;
-        }
+        .quick-amounts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+        .quick-amounts button { background: #1f1f26; border: 1px solid #333; color: white; border-radius: 16px; padding: 16px 8px; font-weight: 700; transition: all 0.2s; }
+        .quick-amounts button.active, .quick-amounts button:hover { background: var(--primary); color: #000; transform: scale(1.05); }
         
-        .quick-amounts button.active,
-        .quick-amounts button:hover {
-            background: var(--primary);
-            color: #000;
-            transform: scale(1.05);
-        }
-        
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #111;
-            color: var(--primary);
-            padding: 16px 32px;
-            border-radius: 999px;
-            font-weight: 700;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
-            z-index: 10000;
-            display: none;
-            max-width: 90%;
-            text-align: center;
-        }
-        
-        button { font-family: inherit; }
-        
-        @media (max-width: 480px) {
-            body { padding: 8px; }
-            .container { border-radius: 24px; }
-            .header { padding: 40px 16px 28px; }
-            .header h1 { font-size: 2.5rem; }
-            .content { padding: 20px; }
-        }
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #111; color: var(--primary); padding: 16px 32px; border-radius: 999px; font-weight: 700; box-shadow: 0 10px 40px rgba(0,0,0,0.7); z-index: 10000; display: none; max-width: 90%; text-align: center; }
     </style>
 </head>
 <body>
 
-    <!-- SIGN UP / ONBOARDING -->
+    <!-- SIGN UP -->
     <div class="container" id="signupScreen">
-        <div class="header">
-            <h1>ROOT</h1>
-            <p style="margin-top:12px; opacity:0.95; font-size:1.1rem;">Quick Apple Pay Profile</p>
-        </div>
+        <div class="header"><h1>ROOT</h1><p style="margin-top:12px; font-size:1.1rem;">Quick Apple Pay Profile</p></div>
         <div class="content">
             <div class="profile-header">
                 <div class="avatar">🌱</div>
-                <h2 style="font-size:1.6rem; margin-bottom:8px;">Create your profile</h2>
-                <p style="color:#888; font-size:0.95rem;">One tap donations with Apple Pay</p>
+                <h2>Create your profile</h2>
             </div>
-
-            <input type="text" id="displayName" placeholder="Display Name (e.g. Guardian)" 
-                   style="width:100%; padding:18px; margin:12px 0; background:#1c1c24; border:none; border-radius:16px; color:white; font-size:1.05rem;">
+            <input type="text" id="displayName" placeholder="Display Name" style="width:100%; padding:18px; margin:12px 0; background:#1c1c24; border:none; border-radius:16px; color:white;">
+            <input type="email" id="email" placeholder="Email" style="width:100%; padding:18px; margin:12px 0; background:#1c1c24; border:none; border-radius:16px; color:white;">
+            <div id="errorMsg" style="color:#ff6666; text-align:center; margin:16px 0;"></div>
             
-            <input type="email" id="email" placeholder="Email" 
-                   style="width:100%; padding:18px; margin:12px 0; background:#1c1c24; border:none; border-radius:16px; color:white; font-size:1.05rem;">
-            
-            <div id="errorMsg" style="color:#ff6666; text-align:center; margin:16px 0; min-height:24px;"></div>
-            
-            <button onclick="completeSignup()" 
-                    style="width:100%; padding:18px; background:var(--primary); color:#000; border:none; border-radius:16px; font-weight:700; font-size:1.15rem; margin-top:12px;">
+            <button onclick="completeSignup()" style="width:100%; padding:18px; background:var(--primary); color:#000; border:none; border-radius:16px; font-weight:700;">
                 Create Profile & Enable Apple Pay
             </button>
-            
-            <p style="text-align:center; color:#666; font-size:0.85rem; margin-top:24px;">
-                Your data is private • Apple Pay is secure
-            </p>
         </div>
     </div>
 
-    <!-- QUICK APPLE PAY PROFILE DASHBOARD -->
+    <!-- DASHBOARD -->
     <div class="container" id="profileScreen" style="display:none;">
         <div class="header">
             <h1>ROOT</h1>
-            <div style="margin-top:12px; font-size:1.4rem; font-weight:700;" id="userGreeting">Guardian</div>
+            <div id="userGreeting" style="font-size:1.4rem; font-weight:700; margin-top:12px;">Guardian</div>
             <div style="font-size:0.9rem; opacity:0.8;">Apple Pay Ready ✓</div>
         </div>
 
         <div class="content">
+            <!-- BALANCE -->
+            <div class="rpg-card">
+                <div style="color:#888; font-size:0.9rem;">YOUR DONATED BALANCE</div>
+                <div id="balanceAmount" class="balance">$0</div>
+                <button onclick="requestWithdraw()" class="withdraw-button" style="margin-top:16px;">
+                    💸 Withdraw Funds
+                </button>
+            </div>
+
             <!-- STATS -->
             <div class="rpg-card">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; justify-content:space-between;">
                     <div>
                         <div style="color:#888; font-size:0.9rem;">TOTAL DONATED</div>
                         <div id="totalDonated" style="font-size:2.2rem; font-weight:800; color:var(--primary);">$0</div>
                     </div>
                     <div style="text-align:right;">
-                        <div style="font-size:2rem; font-weight:900;" id="streak">🔥 0</div>
+                        <div id="streak" style="font-size:2rem; font-weight:900;">🔥 0</div>
                         <div style="font-size:0.85rem; color:#888;">day streak</div>
                     </div>
                 </div>
@@ -224,34 +124,18 @@
 
             <!-- QUICK DONATE -->
             <div class="rpg-card">
-                <div style="font-weight:700; margin-bottom:16px; font-size:1.2rem;">🍎 Quick Apple Pay</div>
-                <p style="color:#888; margin-bottom:16px;">Tap any amount to donate instantly</p>
-                
+                <div style="font-weight:700; margin-bottom:16px;">🍎 Quick Apple Pay</div>
                 <div class="quick-amounts" id="amountGrid">
                     <button onclick="quickDonate(5)" class="active">$5</button>
                     <button onclick="quickDonate(10)">$10</button>
                     <button onclick="quickDonate(25)">$25</button>
                 </div>
-
                 <button onclick="startApplePay(5)" class="apple-pay-button" style="margin-top:24px;">
                     Pay with  Apple Pay
                 </button>
             </div>
 
-            <!-- PROFILE INFO -->
-            <div class="rpg-card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                    <strong>Profile</strong>
-                    <button onclick="editProfile()" style="background:none; border:none; color:var(--primary); font-size:0.95rem;">Edit</button>
-                </div>
-                <div style="background:#1f1f26; padding:16px; border-radius:16px; font-size:0.95rem;">
-                    <div style="margin-bottom:8px;"><strong>Name:</strong> <span id="profileName">Guardian</span></div>
-                    <div><strong>Email:</strong> <span id="profileEmail">you@example.com</span></div>
-                </div>
-            </div>
-
-            <button onclick="logout()" 
-                    style="width:100%; padding:18px; background:#222; color:white; border:none; border-radius:16px; font-weight:600;">
+            <button onclick="logout()" style="width:100%; padding:18px; background:#222; color:white; border:none; border-radius:16px; font-weight:600;">
                 Sign Out
             </button>
         </div>
@@ -262,7 +146,6 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     
     <script>
-        // Firebase Config (replace with your own in production)
         const firebaseConfig = {
             apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
             authDomain: "rootdonate-61e61.firebaseapp.com",
@@ -271,28 +154,51 @@
             messagingSenderId: "754240963907",
             appId: "1:754240963907:web:5417c2763d8f02108bdbf6"
         };
+
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
+        const db = firebase.firestore();
 
         let currentUser = null;
-        let totalDonated = 0;
+        let userDocRef = null;
 
         function showToast(msg, color = '#00ff9d') {
             const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.style.color = color;
-            t.style.display = 'block';
+            t.textContent = msg; t.style.color = color; t.style.display = 'block';
             setTimeout(() => t.style.display = 'none', 2800);
         }
 
-        function confettiBurst() {
-            confetti({ particleCount: 180, spread: 100, origin: { y: 0.6 } });
+        function confettiBurst() { confetti({ particleCount: 180, spread: 100, origin: { y: 0.6 } }); }
+
+        // Load user data from Firestore
+        async function loadUserData() {
+            if (!userDocRef) return;
+            const doc = await userDocRef.get();
+            const data = doc.data() || {};
+            
+            const total = data.totalDonated || 0;
+            document.getElementById('totalDonated').textContent = '$' + total;
+            document.getElementById('balanceAmount').textContent = '$' + total; // same balance for demo
         }
 
-        // Apple Pay (Demo - in production you need proper merchant session on your server)
+        // Update Firestore after donation
+        async function updateDonatedAmount(amount) {
+            if (!userDocRef) return;
+            try {
+                await userDocRef.update({
+                    totalDonated: firebase.firestore.FieldValue.increment(amount),
+                    lastDonation: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                await loadUserData();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Apple Pay
         function startApplePay(amount = 5) {
             if (!window.ApplePaySession || !ApplePaySession.canMakePayments()) {
-                showToast("Apple Pay is not available on this device", "#ff6666");
+                showToast("Apple Pay not available", "#ff6666");
                 return;
             }
 
@@ -301,92 +207,93 @@
                 currencyCode: "USD",
                 supportedNetworks: ["visa", "masterCard", "amex", "discover"],
                 merchantCapabilities: ["supports3DS"],
-                total: { 
-                    label: "ROOT • Donation", 
-                    amount: amount.toFixed(2) 
-                }
+                total: { label: "ROOT • Donation", amount: amount.toFixed(2) }
             };
 
             const session = new ApplePaySession(4, request);
 
-            session.onvalidatemerchant = (event) => {
-                // In real app: call your server to validate
-                session.completeMerchantValidation({});
-            };
-
-            session.onpaymentauthorized = (event) => {
-                // Process payment on your server here
-                setTimeout(() => {
+            session.onvalidatemerchant = () => session.completeMerchantValidation({});
+            session.onpaymentauthorized = () => {
+                setTimeout(async () => {
                     session.completePayment(ApplePaySession.STATUS_SUCCESS);
-                    totalDonated += amount;
-                    updateStats();
-                    showToast(`✅ $${amount} donated successfully!`, '#00ff9d');
+                    await updateDonatedAmount(amount);
+                    showToast(`✅ $${amount} donated!`, '#00ff9d');
                     confettiBurst();
                 }, 800);
             };
-
             session.begin();
         }
 
         function quickDonate(amount) {
-            // Highlight selected
-            document.querySelectorAll('#amountGrid button').forEach(btn => {
-                btn.classList.remove('active');
-                if (parseInt(btn.textContent.replace('$','')) === amount) btn.classList.add('active');
-            });
+            document.querySelectorAll('#amountGrid button').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
             startApplePay(amount);
         }
 
-        function updateStats() {
-            document.getElementById('totalDonated').textContent = '$' + totalDonated;
+        // Withdraw (Demo)
+        function requestWithdraw() {
+            const balance = parseFloat(document.getElementById('balanceAmount').textContent.replace('$','')) || 0;
+            if (balance <= 0) {
+                showToast("No balance to withdraw", "#ff6666");
+                return;
+            }
+            const amount = prompt(`How much would you like to withdraw? (Max: $${balance})`, balance);
+            if (amount && parseFloat(amount) > 0) {
+                showToast(`💸 Withdrawal request of $${parseFloat(amount)} submitted! (Demo)`, '#00ff9d');
+                // In production: call Cloud Function / Stripe payout here
+            }
         }
 
-        function completeSignup() {
+        async function completeSignup() {
             const name = document.getElementById('displayName').value.trim() || "Guardian";
             const email = document.getElementById('email').value.trim();
 
-            if (!email) {
-                document.getElementById('errorMsg').textContent = "Please enter an email";
-                return;
-            }
+            if (!email) return document.getElementById('errorMsg').textContent = "Email required";
 
-            // Demo signup
-            showToast("Profile created! Apple Pay enabled", '#00ff9d');
-            
-            currentUser = { displayName: name, email: email };
-            
-            document.getElementById('signupScreen').style.display = 'none';
-            document.getElementById('profileScreen').style.display = 'block';
-            
-            document.getElementById('userGreeting').textContent = name;
-            document.getElementById('profileName').textContent = name;
-            document.getElementById('profileEmail').textContent = email || "you@example.com";
-            
-            updateStats();
-        }
+            try {
+                // Demo auth (in production use createUserWithEmailAndPassword)
+                const userCredential = await auth.signInAnonymously();
+                currentUser = userCredential.user;
+                userDocRef = db.collection('users').doc(currentUser.uid);
 
-        function editProfile() {
-            const newName = prompt("Update display name:", document.getElementById('profileName').textContent);
-            if (newName) {
-                document.getElementById('profileName').textContent = newName;
-                document.getElementById('userGreeting').textContent = newName;
-                showToast("Profile updated");
+                await userDocRef.set({
+                    displayName: name,
+                    email: email,
+                    totalDonated: 0,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
+                showToast("Profile created & synced!", '#00ff9d');
+
+                document.getElementById('signupScreen').style.display = 'none';
+                document.getElementById('profileScreen').style.display = 'block';
+                document.getElementById('userGreeting').textContent = name;
+                document.getElementById('profileName') && (document.getElementById('profileName').textContent = name);
+
+                await loadUserData();
+            } catch (e) {
+                console.error(e);
+                showToast("Error creating profile", "#ff6666");
             }
         }
 
         function logout() {
-            document.getElementById('profileScreen').style.display = 'none';
-            document.getElementById('signupScreen').style.display = 'block';
-            totalDonated = 0;
-            updateStats();
+            auth.signOut();
+            location.reload();
         }
 
-        // Auto-focus first input
-        window.onload = () => {
-            setTimeout(() => {
-                document.getElementById('displayName').focus();
-            }, 600);
-        };
+        // Auto login if already signed in
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                userDocRef = db.collection('users').doc(user.uid);
+                document.getElementById('signupScreen').style.display = 'none';
+                document.getElementById('profileScreen').style.display = 'block';
+                await loadUserData();
+            }
+        });
+
+        window.onload = () => setTimeout(() => document.getElementById('displayName').focus(), 500);
     </script>
 </body>
 </html>
