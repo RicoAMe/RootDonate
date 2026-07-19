@@ -81,7 +81,6 @@
         
         .balance { font-size: 2.4rem; font-weight: 800; color: var(--primary); }
         
-        /* Search */
         .search-container { position: relative; margin-bottom: 24px; }
         #searchInput {
             width: 100%;
@@ -122,7 +121,7 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        .result-item:hover, .result-item.active { background: #25252e; }
+        .result-item:hover { background: #25252e; }
         .result-avatar {
             width: 48px; height: 48px;
             border-radius: 50%;
@@ -166,8 +165,6 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.7);
             z-index: 10000; display: none; max-width: 90%; text-align: center;
         }
-        
-        button { font-family: inherit; }
     </style>
 </head>
 <body>
@@ -208,14 +205,12 @@
         </div>
 
         <div class="content">
-            <!-- Real Autocomplete Search from Created Profiles -->
             <div class="search-container">
                 <span class="search-icon">🔍</span>
                 <input type="text" id="searchInput" placeholder="Search created profiles..." autocomplete="off">
                 <div class="autocomplete-results" id="autocompleteResults"></div>
             </div>
 
-            <!-- Balance -->
             <div class="rpg-card">
                 <div style="color:#888; font-size:0.9rem;">YOUR DONATED BALANCE</div>
                 <div id="balanceAmount" class="balance">$0</div>
@@ -224,7 +219,6 @@
                 </button>
             </div>
 
-            <!-- Stats -->
             <div class="rpg-card">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
@@ -238,7 +232,6 @@
                 </div>
             </div>
 
-            <!-- Quick Donate -->
             <div class="rpg-card">
                 <div style="font-weight:700; margin-bottom:16px; font-size:1.2rem;">🍎 Quick Apple Pay</div>
                 <p style="color:#888; margin-bottom:16px;">Tap any amount to donate instantly</p>
@@ -294,7 +287,6 @@
             confetti({ particleCount: 180, spread: 100, origin: { y: 0.6 } });
         }
 
-        // Load all created profiles
         async function loadAllUsers() {
             try {
                 const snapshot = await db.collection('users').get();
@@ -402,7 +394,7 @@
             }
 
             btn.disabled = true;
-            btn.textContent = "Creating...";
+            btn.textContent = "Creating Profile...";
             errorEl.textContent = "";
 
             try {
@@ -427,8 +419,10 @@
                 await loadAllUsers();
             } catch (e) {
                 console.error(e);
-                let msg = "Failed to create profile";
-                if (e.code === 'auth/operation-not-allowed') msg = "Enable Anonymous Auth in Firebase Console";
+                let msg = "Failed to create profile. Check Firebase Console.";
+                if (e.code === 'auth/operation-not-allowed') {
+                    msg = "Please enable Anonymous Auth in Firebase Console";
+                }
                 errorEl.textContent = msg;
                 showToast(msg, "#ff6666");
             } finally {
@@ -453,7 +447,6 @@
             }
         });
 
-        // Live Autocomplete Search
         document.getElementById('searchInput').addEventListener('input', function () {
             const q = this.value.toLowerCase().trim();
             if (!q) {
