@@ -30,7 +30,7 @@
             font-family: 'Inter', system-ui, sans-serif;
             background: var(--bg);
             color: #e0e0e0;
-            line-height: 1.5;
+            line-height: 1.6;
             padding: 12px;
             min-height: 100vh;
         }
@@ -72,12 +72,12 @@
             font-size: 0.85rem;
         }
         
-        .content { padding: 16px; }
+        .content { padding: 20px; }
         
         .rpg-card {
             background: #1a1a22;
             border-radius: 20px;
-            padding: 18px;
+            padding: 20px;
             margin-bottom: 16px;
             border: 1px solid #2a2a32;
         }
@@ -96,13 +96,16 @@
             justify-content: center;
             gap: 10px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.25s ease;
             height: 62px;
             margin: 8px 0;
         }
         
-        .apple-pay-button:hover { background: #111; transform: translateY(-2px); }
-        .apple-pay-button::before { content: ""; font-size: 1.5rem; }
+        .apple-pay-button:hover { 
+            background: #111; 
+            transform: translateY(-2px); 
+        }
+        .apple-pay-button::before { content: ""; font-size: 1.55rem; }
         
         .ally-card {
             background: #1f1f26;
@@ -126,8 +129,8 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.7);
             z-index: 10000;
             display: none;
-            white-space: nowrap;
             max-width: 90%;
+            text-align: center;
         }
         
         button { font-family: inherit; }
@@ -138,16 +141,17 @@
             .header { padding: 40px 16px 28px; }
             .header h1 { font-size: 2.5rem; }
             #map { height: 260px; }
+            .content { padding: 16px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- AUTH -->
+    <!-- AUTH SCREEN -->
     <div class="container" id="authScreen">
         <div class="header">
             <h1>ROOT</h1>
-            <p style="margin-top:8px; opacity:0.9;">Donation RPG</p>
+            <p style="margin-top:8px; opacity:0.9; font-size:1.05rem;">Donation RPG</p>
         </div>
         <div class="content">
             <h2 id="formTitle" style="text-align:center; margin:24px 0 20px; font-size:1.4rem;">Welcome Back</h2>
@@ -185,13 +189,13 @@
                         <span>XP Progress</span>
                         <span id="xpText">0 / 1000</span>
                     </div>
-                    <div class="stat-bar" style="height:10px; background:#222; border-radius:999px; overflow:hidden;">
-                        <div id="xpBar" style="height:100%; width:0%; background:linear-gradient(to right, #00ff9d, #00cc7a); transition:width 0.6s;"></div>
+                    <div style="height:10px; background:#222; border-radius:999px; overflow:hidden;">
+                        <div id="xpBar" style="height:100%; width:0%; background:linear-gradient(to right, #00ff9d, #00cc7a); transition:width 0.6s ease;"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- ADD ALLY -->
+            <!-- ALLIES -->
             <div class="rpg-card">
                 <div style="font-weight:700; margin-bottom:12px;">👥 Your Allies</div>
                 <button onclick="showAddAllyModal()" style="width:100%; padding:16px; background:#222; color:white; border:none; border-radius:16px; font-weight:600; margin-bottom:12px;">
@@ -201,7 +205,7 @@
                 <div id="alliesContainer"></div>
             </div>
 
-            <!-- GLOBAL DONATE -->
+            <!-- QUICK DONATE -->
             <div class="rpg-card">
                 <div style="font-weight:700; margin-bottom:12px;">🍎 Quick Apple Pay</div>
                 <button onclick="startApplePay(5,'common')" class="apple-pay-button">Pay $5 • +50 XP</button>
@@ -224,7 +228,7 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     
     <script>
-        // === CONFIG ===
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
             authDomain: "rootdonate-61e61.firebaseapp.com",
@@ -253,10 +257,10 @@
             confetti({ particleCount: 160, spread: 90, origin: { y: 0.6 } });
         }
 
-        // === APPLE PAY ===
+        // Apple Pay
         function startApplePay(amount, tier = 'common', recipient = 'ROOT Fund') {
             if (!window.ApplePaySession || !ApplePaySession.canMakePayments()) {
-                showToast("Apple Pay not available", "#ff6666");
+                showToast("Apple Pay not available on this device", "#ff6666");
                 return;
             }
 
@@ -303,7 +307,7 @@
             document.getElementById('totalDonated').textContent = `Total Donated: $${totalDonated}`;
         }
 
-        // === ALLIES ===
+        // Allies Management
         function showAddAllyModal() {
             const name = prompt("Creator / Ally Name:");
             if (!name) return;
@@ -327,7 +331,7 @@
             container.innerHTML = '';
 
             if (allies.length === 0) {
-                container.innerHTML = `<p style="text-align:center; color:#666; padding:20px;">No allies yet.<br>Tap above to add creators.</p>`;
+                container.innerHTML = `<p style="text-align:center; color:#666; padding:30px 10px;">No allies yet.<br>Tap above to add creators.</p>`;
                 return;
             }
 
@@ -351,31 +355,24 @@
         }
 
         function filterAllies() {
-            const term = document.getElementById('searchInput').value.toLowerCase();
-            const filtered = allies.filter(a => 
-                a.name.toLowerCase().includes(term) || a.username.toLowerCase().includes(term)
-            );
-            // For simplicity we re-render all (you can improve filtering later)
-            renderAllies();
+            renderAllies(); // Simple re-render (you can add real filtering later)
         }
 
         function refreshMap() {
             if (!mapInstance) {
                 mapInstance = L.map('map').setView([40, -30], 2);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: ''
-                }).addTo(mapInstance);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance);
             }
 
             mapInstance.eachLayer(l => { if (l instanceof L.Marker) mapInstance.removeLayer(l); });
 
             allies.forEach(ally => {
-                const marker = L.marker([ally.lat, ally.lon]).addTo(mapInstance);
-                marker.bindPopup(`<b>${ally.name}</b><br>@${ally.username}`);
+                L.marker([ally.lat, ally.lon]).addTo(mapInstance)
+                    .bindPopup(`<b>${ally.name}</b><br>@${ally.username}`);
             });
         }
 
-        // === AUTH ===
+        // Auth
         function handleAuth() {
             showToast("Demo login successful");
             document.getElementById('authScreen').style.display = 'none';
@@ -391,7 +388,7 @@
             document.getElementById('authScreen').style.display = 'block';
         }
 
-        // Demo data
+        // Demo Data
         window.onload = () => {
             allies = [
                 { name: "Alex Rivera", username: "arivera", lat: 40.7, lon: -74.0 },
