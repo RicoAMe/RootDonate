@@ -3,15 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ROOT • Donation RPG</title>
+    <title>ROOT • Quick Apple Pay Profile</title>
     
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
-    
-    <!-- Leaflet -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
@@ -60,25 +56,33 @@
             letter-spacing: -2px;
         }
         
-        .level-badge {
-            position: absolute;
-            top: 24px;
-            right: 24px;
-            background: #000;
-            color: var(--primary);
-            padding: 6px 16px;
-            border-radius: 50px;
-            font-weight: 800;
-            font-size: 0.85rem;
+        .content { padding: 24px; }
+        
+        .profile-header {
+            text-align: center;
+            margin-bottom: 32px;
         }
         
-        .content { padding: 20px; }
+        .avatar {
+            width: 96px;
+            height: 96px;
+            background: linear-gradient(135deg, #00ff9d, #ff00aa);
+            border-radius: 50%;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: #000;
+            font-weight: 700;
+            border: 6px solid #1a1a22;
+        }
         
         .rpg-card {
             background: #1a1a22;
             border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
             border: 1px solid #2a2a32;
         }
         
@@ -87,34 +91,51 @@
             color: white;
             border: none;
             border-radius: 16px;
-            padding: 18px;
-            font-size: 1.1rem;
+            padding: 18px 24px;
+            font-size: 1.15rem;
             font-weight: 700;
             width: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 12px;
             cursor: pointer;
             transition: all 0.25s ease;
-            height: 62px;
-            margin: 8px 0;
+            height: 68px;
+            margin: 12px 0;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4);
         }
         
         .apple-pay-button:hover { 
             background: #111; 
-            transform: translateY(-2px); 
+            transform: translateY(-3px); 
         }
-        .apple-pay-button::before { content: ""; font-size: 1.55rem; }
+        .apple-pay-button::before { content: ""; font-size: 1.7rem; }
         
-        .ally-card {
+        .quick-amounts {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 16px;
+        }
+        
+        .quick-amounts button {
             background: #1f1f26;
+            border: 1px solid #333;
+            color: white;
             border-radius: 16px;
-            padding: 16px;
-            margin-bottom: 12px;
+            padding: 16px 8px;
+            font-weight: 700;
+            font-size: 1.05rem;
+            transition: all 0.2s;
         }
         
-        #map { height: 300px; border-radius: 18px; margin: 12px 0; }
+        .quick-amounts button.active,
+        .quick-amounts button:hover {
+            background: var(--primary);
+            color: #000;
+            transform: scale(1.05);
+        }
         
         .toast {
             position: fixed;
@@ -123,9 +144,9 @@
             transform: translateX(-50%);
             background: #111;
             color: var(--primary);
-            padding: 16px 28px;
+            padding: 16px 32px;
             border-radius: 999px;
-            font-weight: 600;
+            font-weight: 700;
             box-shadow: 0 10px 40px rgba(0,0,0,0.7);
             z-index: 10000;
             display: none;
@@ -140,86 +161,99 @@
             .container { border-radius: 24px; }
             .header { padding: 40px 16px 28px; }
             .header h1 { font-size: 2.5rem; }
-            #map { height: 260px; }
-            .content { padding: 16px; }
+            .content { padding: 20px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- AUTH SCREEN -->
-    <div class="container" id="authScreen">
+    <!-- SIGN UP / ONBOARDING -->
+    <div class="container" id="signupScreen">
         <div class="header">
             <h1>ROOT</h1>
-            <p style="margin-top:8px; opacity:0.9; font-size:1.05rem;">Donation RPG</p>
+            <p style="margin-top:12px; opacity:0.95; font-size:1.1rem;">Quick Apple Pay Profile</p>
         </div>
         <div class="content">
-            <h2 id="formTitle" style="text-align:center; margin:24px 0 20px; font-size:1.4rem;">Welcome Back</h2>
-            <input type="email" id="email" placeholder="Email" style="width:100%; padding:18px; margin:8px 0; background:#1c1c24; border:none; border-radius:16px; color:white; font-size:1rem;">
-            <input type="password" id="password" placeholder="Password" style="width:100%; padding:18px; margin:8px 0; background:#1c1c24; border:none; border-radius:16px; color:white; font-size:1rem;">
-            <div id="errorMsg" style="color:#ff6666; text-align:center; margin:12px 0; min-height:24px;"></div>
-            <button onclick="handleAuth()" style="width:100%; padding:18px; background:var(--primary); color:#000; border:none; border-radius:16px; font-weight:700; font-size:1.1rem; margin-top:8px;">Continue</button>
+            <div class="profile-header">
+                <div class="avatar">🌱</div>
+                <h2 style="font-size:1.6rem; margin-bottom:8px;">Create your profile</h2>
+                <p style="color:#888; font-size:0.95rem;">One tap donations with Apple Pay</p>
+            </div>
+
+            <input type="text" id="displayName" placeholder="Display Name (e.g. Guardian)" 
+                   style="width:100%; padding:18px; margin:12px 0; background:#1c1c24; border:none; border-radius:16px; color:white; font-size:1.05rem;">
+            
+            <input type="email" id="email" placeholder="Email" 
+                   style="width:100%; padding:18px; margin:12px 0; background:#1c1c24; border:none; border-radius:16px; color:white; font-size:1.05rem;">
+            
+            <div id="errorMsg" style="color:#ff6666; text-align:center; margin:16px 0; min-height:24px;"></div>
+            
+            <button onclick="completeSignup()" 
+                    style="width:100%; padding:18px; background:var(--primary); color:#000; border:none; border-radius:16px; font-weight:700; font-size:1.15rem; margin-top:12px;">
+                Create Profile & Enable Apple Pay
+            </button>
+            
+            <p style="text-align:center; color:#666; font-size:0.85rem; margin-top:24px;">
+                Your data is private • Apple Pay is secure
+            </p>
         </div>
     </div>
 
-    <!-- DASHBOARD -->
-    <div class="container" id="dashboardScreen" style="display:none;">
+    <!-- QUICK APPLE PAY PROFILE DASHBOARD -->
+    <div class="container" id="profileScreen" style="display:none;">
         <div class="header">
             <h1>ROOT</h1>
-            <div class="level-badge" id="levelBadge">LVL 1 • 0 XP</div>
-            <div id="userGreeting" style="margin-top:12px; font-size:1.3rem; font-weight:700;">Guardian</div>
+            <div style="margin-top:12px; font-size:1.4rem; font-weight:700;" id="userGreeting">Guardian</div>
+            <div style="font-size:0.9rem; opacity:0.8;">Apple Pay Ready ✓</div>
         </div>
 
         <div class="content">
-
             <!-- STATS -->
             <div class="rpg-card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
-                        <div style="font-weight:700; font-size:1.1rem;">Your Stats</div>
-                        <div id="totalDonated" style="color:#888;">Total Donated: $0</div>
+                        <div style="color:#888; font-size:0.9rem;">TOTAL DONATED</div>
+                        <div id="totalDonated" style="font-size:2.2rem; font-weight:800; color:var(--primary);">$0</div>
                     </div>
                     <div style="text-align:right;">
-                        <div id="streak" style="font-size:2rem; font-weight:900;">🔥 0</div>
-                        <div style="font-size:0.8rem; color:#888;">Streak</div>
+                        <div style="font-size:2rem; font-weight:900;" id="streak">🔥 0</div>
+                        <div style="font-size:0.85rem; color:#888;">day streak</div>
                     </div>
                 </div>
-                <div>
-                    <div style="display:flex; justify-content:space-between; font-size:0.95rem; margin-bottom:6px;">
-                        <span>XP Progress</span>
-                        <span id="xpText">0 / 1000</span>
-                    </div>
-                    <div style="height:10px; background:#222; border-radius:999px; overflow:hidden;">
-                        <div id="xpBar" style="height:100%; width:0%; background:linear-gradient(to right, #00ff9d, #00cc7a); transition:width 0.6s ease;"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ALLIES -->
-            <div class="rpg-card">
-                <div style="font-weight:700; margin-bottom:12px;">👥 Your Allies</div>
-                <button onclick="showAddAllyModal()" style="width:100%; padding:16px; background:#222; color:white; border:none; border-radius:16px; font-weight:600; margin-bottom:12px;">
-                    + Add New Ally / Creator
-                </button>
-                <input type="text" id="searchInput" placeholder="Search allies..." onkeyup="filterAllies()" style="width:100%; padding:14px; background:#1c1c24; border:none; border-radius:16px; margin-bottom:12px;">
-                <div id="alliesContainer"></div>
             </div>
 
             <!-- QUICK DONATE -->
             <div class="rpg-card">
-                <div style="font-weight:700; margin-bottom:12px;">🍎 Quick Apple Pay</div>
-                <button onclick="startApplePay(5,'common')" class="apple-pay-button">Pay $5 • +50 XP</button>
-                <button onclick="startApplePay(10,'rare')" class="apple-pay-button">Pay $10 • +120 XP</button>
-                <button onclick="startApplePay(25,'epic')" class="apple-pay-button">Pay $25 • +300 XP</button>
+                <div style="font-weight:700; margin-bottom:16px; font-size:1.2rem;">🍎 Quick Apple Pay</div>
+                <p style="color:#888; margin-bottom:16px;">Tap any amount to donate instantly</p>
+                
+                <div class="quick-amounts" id="amountGrid">
+                    <button onclick="quickDonate(5)" class="active">$5</button>
+                    <button onclick="quickDonate(10)">$10</button>
+                    <button onclick="quickDonate(25)">$25</button>
+                </div>
+
+                <button onclick="startApplePay(5)" class="apple-pay-button" style="margin-top:24px;">
+                    Pay with  Apple Pay
+                </button>
             </div>
 
-            <!-- MAP -->
+            <!-- PROFILE INFO -->
             <div class="rpg-card">
-                <div style="font-weight:700; margin-bottom:12px;">🗺️ Allies Map</div>
-                <div id="map"></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <strong>Profile</strong>
+                    <button onclick="editProfile()" style="background:none; border:none; color:var(--primary); font-size:0.95rem;">Edit</button>
+                </div>
+                <div style="background:#1f1f26; padding:16px; border-radius:16px; font-size:0.95rem;">
+                    <div style="margin-bottom:8px;"><strong>Name:</strong> <span id="profileName">Guardian</span></div>
+                    <div><strong>Email:</strong> <span id="profileEmail">you@example.com</span></div>
+                </div>
             </div>
 
-            <button onclick="logout()" style="width:100%; padding:18px; background:#222; color:white; border:none; border-radius:16px; font-weight:600; margin-top:8px;">Logout</button>
+            <button onclick="logout()" 
+                    style="width:100%; padding:18px; background:#222; color:white; border:none; border-radius:16px; font-weight:600;">
+                Sign Out
+            </button>
         </div>
     </div>
 
@@ -228,7 +262,7 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     
     <script>
-        // Firebase Config
+        // Firebase Config (replace with your own in production)
         const firebaseConfig = {
             apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
             authDomain: "rootdonate-61e61.firebaseapp.com",
@@ -241,9 +275,7 @@
         const auth = firebase.auth();
 
         let currentUser = null;
-        let allies = [];
-        let xp = 0, level = 1, totalDonated = 0;
-        let mapInstance = null;
+        let totalDonated = 0;
 
         function showToast(msg, color = '#00ff9d') {
             const t = document.getElementById('toast');
@@ -254,146 +286,106 @@
         }
 
         function confettiBurst() {
-            confetti({ particleCount: 160, spread: 90, origin: { y: 0.6 } });
+            confetti({ particleCount: 180, spread: 100, origin: { y: 0.6 } });
         }
 
-        // Apple Pay
-        function startApplePay(amount, tier = 'common', recipient = 'ROOT Fund') {
+        // Apple Pay (Demo - in production you need proper merchant session on your server)
+        function startApplePay(amount = 5) {
             if (!window.ApplePaySession || !ApplePaySession.canMakePayments()) {
-                showToast("Apple Pay not available on this device", "#ff6666");
+                showToast("Apple Pay is not available on this device", "#ff6666");
                 return;
             }
 
-            const session = new ApplePaySession(4, {
+            const request = {
                 countryCode: "US",
                 currencyCode: "USD",
                 supportedNetworks: ["visa", "masterCard", "amex", "discover"],
                 merchantCapabilities: ["supports3DS"],
-                total: { label: `ROOT • ${recipient}`, amount: amount.toFixed(2) }
-            });
+                total: { 
+                    label: "ROOT • Donation", 
+                    amount: amount.toFixed(2) 
+                }
+            };
 
-            session.onvalidatemerchant = () => session.completeMerchantValidation({});
-            
-            session.onpaymentauthorized = () => {
+            const session = new ApplePaySession(4, request);
+
+            session.onvalidatemerchant = (event) => {
+                // In real app: call your server to validate
+                session.completeMerchantValidation({});
+            };
+
+            session.onpaymentauthorized = (event) => {
+                // Process payment on your server here
                 setTimeout(() => {
                     session.completePayment(ApplePaySession.STATUS_SUCCESS);
-                    showToast(`✅ $${amount} sent to ${recipient}`);
+                    totalDonated += amount;
+                    updateStats();
+                    showToast(`✅ $${amount} donated successfully!`, '#00ff9d');
                     confettiBurst();
-                    recordDonation(recipient, amount, tier);
-                }, 600);
+                }, 800);
             };
 
             session.begin();
         }
 
-        function recordDonation(recipient, amount, tier) {
-            totalDonated += amount;
-            const multiplier = tier === 'epic' ? 12 : tier === 'rare' ? 8 : 5;
-            xp += Math.floor(amount * multiplier);
-
-            if (Math.floor(xp / 1000) + 1 > level) {
-                level = Math.floor(xp / 1000) + 1;
-                showToast(`🎉 LEVEL UP! Now Level ${level}`);
-            }
-
-            updateStats();
-            renderAllies();
+        function quickDonate(amount) {
+            // Highlight selected
+            document.querySelectorAll('#amountGrid button').forEach(btn => {
+                btn.classList.remove('active');
+                if (parseInt(btn.textContent.replace('$','')) === amount) btn.classList.add('active');
+            });
+            startApplePay(amount);
         }
 
         function updateStats() {
-            document.getElementById('levelBadge').textContent = `LVL ${level} • ${xp} XP`;
-            document.getElementById('xpText').textContent = `${xp % 1000} / 1000`;
-            document.getElementById('xpBar').style.width = `${(xp % 1000) / 10}%`;
-            document.getElementById('totalDonated').textContent = `Total Donated: $${totalDonated}`;
+            document.getElementById('totalDonated').textContent = '$' + totalDonated;
         }
 
-        // Allies Management
-        function showAddAllyModal() {
-            const name = prompt("Creator / Ally Name:");
-            if (!name) return;
-            const username = prompt("Username / @handle:");
-            if (!username) return;
+        function completeSignup() {
+            const name = document.getElementById('displayName').value.trim() || "Guardian";
+            const email = document.getElementById('email').value.trim();
 
-            allies.push({
-                name: name.trim(),
-                username: username.trim().replace('@',''),
-                lat: 35 + Math.random() * 25,
-                lon: -80 + Math.random() * 60
-            });
-
-            renderAllies();
-            refreshMap();
-            showToast(`${name} added successfully!`);
-        }
-
-        function renderAllies() {
-            const container = document.getElementById('alliesContainer');
-            container.innerHTML = '';
-
-            if (allies.length === 0) {
-                container.innerHTML = `<p style="text-align:center; color:#666; padding:30px 10px;">No allies yet.<br>Tap above to add creators.</p>`;
+            if (!email) {
+                document.getElementById('errorMsg').textContent = "Please enter an email";
                 return;
             }
 
-            allies.forEach((ally) => {
-                const div = document.createElement('div');
-                div.className = 'ally-card';
-                div.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <strong>${ally.name}</strong><br>
-                            <small style="color:#888">@${ally.username}</small>
-                        </div>
-                        <div style="display:flex; gap:8px;">
-                            <button onclick="startApplePay(5,'common','@${ally.username}')" class="apple-pay-button" style="width:auto; padding:10px 16px; font-size:0.95rem;">$5</button>
-                            <button onclick="startApplePay(10,'rare','@${ally.username}')" class="apple-pay-button" style="width:auto; padding:10px 16px; font-size:0.95rem;">$10</button>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        function filterAllies() {
-            renderAllies(); // Simple re-render (you can add real filtering later)
-        }
-
-        function refreshMap() {
-            if (!mapInstance) {
-                mapInstance = L.map('map').setView([40, -30], 2);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance);
-            }
-
-            mapInstance.eachLayer(l => { if (l instanceof L.Marker) mapInstance.removeLayer(l); });
-
-            allies.forEach(ally => {
-                L.marker([ally.lat, ally.lon]).addTo(mapInstance)
-                    .bindPopup(`<b>${ally.name}</b><br>@${ally.username}`);
-            });
-        }
-
-        // Auth
-        function handleAuth() {
-            showToast("Demo login successful");
-            document.getElementById('authScreen').style.display = 'none';
-            document.getElementById('dashboardScreen').style.display = 'block';
-            document.getElementById('userGreeting').textContent = "Guardian";
+            // Demo signup
+            showToast("Profile created! Apple Pay enabled", '#00ff9d');
+            
+            currentUser = { displayName: name, email: email };
+            
+            document.getElementById('signupScreen').style.display = 'none';
+            document.getElementById('profileScreen').style.display = 'block';
+            
+            document.getElementById('userGreeting').textContent = name;
+            document.getElementById('profileName').textContent = name;
+            document.getElementById('profileEmail').textContent = email || "you@example.com";
+            
             updateStats();
-            renderAllies();
-            refreshMap();
+        }
+
+        function editProfile() {
+            const newName = prompt("Update display name:", document.getElementById('profileName').textContent);
+            if (newName) {
+                document.getElementById('profileName').textContent = newName;
+                document.getElementById('userGreeting').textContent = newName;
+                showToast("Profile updated");
+            }
         }
 
         function logout() {
-            document.getElementById('dashboardScreen').style.display = 'none';
-            document.getElementById('authScreen').style.display = 'block';
+            document.getElementById('profileScreen').style.display = 'none';
+            document.getElementById('signupScreen').style.display = 'block';
+            totalDonated = 0;
+            updateStats();
         }
 
-        // Demo Data
+        // Auto-focus first input
         window.onload = () => {
-            allies = [
-                { name: "Alex Rivera", username: "arivera", lat: 40.7, lon: -74.0 },
-                { name: "Luna Voss", username: "lunav", lat: 51.5, lon: -0.1 }
-            ];
+            setTimeout(() => {
+                document.getElementById('displayName').focus();
+            }, 600);
         };
     </script>
 </body>
