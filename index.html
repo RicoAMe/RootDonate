@@ -22,11 +22,7 @@
             --border: #222226;
         }
         
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         
         body {
             font-family: 'Inter', system-ui, sans-serif;
@@ -64,13 +60,24 @@
             line-height: 1;
         }
         
-        .content {
-            padding: 28px 24px;
+        .datetime {
+            margin-top: 12px;
+            font-size: 1.05rem;
+            font-weight: 500;
+            opacity: 0.95;
         }
-        
+        .date { text-decoration: underline; text-underline-offset: 4px; font-weight: 600; }
+
+        .location {
+            font-size: 0.95rem;
+            color: #aaa;
+            margin-top: 8px;
+        }
+
+        .content { padding: 28px 24px; }
+
         .avatar {
-            width: 108px;
-            height: 108px;
+            width: 108px; height: 108px;
             background: linear-gradient(135deg, #00ff9d, #ff00aa);
             border-radius: 50%;
             margin: 0 auto 20px;
@@ -92,12 +99,7 @@
             border: 1px solid var(--border);
         }
         
-        .balance {
-            font-size: 2.8rem;
-            font-weight: 800;
-            color: var(--primary);
-            letter-spacing: -1px;
-        }
+        .balance { font-size: 2.8rem; font-weight: 800; color: var(--primary); letter-spacing: -1px; }
         
         input {
             width: 100%;
@@ -108,19 +110,14 @@
             border-radius: 18px;
             color: white;
             font-size: 1.05rem;
-            transition: all 0.3s ease;
         }
-        
         input:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 4px rgba(0, 255, 157, 0.15);
         }
         
-        button {
-            cursor: pointer;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        button { cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
         
         .share-btn {
             background: var(--primary);
@@ -137,8 +134,7 @@
             gap: 10px;
         }
         
-        .apple-pay-button,
-        .withdraw-button {
+        .apple-pay-button, .withdraw-button {
             border: none;
             border-radius: 18px;
             padding: 20px 24px;
@@ -157,16 +153,12 @@
             background: #000;
             color: white;
         }
-        
         .apple-pay-button::before {
             content: "";
             font-size: 1.9rem;
         }
         
-        .withdraw-button {
-            background: var(--accent);
-            color: #000;
-        }
+        .withdraw-button { background: var(--accent); color: #000; }
         
         .quick-amounts {
             display: grid;
@@ -207,9 +199,6 @@
             display: none;
             max-width: 92%;
             text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
         
         @media (max-width: 480px) {
@@ -250,8 +239,12 @@
     <div class="container" id="profileScreen" style="display:none;">
         <div class="header">
             <h1>ROOT DONATE</h1>
+            <div class="datetime">
+                <span id="currentTime"></span> • <span id="currentDate" class="date"></span>
+            </div>
             <div id="userGreeting" style="font-size:1.5rem; font-weight:700; margin-top:14px;">Guardian</div>
             <div style="font-size:0.95rem; opacity:0.85; margin-top:4px;">✓ Apple Pay Ready</div>
+            <div id="locationInfo" class="location">📍 Detecting location...</div>
         </div>
 
         <div class="content">
@@ -313,7 +306,7 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
     
     <script>
-        // Firebase Config (same as yours)
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
             authDomain: "rootdonate-61e61.firebaseapp.com",
@@ -342,6 +335,39 @@
             confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
         }
 
+        // ========== LIVE TIME & UNDERLINED DATE ==========
+        function updateDateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+            
+            document.getElementById('currentTime').textContent = timeStr;
+            document.getElementById('currentDate').textContent = dateStr;
+        }
+        setInterval(updateDateTime, 1000);
+
+        // ========== CURRENT LOCATION ==========
+        async function getCurrentLocation() {
+            const locEl = document.getElementById('locationInfo');
+            if (!navigator.geolocation) {
+                locEl.textContent = "📍 Location unavailable";
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                try {
+                    const { latitude, longitude } = position.coords;
+                    const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+                    const data = await res.json();
+                    const city = data.city || data.locality || "Unknown";
+                    const country = data.countryName || "";
+                    locEl.textContent = `📍 ${city}, ${country}`;
+                } catch (e) {
+                    locEl.textContent = `📍 Near you`;
+                }
+            }, () => locEl.textContent = "📍 Location access denied");
+        }
+
+        // ========== Your original functions ==========
         async function loadUserData() {
             if (!userDocRef) return;
             const doc = await userDocRef.get();
@@ -360,7 +386,7 @@
             await loadUserData();
         }
 
-        function startApplePay(amount = 5, recipient = "General Fund") {
+        function startApplePay(amount = 5) {
             if (!window.ApplePaySession || !ApplePaySession.canMakePayments()) {
                 showToast("Apple Pay not available on this device", "#ff6666");
                 return;
@@ -370,7 +396,7 @@
                 currencyCode: "USD",
                 supportedNetworks: ["visa", "masterCard", "amex", "discover"],
                 merchantCapabilities: ["supports3DS"],
-                total: { label: `ROOT • ${recipient}`, amount: amount.toFixed(2) }
+                total: { label: "ROOT DONATE", amount: amount.toFixed(2) }
             };
             const session = new ApplePaySession(4, request);
             session.onvalidatemerchant = () => session.completeMerchantValidation({});
@@ -394,7 +420,6 @@
         function requestWithdraw() {
             const balance = parseFloat(document.getElementById('balanceAmount').textContent.replace('$','')) || 0;
             if (balance <= 0) return showToast("No balance available", "#ff6666");
-            
             const amount = prompt(`Enter amount to withdraw (Max $${balance})`, balance);
             if (amount && parseFloat(amount) > 0) {
                 showToast(`💸 Withdrawal request of $${parseFloat(amount)} submitted`, '#00ff9d');
@@ -403,14 +428,12 @@
 
         function shareProfile() {
             if (!currentUser) return showToast("Please create profile first", "#ff6666");
-            
             const profileData = { uid: currentUser.uid, name: document.getElementById('userGreeting').textContent };
             const encoded = btoa(JSON.stringify(profileData));
             const shareLink = `${window.location.origin}${window.location.pathname}?p=${encoded}`;
-            
             navigator.clipboard.writeText(shareLink).then(() => {
                 showToast("✅ Profile link copied!", '#00ff9d');
-            }).catch(() => showToast(shareLink));
+            });
         }
 
         async function completeSignup() {
@@ -419,10 +442,7 @@
             const name = document.getElementById('displayName').value.trim() || "Guardian";
             const email = document.getElementById('email').value.trim();
 
-            if (!email) {
-                errorEl.textContent = "Please enter your email";
-                return;
-            }
+            if (!email) return errorEl.textContent = "Please enter your email";
 
             btn.disabled = true;
             btn.textContent = "Creating Profile...";
@@ -445,13 +465,9 @@
                 document.getElementById('signupScreen').style.display = 'none';
                 document.getElementById('profileScreen').style.display = 'block';
                 document.getElementById('userGreeting').textContent = name;
-
                 await loadUserData();
             } catch (e) {
-                console.error(e);
-                errorEl.textContent = e.code === 'auth/operation-not-allowed' 
-                    ? "Enable Anonymous Auth in Firebase" 
-                    : "Something went wrong";
+                errorEl.textContent = "Something went wrong";
             } finally {
                 btn.disabled = false;
                 btn.textContent = "Create Profile & Enable Apple Pay";
@@ -473,8 +489,14 @@
             }
         });
 
-        // Auto-focus on load
-        window.onload = () => setTimeout(() => document.getElementById('displayName').focus(), 500);
+        // Initialize everything
+        window.onload = () => {
+            setTimeout(() => {
+                document.getElementById('displayName').focus();
+                updateDateTime();
+                getCurrentLocation();
+            }, 600);
+        };
     </script>
 </body>
 </html>
