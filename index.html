@@ -60,19 +60,10 @@
             line-height: 1;
         }
         
-        .datetime {
-            margin-top: 12px;
-            font-size: 1.05rem;
-            font-weight: 500;
-            opacity: 0.95;
-        }
+        .datetime { margin-top: 12px; font-size: 1.05rem; font-weight: 500; opacity: 0.95; }
         .date { text-decoration: underline; text-underline-offset: 4px; font-weight: 600; }
 
-        .location {
-            font-size: 0.95rem;
-            color: #aaa;
-            margin-top: 8px;
-        }
+        .location { font-size: 0.95rem; color: #aaa; margin-top: 8px; }
 
         .content { padding: 28px 24px; }
 
@@ -267,8 +258,7 @@
                 </button>
             </div>
 
-            <button onclick="logout()" 
-                    style="width:100%; padding:18px; background:#222; color:#ccc; border:none; border-radius:18px; font-weight:600; font-size:1.05rem;">
+            <button onclick="logout()" style="width:100%; padding:18px; background:#222; color:#ccc; border:none; border-radius:18px; font-weight:600; font-size:1.05rem;">
                 Sign Out
             </button>
         </div>
@@ -296,7 +286,10 @@
         let currentUser = null;
         let userDocRef = null;
 
-        const MERCHANT_ID = "merchant.rootdonate";   // ← Your Apple Pay Merchant ID
+        // ==================== YOUR REAL MERCHANT ID ====================
+        const MERCHANT_ID = "merchant.rootdonate";   // ← CHANGE THIS TO YOUR REAL APPLE PAY MERCHANT ID
+        // Real example: "merchant.com.yourcompany.rootdonate"
+        // =============================================================
 
         function showToast(msg, color = '#00ff9d') {
             const t = document.getElementById('toast');
@@ -310,37 +303,28 @@
             confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 } });
         }
 
-        // Live Date & Time
         function updateDateTime() {
             const now = new Date();
-            const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-            const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-            
-            document.getElementById('currentTime').textContent = timeStr;
-            document.getElementById('currentDate').textContent = dateStr;
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
         }
         setInterval(updateDateTime, 1000);
 
-        // Location
         async function getCurrentLocation() {
             const locEl = document.getElementById('locationInfo');
-            if (!navigator.geolocation) {
-                locEl.textContent = "📍 Location unavailable";
-                return;
-            }
-            navigator.geolocation.getCurrentPosition(async (position) => {
+            if (!navigator.geolocation) return locEl.textContent = "📍 Location unavailable";
+            
+            navigator.geolocation.getCurrentPosition(async (pos) => {
                 try {
-                    const { latitude, longitude } = position.coords;
-                    const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+                    const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&localityLanguage=en`);
                     const data = await res.json();
-                    locEl.textContent = `📍 ${data.city || data.locality || "Unknown"}, ${data.countryName || ""}`;
-                } catch (e) {
-                    locEl.textContent = `📍 Near you`;
+                    locEl.textContent = `📍 ${data.city || data.locality}, ${data.countryName}`;
+                } catch(e) {
+                    locEl.textContent = "📍 Near you";
                 }
-            }, () => locEl.textContent = "📍 Location access denied");
+            });
         }
 
-        // Apple Pay
         async function startApplePay(amount = 5) {
             if (!window.ApplePaySession || !ApplePaySession.canMakePayments()) {
                 showToast("Apple Pay not available on this device", "#ff6666");
@@ -353,17 +337,14 @@
                 supportedNetworks: ["visa", "masterCard", "amex", "discover"],
                 merchantCapabilities: ["supports3DS"],
                 merchantIdentifier: MERCHANT_ID,
-                total: { 
-                    label: "ROOT DONATE", 
-                    amount: amount.toFixed(2) 
-                }
+                total: { label: "ROOT DONATE", amount: amount.toFixed(2) }
             };
 
             const session = new ApplePaySession(4, request);
 
             session.onvalidatemerchant = (event) => {
                 console.log("Validating merchant:", MERCHANT_ID);
-                session.completeMerchantValidation({}); // Replace with real backend later
+                session.completeMerchantValidation({}); // Replace with real backend call later
             };
 
             session.onpaymentauthorized = (event) => {
@@ -407,9 +388,7 @@
             const profileData = { uid: currentUser.uid, name: document.getElementById('userGreeting').textContent };
             const encoded = btoa(JSON.stringify(profileData));
             const shareLink = `${window.location.origin}${window.location.pathname}?p=${encoded}`;
-            navigator.clipboard.writeText(shareLink).then(() => {
-                showToast("✅ Profile link copied!", '#00ff9d');
-            });
+            navigator.clipboard.writeText(shareLink).then(() => showToast("✅ Profile link copied!", '#00ff9d'));
         }
 
         async function completeSignup() {
@@ -437,13 +416,12 @@
                 }, { merge: true });
 
                 showToast("Profile created successfully!", '#00ff9d');
-
                 document.getElementById('signupScreen').style.display = 'none';
                 document.getElementById('profileScreen').style.display = 'block';
                 document.getElementById('userGreeting').textContent = name;
                 await loadUserData();
             } catch (e) {
-                errorEl.textContent = "Something went wrong. Please try again.";
+                errorEl.textContent = "Something went wrong";
             } finally {
                 btn.disabled = false;
                 btn.textContent = "Create Profile & Enable Apple Pay";
@@ -474,7 +452,6 @@
             }
         });
 
-        // Initialize
         window.onload = () => {
             setTimeout(() => {
                 document.getElementById('displayName').focus();
