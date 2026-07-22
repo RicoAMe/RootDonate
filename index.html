@@ -119,22 +119,7 @@
         
         button { cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
         
-        .share-btn {
-            background: var(--primary);
-            color: #000;
-            border: none;
-            border-radius: 18px;
-            padding: 18px;
-            font-weight: 700;
-            font-size: 1.1rem;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        
-        .apple-pay-button, .withdraw-button {
+        .share-btn, .apple-pay-button, .withdraw-button {
             border: none;
             border-radius: 18px;
             padding: 20px 24px;
@@ -200,12 +185,6 @@
             max-width: 92%;
             text-align: center;
         }
-        
-        @media (max-width: 480px) {
-            .container { border-radius: 28px; }
-            .header { padding: 48px 20px 36px; }
-            .content { padding: 24px 20px; }
-        }
     </style>
 </head>
 <body>
@@ -248,14 +227,10 @@
         </div>
 
         <div class="content">
-            <!-- Share -->
             <div class="rpg-card">
-                <button onclick="shareProfile()" class="share-btn">
-                    🔗 Share My Profile Link
-                </button>
+                <button onclick="shareProfile()" class="share-btn">🔗 Share My Profile Link</button>
             </div>
 
-            <!-- Balance -->
             <div class="rpg-card">
                 <div style="color:#888; font-size:0.95rem; margin-bottom:8px;">YOUR BALANCE</div>
                 <div id="balanceAmount" class="balance">$0</div>
@@ -264,7 +239,6 @@
                 </button>
             </div>
 
-            <!-- Stats -->
             <div class="rpg-card">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
@@ -278,7 +252,6 @@
                 </div>
             </div>
 
-            <!-- Quick Donate -->
             <div class="rpg-card">
                 <div style="font-weight:700; margin-bottom:12px; font-size:1.25rem;">🍎 Quick Apple Pay</div>
                 <p style="color:#aaa; margin-bottom:20px;">Tap any amount to donate instantly</p>
@@ -323,19 +296,21 @@
         let currentUser = null;
         let userDocRef = null;
 
+        const MERCHANT_ID = "merchant.rootdonate";   // ← Your Apple Pay Merchant ID
+
         function showToast(msg, color = '#00ff9d') {
             const t = document.getElementById('toast');
             t.textContent = msg;
             t.style.color = color;
             t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 3000);
+            setTimeout(() => t.style.display = 'none', 2800);
         }
 
         function confettiBurst() {
-            confetti({ particleCount: 200, spread: 90, origin: { y: 0.6 } });
+            confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 } });
         }
 
-        // ========== LIVE TIME & UNDERLINED DATE ==========
+        // Live Date & Time
         function updateDateTime() {
             const now = new Date();
             const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
@@ -346,7 +321,7 @@
         }
         setInterval(updateDateTime, 1000);
 
-        // ========== CURRENT LOCATION ==========
+        // Location
         async function getCurrentLocation() {
             const locEl = document.getElementById('locationInfo');
             if (!navigator.geolocation) {
@@ -358,16 +333,57 @@
                     const { latitude, longitude } = position.coords;
                     const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
                     const data = await res.json();
-                    const city = data.city || data.locality || "Unknown";
-                    const country = data.countryName || "";
-                    locEl.textContent = `📍 ${city}, ${country}`;
+                    locEl.textContent = `📍 ${data.city || data.locality || "Unknown"}, ${data.countryName || ""}`;
                 } catch (e) {
                     locEl.textContent = `📍 Near you`;
                 }
             }, () => locEl.textContent = "📍 Location access denied");
         }
 
-        // ========== Your original functions ==========
+        // Apple Pay
+        async function startApplePay(amount = 5) {
+            if (!window.ApplePaySession || !ApplePaySession.canMakePayments()) {
+                showToast("Apple Pay not available on this device", "#ff6666");
+                return;
+            }
+
+            const request = {
+                countryCode: "US",
+                currencyCode: "USD",
+                supportedNetworks: ["visa", "masterCard", "amex", "discover"],
+                merchantCapabilities: ["supports3DS"],
+                merchantIdentifier: MERCHANT_ID,
+                total: { 
+                    label: "ROOT DONATE", 
+                    amount: amount.toFixed(2) 
+                }
+            };
+
+            const session = new ApplePaySession(4, request);
+
+            session.onvalidatemerchant = (event) => {
+                console.log("Validating merchant:", MERCHANT_ID);
+                session.completeMerchantValidation({}); // Replace with real backend later
+            };
+
+            session.onpaymentauthorized = (event) => {
+                setTimeout(async () => {
+                    session.completePayment(ApplePaySession.STATUS_SUCCESS);
+                    await updateDonatedAmount(amount);
+                    showToast(`✅ $${amount} donated successfully!`, '#00ff9d');
+                    confettiBurst();
+                }, 700);
+            };
+
+            session.begin();
+        }
+
+        function quickDonate(amount) {
+            document.querySelectorAll('#amountGrid button').forEach(b => b.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+            startApplePay(amount);
+        }
+
         async function loadUserData() {
             if (!userDocRef) return;
             const doc = await userDocRef.get();
@@ -384,46 +400,6 @@
                 lastDonation: firebase.firestore.FieldValue.serverTimestamp()
             });
             await loadUserData();
-        }
-
-        function startApplePay(amount = 5) {
-            if (!window.ApplePaySession || !ApplePaySession.canMakePayments()) {
-                showToast("Apple Pay not available on this device", "#ff6666");
-                return;
-            }
-            const request = {
-                countryCode: "US",
-                currencyCode: "USD",
-                supportedNetworks: ["visa", "masterCard", "amex", "discover"],
-                merchantCapabilities: ["supports3DS"],
-                total: { label: "ROOT DONATE", amount: amount.toFixed(2) }
-            };
-            const session = new ApplePaySession(4, request);
-            session.onvalidatemerchant = () => session.completeMerchantValidation({});
-            session.onpaymentauthorized = () => {
-                setTimeout(async () => {
-                    session.completePayment(ApplePaySession.STATUS_SUCCESS);
-                    await updateDonatedAmount(amount);
-                    showToast(`✅ $${amount} donated successfully!`, '#00ff9d');
-                    confettiBurst();
-                }, 700);
-            };
-            session.begin();
-        }
-
-        function quickDonate(amount) {
-            document.querySelectorAll('#amountGrid button').forEach(b => b.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            startApplePay(amount);
-        }
-
-        function requestWithdraw() {
-            const balance = parseFloat(document.getElementById('balanceAmount').textContent.replace('$','')) || 0;
-            if (balance <= 0) return showToast("No balance available", "#ff6666");
-            const amount = prompt(`Enter amount to withdraw (Max $${balance})`, balance);
-            if (amount && parseFloat(amount) > 0) {
-                showToast(`💸 Withdrawal request of $${parseFloat(amount)} submitted`, '#00ff9d');
-            }
         }
 
         function shareProfile() {
@@ -467,10 +443,19 @@
                 document.getElementById('userGreeting').textContent = name;
                 await loadUserData();
             } catch (e) {
-                errorEl.textContent = "Something went wrong";
+                errorEl.textContent = "Something went wrong. Please try again.";
             } finally {
                 btn.disabled = false;
                 btn.textContent = "Create Profile & Enable Apple Pay";
+            }
+        }
+
+        function requestWithdraw() {
+            const balance = parseFloat(document.getElementById('balanceAmount').textContent.replace('$','')) || 0;
+            if (balance <= 0) return showToast("No balance available", "#ff6666");
+            const amount = prompt(`Enter amount to withdraw (Max $${balance})`, balance);
+            if (amount && parseFloat(amount) > 0) {
+                showToast(`💸 Withdrawal request of $${parseFloat(amount)} submitted`, '#00ff9d');
             }
         }
 
@@ -489,7 +474,7 @@
             }
         });
 
-        // Initialize everything
+        // Initialize
         window.onload = () => {
             setTimeout(() => {
                 document.getElementById('displayName').focus();
