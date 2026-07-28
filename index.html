@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Root Donate</title>
+  <title>Root Donate – Items</title>
 
-  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
@@ -55,13 +54,13 @@
 
     .header h1 {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.9rem;
+      font-size: 1.8rem;
       font-weight: 700;
       letter-spacing: -1px;
     }
 
     .profile-name {
-      font-size: 1.25rem;
+      font-size: 1.2rem;
       font-weight: 700;
       margin-top: 8px;
     }
@@ -95,7 +94,7 @@
     }
     .auth-form.active { display: flex; }
 
-    .auth-form input {
+    .auth-form input, .add-item-form input, .add-item-form textarea {
       width: 100%;
       padding: 14px 16px;
       border-radius: 12px;
@@ -104,8 +103,13 @@
       color: white;
       font-size: 1rem;
       outline: none;
+      font-family: inherit;
     }
-    .auth-form input:focus { border-color: var(--primary); }
+    .auth-form input:focus,
+    .add-item-form input:focus,
+    .add-item-form textarea:focus {
+      border-color: var(--primary);
+    }
 
     .auth-toggle {
       text-align: center;
@@ -119,112 +123,102 @@
       font-weight: 600;
     }
 
-    /* Card */
-    .debit-card {
-      width: 100%;
-      height: 210px;
-      background: linear-gradient(145deg, #1c1c1c, #0d0d0d);
-      border-radius: 16px;
-      position: relative;
-      color: white;
-      margin-bottom: 24px;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
-      overflow: hidden;
-    }
-    .debit-card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.04) 50%, transparent 60%);
-    }
-    .chip {
-      position: absolute;
-      top: 24px; left: 24px;
-      width: 44px; height: 34px;
-      background: linear-gradient(135deg, #c9a227, #e8d48b);
-      border-radius: 5px;
-    }
-    .card-logo {
-      position: absolute;
-      top: 22px; right: 24px;
-      font-size: 20px; font-weight: 700;
-    }
-    .card-number {
-      position: absolute;
-      top: 95px; left: 24px;
-      font-size: 19px; letter-spacing: 3px;
-    }
-    .card-handle {
-      position: absolute;
-      bottom: 52px; left: 24px;
-      font-size: 15px; font-weight: 600;
-    }
-    .card-bottom {
-      position: absolute;
-      bottom: 20px; left: 24px; right: 24px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      font-size: 12px; opacity: 0.85;
-    }
-    .visa {
-      font-size: 24px; font-weight: 800; font-style: italic;
-    }
-
-    .total {
-      text-align: center;
-      margin-bottom: 16px;
-      font-size: 1.1rem;
-      color: #aaa;
-    }
-    .total span {
-      color: var(--primary);
-      font-weight: 700;
-      font-size: 1.4rem;
-    }
-
-    .amount-btns {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin: 16px 0 24px;
-    }
-    .amount-btns button {
-      background: #1f1f26;
-      border: 1px solid #333;
-      color: white;
-      border-radius: 12px;
-      padding: 14px;
-      font-weight: 700;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .amount-btns button.active {
-      background: var(--primary);
-      color: #000;
-    }
-
     .btn {
       width: 100%;
-      padding: 17px;
+      padding: 16px;
       border: none;
       border-radius: 14px;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: 700;
       cursor: pointer;
-      margin-top: 10px;
       transition: 0.2s;
     }
     .btn:active { transform: scale(0.98); }
     .btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
-    .donate-btn { background: var(--primary); color: #000; }
-    .share-btn {
+    .primary-btn {
+      background: var(--primary);
+      color: #000;
+    }
+
+    .secondary-btn {
       background: #1f1f26;
       color: white;
       border: 1px solid #333;
-      margin-top: 14px;
+      margin-top: 12px;
+    }
+
+    .danger-btn {
+      background: transparent;
+      color: #ff6b6b;
+      border: 1px solid #ff6b6b;
+      padding: 8px 14px;
+      font-size: 0.85rem;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    /* Items */
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 8px 0 16px;
+      color: #ccc;
+    }
+
+    .item-card {
+      background: #1a1a22;
+      border: 1px solid #2a2a32;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .item-title {
+      font-weight: 700;
+      font-size: 1.05rem;
+      margin-bottom: 4px;
+    }
+
+    .item-desc {
+      font-size: 0.9rem;
+      color: #aaa;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    .item-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 30px 10px;
+      color: #666;
+      font-size: 0.95rem;
+    }
+
+    .add-item-form {
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding: 16px;
+      background: #1a1a22;
+      border-radius: 16px;
+      border: 1px solid #2a2a32;
+    }
+    .add-item-form.active { display: flex; }
+
+    .own-badge {
+      display: none;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--primary);
+      margin-bottom: 16px;
+      font-weight: 600;
     }
 
     .toast {
@@ -252,15 +246,6 @@
       padding: 50px 20px;
       color: #888;
     }
-
-    .own-badge {
-      display: none;
-      text-align: center;
-      font-size: 0.85rem;
-      color: var(--primary);
-      margin-bottom: 12px;
-      font-weight: 600;
-    }
   </style>
 </head>
 <body>
@@ -278,9 +263,9 @@
     <div class="content">
       <!-- AUTH -->
       <div class="auth-form" id="loginForm">
-        <input type="email" id="loginEmail" placeholder="Email" autocomplete="email">
-        <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
-        <button class="btn donate-btn" id="loginBtn">Log In</button>
+        <input type="email" id="loginEmail" placeholder="Email">
+        <input type="password" id="loginPassword" placeholder="Password">
+        <button class="btn primary-btn" id="loginBtn">Log In</button>
         <div class="auth-toggle">
           Don't have an account? <span id="showSignup">Sign Up</span>
         </div>
@@ -289,47 +274,35 @@
       <div class="auth-form" id="signupForm">
         <input type="text" id="signupName" placeholder="Display Name">
         <input type="text" id="signupHandle" placeholder="Handle (e.g. john)">
-        <input type="email" id="signupEmail" placeholder="Email" autocomplete="email">
-        <input type="password" id="signupPassword" placeholder="Password (min 6 chars)" autocomplete="new-password">
-        <button class="btn donate-btn" id="signupBtn">Create Account</button>
+        <input type="email" id="signupEmail" placeholder="Email">
+        <input type="password" id="signupPassword" placeholder="Password (min 6 chars)">
+        <button class="btn primary-btn" id="signupBtn">Create Account</button>
         <div class="auth-toggle">
           Already have an account? <span id="showLogin">Log In</span>
         </div>
       </div>
 
-      <!-- MAIN PROFILE + DONATE UI -->
+      <!-- MAIN UI -->
       <div class="main-ui" id="mainUI">
-        <div class="own-badge" id="ownBadge">This is your profile</div>
+        <div class="own-badge" id="ownBadge">This is your profile – add items you need</div>
 
-        <div class="debit-card">
-          <div class="chip"></div>
-          <div class="card-logo">𝕏 Money</div>
-          <div class="card-number" id="cardNumber">•••• •••• •••• ----</div>
-          <div class="card-handle" id="cardHandle">@handle</div>
-          <div class="card-bottom">
-            <div>
-              <div style="font-size:10px; opacity:0.7;">VALID THRU</div>
-              <div>09/29</div>
-            </div>
-            <div class="visa">VISA</div>
-          </div>
+        <div class="section-title" id="itemsTitle">Items Needed</div>
+
+        <!-- Add Item Form (only for owner) -->
+        <div class="add-item-form" id="addItemForm">
+          <input type="text" id="itemTitle" placeholder="Item name (e.g. Winter Jacket)">
+          <textarea id="itemDesc" rows="2" placeholder="Short description (optional)"></textarea>
+          <button class="btn primary-btn" id="saveItemBtn">Add Item</button>
+          <button class="btn secondary-btn" id="cancelItemBtn">Cancel</button>
         </div>
 
-        <div class="total">
-          Total Raised: <span id="totalRaised">$0</span>
-        </div>
-
-        <div class="amount-btns" id="amountGrid">
-          <button type="button" data-amount="5" class="active">$5</button>
-          <button type="button" data-amount="10">$10</button>
-          <button type="button" data-amount="25">$25</button>
-        </div>
-
-        <button class="btn donate-btn" id="donateBtn" type="button">
-          Donate $<span id="amountDisplay">5</span>
+        <button class="btn primary-btn" id="showAddBtn" style="display:none; margin-bottom:20px;">
+          + Add Item
         </button>
 
-        <button class="btn share-btn" id="shareBtn" type="button" style="display:none;">
+        <div id="itemsList"></div>
+
+        <button class="btn secondary-btn" id="shareBtn" style="display:none;">
           🔗 Share My Profile Link
         </button>
       </div>
@@ -353,27 +326,22 @@
       measurementId: "G-0SC5R5ELT1"
     };
 
-    // ========== STRIPE CLOUD FUNCTION ==========
-    // Must return { url: "https://checkout.stripe.com/..." }
-    const CREATE_CHECKOUT_URL = "https://YOUR_CLOUD_FUNCTION_URL_HERE";
-
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // State
-    let currentAmount = 5;
-    let currentUser = null;          // logged-in user
-    let viewingUserId = null;        // whose profile we are looking at
-    let profile = {};                // the profile currently shown
+    let currentUser = null;
+    let viewingUserId = null;
+    let profile = {};
     let isOwnProfile = false;
+    let items = [];
 
     // ========== HELPERS ==========
     function showToast(msg) {
       const t = document.getElementById("toast");
       t.textContent = msg;
       t.style.display = "block";
-      setTimeout(() => t.style.display = "none", 4000);
+      setTimeout(() => t.style.display = "none", 3500);
     }
 
     function showAuth(mode = "login") {
@@ -398,24 +366,7 @@
       document.getElementById("myProfileBtn").style.display = loggedIn && !isOwnProfile ? "block" : "none";
     }
 
-    function updateCardUI() {
-      document.getElementById("profileName").textContent = profile.name || profile.handle || "User";
-      document.getElementById("cardHandle").textContent = profile.handle || "@user";
-      document.getElementById("cardNumber").textContent = `•••• •••• •••• ${profile.last4 || "0000"}`;
-      document.getElementById("totalRaised").textContent = "$" + (profile.totalRaised || 0);
-
-      document.getElementById("ownBadge").style.display = isOwnProfile ? "block" : "none";
-      document.getElementById("shareBtn").style.display = isOwnProfile ? "block" : "none";
-    }
-
-    function setAmount(amount, btn) {
-      currentAmount = amount;
-      document.getElementById("amountDisplay").textContent = amount;
-      document.querySelectorAll("#amountGrid button").forEach(b => b.classList.remove("active"));
-      if (btn) btn.classList.add("active");
-    }
-
-    // ========== LOAD ANY PROFILE BY UID ==========
+    // ========== LOAD PROFILE + ITEMS ==========
     async function loadProfile(uid) {
       if (!uid) return;
 
@@ -426,7 +377,6 @@
 
       try {
         const doc = await db.collection("users").doc(uid).get();
-
         if (!doc.exists) {
           showToast("Profile not found");
           document.getElementById("loadingText").textContent = "Profile not found";
@@ -436,30 +386,111 @@
         profile = doc.data();
         isOwnProfile = currentUser && currentUser.uid === uid;
 
-        updateCardUI();
+        document.getElementById("profileName").textContent = profile.name || profile.handle || "User";
+        document.getElementById("ownBadge").style.display = isOwnProfile ? "block" : "none";
+        document.getElementById("showAddBtn").style.display = isOwnProfile ? "block" : "none";
+        document.getElementById("shareBtn").style.display = isOwnProfile ? "block" : "none";
+        document.getElementById("addItemForm").classList.remove("active");
+
+        // Load items
+        const itemsSnap = await db.collection("users").doc(uid).collection("items")
+          .orderBy("createdAt", "desc").get();
+
+        items = [];
+        itemsSnap.forEach(doc => {
+          items.push({ id: doc.id, ...doc.data() });
+        });
+
+        renderItems();
         showMainUI();
         updateHeaderButtons(!!currentUser);
-
-        // Handle Stripe success return
-        const params = new URLSearchParams(window.location.search);
-        if (params.get("success") === "true") {
-          showToast("✅ Donation successful! Thank you!");
-          // refresh total
-          const fresh = await db.collection("users").doc(uid).get();
-          if (fresh.exists) {
-            profile = fresh.data();
-            updateCardUI();
-          }
-          // clean URL but keep the u= param
-          const clean = new URL(window.location);
-          clean.searchParams.delete("success");
-          window.history.replaceState({}, "", clean);
-        }
       } catch (err) {
         console.error(err);
         showToast("Failed to load profile");
         document.getElementById("loadingText").textContent = "Error loading profile";
       }
+    }
+
+    function renderItems() {
+      const list = document.getElementById("itemsList");
+      list.innerHTML = "";
+
+      if (items.length === 0) {
+        list.innerHTML = `<div class="empty-state">${isOwnProfile ? "No items yet. Add something you need!" : "This person hasn’t added any items yet."}</div>`;
+        return;
+      }
+
+      items.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "item-card";
+        card.innerHTML = `
+          <div class="item-title">${escapeHtml(item.title)}</div>
+          ${item.description ? `<div class="item-desc">${escapeHtml(item.description)}</div>` : ""}
+          <div class="item-actions">
+            ${isOwnProfile
+              ? `<button class="danger-btn" onclick="deleteItem('${item.id}')">Delete</button>`
+              : `<button class="btn primary-btn" style="padding:10px 16px; font-size:0.9rem; width:auto;" onclick="claimItem('${escapeHtml(item.title)}')">I'll donate this</button>`
+            }
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ========== ADD / DELETE ITEM ==========
+    async function saveItem() {
+      const title = document.getElementById("itemTitle").value.trim();
+      const description = document.getElementById("itemDesc").value.trim();
+
+      if (!title) return showToast("Please enter an item name");
+
+      const btn = document.getElementById("saveItemBtn");
+      btn.disabled = true;
+      btn.textContent = "Saving...";
+
+      try {
+        await db.collection("users").doc(currentUser.uid).collection("items").add({
+          title,
+          description,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        document.getElementById("itemTitle").value = "";
+        document.getElementById("itemDesc").value = "";
+        document.getElementById("addItemForm").classList.remove("active");
+        document.getElementById("showAddBtn").style.display = "block";
+
+        showToast("✅ Item added!");
+        await loadProfile(currentUser.uid);
+      } catch (err) {
+        console.error(err);
+        showToast("Failed to add item");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Add Item";
+      }
+    }
+
+    async function deleteItem(itemId) {
+      if (!confirm("Delete this item?")) return;
+
+      try {
+        await db.collection("users").doc(currentUser.uid).collection("items").doc(itemId).delete();
+        showToast("Item deleted");
+        await loadProfile(currentUser.uid);
+      } catch (err) {
+        showToast("Failed to delete");
+      }
+    }
+
+    function claimItem(title) {
+      showToast(`Thanks! You can contact ${profile.handle || "them"} about: ${title}`);
     }
 
     // ========== AUTH ==========
@@ -500,17 +531,11 @@
 
       try {
         const cred = await auth.createUserWithEmailAndPassword(email, password);
-        const last4 = Math.floor(1000 + Math.random() * 9000).toString();
-
         await db.collection("users").doc(cred.user.uid).set({
           name,
           handle,
-          last4,
-          totalRaised: 0,
-          email,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-
         showToast("✅ Account created!");
       } catch (err) {
         showToast(err.message || "Sign up failed");
@@ -524,67 +549,14 @@
       showToast("Logged out");
     }
 
-    // ========== DONATE TO THE CURRENTLY VIEWED PROFILE ==========
-    async function startDonation() {
-      if (!viewingUserId || !profile.handle) {
-        return showToast("Profile not loaded yet");
-      }
-
-      if (CREATE_CHECKOUT_URL.includes("YOUR_CLOUD_FUNCTION")) {
-        return showToast("⚠️ Backend not set. Replace CREATE_CHECKOUT_URL first.");
-      }
-
-      const btn = document.getElementById("donateBtn");
-      btn.disabled = true;
-      btn.textContent = "Redirecting to secure payment...";
-
-      try {
-        const response = await fetch(CREATE_CHECKOUT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            amount: currentAmount * 100,          // cents
-            recipientUserId: viewingUserId,       // who receives the money
-            recipientHandle: profile.handle,
-            donorUserId: currentUser ? currentUser.uid : null
-          })
-        });
-
-        if (!response.ok) throw new Error(`Server error ${response.status}`);
-
-        const data = await response.json();
-        if (data.url) {
-          window.location.href = data.url;
-        } else {
-          throw new Error(data.error || "No checkout URL");
-        }
-      } catch (err) {
-        console.error(err);
-        showToast("Payment failed: " + (err.message || "Unknown error"));
-        btn.disabled = false;
-        btn.innerHTML = `Donate $<span id="amountDisplay">${currentAmount}</span>`;
-      }
-    }
-
-    // ========== SHARE ==========
     function shareProfile() {
-      if (!currentUser) return showToast("You must be logged in");
-
-      const shareLink = `${window.location.origin}${window.location.pathname}?u=${currentUser.uid}`;
-
+      if (!currentUser) return;
+      const link = `${window.location.origin}${window.location.pathname}?u=${currentUser.uid}`;
       if (navigator.clipboard?.writeText) {
-        navigator.clipboard.writeText(shareLink)
-          .then(() => showToast("✅ Profile link copied!"))
-          .catch(() => prompt("Copy this link:", shareLink));
+        navigator.clipboard.writeText(link).then(() => showToast("✅ Link copied!"));
       } else {
-        prompt("Copy this link:", shareLink);
+        prompt("Copy this link:", link);
       }
-    }
-
-    // ========== ROUTING ==========
-    function getUserIdFromURL() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get("u");
     }
 
     // ========== EVENTS ==========
@@ -598,40 +570,31 @@
         loadProfile(currentUser.uid);
       }
     });
-
     document.getElementById("showSignup").addEventListener("click", () => showAuth("signup"));
     document.getElementById("showLogin").addEventListener("click", () => showAuth("login"));
 
-    document.getElementById("amountGrid").addEventListener("click", (e) => {
-      const btn = e.target.closest("button[data-amount]");
-      if (btn) setAmount(Number(btn.dataset.amount), btn);
+    document.getElementById("showAddBtn").addEventListener("click", () => {
+      document.getElementById("addItemForm").classList.add("active");
+      document.getElementById("showAddBtn").style.display = "none";
     });
-
-    document.getElementById("donateBtn").addEventListener("click", startDonation);
+    document.getElementById("cancelItemBtn").addEventListener("click", () => {
+      document.getElementById("addItemForm").classList.remove("active");
+      document.getElementById("showAddBtn").style.display = "block";
+    });
+    document.getElementById("saveItemBtn").addEventListener("click", saveItem);
     document.getElementById("shareBtn").addEventListener("click", shareProfile);
 
-    document.getElementById("loginPassword").addEventListener("keypress", e => {
-      if (e.key === "Enter") handleLogin();
-    });
-    document.getElementById("signupPassword").addEventListener("keypress", e => {
-      if (e.key === "Enter") handleSignup();
-    });
-
-    // ========== AUTH STATE + INITIAL LOAD ==========
+    // ========== START ==========
     auth.onAuthStateChanged(async (user) => {
       currentUser = user;
-
-      const urlUserId = getUserIdFromURL();
+      const urlUserId = new URLSearchParams(window.location.search).get("u");
 
       if (urlUserId) {
-        // Someone opened a shared profile link → show that profile
         await loadProfile(urlUserId);
       } else if (user) {
-        // Logged in + no ?u= → show own profile
         window.history.replaceState({}, "", `?u=${user.uid}`);
         await loadProfile(user.uid);
       } else {
-        // Not logged in + no profile in URL → show login
         showAuth("login");
       }
     });
