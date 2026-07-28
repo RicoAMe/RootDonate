@@ -3,8 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Donate • Debit Card</title>
+  <title>Donate • Debit Card (Firebase)</title>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+
   <style>
     :root {
       --primary: #00ff9d;
@@ -58,11 +65,8 @@
       margin-top: 10px;
     }
 
-    .content {
-      padding: 24px;
-    }
+    .content { padding: 24px; }
 
-    /* Debit Card */
     .debit-card {
       width: 100%;
       height: 210px;
@@ -134,70 +138,11 @@
       font-style: italic;
     }
 
-    /* Form */
-    .form-group { margin-bottom: 14px; }
-
-    label {
-      display: block;
-      font-size: 0.88rem;
-      color: #aaa;
-      margin-bottom: 5px;
-    }
-
-    input {
-      width: 100%;
-      padding: 15px 16px;
-      background: #1c1c24;
-      border: 1px solid #333;
-      border-radius: 14px;
-      color: white;
-      font-size: 1rem;
-    }
-
-    input:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(0, 255, 157, 0.15);
-    }
-
-    .row {
-      display: flex;
-      gap: 12px;
-    }
-
-    .row .form-group { flex: 1; }
-
-    .btn {
-      width: 100%;
-      padding: 17px;
-      border: none;
-      border-radius: 14px;
-      font-size: 1.1rem;
-      font-weight: 700;
-      cursor: pointer;
-      margin-top: 10px;
-      transition: transform 0.2s;
-    }
-
-    .btn:active { transform: scale(0.98); }
-
-    .pay-btn {
-      background: var(--primary);
-      color: #000;
-    }
-
-    .share-btn {
-      background: #1f1f26;
-      color: white;
-      border: 1px solid #333;
-      margin-top: 16px;
-    }
-
     .amount-btns {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 10px;
-      margin: 16px 0;
+      margin: 16px 0 24px;
     }
 
     .amount-btns button {
@@ -216,6 +161,32 @@
       color: #000;
     }
 
+    .btn {
+      width: 100%;
+      padding: 17px;
+      border: none;
+      border-radius: 14px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: transform 0.2s;
+    }
+
+    .btn:active { transform: scale(0.98); }
+
+    .donate-btn {
+      background: var(--primary);
+      color: #000;
+    }
+
+    .share-btn {
+      background: #1f1f26;
+      color: white;
+      border: 1px solid #333;
+      margin-top: 16px;
+    }
+
     .toast {
       position: fixed;
       bottom: 30px;
@@ -230,22 +201,35 @@
       z-index: 999;
       box-shadow: 0 10px 30px rgba(0,0,0,0.6);
     }
+
+    .total {
+      text-align: center;
+      margin-bottom: 16px;
+      font-size: 1.1rem;
+      color: #aaa;
+    }
+
+    .total span {
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 1.4rem;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
       <h1>Donate</h1>
-      <div class="profile-name" id="profileName">@YourHandle</div>
+      <div class="profile-name" id="profileName">Loading...</div>
     </div>
 
     <div class="content">
-      <!-- Debit Card Visual -->
+      <!-- Debit Card loaded from Firebase -->
       <div class="debit-card">
         <div class="chip"></div>
         <div class="card-logo">𝕏 Money</div>
-        <div class="card-number">•••• •••• •••• 8842</div>
-        <div class="card-handle" id="cardHandle">@YourHandle</div>
+        <div class="card-number" id="cardNumber">•••• •••• •••• ----</div>
+        <div class="card-handle" id="cardHandle">@handle</div>
         <div class="card-bottom">
           <div>
             <div style="font-size:10px; opacity:0.7;">VALID THRU</div>
@@ -255,63 +239,57 @@
         </div>
       </div>
 
-      <!-- Quick Amounts -->
+      <div class="total">
+        Total Raised: <span id="totalRaised">$0</span>
+      </div>
+
       <div class="amount-btns" id="amountGrid">
         <button onclick="setAmount(5)" class="active">$5</button>
         <button onclick="setAmount(10)">$10</button>
         <button onclick="setAmount(25)">$25</button>
       </div>
 
-      <!-- Card Form -->
-      <div class="form-group">
-        <label>Card Number</label>
-        <input type="text" id="cardNumber" placeholder="ACCT-000035" maxlength="19">
-      </div>
+      <button class="btn donate-btn" onclick="recordDonation()">
+        Record Donation
+      </button>
 
-      <div class="form-group">
-        <label>Name on Card</label>
-        <input type="text" id="cardName" placeholder="Full Name">
-      </div>
-
-      <div class="row">
-        <div class="form-group">
-          <label>Expiry</label>
-          <input type="text" id="expiry" placeholder="MM/YY" maxlength="5">
-        </div>
-        <div class="form-group">
-          <label>CVV</label>
-          <input type="text" id="cvv" placeholder="123" maxlength="4">
-        </div>
-      </div>
-
-      <button class="btn pay-btn" onclick="donate()">Donate with Debit Card</button>
-      <button class="btn share-btn" onclick="shareProfile()">🔗 Share My Profile Link</button>
+      <button class="btn share-btn" onclick="shareProfile()">
+        🔗 Share My Profile Link
+      </button>
     </div>
   </div>
 
   <div class="toast" id="toast"></div>
 
   <script>
-    let currentAmount = 5;
-    let profile = {
-      name: "YourHandle",
-      handle: "@YourHandle"
-    };
+    // ========== REPLACE WITH YOUR FIREBASE CONFIG ==========
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
+  authDomain: "rootdonate-61e61.firebaseapp.com",
+  databaseURL: "https://rootdonate-61e61-default-rtdb.firebaseio.com",
+  projectId: "rootdonate-61e61",
+  storageBucket: "rootdonate-61e61.firebasestorage.app",
+  messagingSenderId: "754240963907",
+  appId: "1:754240963907:web:5417c2763d8f02108bdbf6",
+  measurementId: "G-0SC5R5ELT1"
+};
+    // =======================================================
 
-    // Load profile from base64 URL parameter
-    function loadProfileFromURL() {
-      const params = new URLSearchParams(window.location.search);
-      const encoded = params.get("p");
-      if (encoded) {
-        try {
-          const decoded = JSON.parse(atob(encoded));
-          profile = decoded;
-          document.getElementById("profileName").textContent = profile.name || profile.handle;
-          document.getElementById("cardHandle").textContent = profile.handle || "@" + profile.name;
-        } catch (e) {
-          console.log("Invalid profile link");
-        }
-      }
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let currentAmount = 5;
+    let currentUser = null;
+    let userDocRef = null;
+    let profile = {};
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      setTimeout(() => t.style.display = "none", 2800);
     }
 
     function setAmount(amount) {
@@ -320,26 +298,61 @@
       event.currentTarget.classList.add("active");
     }
 
-    function showToast(msg) {
-      const t = document.getElementById("toast");
-      t.textContent = msg;
-      t.style.display = "block";
-      setTimeout(() => t.style.display = "none", 2500);
+    function updateCardUI() {
+      document.getElementById("profileName").textContent = profile.name || profile.handle || "User";
+      document.getElementById("cardHandle").textContent = profile.handle || "@user";
+      document.getElementById("cardNumber").textContent = `•••• •••• •••• ${profile.last4 || "0000"}`;
+      document.getElementById("totalRaised").textContent = "$" + (profile.totalRaised || 0);
     }
 
-    function donate() {
-      // This is a demo only – no real payment is processed
-      showToast(`✅ $${currentAmount} donation simulated!`);
+    async function initUser() {
+      auth.onAuthStateChanged(async (user) => {
+        if (user) {
+          currentUser = user;
+          userDocRef = db.collection("users").doc(user.uid);
+
+          const doc = await userDocRef.get();
+          if (doc.exists) {
+            profile = doc.data();
+          } else {
+            const last4 = Math.floor(1000 + Math.random() * 9000).toString();
+            profile = {
+              name: "User" + user.uid.slice(0, 5),
+              handle: "@user" + user.uid.slice(0, 5),
+              last4: last4,
+              totalRaised: 0,
+              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            await userDocRef.set(profile);
+          }
+          updateCardUI();
+        } else {
+          await auth.signInAnonymously();
+        }
+      });
+    }
+
+    async function recordDonation() {
+      if (!userDocRef) return showToast("Please wait...");
+
+      await userDocRef.update({
+        totalRaised: firebase.firestore.FieldValue.increment(currentAmount)
+      });
+
+      profile.totalRaised = (profile.totalRaised || 0) + currentAmount;
+      updateCardUI();
+      showToast(`✅ $${currentAmount} recorded!`);
     }
 
     function shareProfile() {
       const data = {
         name: profile.name,
-        handle: profile.handle
+        handle: profile.handle,
+        last4: profile.last4
       };
       const encoded = btoa(JSON.stringify(data));
       const shareLink = `${window.location.origin}${window.location.pathname}?p=${encoded}`;
-      
+
       navigator.clipboard.writeText(shareLink).then(() => {
         showToast("✅ Profile link copied!");
       }).catch(() => {
@@ -347,24 +360,22 @@
       });
     }
 
-    // Auto format card number
-    document.getElementById("cardNumber").addEventListener("input", function(e) {
-      let value = e.target.value.replace(/\D/g, "").substring(0, 16);
-      value = value.replace(/(.{4})/g, "$1 ").trim();
-      e.target.value = value;
-    });
-
-    // Auto format expiry
-    document.getElementById("expiry").addEventListener("input", function(e) {
-      let value = e.target.value.replace(/\D/g, "").substring(0, 4);
-      if (value.length >= 3) {
-        value = value.substring(0, 2) + "/" + value.substring(2);
+    // Load shared profile from URL
+    function loadFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      const encoded = params.get("p");
+      if (encoded) {
+        try {
+          const decoded = JSON.parse(atob(encoded));
+          document.getElementById("profileName").textContent = decoded.name || decoded.handle;
+          document.getElementById("cardHandle").textContent = decoded.handle || "@user";
+          document.getElementById("cardNumber").textContent = `•••• •••• •••• ${decoded.last4 || "0000"}`;
+        } catch (e) {}
       }
-      e.target.value = value;
-    });
+    }
 
-    // Load profile when page opens
-    loadProfileFromURL();
+    initUser();
+    loadFromURL();
   </script>
 </body>
 </html>
