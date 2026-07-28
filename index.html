@@ -3,12 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Root Donate • Debit Card</title>
+  <title>Root Donate</title>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+
+  <!-- Stripe.js -->
+  <script src="https://js.stripe.com/v3/"></script>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
 
@@ -174,6 +177,7 @@
     }
 
     .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
     .donate-btn {
       background: var(--primary);
@@ -224,7 +228,7 @@
     </div>
 
     <div class="content">
-      <!-- Debit Card loaded from Firebase -->
+      <!-- Visual card only – decoration -->
       <div class="debit-card">
         <div class="chip"></div>
         <div class="card-logo">𝕏 Money</div>
@@ -249,8 +253,8 @@
         <button onclick="setAmount(25)">$25</button>
       </div>
 
-      <button class="btn donate-btn" onclick="recordDonation()">
-        Record Donation
+      <button class="btn donate-btn" id="donateBtn" onclick="startDonation()">
+        Donate $<span id="amountDisplay">5</span>
       </button>
 
       <button class="btn share-btn" onclick="shareProfile()">
@@ -263,18 +267,25 @@
 
   <script>
     // ========== REPLACE WITH YOUR FIREBASE CONFIG ==========
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
-  authDomain: "rootdonate-61e61.firebaseapp.com",
-  databaseURL: "https://rootdonate-61e61-default-rtdb.firebaseio.com",
-  projectId: "rootdonate-61e61",
-  storageBucket: "rootdonate-61e61.firebasestorage.app",
-  messagingSenderId: "754240963907",
-  appId: "1:754240963907:web:5417c2763d8f02108bdbf6",
-  measurementId: "G-0SC5R5ELT1"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
+      authDomain: "rootdonate-61e61.firebaseapp.com",
+      databaseURL: "https://rootdonate-61e61-default-rtdb.firebaseio.com",
+      projectId: "rootdonate-61e61",
+      storageBucket: "rootdonate-61e61.firebasestorage.app",
+      messagingSenderId: "754240963907",
+      appId: "1:754240963907:web:5417c2763d8f02108bdbf6",
+      measurementId: "G-0SC5R5ELT1"
+    };
     // =======================================================
+
+    // ========== REPLACE WITH YOUR STRIPE PUBLISHABLE KEY ==========
+    const stripe = mk_1TeUTNAYd3hJ6fUD0o6WiiZM; // or pk_test_... for testing
+    // ==============================================================
+
+    // ========== REPLACE WITH YOUR CLOUD FUNCTION URL ==========
+    const CREATE_CHECKOUT_URL = "https://storage.googleapis.com";
+    // ==========================================================
 
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
@@ -289,11 +300,12 @@ const firebaseConfig = {
       const t = document.getElementById("toast");
       t.textContent = msg;
       t.style.display = "block";
-      setTimeout(() => t.style.display = "none", 2800);
+      setTimeout(() => t.style.display = "none", 3500);
     }
 
     function setAmount(amount) {
       currentAmount = amount;
+      document.getElementById("amountDisplay").textContent = amount;
       document.querySelectorAll("#amountGrid button").forEach(btn => btn.classList.remove("active"));
       event.currentTarget.classList.add("active");
     }
@@ -326,22 +338,59 @@ const firebaseConfig = {
             await userDocRef.set(profile);
           }
           updateCardUI();
+
+          // Check if returning from successful payment
+          const params = new URLSearchParams(window.location.search);
+          if (params.get("success") === "true") {
+            showToast("✅ Payment successful! Thank you for your donation.");
+            // Refresh total from Firestore (webhook already updated it)
+            const fresh = await userDocRef.get();
+            if (fresh.exists) {
+              profile = fresh.data();
+              updateCardUI();
+            }
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
         } else {
           await auth.signInAnonymously();
         }
       });
     }
 
-    async function recordDonation() {
-      if (!userDocRef) return showToast("Please wait...");
+    async function startDonation() {
+      if (!currentUser || !userDocRef) {
+        return showToast("Please wait a moment...");
+      }
 
-      await userDocRef.update({
-        totalRaised: firebase.firestore.FieldValue.increment(currentAmount)
-      });
+      const btn = document.getElementById("donateBtn");
+      btn.disabled = true;
+      btn.textContent = "Redirecting to secure payment...";
 
-      profile.totalRaised = (profile.totalRaised || 0) + currentAmount;
-      updateCardUI();
-      showToast(`✅ $${currentAmount} recorded!`);
+      try {
+        const response = await fetch(CREATE_CHECKOUT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: currentAmount * 100, // cents
+            userId: currentUser.uid,
+            handle: profile.handle || "donor"
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.url) {
+          window.location.href = data.url; // Go to Stripe Checkout
+        } else {
+          throw new Error(data.error || "Failed to create checkout");
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Something went wrong. Please try again.");
+        btn.disabled = false;
+        btn.innerHTML = `Donate $<span id="amountDisplay">${currentAmount}</span>`;
+      }
     }
 
     function shareProfile() {
@@ -360,7 +409,7 @@ const firebaseConfig = {
       });
     }
 
-    // Load shared profile from URL
+    // Load shared profile from URL (view only)
     function loadFromURL() {
       const params = new URLSearchParams(window.location.search);
       const encoded = params.get("p");
