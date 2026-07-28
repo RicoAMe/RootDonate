@@ -61,16 +61,21 @@
     }
 
     .profile-name {
-      font-size: 1.3rem;
+      font-size: 1.25rem;
       font-weight: 700;
-      margin-top: 10px;
+      margin-top: 8px;
     }
 
-    .logout-btn {
+    .header-actions {
       position: absolute;
-      top: 16px;
-      right: 16px;
-      background: rgba(0,0,0,0.2);
+      top: 14px;
+      right: 14px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .header-btn {
+      background: rgba(0,0,0,0.18);
       border: none;
       color: #000;
       font-size: 12px;
@@ -82,13 +87,12 @@
 
     .content { padding: 24px; }
 
-    /* Auth form */
+    /* Auth */
     .auth-form {
       display: none;
       flex-direction: column;
       gap: 12px;
     }
-
     .auth-form.active { display: flex; }
 
     .auth-form input {
@@ -101,18 +105,14 @@
       font-size: 1rem;
       outline: none;
     }
-
-    .auth-form input:focus {
-      border-color: var(--primary);
-    }
+    .auth-form input:focus { border-color: var(--primary); }
 
     .auth-toggle {
       text-align: center;
-      margin-top: 8px;
+      margin-top: 6px;
       font-size: 0.9rem;
       color: #aaa;
     }
-
     .auth-toggle span {
       color: var(--primary);
       cursor: pointer;
@@ -131,64 +131,56 @@
       box-shadow: 0 12px 30px rgba(0,0,0,0.5);
       overflow: hidden;
     }
-
     .debit-card::before {
       content: "";
       position: absolute;
       inset: 0;
       background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.04) 50%, transparent 60%);
     }
-
     .chip {
       position: absolute;
-      top: 24px;
-      left: 24px;
-      width: 44px;
-      height: 34px;
+      top: 24px; left: 24px;
+      width: 44px; height: 34px;
       background: linear-gradient(135deg, #c9a227, #e8d48b);
       border-radius: 5px;
     }
-
     .card-logo {
       position: absolute;
-      top: 22px;
-      right: 24px;
-      font-size: 20px;
-      font-weight: 700;
+      top: 22px; right: 24px;
+      font-size: 20px; font-weight: 700;
     }
-
     .card-number {
       position: absolute;
-      top: 95px;
-      left: 24px;
-      font-size: 19px;
-      letter-spacing: 3px;
+      top: 95px; left: 24px;
+      font-size: 19px; letter-spacing: 3px;
     }
-
     .card-handle {
       position: absolute;
-      bottom: 52px;
-      left: 24px;
-      font-size: 15px;
-      font-weight: 600;
+      bottom: 52px; left: 24px;
+      font-size: 15px; font-weight: 600;
     }
-
     .card-bottom {
       position: absolute;
-      bottom: 20px;
-      left: 24px;
-      right: 24px;
+      bottom: 20px; left: 24px; right: 24px;
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      font-size: 12px;
-      opacity: 0.85;
+      font-size: 12px; opacity: 0.85;
+    }
+    .visa {
+      font-size: 24px; font-weight: 800; font-style: italic;
     }
 
-    .visa {
-      font-size: 24px;
-      font-weight: 800;
-      font-style: italic;
+    .total {
+      text-align: center;
+      margin-bottom: 16px;
+      font-size: 1.1rem;
+      color: #aaa;
+    }
+    .total span {
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 1.4rem;
     }
 
     .amount-btns {
@@ -197,7 +189,6 @@
       gap: 10px;
       margin: 16px 0 24px;
     }
-
     .amount-btns button {
       background: #1f1f26;
       border: 1px solid #333;
@@ -207,9 +198,8 @@
       font-weight: 700;
       font-size: 1rem;
       cursor: pointer;
-      transition: background 0.2s, color 0.2s;
+      transition: 0.2s;
     }
-
     .amount-btns button.active {
       background: var(--primary);
       color: #000;
@@ -224,22 +214,17 @@
       font-weight: 700;
       cursor: pointer;
       margin-top: 10px;
-      transition: transform 0.2s, opacity 0.2s;
+      transition: 0.2s;
     }
-
     .btn:active { transform: scale(0.98); }
     .btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
-    .donate-btn {
-      background: var(--primary);
-      color: #000;
-    }
-
+    .donate-btn { background: var(--primary); color: #000; }
     .share-btn {
       background: #1f1f26;
       color: white;
       border: 1px solid #333;
-      margin-top: 16px;
+      margin-top: 14px;
     }
 
     .toast {
@@ -259,26 +244,22 @@
       text-align: center;
     }
 
-    .total {
-      text-align: center;
-      margin-bottom: 16px;
-      font-size: 1.1rem;
-      color: #aaa;
-    }
-
-    .total span {
-      color: var(--primary);
-      font-weight: 700;
-      font-size: 1.4rem;
-    }
-
     .main-ui { display: none; }
     .main-ui.active { display: block; }
 
     .loading-text {
       text-align: center;
-      padding: 40px 20px;
+      padding: 50px 20px;
       color: #888;
+    }
+
+    .own-badge {
+      display: none;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--primary);
+      margin-bottom: 12px;
+      font-weight: 600;
     }
   </style>
 </head>
@@ -287,11 +268,15 @@
     <div class="header">
       <h1>Root Donate</h1>
       <div class="profile-name" id="profileName">Loading...</div>
-      <button class="logout-btn" id="logoutBtn" style="display:none;">Logout</button>
+      <div class="header-actions">
+        <button class="header-btn" id="myProfileBtn" style="display:none;">My Profile</button>
+        <button class="header-btn" id="logoutBtn" style="display:none;">Logout</button>
+        <button class="header-btn" id="loginHeaderBtn" style="display:none;">Login</button>
+      </div>
     </div>
 
     <div class="content">
-      <!-- ========== AUTH FORMS ========== -->
+      <!-- AUTH -->
       <div class="auth-form" id="loginForm">
         <input type="email" id="loginEmail" placeholder="Email" autocomplete="email">
         <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
@@ -303,7 +288,7 @@
 
       <div class="auth-form" id="signupForm">
         <input type="text" id="signupName" placeholder="Display Name">
-        <input type="text" id="signupHandle" placeholder="Handle (e.g. @john)">
+        <input type="text" id="signupHandle" placeholder="Handle (e.g. john)">
         <input type="email" id="signupEmail" placeholder="Email" autocomplete="email">
         <input type="password" id="signupPassword" placeholder="Password (min 6 chars)" autocomplete="new-password">
         <button class="btn donate-btn" id="signupBtn">Create Account</button>
@@ -312,8 +297,10 @@
         </div>
       </div>
 
-      <!-- ========== MAIN UI (after login) ========== -->
+      <!-- MAIN PROFILE + DONATE UI -->
       <div class="main-ui" id="mainUI">
+        <div class="own-badge" id="ownBadge">This is your profile</div>
+
         <div class="debit-card">
           <div class="chip"></div>
           <div class="card-logo">𝕏 Money</div>
@@ -342,19 +329,19 @@
           Donate $<span id="amountDisplay">5</span>
         </button>
 
-        <button class="btn share-btn" id="shareBtn" type="button">
+        <button class="btn share-btn" id="shareBtn" type="button" style="display:none;">
           🔗 Share My Profile Link
         </button>
       </div>
 
-      <div class="loading-text" id="loadingText">Checking authentication...</div>
+      <div class="loading-text" id="loadingText">Loading...</div>
     </div>
   </div>
 
   <div class="toast" id="toast"></div>
 
   <script>
-    // ========== REPLACE WITH YOUR FIREBASE CONFIG ==========
+    // ========== FIREBASE CONFIG ==========
     const firebaseConfig = {
       apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
       authDomain: "rootdonate-61e61.firebaseapp.com",
@@ -365,26 +352,23 @@
       appId: "1:754240963907:web:5417c2763d8f02108bdbf6",
       measurementId: "G-0SC5R5ELT1"
     };
-    // =======================================================
 
-    // ========== REPLACE WITH YOUR CLOUD FUNCTION URL ==========
-    // This MUST be a real Cloud Function that creates a Stripe Checkout Session
-    // and returns { url: "https://checkout.stripe.com/..." }
+    // ========== STRIPE CLOUD FUNCTION ==========
+    // Must return { url: "https://checkout.stripe.com/..." }
     const CREATE_CHECKOUT_URL = "https://YOUR_CLOUD_FUNCTION_URL_HERE";
-    // ==========================================================
 
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // State
     let currentAmount = 5;
-    let currentUser = null;
-    let userDocRef = null;
-    let profile = {};
-    let isViewingShared = false;
-    let isAuthReady = false;
+    let currentUser = null;          // logged-in user
+    let viewingUserId = null;        // whose profile we are looking at
+    let profile = {};                // the profile currently shown
+    let isOwnProfile = false;
 
-    // ========== UI HELPERS ==========
+    // ========== HELPERS ==========
     function showToast(msg) {
       const t = document.getElementById("toast");
       t.textContent = msg;
@@ -397,8 +381,8 @@
       document.getElementById("mainUI").classList.remove("active");
       document.getElementById("loginForm").classList.toggle("active", mode === "login");
       document.getElementById("signupForm").classList.toggle("active", mode === "signup");
-      document.getElementById("logoutBtn").style.display = "none";
       document.getElementById("profileName").textContent = mode === "login" ? "Welcome back" : "Create Account";
+      updateHeaderButtons(false);
     }
 
     function showMainUI() {
@@ -406,7 +390,12 @@
       document.getElementById("loginForm").classList.remove("active");
       document.getElementById("signupForm").classList.remove("active");
       document.getElementById("mainUI").classList.add("active");
-      document.getElementById("logoutBtn").style.display = "block";
+    }
+
+    function updateHeaderButtons(loggedIn) {
+      document.getElementById("logoutBtn").style.display = loggedIn ? "block" : "none";
+      document.getElementById("loginHeaderBtn").style.display = loggedIn ? "none" : "block";
+      document.getElementById("myProfileBtn").style.display = loggedIn && !isOwnProfile ? "block" : "none";
     }
 
     function updateCardUI() {
@@ -414,24 +403,70 @@
       document.getElementById("cardHandle").textContent = profile.handle || "@user";
       document.getElementById("cardNumber").textContent = `•••• •••• •••• ${profile.last4 || "0000"}`;
       document.getElementById("totalRaised").textContent = "$" + (profile.totalRaised || 0);
+
+      document.getElementById("ownBadge").style.display = isOwnProfile ? "block" : "none";
+      document.getElementById("shareBtn").style.display = isOwnProfile ? "block" : "none";
     }
 
-    // ========== AMOUNT SELECT ==========
-    function setAmount(amount, button) {
+    function setAmount(amount, btn) {
       currentAmount = amount;
       document.getElementById("amountDisplay").textContent = amount;
-      document.querySelectorAll("#amountGrid button").forEach(btn => btn.classList.remove("active"));
-      if (button) button.classList.add("active");
+      document.querySelectorAll("#amountGrid button").forEach(b => b.classList.remove("active"));
+      if (btn) btn.classList.add("active");
+    }
+
+    // ========== LOAD ANY PROFILE BY UID ==========
+    async function loadProfile(uid) {
+      if (!uid) return;
+
+      viewingUserId = uid;
+      document.getElementById("loadingText").style.display = "block";
+      document.getElementById("loadingText").textContent = "Loading profile...";
+      document.getElementById("mainUI").classList.remove("active");
+
+      try {
+        const doc = await db.collection("users").doc(uid).get();
+
+        if (!doc.exists) {
+          showToast("Profile not found");
+          document.getElementById("loadingText").textContent = "Profile not found";
+          return;
+        }
+
+        profile = doc.data();
+        isOwnProfile = currentUser && currentUser.uid === uid;
+
+        updateCardUI();
+        showMainUI();
+        updateHeaderButtons(!!currentUser);
+
+        // Handle Stripe success return
+        const params = new URLSearchParams(window.location.search);
+        if (params.get("success") === "true") {
+          showToast("✅ Donation successful! Thank you!");
+          // refresh total
+          const fresh = await db.collection("users").doc(uid).get();
+          if (fresh.exists) {
+            profile = fresh.data();
+            updateCardUI();
+          }
+          // clean URL but keep the u= param
+          const clean = new URL(window.location);
+          clean.searchParams.delete("success");
+          window.history.replaceState({}, "", clean);
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Failed to load profile");
+        document.getElementById("loadingText").textContent = "Error loading profile";
+      }
     }
 
     // ========== AUTH ==========
     async function handleLogin() {
       const email = document.getElementById("loginEmail").value.trim();
       const password = document.getElementById("loginPassword").value;
-
-      if (!email || !password) {
-        return showToast("Please enter email and password");
-      }
+      if (!email || !password) return showToast("Enter email and password");
 
       const btn = document.getElementById("loginBtn");
       btn.disabled = true;
@@ -441,7 +476,6 @@
         await auth.signInWithEmailAndPassword(email, password);
         showToast("✅ Logged in!");
       } catch (err) {
-        console.error(err);
         showToast(err.message || "Login failed");
         btn.disabled = false;
         btn.textContent = "Log In";
@@ -454,40 +488,31 @@
       const email = document.getElementById("signupEmail").value.trim();
       const password = document.getElementById("signupPassword").value;
 
-      if (!name || !handle || !email || !password) {
-        return showToast("Please fill all fields");
-      }
+      if (!name || !handle || !email || !password) return showToast("Fill all fields");
+      if (password.length < 6) return showToast("Password must be at least 6 characters");
 
-      if (password.length < 6) {
-        return showToast("Password must be at least 6 characters");
-      }
-
-      // Normalize handle
       if (!handle.startsWith("@")) handle = "@" + handle;
       handle = handle.toLowerCase().replace(/[^a-z0-9@_]/g, "");
 
       const btn = document.getElementById("signupBtn");
       btn.disabled = true;
-      btn.textContent = "Creating account...";
+      btn.textContent = "Creating...";
 
       try {
         const cred = await auth.createUserWithEmailAndPassword(email, password);
-        const user = cred.user;
-
         const last4 = Math.floor(1000 + Math.random() * 9000).toString();
-        const newProfile = {
-          name: name,
-          handle: handle,
-          last4: last4,
-          totalRaised: 0,
-          email: email,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
 
-        await db.collection("users").doc(user.uid).set(newProfile);
+        await db.collection("users").doc(cred.user.uid).set({
+          name,
+          handle,
+          last4,
+          totalRaised: 0,
+          email,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
         showToast("✅ Account created!");
       } catch (err) {
-        console.error(err);
         showToast(err.message || "Sign up failed");
         btn.disabled = false;
         btn.textContent = "Create Account";
@@ -496,70 +521,17 @@
 
     async function handleLogout() {
       await auth.signOut();
-      profile = {};
-      currentUser = null;
-      userDocRef = null;
-      showAuth("login");
       showToast("Logged out");
     }
 
-    // ========== PROFILE LOAD ==========
-    async function loadUserProfile(user) {
-      currentUser = user;
-      userDocRef = db.collection("users").doc(user.uid);
-
-      try {
-        const doc = await userDocRef.get();
-
-        if (doc.exists) {
-          profile = doc.data();
-        } else {
-          // Fallback if document somehow missing
-          const last4 = Math.floor(1000 + Math.random() * 9000).toString();
-          profile = {
-            name: user.email?.split("@")[0] || "User",
-            handle: "@user" + user.uid.slice(0, 5),
-            last4: last4,
-            totalRaised: 0,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          };
-          await userDocRef.set(profile);
-        }
-
-        if (!isViewingShared) {
-          updateCardUI();
-          showMainUI();
-        }
-
-        // Success return from Stripe
-        const params = new URLSearchParams(window.location.search);
-        if (params.get("success") === "true") {
-          showToast("✅ Payment successful! Thank you!");
-          const fresh = await userDocRef.get();
-          if (fresh.exists) {
-            profile = fresh.data();
-            updateCardUI();
-          }
-          window.history.replaceState({}, document.title, window.location.pathname);
-        }
-      } catch (err) {
-        console.error("Error loading profile:", err);
-        showToast("Failed to load profile. Check Firestore rules.");
-      }
-    }
-
-    // ========== DONATE ==========
+    // ========== DONATE TO THE CURRENTLY VIEWED PROFILE ==========
     async function startDonation() {
-      if (!currentUser || !userDocRef || !profile.handle) {
-        return showToast("Please wait, profile still loading...");
-      }
-
-      if (isViewingShared) {
-        return showToast("This is a shared view. Log in to your own account to receive donations.");
+      if (!viewingUserId || !profile.handle) {
+        return showToast("Profile not loaded yet");
       }
 
       if (CREATE_CHECKOUT_URL.includes("YOUR_CLOUD_FUNCTION")) {
-        return showToast("⚠️ Backend not configured. Replace CREATE_CHECKOUT_URL with your Cloud Function.");
+        return showToast("⚠️ Backend not set. Replace CREATE_CHECKOUT_URL first.");
       }
 
       const btn = document.getElementById("donateBtn");
@@ -571,22 +543,20 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            amount: currentAmount * 100,
-            userId: currentUser.uid,
-            handle: profile.handle
+            amount: currentAmount * 100,          // cents
+            recipientUserId: viewingUserId,       // who receives the money
+            recipientHandle: profile.handle,
+            donorUserId: currentUser ? currentUser.uid : null
           })
         });
 
-        if (!response.ok) {
-          throw new Error(`Server error: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`Server error ${response.status}`);
 
         const data = await response.json();
-
         if (data.url) {
           window.location.href = data.url;
         } else {
-          throw new Error(data.error || "No checkout URL returned");
+          throw new Error(data.error || "No checkout URL");
         }
       } catch (err) {
         console.error(err);
@@ -598,19 +568,9 @@
 
     // ========== SHARE ==========
     function shareProfile() {
-      if (!profile.handle) {
-        return showToast("Profile not ready yet. Please wait a second...");
-      }
+      if (!currentUser) return showToast("You must be logged in");
 
-      const data = {
-        name: profile.name,
-        handle: profile.handle,
-        last4: profile.last4,
-        totalRaised: profile.totalRaised || 0
-      };
-
-      const encoded = btoa(JSON.stringify(data));
-      const shareLink = `${window.location.origin}${window.location.pathname}?p=${encoded}`;
+      const shareLink = `${window.location.origin}${window.location.pathname}?u=${currentUser.uid}`;
 
       if (navigator.clipboard?.writeText) {
         navigator.clipboard.writeText(shareLink)
@@ -621,36 +581,24 @@
       }
     }
 
-    // ========== SHARED PROFILE VIEW ==========
-    function loadFromURL() {
+    // ========== ROUTING ==========
+    function getUserIdFromURL() {
       const params = new URLSearchParams(window.location.search);
-      const encoded = params.get("p");
-      if (!encoded) return;
-
-      try {
-        const decoded = JSON.parse(atob(encoded));
-        isViewingShared = true;
-
-        document.getElementById("profileName").textContent = decoded.name || decoded.handle || "User";
-        document.getElementById("cardHandle").textContent = decoded.handle || "@user";
-        document.getElementById("cardNumber").textContent = `•••• •••• •••• ${decoded.last4 || "0000"}`;
-        document.getElementById("totalRaised").textContent = "$" + (decoded.totalRaised || 0);
-
-        document.getElementById("loadingText").style.display = "none";
-        document.getElementById("mainUI").classList.add("active");
-        document.getElementById("donateBtn").disabled = true;
-        document.getElementById("donateBtn").textContent = "Viewing shared profile";
-        document.getElementById("shareBtn").style.display = "none";
-        document.getElementById("logoutBtn").style.display = "none";
-      } catch (e) {
-        console.warn("Invalid shared data");
-      }
+      return params.get("u");
     }
 
-    // ========== EVENT LISTENERS ==========
+    // ========== EVENTS ==========
     document.getElementById("loginBtn").addEventListener("click", handleLogin);
     document.getElementById("signupBtn").addEventListener("click", handleSignup);
     document.getElementById("logoutBtn").addEventListener("click", handleLogout);
+    document.getElementById("loginHeaderBtn").addEventListener("click", () => showAuth("login"));
+    document.getElementById("myProfileBtn").addEventListener("click", () => {
+      if (currentUser) {
+        window.history.replaceState({}, "", `?u=${currentUser.uid}`);
+        loadProfile(currentUser.uid);
+      }
+    });
+
     document.getElementById("showSignup").addEventListener("click", () => showAuth("signup"));
     document.getElementById("showLogin").addEventListener("click", () => showAuth("login"));
 
@@ -662,29 +610,31 @@
     document.getElementById("donateBtn").addEventListener("click", startDonation);
     document.getElementById("shareBtn").addEventListener("click", shareProfile);
 
-    // Enter key support
-    document.getElementById("loginPassword").addEventListener("keypress", (e) => {
+    document.getElementById("loginPassword").addEventListener("keypress", e => {
       if (e.key === "Enter") handleLogin();
     });
-    document.getElementById("signupPassword").addEventListener("keypress", (e) => {
+    document.getElementById("signupPassword").addEventListener("keypress", e => {
       if (e.key === "Enter") handleSignup();
     });
 
-    // ========== AUTH STATE ==========
+    // ========== AUTH STATE + INITIAL LOAD ==========
     auth.onAuthStateChanged(async (user) => {
-      isAuthReady = true;
+      currentUser = user;
 
-      if (isViewingShared) return; // stay in view-only mode
+      const urlUserId = getUserIdFromURL();
 
-      if (user) {
-        await loadUserProfile(user);
+      if (urlUserId) {
+        // Someone opened a shared profile link → show that profile
+        await loadProfile(urlUserId);
+      } else if (user) {
+        // Logged in + no ?u= → show own profile
+        window.history.replaceState({}, "", `?u=${user.uid}`);
+        await loadProfile(user.uid);
       } else {
+        // Not logged in + no profile in URL → show login
         showAuth("login");
       }
     });
-
-    // Start
-    loadFromURL();
   </script>
 </body>
 </html>
