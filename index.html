@@ -191,6 +191,26 @@
       display: flex;
       gap: 10px;
       align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .offers-list {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #2a2a32;
+      font-size: 0.85rem;
+    }
+
+    .offer-item {
+      background: #15151c;
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+
+    .offer-email {
+      color: var(--primary);
+      font-weight: 600;
     }
 
     .empty-state {
@@ -397,9 +417,24 @@
           .orderBy("createdAt", "desc").get();
 
         items = [];
-        itemsSnap.forEach(doc => {
-          items.push({ id: doc.id, ...doc.data() });
-        });
+        for (const doc of itemsSnap.docs) {
+          const itemData = { id: doc.id, ...doc.data(), offers: [] };
+
+          // If own profile, also load offers for this item
+          if (isOwnProfile) {
+            const offersSnap = await db.collection("users").doc(uid)
+              .collection("items").doc(doc.id)
+              .collection("offers")
+              .orderBy("createdAt", "desc")
+              .get();
+
+            offersSnap.forEach(o => {
+              itemData.offers.push({ id: o.id, ...o.data() });
+            });
+          }
+
+          items.push(itemData);
+        }
 
         renderItems();
         showMainUI();
@@ -423,21 +458,42 @@
       items.forEach(item => {
         const card = document.createElement("div");
         card.className = "item-card";
+
+        let offersHtml = "";
+        if (isOwnProfile && item.offers && item.offers.length > 0) {
+          offersHtml = `
+            <div class="offers-list">
+              <strong style="color:#ccc;">Donation offers (${item.offers.length}):</strong>
+              ${item.offers.map(o => `
+                <div class="offer-item">
+                  <div class="offer-email">${escapeHtml(o.email)}</div>
+                  ${o.message ? `<div style="color:#aaa; margin-top:4px;">${escapeHtml(o.message)}</div>` : ""}
+                </div>
+              `).join("")}
+            </div>
+          `;
+        }
+
         card.innerHTML = `
           <div class="item-title">${escapeHtml(item.title)}</div>
           ${item.description ? `<div class="item-desc">${escapeHtml(item.description)}</div>` : ""}
           <div class="item-actions">
             ${isOwnProfile
               ? `<button class="danger-btn" onclick="deleteItem('${item.id}')">Delete</button>`
-              : `<button class="btn primary-btn" style="padding:10px 16px; font-size:0.9rem; width:auto;" onclick="claimItem('${escapeHtml(item.title)}')">I'll donate this</button>`
+              : `<button class="btn primary-btn" style="padding:10px 16px; font-size:0.9rem; width:auto;" 
+                   onclick="claimItem('${item.id}', '${escapeHtml(item.title)}')">
+                   I'll donate this
+                 </button>`
             }
           </div>
+          ${offersHtml}
         `;
         list.appendChild(card);
       });
     }
 
     function escapeHtml(text) {
+      if (!text) return "";
       const div = document.createElement("div");
       div.textContent = text;
       return div.innerHTML;
@@ -489,8 +545,33 @@
       }
     }
 
-    function claimItem(title) {
-      showToast(`Thanks! You can contact ${profile.handle || "them"} about: ${title}`);
+    // ========== CLAIM / DONATE (with email) ==========
+    async function claimItem(itemId, title) {
+      const email = prompt(`Enter your email so ${profile.name || profile.handle || "they"} can contact you about donating "${title}":`);
+      
+      if (!email || !email.includes("@")) {
+        if (email !== null) showToast("Please enter a valid email");
+        return;
+      }
+
+      const message = prompt("Optional short message (e.g. size, condition, when you can drop it off):") || "";
+
+      try {
+        await db.collection("users").doc(viewingUserId)
+          .collection("items").doc(itemId)
+          .collection("offers")
+          .add({
+            email: email.trim(),
+            message: message.trim(),
+            donorUid: currentUser ? currentUser.uid : null,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+        showToast("✅ Offer sent! They will see your email.");
+      } catch (err) {
+        console.error(err);
+        showToast("Failed to send offer. Try again.");
+      }
     }
 
     // ========== AUTH ==========
