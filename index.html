@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0a0f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <title>Root Donate – Items</title>
 
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
@@ -18,19 +20,28 @@
       --bg: #0a0a0f;
       --card: #111118;
       --border: #222226;
+      --text: #e0e0e0;
+      --muted: #aaa;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
 
     body {
-      font-family: 'Inter', system-ui, sans-serif;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
       background: var(--bg);
-      color: #e0e0e0;
+      color: var(--text);
       min-height: 100dvh;
-      padding: 20px 12px;
+      padding: 16px 12px;
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
       display: flex;
       justify-content: center;
       align-items: flex-start;
+      line-height: 1.5;
     }
 
     .container {
@@ -40,51 +51,55 @@
       border-radius: 28px;
       border: 1px solid var(--border);
       overflow: hidden;
-      box-shadow: 0 25px 60px rgba(0, 255, 157, 0.1);
-      margin-top: 20px;
+      box-shadow: 0 25px 60px rgba(0, 255, 157, 0.08);
+      margin-top: 12px;
     }
 
     .header {
       background: linear-gradient(135deg, #00ff9d 0%, #ff00aa 100%);
       color: #000;
-      padding: 28px 24px 24px;
+      padding: 28px 20px 24px;
       text-align: center;
       position: relative;
     }
 
     .header h1 {
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.8rem;
+      font-size: 1.75rem;
       font-weight: 700;
-      letter-spacing: -1px;
+      letter-spacing: -0.8px;
     }
 
     .profile-name {
-      font-size: 1.2rem;
+      font-size: 1.15rem;
       font-weight: 700;
-      margin-top: 8px;
+      margin-top: 6px;
+      word-break: break-word;
     }
 
     .header-actions {
       position: absolute;
-      top: 14px;
-      right: 14px;
+      top: 12px;
+      right: 12px;
       display: flex;
-      gap: 8px;
+      gap: 6px;
     }
 
     .header-btn {
-      background: rgba(0,0,0,0.18);
+      background: rgba(0, 0, 0, 0.18);
       border: none;
       color: #000;
       font-size: 12px;
       font-weight: 600;
-      padding: 6px 12px;
+      padding: 7px 12px;
       border-radius: 999px;
       cursor: pointer;
+      min-height: 32px;
     }
 
-    .content { padding: 24px; }
+    .content {
+      padding: 22px 18px 28px;
+    }
 
     /* Auth */
     .auth-form {
@@ -92,30 +107,37 @@
       flex-direction: column;
       gap: 12px;
     }
-    .auth-form.active { display: flex; }
+    .auth-form.active {
+      display: flex;
+    }
 
-    .auth-form input, .add-item-form input, .add-item-form textarea {
+    input, textarea {
       width: 100%;
-      padding: 14px 16px;
-      border-radius: 12px;
+      padding: 15px 16px;
+      border-radius: 14px;
       border: 1px solid #333;
       background: #1a1a22;
       color: white;
-      font-size: 1rem;
+      font-size: 16px; /* prevents iOS zoom */
       outline: none;
       font-family: inherit;
+      transition: border-color 0.2s;
     }
-    .auth-form input:focus,
-    .add-item-form input:focus,
-    .add-item-form textarea:focus {
+
+    input:focus, textarea:focus {
       border-color: var(--primary);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
     }
 
     .auth-toggle {
       text-align: center;
-      margin-top: 6px;
+      margin-top: 8px;
       font-size: 0.9rem;
-      color: #aaa;
+      color: var(--muted);
     }
     .auth-toggle span {
       color: var(--primary);
@@ -131,10 +153,16 @@
       font-size: 1.05rem;
       font-weight: 700;
       cursor: pointer;
-      transition: 0.2s;
+      transition: transform 0.15s, opacity 0.2s;
+      min-height: 52px;
     }
-    .btn:active { transform: scale(0.98); }
-    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn:active {
+      transform: scale(0.98);
+    }
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
 
     .primary-btn {
       background: var(--primary);
@@ -145,24 +173,26 @@
       background: #1f1f26;
       color: white;
       border: 1px solid #333;
-      margin-top: 12px;
+      margin-top: 10px;
     }
 
     .danger-btn {
       background: transparent;
       color: #ff6b6b;
       border: 1px solid #ff6b6b;
-      padding: 8px 14px;
+      padding: 9px 16px;
       font-size: 0.85rem;
       border-radius: 10px;
       cursor: pointer;
+      font-weight: 600;
+      min-height: 38px;
     }
 
     /* Items */
     .section-title {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: 600;
-      margin: 8px 0 16px;
+      margin: 4px 0 14px;
       color: #ccc;
     }
 
@@ -178,13 +208,14 @@
       font-weight: 700;
       font-size: 1.05rem;
       margin-bottom: 4px;
+      word-break: break-word;
     }
 
     .item-desc {
       font-size: 0.9rem;
-      color: #aaa;
-      margin-bottom: 12px;
-      line-height: 1.4;
+      color: var(--muted);
+      margin-bottom: 14px;
+      line-height: 1.45;
     }
 
     .item-actions {
@@ -195,76 +226,99 @@
     }
 
     .offers-list {
-      margin-top: 12px;
-      padding-top: 12px;
+      margin-top: 14px;
+      padding-top: 14px;
       border-top: 1px solid #2a2a32;
       font-size: 0.85rem;
     }
 
     .offer-item {
       background: #15151c;
-      padding: 10px 12px;
-      border-radius: 10px;
+      padding: 12px 14px;
+      border-radius: 12px;
       margin-bottom: 8px;
     }
 
     .offer-email {
       color: var(--primary);
       font-weight: 600;
+      word-break: break-all;
     }
 
     .empty-state {
       text-align: center;
-      padding: 30px 10px;
+      padding: 36px 12px;
       color: #666;
       font-size: 0.95rem;
+      line-height: 1.5;
     }
 
     .add-item-form {
       display: none;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
       margin-bottom: 20px;
       padding: 16px;
       background: #1a1a22;
       border-radius: 16px;
       border: 1px solid #2a2a32;
     }
-    .add-item-form.active { display: flex; }
+    .add-item-form.active {
+      display: flex;
+    }
 
     .own-badge {
       display: none;
       text-align: center;
       font-size: 0.85rem;
       color: var(--primary);
-      margin-bottom: 16px;
+      margin-bottom: 18px;
       font-weight: 600;
     }
 
     .toast {
       position: fixed;
-      bottom: 30px;
+      bottom: max(28px, env(safe-area-inset-bottom));
       left: 50%;
       transform: translateX(-50%);
       background: #111;
       color: var(--primary);
-      padding: 14px 28px;
+      padding: 14px 26px;
       border-radius: 999px;
       font-weight: 700;
+      font-size: 0.95rem;
       display: none;
-      z-index: 999;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      z-index: 9999;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
       max-width: 90%;
       text-align: center;
     }
 
-    .main-ui { display: none; }
-    .main-ui.active { display: block; }
+    .main-ui {
+      display: none;
+    }
+    .main-ui.active {
+      display: block;
+    }
 
     .loading-text {
       text-align: center;
-      padding: 50px 20px;
+      padding: 60px 20px;
       color: #888;
+      font-size: 1rem;
+    }
+
+    /* Mobile refinements */
+    @media (max-width: 380px) {
+      .header {
+        padding: 24px 16px 20px;
+      }
+      .content {
+        padding: 18px 14px 24px;
+      }
+      .header h1 {
+        font-size: 1.55rem;
+      }
     }
   </style>
 </head>
@@ -283,8 +337,8 @@
     <div class="content">
       <!-- AUTH -->
       <div class="auth-form" id="loginForm">
-        <input type="email" id="loginEmail" placeholder="Email">
-        <input type="password" id="loginPassword" placeholder="Password">
+        <input type="email" id="loginEmail" placeholder="Email" autocomplete="email">
+        <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
         <button class="btn primary-btn" id="loginBtn">Log In</button>
         <div class="auth-toggle">
           Don't have an account? <span id="showSignup">Sign Up</span>
@@ -292,10 +346,10 @@
       </div>
 
       <div class="auth-form" id="signupForm">
-        <input type="text" id="signupName" placeholder="Display Name">
-        <input type="text" id="signupHandle" placeholder="Handle (e.g. john)">
-        <input type="email" id="signupEmail" placeholder="Email">
-        <input type="password" id="signupPassword" placeholder="Password (min 6 chars)">
+        <input type="text" id="signupName" placeholder="Display Name" autocomplete="name">
+        <input type="text" id="signupHandle" placeholder="Handle (e.g. john)" autocomplete="username">
+        <input type="email" id="signupEmail" placeholder="Email" autocomplete="email">
+        <input type="password" id="signupPassword" placeholder="Password (min 6 characters)" autocomplete="new-password">
         <button class="btn primary-btn" id="signupBtn">Create Account</button>
         <div class="auth-toggle">
           Already have an account? <span id="showLogin">Log In</span>
@@ -308,7 +362,6 @@
 
         <div class="section-title" id="itemsTitle">Items Needed</div>
 
-        <!-- Add Item Form (only for owner) -->
         <div class="add-item-form" id="addItemForm">
           <input type="text" id="itemTitle" placeholder="Item name (e.g. Winter Jacket)">
           <textarea id="itemDesc" rows="2" placeholder="Short description (optional)"></textarea>
@@ -334,7 +387,7 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    // ========== FIREBASE CONFIG ==========
+    // ========== FIREBASE ==========
     const firebaseConfig = {
       apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
       authDomain: "rootdonate-61e61.firebaseapp.com",
@@ -361,7 +414,17 @@
       const t = document.getElementById("toast");
       t.textContent = msg;
       t.style.display = "block";
-      setTimeout(() => t.style.display = "none", 3500);
+      clearTimeout(t._timeout);
+      t._timeout = setTimeout(() => {
+        t.style.display = "none";
+      }, 3400);
+    }
+
+    function escapeHtml(text) {
+      if (!text) return "";
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
     }
 
     function showAuth(mode = "login") {
@@ -391,20 +454,21 @@
       if (!uid) return;
 
       viewingUserId = uid;
-      document.getElementById("loadingText").style.display = "block";
-      document.getElementById("loadingText").textContent = "Loading profile...";
+      const loading = document.getElementById("loadingText");
+      loading.style.display = "block";
+      loading.textContent = "Loading profile...";
       document.getElementById("mainUI").classList.remove("active");
 
       try {
         const doc = await db.collection("users").doc(uid).get();
         if (!doc.exists) {
           showToast("Profile not found");
-          document.getElementById("loadingText").textContent = "Profile not found";
+          loading.textContent = "Profile not found";
           return;
         }
 
         profile = doc.data();
-        isOwnProfile = currentUser && currentUser.uid === uid;
+        isOwnProfile = !!(currentUser && currentUser.uid === uid);
 
         document.getElementById("profileName").textContent = profile.name || profile.handle || "User";
         document.getElementById("ownBadge").style.display = isOwnProfile ? "block" : "none";
@@ -414,16 +478,16 @@
 
         // Load items
         const itemsSnap = await db.collection("users").doc(uid).collection("items")
-          .orderBy("createdAt", "desc").get();
+          .orderBy("createdAt", "desc")
+          .get();
 
         items = [];
-        for (const doc of itemsSnap.docs) {
-          const itemData = { id: doc.id, ...doc.data(), offers: [] };
+        for (const itemDoc of itemsSnap.docs) {
+          const itemData = { id: itemDoc.id, ...itemDoc.data(), offers: [] };
 
-          // If own profile, also load offers for this item
           if (isOwnProfile) {
             const offersSnap = await db.collection("users").doc(uid)
-              .collection("items").doc(doc.id)
+              .collection("items").doc(itemDoc.id)
               .collection("offers")
               .orderBy("createdAt", "desc")
               .get();
@@ -442,7 +506,7 @@
       } catch (err) {
         console.error(err);
         showToast("Failed to load profile");
-        document.getElementById("loadingText").textContent = "Error loading profile";
+        loading.textContent = "Error loading profile";
       }
     }
 
@@ -451,7 +515,11 @@
       list.innerHTML = "";
 
       if (items.length === 0) {
-        list.innerHTML = `<div class="empty-state">${isOwnProfile ? "No items yet. Add something you need!" : "This person hasn’t added any items yet."}</div>`;
+        list.innerHTML = `<div class="empty-state">${
+          isOwnProfile
+            ? "No items yet.<br>Add something you need!"
+            : "This person hasn’t added any items yet."
+        }</div>`;
         return;
       }
 
@@ -467,36 +535,40 @@
               ${item.offers.map(o => `
                 <div class="offer-item">
                   <div class="offer-email">${escapeHtml(o.email)}</div>
-                  ${o.message ? `<div style="color:#aaa; margin-top:4px;">${escapeHtml(o.message)}</div>` : ""}
+                  ${o.message ? `<div style="color:#aaa; margin-top:5px;">${escapeHtml(o.message)}</div>` : ""}
                 </div>
               `).join("")}
             </div>
           `;
         }
 
+        const actionsHtml = isOwnProfile
+          ? `<button class="danger-btn delete-btn" data-id="${item.id}">Delete</button>`
+          : `<button class="btn primary-btn claim-btn" style="padding:11px 18px; font-size:0.9rem; width:auto; min-height:42px;" 
+               data-id="${item.id}" data-title="${escapeHtml(item.title)}">
+               I'll donate this
+             </button>`;
+
         card.innerHTML = `
           <div class="item-title">${escapeHtml(item.title)}</div>
           ${item.description ? `<div class="item-desc">${escapeHtml(item.description)}</div>` : ""}
-          <div class="item-actions">
-            ${isOwnProfile
-              ? `<button class="danger-btn" onclick="deleteItem('${item.id}')">Delete</button>`
-              : `<button class="btn primary-btn" style="padding:10px 16px; font-size:0.9rem; width:auto;" 
-                   onclick="claimItem('${item.id}', '${escapeHtml(item.title)}')">
-                   I'll donate this
-                 </button>`
-            }
-          </div>
+          <div class="item-actions">${actionsHtml}</div>
           ${offersHtml}
         `;
+
         list.appendChild(card);
       });
-    }
 
-    function escapeHtml(text) {
-      if (!text) return "";
-      const div = document.createElement("div");
-      div.textContent = text;
-      return div.innerHTML;
+      // Attach event listeners (safe)
+      list.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.addEventListener("click", () => deleteItem(btn.dataset.id));
+      });
+
+      list.querySelectorAll(".claim-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          claimItem(btn.dataset.id, btn.dataset.title);
+        });
+      });
     }
 
     // ========== ADD / DELETE ITEM ==========
@@ -504,7 +576,10 @@
       const title = document.getElementById("itemTitle").value.trim();
       const description = document.getElementById("itemDesc").value.trim();
 
-      if (!title) return showToast("Please enter an item name");
+      if (!title) {
+        showToast("Please enter an item name");
+        return;
+      }
 
       const btn = document.getElementById("saveItemBtn");
       btn.disabled = true;
@@ -541,20 +616,22 @@
         showToast("Item deleted");
         await loadProfile(currentUser.uid);
       } catch (err) {
+        console.error(err);
         showToast("Failed to delete");
       }
     }
 
-    // ========== CLAIM / DONATE (with email) ==========
+    // ========== CLAIM / DONATE ==========
     async function claimItem(itemId, title) {
       const email = prompt(`Enter your email so ${profile.name || profile.handle || "they"} can contact you about donating "${title}":`);
-      
-      if (!email || !email.includes("@")) {
-        if (email !== null) showToast("Please enter a valid email");
+
+      if (email === null) return;
+      if (!email.trim() || !email.includes("@")) {
+        showToast("Please enter a valid email");
         return;
       }
 
-      const message = prompt("Optional short message (e.g. size, condition, when you can drop it off):") || "";
+      const message = prompt("Optional short message (size, condition, pickup time…):") || "";
 
       try {
         await db.collection("users").doc(viewingUserId)
@@ -570,7 +647,7 @@
         showToast("✅ Offer sent! They will see your email.");
       } catch (err) {
         console.error(err);
-        showToast("Failed to send offer. Try again.");
+        showToast("Failed to send offer. Please try again.");
       }
     }
 
@@ -578,7 +655,11 @@
     async function handleLogin() {
       const email = document.getElementById("loginEmail").value.trim();
       const password = document.getElementById("loginPassword").value;
-      if (!email || !password) return showToast("Enter email and password");
+
+      if (!email || !password) {
+        showToast("Enter email and password");
+        return;
+      }
 
       const btn = document.getElementById("loginBtn");
       btn.disabled = true;
@@ -600,8 +681,14 @@
       const email = document.getElementById("signupEmail").value.trim();
       const password = document.getElementById("signupPassword").value;
 
-      if (!name || !handle || !email || !password) return showToast("Fill all fields");
-      if (password.length < 6) return showToast("Password must be at least 6 characters");
+      if (!name || !handle || !email || !password) {
+        showToast("Please fill all fields");
+        return;
+      }
+      if (password.length < 6) {
+        showToast("Password must be at least 6 characters");
+        return;
+      }
 
       if (!handle.startsWith("@")) handle = "@" + handle;
       handle = handle.toLowerCase().replace(/[^a-z0-9@_]/g, "");
@@ -633,8 +720,11 @@
     function shareProfile() {
       if (!currentUser) return;
       const link = `${window.location.origin}${window.location.pathname}?u=${currentUser.uid}`;
-      if (navigator.clipboard?.writeText) {
-        navigator.clipboard.writeText(link).then(() => showToast("✅ Link copied!"));
+      
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(link)
+          .then(() => showToast("✅ Link copied!"))
+          .catch(() => prompt("Copy this link:", link));
       } else {
         prompt("Copy this link:", link);
       }
@@ -657,15 +747,26 @@
     document.getElementById("showAddBtn").addEventListener("click", () => {
       document.getElementById("addItemForm").classList.add("active");
       document.getElementById("showAddBtn").style.display = "none";
+      document.getElementById("itemTitle").focus();
     });
+
     document.getElementById("cancelItemBtn").addEventListener("click", () => {
       document.getElementById("addItemForm").classList.remove("active");
       document.getElementById("showAddBtn").style.display = "block";
     });
+
     document.getElementById("saveItemBtn").addEventListener("click", saveItem);
     document.getElementById("shareBtn").addEventListener("click", shareProfile);
 
-    // ========== START ==========
+    // Enter key support
+    document.getElementById("loginPassword").addEventListener("keydown", e => {
+      if (e.key === "Enter") handleLogin();
+    });
+    document.getElementById("signupPassword").addEventListener("keydown", e => {
+      if (e.key === "Enter") handleSignup();
+    });
+
+    // ========== INIT ==========
     auth.onAuthStateChanged(async (user) => {
       currentUser = user;
       const urlUserId = new URLSearchParams(window.location.search).get("u");
