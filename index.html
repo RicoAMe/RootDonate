@@ -10,7 +10,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
-  <!-- Stripe.js -->
+  <!-- Stripe.js (optional – only needed if you switch to client-side Elements) -->
   <script src="https://js.stripe.com/v3/"></script>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
@@ -24,7 +24,11 @@
       --border: #222226;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     body {
       font-family: 'Inter', system-ui, sans-serif;
@@ -68,7 +72,9 @@
       margin-top: 10px;
     }
 
-    .content { padding: 24px; }
+    .content {
+      padding: 24px;
+    }
 
     .debit-card {
       width: 100%;
@@ -78,7 +84,7 @@
       position: relative;
       color: white;
       margin-bottom: 24px;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
       overflow: hidden;
     }
 
@@ -86,7 +92,7 @@
       content: "";
       position: absolute;
       inset: 0;
-      background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.04) 50%, transparent 60%);
+      background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.04) 50%, transparent 60%);
     }
 
     .chip {
@@ -157,6 +163,7 @@
       font-weight: 700;
       font-size: 1rem;
       cursor: pointer;
+      transition: background 0.2s, color 0.2s;
     }
 
     .amount-btns button.active {
@@ -173,11 +180,17 @@
       font-weight: 700;
       cursor: pointer;
       margin-top: 10px;
-      transition: transform 0.2s;
+      transition: transform 0.2s, opacity 0.2s;
     }
 
-    .btn:active { transform: scale(0.98); }
-    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
 
     .donate-btn {
       background: var(--primary);
@@ -203,7 +216,7 @@
       font-weight: 700;
       display: none;
       z-index: 999;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
     }
 
     .total {
@@ -236,7 +249,7 @@
         <div class="card-handle" id="cardHandle">@handle</div>
         <div class="card-bottom">
           <div>
-            <div style="font-size:10px; opacity:0.7;">VALID THRU</div>
+            <div style="font-size: 10px; opacity: 0.7;">VALID THRU</div>
             <div>09/29</div>
           </div>
           <div class="visa">VISA</div>
@@ -248,16 +261,16 @@
       </div>
 
       <div class="amount-btns" id="amountGrid">
-        <button onclick="setAmount(5)" class="active">$5</button>
-        <button onclick="setAmount(10)">$10</button>
-        <button onclick="setAmount(25)">$25</button>
+        <button type="button" data-amount="5" class="active">$5</button>
+        <button type="button" data-amount="10">$10</button>
+        <button type="button" data-amount="25">$25</button>
       </div>
 
-      <button class="btn donate-btn" id="donateBtn" onclick="startDonation()">
+      <button class="btn donate-btn" id="donateBtn" type="button">
         Donate $<span id="amountDisplay">5</span>
       </button>
 
-      <button class="btn share-btn" onclick="shareProfile()">
+      <button class="btn share-btn" id="shareBtn" type="button">
         🔗 Share My Profile Link
       </button>
     </div>
@@ -279,12 +292,14 @@
     };
     // =======================================================
 
-    // ========== REPLACE WITH YOUR STRIPE PUBLISHABLE KEY ==========
-    const stripe = mk_1TeUTNAYd3hJ6fUD0o6WiiZM; // or pk_test_... for testing
-    // ==============================================================
+    // ========== REPLACE WITH YOUR STRIPE PUBLISHABLE KEY (optional) ==========
+    // const stripe = Stripe("pk_test_your_key_here"); // or pk_live_...
+    // Currently unused – checkout is handled by Cloud Function redirect.
+    // ========================================================================
 
     // ========== REPLACE WITH YOUR CLOUD FUNCTION URL ==========
-    const CREATE_CHECKOUT_URL = "https://storage.googleapis.com";
+    // Example: "https://us-central1-your-project.cloudfunctions.net/createCheckoutSession"
+    const CREATE_CHECKOUT_URL = "https://YOUR_CLOUD_FUNCTION_URL_HERE";
     // ==========================================================
 
     firebase.initializeApp(firebaseConfig);
@@ -295,26 +310,39 @@
     let currentUser = null;
     let userDocRef = null;
     let profile = {};
+    let isViewingShared = false;
 
     function showToast(msg) {
       const t = document.getElementById("toast");
       t.textContent = msg;
       t.style.display = "block";
-      setTimeout(() => t.style.display = "none", 3500);
+      setTimeout(() => {
+        t.style.display = "none";
+      }, 3500);
     }
 
-    function setAmount(amount) {
+    function setAmount(amount, button) {
       currentAmount = amount;
       document.getElementById("amountDisplay").textContent = amount;
-      document.querySelectorAll("#amountGrid button").forEach(btn => btn.classList.remove("active"));
-      event.currentTarget.classList.add("active");
+
+      document.querySelectorAll("#amountGrid button").forEach((btn) => {
+        btn.classList.remove("active");
+      });
+
+      if (button) {
+        button.classList.add("active");
+      }
     }
 
     function updateCardUI() {
-      document.getElementById("profileName").textContent = profile.name || profile.handle || "User";
-      document.getElementById("cardHandle").textContent = profile.handle || "@user";
-      document.getElementById("cardNumber").textContent = `•••• •••• •••• ${profile.last4 || "0000"}`;
-      document.getElementById("totalRaised").textContent = "$" + (profile.totalRaised || 0);
+      document.getElementById("profileName").textContent =
+        profile.name || profile.handle || "User";
+      document.getElementById("cardHandle").textContent =
+        profile.handle || "@user";
+      document.getElementById("cardNumber").textContent =
+        `•••• •••• •••• ${profile.last4 || "0000"}`;
+      document.getElementById("totalRaised").textContent =
+        "$" + (profile.totalRaised || 0);
     }
 
     async function initUser() {
@@ -324,6 +352,7 @@
           userDocRef = db.collection("users").doc(user.uid);
 
           const doc = await userDocRef.get();
+
           if (doc.exists) {
             profile = doc.data();
           } else {
@@ -337,30 +366,47 @@
             };
             await userDocRef.set(profile);
           }
-          updateCardUI();
+
+          // Only overwrite UI with own profile if not viewing a shared link
+          if (!isViewingShared) {
+            updateCardUI();
+          }
 
           // Check if returning from successful payment
           const params = new URLSearchParams(window.location.search);
           if (params.get("success") === "true") {
             showToast("✅ Payment successful! Thank you for your donation.");
-            // Refresh total from Firestore (webhook already updated it)
+
+            // Refresh total from Firestore (webhook should already have updated it)
             const fresh = await userDocRef.get();
             if (fresh.exists) {
               profile = fresh.data();
               updateCardUI();
             }
+
             // Clean URL
             window.history.replaceState({}, document.title, window.location.pathname);
           }
         } else {
-          await auth.signInAnonymously();
+          try {
+            await auth.signInAnonymously();
+          } catch (err) {
+            console.error("Anonymous sign-in failed:", err);
+            showToast("Authentication error. Please refresh.");
+          }
         }
       });
     }
 
     async function startDonation() {
       if (!currentUser || !userDocRef) {
-        return showToast("Please wait a moment...");
+        showToast("Please wait a moment...");
+        return;
+      }
+
+      if (isViewingShared) {
+        showToast("This is a shared view. Open your own profile to donate.");
+        return;
       }
 
       const btn = document.getElementById("donateBtn");
@@ -370,7 +416,9 @@
       try {
         const response = await fetch(CREATE_CHECKOUT_URL, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json"
+          },
           body: JSON.stringify({
             amount: currentAmount * 100, // cents
             userId: currentUser.uid,
@@ -381,9 +429,9 @@
         const data = await response.json();
 
         if (data.url) {
-          window.location.href = data.url; // Go to Stripe Checkout
+          window.location.href = data.url; // Redirect to Stripe Checkout
         } else {
-          throw new Error(data.error || "Failed to create checkout");
+          throw new Error(data.error || "Failed to create checkout session");
         }
       } catch (err) {
         console.error(err);
@@ -394,37 +442,73 @@
     }
 
     function shareProfile() {
+      if (!profile.handle) {
+        showToast("Profile not ready yet.");
+        return;
+      }
+
       const data = {
         name: profile.name,
         handle: profile.handle,
-        last4: profile.last4
+        last4: profile.last4,
+        totalRaised: profile.totalRaised || 0
       };
+
       const encoded = btoa(JSON.stringify(data));
       const shareLink = `${window.location.origin}${window.location.pathname}?p=${encoded}`;
 
-      navigator.clipboard.writeText(shareLink).then(() => {
-        showToast("✅ Profile link copied!");
-      }).catch(() => {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareLink)
+          .then(() => showToast("✅ Profile link copied!"))
+          .catch(() => prompt("Copy this link:", shareLink));
+      } else {
         prompt("Copy this link:", shareLink);
-      });
-    }
-
-    // Load shared profile from URL (view only)
-    function loadFromURL() {
-      const params = new URLSearchParams(window.location.search);
-      const encoded = params.get("p");
-      if (encoded) {
-        try {
-          const decoded = JSON.parse(atob(encoded));
-          document.getElementById("profileName").textContent = decoded.name || decoded.handle;
-          document.getElementById("cardHandle").textContent = decoded.handle || "@user";
-          document.getElementById("cardNumber").textContent = `•••• •••• •••• ${decoded.last4 || "0000"}`;
-        } catch (e) {}
       }
     }
 
-    initUser();
+    // Load shared profile from URL (view-only mode)
+    function loadFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      const encoded = params.get("p");
+
+      if (!encoded) return;
+
+      try {
+        const decoded = JSON.parse(atob(encoded));
+        isViewingShared = true;
+
+        document.getElementById("profileName").textContent =
+          decoded.name || decoded.handle || "User";
+        document.getElementById("cardHandle").textContent =
+          decoded.handle || "@user";
+        document.getElementById("cardNumber").textContent =
+          `•••• •••• •••• ${decoded.last4 || "0000"}`;
+        document.getElementById("totalRaised").textContent =
+          "$" + (decoded.totalRaised || 0);
+
+        // Disable donation on shared views (no userId available)
+        const donateBtn = document.getElementById("donateBtn");
+        donateBtn.disabled = true;
+        donateBtn.textContent = "Viewing shared profile";
+      } catch (e) {
+        console.warn("Invalid shared profile data");
+      }
+    }
+
+    // Event listeners
+    document.getElementById("amountGrid").addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-amount]");
+      if (btn) {
+        setAmount(Number(btn.dataset.amount), btn);
+      }
+    });
+
+    document.getElementById("donateBtn").addEventListener("click", startDonation);
+    document.getElementById("shareBtn").addEventListener("click", shareProfile);
+
+    // Initialize
     loadFromURL();
+    initUser();
   </script>
 </body>
 </html>
