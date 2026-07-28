@@ -1,464 +1,370 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ROOT DONATE • Quick Apple Pay</title>
-    
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
-    
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --primary: #00ff9d;
-            --accent: #ff00aa;
-            --bg: #0a0a0f;
-            --card: #111118;
-            --border: #222226;
-        }
-        
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        body {
-            font-family: 'Inter', system-ui, sans-serif;
-            background: var(--bg);
-            color: #e0e0e0;
-            line-height: 1.6;
-            padding: 16px 12px;
-            min-height: 100dvh;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        .container {
-            max-width: 520px;
-            margin: 0 auto;
-            background: var(--card);
-            border-radius: 32px;
-            box-shadow: 0 30px 90px rgba(0, 255, 157, 0.12);
-            overflow: hidden;
-            border: 1px solid var(--border);
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #00ff9d 0%, #ff00aa 100%);
-            color: #000;
-            padding: 52px 24px 40px;
-            text-align: center;
-            position: relative;
-        }
-        
-        .header h1 {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: clamp(2.4rem, 8vw, 3.2rem);
-            font-weight: 700;
-            letter-spacing: -2.5px;
-            line-height: 1;
-        }
-        
-        .datetime { margin-top: 12px; font-size: 1.05rem; font-weight: 500; opacity: 0.95; }
-        .date { text-decoration: underline; text-underline-offset: 4px; font-weight: 600; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Donate • Debit Card</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #00ff9d;
+      --accent: #ff00aa;
+      --bg: #0a0a0f;
+      --card: #111118;
+      --border: #222226;
+    }
 
-        .location { font-size: 0.95rem; color: #aaa; margin-top: 8px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .content { padding: 28px 24px; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--bg);
+      color: #e0e0e0;
+      min-height: 100dvh;
+      padding: 20px 12px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
 
-        .avatar {
-            width: 108px; height: 108px;
-            background: linear-gradient(135deg, #00ff9d, #ff00aa);
-            border-radius: 50%;
-            margin: 0 auto 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            color: #000;
-            font-weight: 700;
-            border: 7px solid #1a1a22;
-            box-shadow: 0 10px 30px rgba(0, 255, 157, 0.3);
-        }
-        
-        .rpg-card {
-            background: #1a1a22;
-            border-radius: 24px;
-            padding: 28px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border);
-        }
-        
-        .balance { font-size: 2.8rem; font-weight: 800; color: var(--primary); letter-spacing: -1px; }
-        
-        input {
-            width: 100%;
-            padding: 18px 20px;
-            margin: 12px 0;
-            background: #1c1c24;
-            border: 1px solid #333;
-            border-radius: 18px;
-            color: white;
-            font-size: 1.05rem;
-        }
-        input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(0, 255, 157, 0.15);
-        }
-        
-        button { cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
-        
-        .share-btn, .apple-pay-button, .withdraw-button {
-            border: none;
-            border-radius: 18px;
-            padding: 20px 24px;
-            font-size: 1.15rem;
-            font-weight: 700;
-            width: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            height: 72px;
-            margin: 12px 0;
-        }
-        
-        .apple-pay-button {
-            background: #000;
-            color: white;
-        }
-        .apple-pay-button::before {
-            content: "";
-            font-size: 1.9rem;
-        }
-        
-        .withdraw-button { background: var(--accent); color: #000; }
-        
-        .quick-amounts {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 14px;
-            margin: 20px 0;
-        }
-        
-        .quick-amounts button {
-            background: #1f1f26;
-            border: 1px solid #333;
-            color: white;
-            border-radius: 18px;
-            padding: 18px 12px;
-            font-weight: 700;
-            font-size: 1.1rem;
-        }
-        
-        .quick-amounts button.active,
-        .quick-amounts button:hover {
-            background: var(--primary);
-            color: #000;
-            transform: scale(1.06);
-        }
-        
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #111;
-            color: var(--primary);
-            padding: 16px 32px;
-            border-radius: 999px;
-            font-weight: 700;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.8);
-            z-index: 10000;
-            display: none;
-            max-width: 92%;
-            text-align: center;
-        }
-    </style>
+    .container {
+      max-width: 420px;
+      width: 100%;
+      background: var(--card);
+      border-radius: 28px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: 0 25px 60px rgba(0, 255, 157, 0.1);
+      margin-top: 20px;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #00ff9d 0%, #ff00aa 100%);
+      color: #000;
+      padding: 28px 24px 24px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.9rem;
+      font-weight: 700;
+      letter-spacing: -1px;
+    }
+
+    .profile-name {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-top: 10px;
+    }
+
+    .content {
+      padding: 24px;
+    }
+
+    /* Debit Card */
+    .debit-card {
+      width: 100%;
+      height: 210px;
+      background: linear-gradient(145deg, #1c1c1c, #0d0d0d);
+      border-radius: 16px;
+      position: relative;
+      color: white;
+      margin-bottom: 24px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+      overflow: hidden;
+    }
+
+    .debit-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.04) 50%, transparent 60%);
+    }
+
+    .chip {
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      width: 44px;
+      height: 34px;
+      background: linear-gradient(135deg, #c9a227, #e8d48b);
+      border-radius: 5px;
+    }
+
+    .card-logo {
+      position: absolute;
+      top: 22px;
+      right: 24px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .card-number {
+      position: absolute;
+      top: 95px;
+      left: 24px;
+      font-size: 19px;
+      letter-spacing: 3px;
+    }
+
+    .card-handle {
+      position: absolute;
+      bottom: 52px;
+      left: 24px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .card-bottom {
+      position: absolute;
+      bottom: 20px;
+      left: 24px;
+      right: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      font-size: 12px;
+      opacity: 0.85;
+    }
+
+    .visa {
+      font-size: 24px;
+      font-weight: 800;
+      font-style: italic;
+    }
+
+    /* Form */
+    .form-group { margin-bottom: 14px; }
+
+    label {
+      display: block;
+      font-size: 0.88rem;
+      color: #aaa;
+      margin-bottom: 5px;
+    }
+
+    input {
+      width: 100%;
+      padding: 15px 16px;
+      background: #1c1c24;
+      border: 1px solid #333;
+      border-radius: 14px;
+      color: white;
+      font-size: 1rem;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0, 255, 157, 0.15);
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+    }
+
+    .row .form-group { flex: 1; }
+
+    .btn {
+      width: 100%;
+      padding: 17px;
+      border: none;
+      border-radius: 14px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: transform 0.2s;
+    }
+
+    .btn:active { transform: scale(0.98); }
+
+    .pay-btn {
+      background: var(--primary);
+      color: #000;
+    }
+
+    .share-btn {
+      background: #1f1f26;
+      color: white;
+      border: 1px solid #333;
+      margin-top: 16px;
+    }
+
+    .amount-btns {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .amount-btns button {
+      background: #1f1f26;
+      border: 1px solid #333;
+      color: white;
+      border-radius: 12px;
+      padding: 14px;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .amount-btns button.active {
+      background: var(--primary);
+      color: #000;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #111;
+      color: var(--primary);
+      padding: 14px 28px;
+      border-radius: 999px;
+      font-weight: 700;
+      display: none;
+      z-index: 999;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    }
+  </style>
 </head>
 <body>
-
-    <!-- SIGN UP SCREEN -->
-    <div class="container" id="signupScreen">
-        <div class="header">
-            <h1>ROOT DONATE</h1>
-            <p style="margin-top:14px; font-size:1.15rem; opacity:0.95;">Quick Apple Pay Profile</p>
-        </div>
-        <div class="content">
-            <div style="text-align:center; margin-bottom:36px;">
-                <div class="avatar">🌱</div>
-                <h2 style="font-size:1.65rem; margin-bottom:8px;">Create your profile</h2>
-                <p style="color:#aaa;">One-tap donations with Apple Pay</p>
-            </div>
-
-            <input type="text" id="displayName" placeholder="Display Name (e.g. Guardian)" autocomplete="name">
-            <input type="email" id="email" placeholder="Email Address" autocomplete="email">
-            
-            <div id="errorMsg" style="color:#ff6666; text-align:center; margin:18px 0; min-height:28px; font-size:0.95rem;"></div>
-            
-            <button id="createBtn" onclick="completeSignup()" 
-                    style="width:100%; padding:20px; background:var(--primary); color:#000; border:none; border-radius:18px; font-weight:700; font-size:1.2rem;">
-                Create Profile & Enable Apple Pay
-            </button>
-        </div>
+  <div class="container">
+    <div class="header">
+      <h1>Donate</h1>
+      <div class="profile-name" id="profileName">@YourHandle</div>
     </div>
 
-    <!-- DASHBOARD -->
-    <div class="container" id="profileScreen" style="display:none;">
-        <div class="header">
-            <h1>ROOT DONATE</h1>
-            <div class="datetime">
-                <span id="currentTime"></span> • <span id="currentDate" class="date"></span>
-            </div>
-            <div id="userGreeting" style="font-size:1.5rem; font-weight:700; margin-top:14px;">Guardian</div>
-            <div style="font-size:0.95rem; opacity:0.85; margin-top:4px;">✓ Apple Pay Ready</div>
-            <div id="locationInfo" class="location">📍 Detecting location...</div>
+    <div class="content">
+      <!-- Debit Card Visual -->
+      <div class="debit-card">
+        <div class="chip"></div>
+        <div class="card-logo">𝕏 Money</div>
+        <div class="card-number">•••• •••• •••• 8842</div>
+        <div class="card-handle" id="cardHandle">@YourHandle</div>
+        <div class="card-bottom">
+          <div>
+            <div style="font-size:10px; opacity:0.7;">VALID THRU</div>
+            <div>09/29</div>
+          </div>
+          <div class="visa">VISA</div>
         </div>
+      </div>
 
-        <div class="content">
-            <div class="rpg-card">
-                <button onclick="shareProfile()" class="share-btn">🔗 Share My Profile Link</button>
-            </div>
+      <!-- Quick Amounts -->
+      <div class="amount-btns" id="amountGrid">
+        <button onclick="setAmount(5)" class="active">$5</button>
+        <button onclick="setAmount(10)">$10</button>
+        <button onclick="setAmount(25)">$25</button>
+      </div>
 
-            <div class="rpg-card">
-                <div style="color:#888; font-size:0.95rem; margin-bottom:8px;">YOUR BALANCE</div>
-                <div id="balanceAmount" class="balance">$0</div>
-                <button onclick="requestWithdraw()" class="withdraw-button" style="margin-top:20px;">
-                    💸 Withdraw Funds
-                </button>
-            </div>
+      <!-- Card Form -->
+      <div class="form-group">
+        <label>Card Number</label>
+        <input type="text" id="cardNumber" placeholder="ACCT-000035" maxlength="19">
+      </div>
 
-            <div class="rpg-card">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <div style="color:#888; font-size:0.95rem;">TOTAL DONATED</div>
-                        <div id="totalDonated" style="font-size:2.4rem; font-weight:800; color:var(--primary);">$0</div>
-                    </div>
-                    <div style="text-align:right;">
-                        <div id="streak" style="font-size:2.2rem; font-weight:900;">🔥 0</div>
-                        <div style="font-size:0.9rem; color:#888;">day streak</div>
-                    </div>
-                </div>
-            </div>
+      <div class="form-group">
+        <label>Name on Card</label>
+        <input type="text" id="cardName" placeholder="Full Name">
+      </div>
 
-            <div class="rpg-card">
-                <div style="font-weight:700; margin-bottom:12px; font-size:1.25rem;">🍎 Quick Apple Pay</div>
-                <p style="color:#aaa; margin-bottom:20px;">Tap any amount to donate instantly</p>
-                
-                <div class="quick-amounts" id="amountGrid">
-                    <button onclick="quickDonate(5)" class="active">$5</button>
-                    <button onclick="quickDonate(10)">$10</button>
-                    <button onclick="quickDonate(25)">$25</button>
-                </div>
-
-                <button onclick="startApplePay(5)" class="apple-pay-button" style="margin-top:24px;">
-                    Pay with  Apple Pay
-                </button>
-            </div>
-
-            <button onclick="logout()" style="width:100%; padding:18px; background:#222; color:#ccc; border:none; border-radius:18px; font-weight:600; font-size:1.05rem;">
-                Sign Out
-            </button>
+      <div class="row">
+        <div class="form-group">
+          <label>Expiry</label>
+          <input type="text" id="expiry" placeholder="MM/YY" maxlength="5">
         </div>
+        <div class="form-group">
+          <label>CVV</label>
+          <input type="text" id="cvv" placeholder="123" maxlength="4">
+        </div>
+      </div>
+
+      <button class="btn pay-btn" onclick="donate()">Donate with Debit Card</button>
+      <button class="btn share-btn" onclick="shareProfile()">🔗 Share My Profile Link</button>
     </div>
+  </div>
 
-    <div class="toast" id="toast"></div>
+  <div class="toast" id="toast"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
-    
-    <script>
-        // Firebase Config
-        const firebaseConfig = {
-            apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
-            authDomain: "rootdonate-61e61.firebaseapp.com",
-            projectId: "rootdonate-61e61",
-            storageBucket: "rootdonate-61e61.firebasestorage.app",
-            messagingSenderId: "754240963907",
-            appId: "1:754240963907:web:5417c2763d8f02108bdbf6"
-        };
+  <script>
+    let currentAmount = 5;
+    let profile = {
+      name: "YourHandle",
+      handle: "@YourHandle"
+    };
 
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-
-        let currentUser = null;
-        let userDocRef = null;
-
-        // ==================== YOUR REAL MERCHANT ID ====================
-        const MERCHANT_ID = "merchant.rootdonate";   // ← CHANGE THIS TO YOUR REAL APPLE PAY MERCHANT ID
-        // Real example: "merchant.com.yourcompany.rootdonate"
-        // =============================================================
-
-        function showToast(msg, color = '#00ff9d') {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.style.color = color;
-            t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 2800);
+    // Load profile from base64 URL parameter
+    function loadProfileFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      const encoded = params.get("p");
+      if (encoded) {
+        try {
+          const decoded = JSON.parse(atob(encoded));
+          profile = decoded;
+          document.getElementById("profileName").textContent = profile.name || profile.handle;
+          document.getElementById("cardHandle").textContent = profile.handle || "@" + profile.name;
+        } catch (e) {
+          console.log("Invalid profile link");
         }
+      }
+    }
 
-        function confettiBurst() {
-            confetti({ particleCount: 200, spread: 80, origin: { y: 0.6 } });
-        }
+    function setAmount(amount) {
+      currentAmount = amount;
+      document.querySelectorAll("#amountGrid button").forEach(btn => btn.classList.remove("active"));
+      event.currentTarget.classList.add("active");
+    }
 
-        function updateDateTime() {
-            const now = new Date();
-            document.getElementById('currentTime').textContent = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-            document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-        }
-        setInterval(updateDateTime, 1000);
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      setTimeout(() => t.style.display = "none", 2500);
+    }
 
-        async function getCurrentLocation() {
-            const locEl = document.getElementById('locationInfo');
-            if (!navigator.geolocation) return locEl.textContent = "📍 Location unavailable";
-            
-            navigator.geolocation.getCurrentPosition(async (pos) => {
-                try {
-                    const res = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${pos.coords.latitude}&longitude=${pos.coords.longitude}&localityLanguage=en`);
-                    const data = await res.json();
-                    locEl.textContent = `📍 ${data.city || data.locality}, ${data.countryName}`;
-                } catch(e) {
-                    locEl.textContent = "📍 Near you";
-                }
-            });
-        }
+    function donate() {
+      // This is a demo only – no real payment is processed
+      showToast(`✅ $${currentAmount} donation simulated!`);
+    }
 
-        async function startApplePay(amount = 5) {
-            if (!window.ApplePaySession || !ApplePaySession.canMakePayments()) {
-                showToast("Apple Pay not available on this device", "#ff6666");
-                return;
-            }
+    function shareProfile() {
+      const data = {
+        name: profile.name,
+        handle: profile.handle
+      };
+      const encoded = btoa(JSON.stringify(data));
+      const shareLink = `${window.location.origin}${window.location.pathname}?p=${encoded}`;
+      
+      navigator.clipboard.writeText(shareLink).then(() => {
+        showToast("✅ Profile link copied!");
+      }).catch(() => {
+        prompt("Copy this link:", shareLink);
+      });
+    }
 
-            const request = {
-                countryCode: "US",
-                currencyCode: "USD",
-                supportedNetworks: ["visa", "masterCard", "amex", "discover"],
-                merchantCapabilities: ["supports3DS"],
-                merchantIdentifier: MERCHANT_ID,
-                total: { label: "ROOT DONATE", amount: amount.toFixed(2) }
-            };
+    // Auto format card number
+    document.getElementById("cardNumber").addEventListener("input", function(e) {
+      let value = e.target.value.replace(/\D/g, "").substring(0, 16);
+      value = value.replace(/(.{4})/g, "$1 ").trim();
+      e.target.value = value;
+    });
 
-            const session = new ApplePaySession(4, request);
+    // Auto format expiry
+    document.getElementById("expiry").addEventListener("input", function(e) {
+      let value = e.target.value.replace(/\D/g, "").substring(0, 4);
+      if (value.length >= 3) {
+        value = value.substring(0, 2) + "/" + value.substring(2);
+      }
+      e.target.value = value;
+    });
 
-            session.onvalidatemerchant = (event) => {
-                console.log("Validating merchant:", MERCHANT_ID);
-                session.completeMerchantValidation({}); // Replace with real backend call later
-            };
-
-            session.onpaymentauthorized = (event) => {
-                setTimeout(async () => {
-                    session.completePayment(ApplePaySession.STATUS_SUCCESS);
-                    await updateDonatedAmount(amount);
-                    showToast(`✅ $${amount} donated successfully!`, '#00ff9d');
-                    confettiBurst();
-                }, 700);
-            };
-
-            session.begin();
-        }
-
-        function quickDonate(amount) {
-            document.querySelectorAll('#amountGrid button').forEach(b => b.classList.remove('active'));
-            event.currentTarget.classList.add('active');
-            startApplePay(amount);
-        }
-
-        async function loadUserData() {
-            if (!userDocRef) return;
-            const doc = await userDocRef.get();
-            const data = doc.data() || {};
-            const total = data.totalDonated || 0;
-            document.getElementById('totalDonated').textContent = '$' + total;
-            document.getElementById('balanceAmount').textContent = '$' + total;
-        }
-
-        async function updateDonatedAmount(amount) {
-            if (!userDocRef) return;
-            await userDocRef.update({
-                totalDonated: firebase.firestore.FieldValue.increment(amount),
-                lastDonation: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            await loadUserData();
-        }
-
-        function shareProfile() {
-            if (!currentUser) return showToast("Please create profile first", "#ff6666");
-            const profileData = { uid: currentUser.uid, name: document.getElementById('userGreeting').textContent };
-            const encoded = btoa(JSON.stringify(profileData));
-            const shareLink = `${window.location.origin}${window.location.pathname}?p=${encoded}`;
-            navigator.clipboard.writeText(shareLink).then(() => showToast("✅ Profile link copied!", '#00ff9d'));
-        }
-
-        async function completeSignup() {
-            const btn = document.getElementById('createBtn');
-            const errorEl = document.getElementById('errorMsg');
-            const name = document.getElementById('displayName').value.trim() || "Guardian";
-            const email = document.getElementById('email').value.trim();
-
-            if (!email) return errorEl.textContent = "Please enter your email";
-
-            btn.disabled = true;
-            btn.textContent = "Creating Profile...";
-            errorEl.textContent = "";
-
-            try {
-                const userCredential = await auth.signInAnonymously();
-                currentUser = userCredential.user;
-                userDocRef = db.collection('users').doc(currentUser.uid);
-
-                await userDocRef.set({
-                    displayName: name,
-                    email: email,
-                    totalDonated: 0,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true });
-
-                showToast("Profile created successfully!", '#00ff9d');
-                document.getElementById('signupScreen').style.display = 'none';
-                document.getElementById('profileScreen').style.display = 'block';
-                document.getElementById('userGreeting').textContent = name;
-                await loadUserData();
-            } catch (e) {
-                errorEl.textContent = "Something went wrong";
-            } finally {
-                btn.disabled = false;
-                btn.textContent = "Create Profile & Enable Apple Pay";
-            }
-        }
-
-        function requestWithdraw() {
-            const balance = parseFloat(document.getElementById('balanceAmount').textContent.replace('$','')) || 0;
-            if (balance <= 0) return showToast("No balance available", "#ff6666");
-            const amount = prompt(`Enter amount to withdraw (Max $${balance})`, balance);
-            if (amount && parseFloat(amount) > 0) {
-                showToast(`💸 Withdrawal request of $${parseFloat(amount)} submitted`, '#00ff9d');
-            }
-        }
-
-        function logout() {
-            auth.signOut().then(() => location.reload());
-        }
-
-        auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                currentUser = user;
-                userDocRef = db.collection('users').doc(user.uid);
-                document.getElementById('signupScreen').style.display = 'none';
-                document.getElementById('profileScreen').style.display = 'block';
-                document.getElementById('userGreeting').textContent = user.displayName || "Guardian";
-                await loadUserData();
-            }
-        });
-
-        window.onload = () => {
-            setTimeout(() => {
-                document.getElementById('displayName').focus();
-                updateDateTime();
-                getCurrentLocation();
-            }, 600);
-        };
-    </script>
+    // Load profile when page opens
+    loadProfileFromURL();
+  </script>
 </body>
 </html>
