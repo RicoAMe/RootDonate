@@ -118,7 +118,7 @@
       border: 1px solid #333;
       background: #1a1a22;
       color: white;
-      font-size: 16px; /* prevents iOS zoom */
+      font-size: 16px;
       outline: none;
       font-family: inherit;
       transition: border-color 0.2s;
@@ -308,7 +308,6 @@
       font-size: 1rem;
     }
 
-    /* Mobile refinements */
     @media (max-width: 380px) {
       .header {
         padding: 24px 16px 20px;
@@ -559,7 +558,6 @@
         list.appendChild(card);
       });
 
-      // Attach event listeners (safe)
       list.querySelectorAll(".delete-btn").forEach(btn => {
         btn.addEventListener("click", () => deleteItem(btn.dataset.id));
       });
@@ -758,7 +756,6 @@
     document.getElementById("saveItemBtn").addEventListener("click", saveItem);
     document.getElementById("shareBtn").addEventListener("click", shareProfile);
 
-    // Enter key support
     document.getElementById("loginPassword").addEventListener("keydown", e => {
       if (e.key === "Enter") handleLogin();
     });
