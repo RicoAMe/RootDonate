@@ -179,9 +179,6 @@
       font-weight: 600;
       margin: 4px 0 14px;
       color: #ccc;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
     }
 
     .item-card {
@@ -400,7 +397,7 @@
       gap: 10px;
       margin-top: 18px;
     }
-    .modal-actions .btn { flex: 1; }
+    .modal-actions .btn { flex: 1; margin: 0; }
 
     .main-ui { display: none; }
     .main-ui.active { display: block; }
@@ -469,9 +466,7 @@
       <div class="main-ui" id="mainUI">
         <div class="own-badge" id="ownBadge">This is your profile – add items you need</div>
 
-        <div class="section-title">
-          <span id="itemsTitle">Items Needed</span>
-        </div>
+        <div class="section-title">Items Needed</div>
 
         <div class="add-item-form" id="addItemForm">
           <input type="text" id="itemTitle" placeholder="Item name (e.g. Winter Jacket)">
@@ -516,8 +511,8 @@
       <input type="email" id="claimEmail" placeholder="Your email">
       <textarea id="claimMessage" rows="2" placeholder="Optional message (size, condition, pickup…)" style="margin-top:10px;"></textarea>
       <div class="modal-actions">
-        <button class="btn secondary-btn" id="cancelClaimBtn" style="margin:0;">Cancel</button>
-        <button class="btn primary-btn" id="confirmClaimBtn" style="margin:0;">Send Offer</button>
+        <button class="btn secondary-btn" id="cancelClaimBtn">Cancel</button>
+        <button class="btn primary-btn" id="confirmClaimBtn">Send Offer</button>
       </div>
     </div>
   </div>
@@ -541,6 +536,7 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // ========== STATE ==========
     let currentUser = null;
     let viewingUserId = null;
     let profile = {};
@@ -556,7 +552,7 @@
       t.textContent = msg;
       t.style.display = "block";
       clearTimeout(t._timeout);
-      t._timeout = setTimeout(() => (t.style.display = "none"), 4000);
+      t._timeout = setTimeout(() => t.style.display = "none", 4000);
     }
 
     function escapeHtml(text) {
@@ -571,9 +567,9 @@
       document.getElementById("mainUI").classList.remove("active");
       document.getElementById("loginForm").classList.toggle("active", mode === "login");
       document.getElementById("signupForm").classList.toggle("active", mode === "signup");
-      document.getElementById("profileName").textContent =
-        mode === "login" ? "Welcome back" : "Create Account";
+      document.getElementById("profileName").textContent = mode === "login" ? "Welcome back" : "Create Account";
       updateHeaderButtons(false);
+      closeChat();
     }
 
     function showMainUI() {
@@ -586,8 +582,16 @@
     function updateHeaderButtons(loggedIn) {
       document.getElementById("logoutBtn").style.display = loggedIn ? "block" : "none";
       document.getElementById("loginHeaderBtn").style.display = loggedIn ? "none" : "block";
-      document.getElementById("myProfileBtn").style.display =
-        loggedIn && !isOwnProfile ? "block" : "none";
+      document.getElementById("myProfileBtn").style.display = (loggedIn && !isOwnProfile) ? "block" : "none";
+    }
+
+    function closeChat() {
+      document.getElementById("chatPanel").classList.remove("active");
+      currentChatId = null;
+      if (chatUnsub) {
+        chatUnsub();
+        chatUnsub = null;
+      }
     }
 
     // ========== LOAD PROFILE + ITEMS ==========
@@ -595,13 +599,17 @@
       if (!uid) return;
 
       viewingUserId = uid;
+      closeChat();
+
       const loading = document.getElementById("loadingText");
       loading.style.display = "block";
       loading.textContent = "Loading profile...";
       document.getElementById("mainUI").classList.remove("active");
-      document.getElementById("chatPanel").classList.remove("active");
 
-      if (itemsUnsub) itemsUnsub();
+      if (itemsUnsub) {
+        itemsUnsub();
+        itemsUnsub = null;
+      }
 
       try {
         const doc = await db.collection("users").doc(uid).get();
@@ -614,52 +622,45 @@
         profile = doc.data();
         isOwnProfile = !!(currentUser && currentUser.uid === uid);
 
-        document.getElementById("profileName").textContent =
-          profile.name || profile.handle || "User";
+        document.getElementById("profileName").textContent = profile.name || profile.handle || "User";
         document.getElementById("ownBadge").style.display = isOwnProfile ? "block" : "none";
         document.getElementById("showAddBtn").style.display = isOwnProfile ? "block" : "none";
         document.getElementById("shareBtn").style.display = isOwnProfile ? "block" : "none";
         document.getElementById("addItemForm").classList.remove("active");
 
-        itemsUnsub = db
-          .collection("users")
-          .doc(uid)
-          .collection("items")
+        itemsUnsub = db.collection("users").doc(uid).collection("items")
           .orderBy("createdAt", "desc")
-          .onSnapshot(
-            async (snap) => {
-              const promises = snap.docs.map(async (itemDoc) => {
-                const itemData = { id: itemDoc.id, ...itemDoc.data(), offers: [] };
+          .onSnapshot(async (snap) => {
+            const promises = snap.docs.map(async (itemDoc) => {
+              const itemData = { id: itemDoc.id, ...itemDoc.data(), offers: [] };
 
-                if (isOwnProfile) {
-                  const offersSnap = await db
-                    .collection("users")
-                    .doc(uid)
-                    .collection("items")
-                    .doc(itemDoc.id)
+              if (isOwnProfile) {
+                try {
+                  const offersSnap = await db.collection("users").doc(uid)
+                    .collection("items").doc(itemDoc.id)
                     .collection("offers")
                     .orderBy("createdAt", "desc")
                     .get();
-                  offersSnap.forEach((o) =>
-                    itemData.offers.push({ id: o.id, ...o.data() })
-                  );
+                  offersSnap.forEach(o => itemData.offers.push({ id: o.id, ...o.data() }));
+                } catch (e) {
+                  console.warn("Failed to load offers for item", itemDoc.id, e);
                 }
-                return itemData;
-              });
+              }
+              return itemData;
+            });
 
-              items = await Promise.all(promises);
-              renderItems();
-              showMainUI();
-              updateHeaderButtons(!!currentUser);
-            },
-            (err) => {
-              console.error(err);
-              showToast("Failed to load items: " + err.message);
-            }
-          );
+            items = await Promise.all(promises);
+            renderItems();
+            showMainUI();
+            updateHeaderButtons(!!currentUser);
+          }, (err) => {
+            console.error(err);
+            showToast("Failed to load items");
+          });
+
       } catch (err) {
         console.error(err);
-        showToast("Failed to load profile: " + err.message);
+        showToast("Failed to load profile");
         loading.textContent = "Error loading profile";
       }
     }
@@ -682,31 +683,19 @@
         card.className = "item-card";
 
         let offersHtml = "";
-        if (isOwnProfile && item.offers && item.offers.length > 0) {
+        if (isOwnProfile && item.offers?.length > 0) {
           offersHtml = `
             <div class="offers-list">
               <strong style="color:#ccc;">Offers (${item.offers.length}):</strong>
-              ${item.offers
-                .map(
-                  (o) => `
+              ${item.offers.map(o => `
                 <div class="offer-item">
                   <div>
                     <div class="offer-email">${escapeHtml(o.email)}</div>
-                    ${
-                      o.message
-                        ? `<div style="color:#aaa;margin-top:4px;font-size:0.85rem;">${escapeHtml(
-                            o.message
-                          )}</div>`
-                        : ""
-                    }
+                    ${o.message ? `<div style="color:#aaa;margin-top:4px;font-size:0.85rem;">${escapeHtml(o.message)}</div>` : ""}
                   </div>
-                  <button class="chat-btn open-chat" data-chat="${o.chatId || ""}" data-email="${escapeHtml(
-                    o.email
-                  )}">Chat</button>
+                  <button class="chat-btn open-chat" data-chat="${o.chatId || ""}" data-email="${escapeHtml(o.email)}">Chat</button>
                 </div>
-              `
-                )
-                .join("")}
+              `).join("")}
             </div>
           `;
         }
@@ -727,15 +716,14 @@
         list.appendChild(card);
       });
 
-      list.querySelectorAll(".delete-btn").forEach((btn) => {
+      // Attach event listeners
+      list.querySelectorAll(".delete-btn").forEach(btn => {
         btn.addEventListener("click", () => deleteItem(btn.dataset.id));
       });
-      list.querySelectorAll(".claim-btn").forEach((btn) => {
-        btn.addEventListener("click", () =>
-          openClaimModal(btn.dataset.id, btn.dataset.title)
-        );
+      list.querySelectorAll(".claim-btn").forEach(btn => {
+        btn.addEventListener("click", () => openClaimModal(btn.dataset.id, btn.dataset.title));
       });
-      list.querySelectorAll(".open-chat").forEach((btn) => {
+      list.querySelectorAll(".open-chat").forEach(btn => {
         btn.addEventListener("click", () => {
           if (btn.dataset.chat) openChat(btn.dataset.chat, btn.dataset.email);
           else showToast("Chat not ready yet");
@@ -757,7 +745,7 @@
         await db.collection("users").doc(currentUser.uid).collection("items").add({
           title,
           description,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         document.getElementById("itemTitle").value = "";
         document.getElementById("itemDesc").value = "";
@@ -766,7 +754,7 @@
         showToast("✅ Item added!");
       } catch (err) {
         console.error(err);
-        showToast("Failed to add item: " + err.message);
+        showToast("Failed to add item");
       } finally {
         btn.disabled = false;
         btn.textContent = "Add Item";
@@ -776,15 +764,10 @@
     async function deleteItem(itemId) {
       if (!confirm("Delete this item?")) return;
       try {
-        await db
-          .collection("users")
-          .doc(currentUser.uid)
-          .collection("items")
-          .doc(itemId)
-          .delete();
+        await db.collection("users").doc(currentUser.uid).collection("items").doc(itemId).delete();
         showToast("Item deleted");
       } catch (err) {
-        showToast("Failed to delete: " + err.message);
+        showToast("Failed to delete item");
       }
     }
 
@@ -813,7 +796,6 @@
         showToast("Please enter a valid email");
         return;
       }
-
       if (!currentUser) {
         showToast("You must be logged in");
         return;
@@ -824,49 +806,40 @@
       btn.textContent = "Sending...";
 
       try {
-        // 1. Create chat
         const chatRef = await db.collection("chats").add({
           participants: [viewingUserId, currentUser.uid],
           itemId: pendingClaim.itemId,
           itemTitle: pendingClaim.title,
           donorEmail: email,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // 2. Add offer
-        await db
-          .collection("users")
-          .doc(viewingUserId)
-          .collection("items")
-          .doc(pendingClaim.itemId)
-          .collection("offers")
-          .add({
+        await db.collection("users").doc(viewingUserId)
+          .collection("items").doc(pendingClaim.itemId)
+          .collection("offers").add({
             email,
             message,
             donorUid: currentUser.uid,
             chatId: chatRef.id,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
           });
 
-        // 3. First message (if any)
         if (message) {
           await db.collection("chats").doc(chatRef.id).collection("messages").add({
             text: message,
             sender: currentUser.uid,
             senderEmail: email,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
           });
         }
 
         document.getElementById("claimModal").classList.remove("active");
         showToast("✅ Offer sent!");
-
-        // Automatically open chat for the donor
         openChat(chatRef.id, email);
 
       } catch (err) {
         console.error(err);
-        showToast("Failed to send offer: " + (err.message || err.code || "Unknown error"));
+        showToast("Failed to send offer");
       } finally {
         btn.disabled = false;
         btn.textContent = "Send Offer";
@@ -874,25 +847,28 @@
     }
 
     function openChat(chatId, email) {
+      if (!currentUser) {
+        showToast("Please log in to chat");
+        return;
+      }
+
       currentChatId = chatId;
       document.getElementById("chatTitle").textContent = `Chat with ${email}`;
       document.getElementById("chatPanel").classList.add("active");
       document.getElementById("chatMessages").innerHTML = "";
       document.getElementById("chatInput").value = "";
+      document.getElementById("chatInput").focus();
 
       if (chatUnsub) chatUnsub();
 
-      chatUnsub = db
-        .collection("chats")
-        .doc(chatId)
-        .collection("messages")
+      chatUnsub = db.collection("chats").doc(chatId).collection("messages")
         .orderBy("createdAt", "asc")
         .onSnapshot((snap) => {
           const box = document.getElementById("chatMessages");
           box.innerHTML = "";
           snap.forEach((doc) => {
             const m = doc.data();
-            const isMe = currentUser && m.sender === currentUser.uid;
+            const isMe = m.sender === currentUser.uid;
             const div = document.createElement("div");
             div.className = `msg ${isMe ? "me" : "them"}`;
             div.textContent = m.text;
@@ -901,7 +877,7 @@
           box.scrollTop = box.scrollHeight;
         }, (err) => {
           console.error(err);
-          showToast("Chat error: " + err.message);
+          showToast("Chat error");
         });
     }
 
@@ -915,10 +891,10 @@
           text,
           sender: currentUser.uid,
           senderEmail: currentUser.email || "",
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
       } catch (err) {
-        showToast("Failed to send: " + err.message);
+        showToast("Failed to send message");
       }
     }
 
@@ -937,6 +913,7 @@
         showToast("✅ Logged in!");
       } catch (err) {
         showToast(err.message || "Login failed");
+      } finally {
         btn.disabled = false;
         btn.textContent = "Log In";
       }
@@ -948,10 +925,8 @@
       const email = document.getElementById("signupEmail").value.trim();
       const password = document.getElementById("signupPassword").value;
 
-      if (!name || !handle || !email || !password)
-        return showToast("Please fill all fields");
-      if (password.length < 6)
-        return showToast("Password must be at least 6 characters");
+      if (!name || !handle || !email || !password) return showToast("Please fill all fields");
+      if (password.length < 6) return showToast("Password must be at least 6 characters");
 
       if (!handle.startsWith("@")) handle = "@" + handle;
       handle = handle.toLowerCase().replace(/[^a-z0-9@_]/g, "");
@@ -961,14 +936,9 @@
       btn.textContent = "Creating...";
 
       try {
-        const handleSnap = await db
-          .collection("users")
-          .where("handle", "==", handle)
-          .get();
+        const handleSnap = await db.collection("users").where("handle", "==", handle).get();
         if (!handleSnap.empty) {
           showToast("Handle already taken");
-          btn.disabled = false;
-          btn.textContent = "Create Account";
           return;
         }
 
@@ -976,17 +946,19 @@
         await db.collection("users").doc(cred.user.uid).set({
           name,
           handle,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         showToast("✅ Account created!");
       } catch (err) {
         showToast(err.message || "Sign up failed");
+      } finally {
         btn.disabled = false;
         btn.textContent = "Create Account";
       }
     }
 
     async function handleLogout() {
+      closeChat();
       await auth.signOut();
       showToast("Logged out");
     }
@@ -1032,10 +1004,7 @@
       document.getElementById("claimModal").classList.remove("active");
     });
 
-    document.getElementById("closeChatBtn").addEventListener("click", () => {
-      document.getElementById("chatPanel").classList.remove("active");
-      if (chatUnsub) chatUnsub();
-    });
+    document.getElementById("closeChatBtn").addEventListener("click", closeChat);
     document.getElementById("chatSendBtn").addEventListener("click", sendChatMessage);
     document.getElementById("chatInput").addEventListener("keydown", (e) => {
       if (e.key === "Enter") sendChatMessage();
