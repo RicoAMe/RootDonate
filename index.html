@@ -55,7 +55,6 @@
       margin-top: 8px;
     }
 
-    /* Header */
     .header {
       background: linear-gradient(135deg, #00ff9d 0%, #ff00aa 100%);
       color: #000;
@@ -100,12 +99,10 @@
     }
     .header-btn:active { background: rgba(0, 0, 0, 0.28); }
 
-    /* Content */
     .content {
       padding: 20px 16px 28px;
     }
 
-    /* Auth */
     .auth-form {
       display: none;
       flex-direction: column;
@@ -144,7 +141,6 @@
       font-weight: 600;
     }
 
-    /* Buttons */
     .btn {
       width: 100%;
       padding: 16px;
@@ -178,7 +174,6 @@
       min-height: 38px;
     }
 
-    /* Items */
     .section-title {
       font-size: 1.05rem;
       font-weight: 600;
@@ -274,7 +269,6 @@
       font-weight: 600;
     }
 
-    /* Chat */
     .chat-panel {
       display: none;
       flex-direction: column;
@@ -350,7 +344,6 @@
       cursor: pointer;
     }
 
-    /* Toast & Modal */
     .toast {
       position: fixed;
       bottom: max(28px, env(safe-area-inset-bottom));
@@ -563,7 +556,7 @@
       t.textContent = msg;
       t.style.display = "block";
       clearTimeout(t._timeout);
-      t._timeout = setTimeout(() => (t.style.display = "none"), 3400);
+      t._timeout = setTimeout(() => (t.style.display = "none"), 4000);
     }
 
     function escapeHtml(text) {
@@ -597,7 +590,7 @@
         loggedIn && !isOwnProfile ? "block" : "none";
     }
 
-    // ========== LOAD PROFILE + ITEMS (REAL-TIME) ==========
+    // ========== LOAD PROFILE + ITEMS ==========
     async function loadProfile(uid) {
       if (!uid) return;
 
@@ -628,7 +621,6 @@
         document.getElementById("shareBtn").style.display = isOwnProfile ? "block" : "none";
         document.getElementById("addItemForm").classList.remove("active");
 
-        // Real-time items
         itemsUnsub = db
           .collection("users")
           .doc(uid)
@@ -662,12 +654,12 @@
             },
             (err) => {
               console.error(err);
-              showToast("Failed to load items");
+              showToast("Failed to load items: " + err.message);
             }
           );
       } catch (err) {
         console.error(err);
-        showToast("Failed to load profile");
+        showToast("Failed to load profile: " + err.message);
         loading.textContent = "Error loading profile";
       }
     }
@@ -774,7 +766,7 @@
         showToast("✅ Item added!");
       } catch (err) {
         console.error(err);
-        showToast("Failed to add item");
+        showToast("Failed to add item: " + err.message);
       } finally {
         btn.disabled = false;
         btn.textContent = "Add Item";
@@ -792,7 +784,7 @@
           .delete();
         showToast("Item deleted");
       } catch (err) {
-        showToast("Failed to delete");
+        showToast("Failed to delete: " + err.message);
       }
     }
 
@@ -800,9 +792,15 @@
     let pendingClaim = { itemId: null, title: "" };
 
     function openClaimModal(itemId, title) {
+      if (!currentUser) {
+        showToast("Please log in first to send an offer");
+        showAuth("login");
+        return;
+      }
+
       pendingClaim = { itemId, title };
       document.getElementById("claimItemName").textContent = `Offering: ${title}`;
-      document.getElementById("claimEmail").value = currentUser?.email || "";
+      document.getElementById("claimEmail").value = currentUser.email || "";
       document.getElementById("claimMessage").value = "";
       document.getElementById("claimModal").classList.add("active");
     }
@@ -816,21 +814,26 @@
         return;
       }
 
+      if (!currentUser) {
+        showToast("You must be logged in");
+        return;
+      }
+
       const btn = document.getElementById("confirmClaimBtn");
       btn.disabled = true;
       btn.textContent = "Sending...";
 
       try {
-        // Create chat conversation
+        // 1. Create chat
         const chatRef = await db.collection("chats").add({
-          participants: [viewingUserId, currentUser ? currentUser.uid : "anonymous"],
+          participants: [viewingUserId, currentUser.uid],
           itemId: pendingClaim.itemId,
           itemTitle: pendingClaim.title,
           donorEmail: email,
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         });
 
-        // Add offer with chatId
+        // 2. Add offer
         await db
           .collection("users")
           .doc(viewingUserId)
@@ -840,26 +843,30 @@
           .add({
             email,
             message,
-            donorUid: currentUser ? currentUser.uid : null,
+            donorUid: currentUser.uid,
             chatId: chatRef.id,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           });
 
-        // First message
+        // 3. First message (if any)
         if (message) {
           await db.collection("chats").doc(chatRef.id).collection("messages").add({
             text: message,
-            sender: currentUser ? currentUser.uid : "anonymous",
+            sender: currentUser.uid,
             senderEmail: email,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           });
         }
 
         document.getElementById("claimModal").classList.remove("active");
-        showToast("✅ Offer sent! Chat is ready.");
+        showToast("✅ Offer sent!");
+
+        // Automatically open chat for the donor
+        openChat(chatRef.id, email);
+
       } catch (err) {
         console.error(err);
-        showToast("Failed to send offer");
+        showToast("Failed to send offer: " + (err.message || err.code || "Unknown error"));
       } finally {
         btn.disabled = false;
         btn.textContent = "Send Offer";
@@ -885,32 +892,33 @@
           box.innerHTML = "";
           snap.forEach((doc) => {
             const m = doc.data();
-            const isMe =
-              (currentUser && m.sender === currentUser.uid) ||
-              (!currentUser && m.sender === "anonymous");
+            const isMe = currentUser && m.sender === currentUser.uid;
             const div = document.createElement("div");
             div.className = `msg ${isMe ? "me" : "them"}`;
             div.textContent = m.text;
             box.appendChild(div);
           });
           box.scrollTop = box.scrollHeight;
+        }, (err) => {
+          console.error(err);
+          showToast("Chat error: " + err.message);
         });
     }
 
     async function sendChatMessage() {
       const text = document.getElementById("chatInput").value.trim();
-      if (!text || !currentChatId) return;
+      if (!text || !currentChatId || !currentUser) return;
 
       document.getElementById("chatInput").value = "";
       try {
         await db.collection("chats").doc(currentChatId).collection("messages").add({
           text,
-          sender: currentUser ? currentUser.uid : "anonymous",
-          senderEmail: currentUser?.email || "",
+          sender: currentUser.uid,
+          senderEmail: currentUser.email || "",
           createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         });
       } catch (err) {
-        showToast("Failed to send");
+        showToast("Failed to send: " + err.message);
       }
     }
 
@@ -953,7 +961,6 @@
       btn.textContent = "Creating...";
 
       try {
-        // Check unique handle
         const handleSnap = await db
           .collection("users")
           .where("handle", "==", handle)
