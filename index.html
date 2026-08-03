@@ -87,7 +87,7 @@
     }
 
     .header-btn {
-      background: rgba(0,0,0,0.18);
+      background: rgba(0, 0, 0, 0.18);
       border: none;
       color: #000;
       font-size: 12px;
@@ -98,7 +98,7 @@
       min-height: 32px;
       transition: background 0.2s;
     }
-    .header-btn:active { background: rgba(0,0,0,0.28); }
+    .header-btn:active { background: rgba(0, 0, 0, 0.28); }
 
     /* Content */
     .content {
@@ -364,7 +364,7 @@
       font-size: 0.95rem;
       display: none;
       z-index: 9999;
-      box-shadow: 0 12px 32px rgba(0,0,0,0.55);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
       max-width: 90%;
       text-align: center;
     }
@@ -372,7 +372,7 @@
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.7);
+      background: rgba(0, 0, 0, 0.7);
       display: none;
       align-items: center;
       justify-content: center;
@@ -563,7 +563,7 @@
       t.textContent = msg;
       t.style.display = "block";
       clearTimeout(t._timeout);
-      t._timeout = setTimeout(() => t.style.display = "none", 3400);
+      t._timeout = setTimeout(() => (t.style.display = "none"), 3400);
     }
 
     function escapeHtml(text) {
@@ -578,7 +578,8 @@
       document.getElementById("mainUI").classList.remove("active");
       document.getElementById("loginForm").classList.toggle("active", mode === "login");
       document.getElementById("signupForm").classList.toggle("active", mode === "signup");
-      document.getElementById("profileName").textContent = mode === "login" ? "Welcome back" : "Create Account";
+      document.getElementById("profileName").textContent =
+        mode === "login" ? "Welcome back" : "Create Account";
       updateHeaderButtons(false);
     }
 
@@ -592,7 +593,8 @@
     function updateHeaderButtons(loggedIn) {
       document.getElementById("logoutBtn").style.display = loggedIn ? "block" : "none";
       document.getElementById("loginHeaderBtn").style.display = loggedIn ? "none" : "block";
-      document.getElementById("myProfileBtn").style.display = loggedIn && !isOwnProfile ? "block" : "none";
+      document.getElementById("myProfileBtn").style.display =
+        loggedIn && !isOwnProfile ? "block" : "none";
     }
 
     // ========== LOAD PROFILE + ITEMS (REAL-TIME) ==========
@@ -619,38 +621,50 @@
         profile = doc.data();
         isOwnProfile = !!(currentUser && currentUser.uid === uid);
 
-        document.getElementById("profileName").textContent = profile.name || profile.handle || "User";
+        document.getElementById("profileName").textContent =
+          profile.name || profile.handle || "User";
         document.getElementById("ownBadge").style.display = isOwnProfile ? "block" : "none";
         document.getElementById("showAddBtn").style.display = isOwnProfile ? "block" : "none";
         document.getElementById("shareBtn").style.display = isOwnProfile ? "block" : "none";
         document.getElementById("addItemForm").classList.remove("active");
 
         // Real-time items
-        itemsUnsub = db.collection("users").doc(uid).collection("items")
+        itemsUnsub = db
+          .collection("users")
+          .doc(uid)
+          .collection("items")
           .orderBy("createdAt", "desc")
-          .onSnapshot(async (snap) => {
-            items = [];
-            for (const itemDoc of snap.docs) {
-              const itemData = { id: itemDoc.id, ...itemDoc.data(), offers: [] };
+          .onSnapshot(
+            async (snap) => {
+              const promises = snap.docs.map(async (itemDoc) => {
+                const itemData = { id: itemDoc.id, ...itemDoc.data(), offers: [] };
 
-              if (isOwnProfile) {
-                const offersSnap = await db.collection("users").doc(uid)
-                  .collection("items").doc(itemDoc.id)
-                  .collection("offers")
-                  .orderBy("createdAt", "desc")
-                  .get();
-                offersSnap.forEach(o => itemData.offers.push({ id: o.id, ...o.data() }));
-              }
-              items.push(itemData);
+                if (isOwnProfile) {
+                  const offersSnap = await db
+                    .collection("users")
+                    .doc(uid)
+                    .collection("items")
+                    .doc(itemDoc.id)
+                    .collection("offers")
+                    .orderBy("createdAt", "desc")
+                    .get();
+                  offersSnap.forEach((o) =>
+                    itemData.offers.push({ id: o.id, ...o.data() })
+                  );
+                }
+                return itemData;
+              });
+
+              items = await Promise.all(promises);
+              renderItems();
+              showMainUI();
+              updateHeaderButtons(!!currentUser);
+            },
+            (err) => {
+              console.error(err);
+              showToast("Failed to load items");
             }
-            renderItems();
-            showMainUI();
-            updateHeaderButtons(!!currentUser);
-          }, (err) => {
-            console.error(err);
-            showToast("Failed to load items");
-          });
-
+          );
       } catch (err) {
         console.error(err);
         showToast("Failed to load profile");
@@ -671,7 +685,7 @@
         return;
       }
 
-      items.forEach(item => {
+      items.forEach((item) => {
         const card = document.createElement("div");
         card.className = "item-card";
 
@@ -680,15 +694,27 @@
           offersHtml = `
             <div class="offers-list">
               <strong style="color:#ccc;">Offers (${item.offers.length}):</strong>
-              ${item.offers.map(o => `
+              ${item.offers
+                .map(
+                  (o) => `
                 <div class="offer-item">
                   <div>
                     <div class="offer-email">${escapeHtml(o.email)}</div>
-                    ${o.message ? `<div style="color:#aaa;margin-top:4px;font-size:0.85rem;">${escapeHtml(o.message)}</div>` : ""}
+                    ${
+                      o.message
+                        ? `<div style="color:#aaa;margin-top:4px;font-size:0.85rem;">${escapeHtml(
+                            o.message
+                          )}</div>`
+                        : ""
+                    }
                   </div>
-                  <button class="chat-btn open-chat" data-chat="${o.chatId || ''}" data-email="${escapeHtml(o.email)}">Chat</button>
+                  <button class="chat-btn open-chat" data-chat="${o.chatId || ""}" data-email="${escapeHtml(
+                    o.email
+                  )}">Chat</button>
                 </div>
-              `).join("")}
+              `
+                )
+                .join("")}
             </div>
           `;
         }
@@ -709,13 +735,15 @@
         list.appendChild(card);
       });
 
-      list.querySelectorAll(".delete-btn").forEach(btn => {
+      list.querySelectorAll(".delete-btn").forEach((btn) => {
         btn.addEventListener("click", () => deleteItem(btn.dataset.id));
       });
-      list.querySelectorAll(".claim-btn").forEach(btn => {
-        btn.addEventListener("click", () => openClaimModal(btn.dataset.id, btn.dataset.title));
+      list.querySelectorAll(".claim-btn").forEach((btn) => {
+        btn.addEventListener("click", () =>
+          openClaimModal(btn.dataset.id, btn.dataset.title)
+        );
       });
-      list.querySelectorAll(".open-chat").forEach(btn => {
+      list.querySelectorAll(".open-chat").forEach((btn) => {
         btn.addEventListener("click", () => {
           if (btn.dataset.chat) openChat(btn.dataset.chat, btn.dataset.email);
           else showToast("Chat not ready yet");
@@ -735,8 +763,9 @@
 
       try {
         await db.collection("users").doc(currentUser.uid).collection("items").add({
-          title, description,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          title,
+          description,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         });
         document.getElementById("itemTitle").value = "";
         document.getElementById("itemDesc").value = "";
@@ -755,7 +784,12 @@
     async function deleteItem(itemId) {
       if (!confirm("Delete this item?")) return;
       try {
-        await db.collection("users").doc(currentUser.uid).collection("items").doc(itemId).delete();
+        await db
+          .collection("users")
+          .doc(currentUser.uid)
+          .collection("items")
+          .doc(itemId)
+          .delete();
         showToast("Item deleted");
       } catch (err) {
         showToast("Failed to delete");
@@ -789,23 +823,26 @@
       try {
         // Create chat conversation
         const chatRef = await db.collection("chats").add({
-          participants: [viewingUserId, currentUser ? currentUser.uid : null],
+          participants: [viewingUserId, currentUser ? currentUser.uid : "anonymous"],
           itemId: pendingClaim.itemId,
           itemTitle: pendingClaim.title,
           donorEmail: email,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         });
 
         // Add offer with chatId
-        await db.collection("users").doc(viewingUserId)
-          .collection("items").doc(pendingClaim.itemId)
+        await db
+          .collection("users")
+          .doc(viewingUserId)
+          .collection("items")
+          .doc(pendingClaim.itemId)
           .collection("offers")
           .add({
             email,
             message,
             donorUid: currentUser ? currentUser.uid : null,
             chatId: chatRef.id,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           });
 
         // First message
@@ -814,7 +851,7 @@
             text: message,
             sender: currentUser ? currentUser.uid : "anonymous",
             senderEmail: email,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           });
         }
 
@@ -838,15 +875,19 @@
 
       if (chatUnsub) chatUnsub();
 
-      chatUnsub = db.collection("chats").doc(chatId).collection("messages")
+      chatUnsub = db
+        .collection("chats")
+        .doc(chatId)
+        .collection("messages")
         .orderBy("createdAt", "asc")
-        .onSnapshot(snap => {
+        .onSnapshot((snap) => {
           const box = document.getElementById("chatMessages");
           box.innerHTML = "";
-          snap.forEach(doc => {
+          snap.forEach((doc) => {
             const m = doc.data();
-            const isMe = (currentUser && m.sender === currentUser.uid) ||
-                         (!currentUser && m.sender === "anonymous");
+            const isMe =
+              (currentUser && m.sender === currentUser.uid) ||
+              (!currentUser && m.sender === "anonymous");
             const div = document.createElement("div");
             div.className = `msg ${isMe ? "me" : "them"}`;
             div.textContent = m.text;
@@ -866,7 +907,7 @@
           text,
           sender: currentUser ? currentUser.uid : "anonymous",
           senderEmail: currentUser?.email || "",
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         });
       } catch (err) {
         showToast("Failed to send");
@@ -899,8 +940,10 @@
       const email = document.getElementById("signupEmail").value.trim();
       const password = document.getElementById("signupPassword").value;
 
-      if (!name || !handle || !email || !password) return showToast("Please fill all fields");
-      if (password.length < 6) return showToast("Password must be at least 6 characters");
+      if (!name || !handle || !email || !password)
+        return showToast("Please fill all fields");
+      if (password.length < 6)
+        return showToast("Password must be at least 6 characters");
 
       if (!handle.startsWith("@")) handle = "@" + handle;
       handle = handle.toLowerCase().replace(/[^a-z0-9@_]/g, "");
@@ -911,7 +954,10 @@
 
       try {
         // Check unique handle
-        const handleSnap = await db.collection("users").where("handle", "==", handle).get();
+        const handleSnap = await db
+          .collection("users")
+          .where("handle", "==", handle)
+          .get();
         if (!handleSnap.empty) {
           showToast("Handle already taken");
           btn.disabled = false;
@@ -921,8 +967,9 @@
 
         const cred = await auth.createUserWithEmailAndPassword(email, password);
         await db.collection("users").doc(cred.user.uid).set({
-          name, handle,
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          name,
+          handle,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         });
         showToast("✅ Account created!");
       } catch (err) {
@@ -983,14 +1030,14 @@
       if (chatUnsub) chatUnsub();
     });
     document.getElementById("chatSendBtn").addEventListener("click", sendChatMessage);
-    document.getElementById("chatInput").addEventListener("keydown", e => {
+    document.getElementById("chatInput").addEventListener("keydown", (e) => {
       if (e.key === "Enter") sendChatMessage();
     });
 
-    document.getElementById("loginPassword").addEventListener("keydown", e => {
+    document.getElementById("loginPassword").addEventListener("keydown", (e) => {
       if (e.key === "Enter") handleLogin();
     });
-    document.getElementById("signupPassword").addEventListener("keydown", e => {
+    document.getElementById("signupPassword").addEventListener("keydown", (e) => {
       if (e.key === "Enter") handleSignup();
     });
 
