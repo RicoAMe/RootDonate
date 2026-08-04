@@ -198,6 +198,13 @@
       word-break: break-word;
     }
 
+    .item-price {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+
     .item-desc {
       font-size: 0.9rem;
       color: var(--muted);
@@ -464,19 +471,20 @@
 
       <!-- MAIN UI -->
       <div class="main-ui" id="mainUI">
-        <div class="own-badge" id="ownBadge">This is your profile – add items you need</div>
+        <div class="own-badge" id="ownBadge">This is your profile – add items you want to sell</div>
 
-        <div class="section-title">Items Needed</div>
+        <div class="section-title">Items for Sale</div>
 
         <div class="add-item-form" id="addItemForm">
-          <input type="text" id="itemTitle" placeholder="Item name (e.g. Winter Jacket)">
-          <textarea id="itemDesc" rows="2" placeholder="Short description (optional)"></textarea>
+          <input type="text" id="itemTitle" placeholder="Item name (e.g. iPhone 13)">
+          <input type="text" id="itemPrice" placeholder="Price (e.g. $250 or Make Offer)">
+          <textarea id="itemDesc" rows="2" placeholder="Description (condition, size, etc.)"></textarea>
           <button class="btn primary-btn" id="saveItemBtn">Add Item</button>
           <button class="btn secondary-btn" id="cancelItemBtn">Cancel</button>
         </div>
 
         <button class="btn primary-btn" id="showAddBtn" style="display:none; margin-bottom:20px;">
-          + Add Item
+          + Add Item for Sale
         </button>
 
         <div id="itemsList"></div>
@@ -495,7 +503,7 @@
         </div>
 
         <button class="btn secondary-btn" id="shareBtn" style="display:none; margin-top:16px;">
-          🔗 Share My Profile Link
+          🔗 Share My Shop Link
         </button>
       </div>
 
@@ -503,13 +511,13 @@
     </div>
   </div>
 
-  <!-- Claim Modal -->
+  <!-- Offer Modal -->
   <div class="modal-overlay" id="claimModal">
     <div class="modal">
-      <h3>I'll donate this</h3>
+      <h3>Make an Offer</h3>
       <p style="color:#aaa;font-size:0.9rem;margin-bottom:14px;" id="claimItemName"></p>
       <input type="email" id="claimEmail" placeholder="Your email">
-      <textarea id="claimMessage" rows="2" placeholder="Optional message (size, condition, pickup…)" style="margin-top:10px;"></textarea>
+      <textarea id="claimMessage" rows="2" placeholder="Your offer (price, questions, pickup…)" style="margin-top:10px;"></textarea>
       <div class="modal-actions">
         <button class="btn secondary-btn" id="cancelClaimBtn">Cancel</button>
         <button class="btn primary-btn" id="confirmClaimBtn">Send Offer</button>
@@ -672,8 +680,8 @@
       if (items.length === 0) {
         list.innerHTML = `<div class="empty-state">${
           isOwnProfile
-            ? "No items yet.<br>Add something you need!"
-            : "This person hasn’t added any items yet."
+            ? "No items yet.<br>Add something you want to sell!"
+            : "This person hasn’t listed any items for sale yet."
         }</div>`;
         return;
       }
@@ -704,11 +712,12 @@
           ? `<button class="danger-btn delete-btn" data-id="${item.id}">Delete</button>`
           : `<button class="btn primary-btn claim-btn" style="padding:11px 18px;font-size:0.9rem;width:auto;min-height:42px;"
                data-id="${item.id}" data-title="${escapeHtml(item.title)}">
-               I'll donate this
+               Make Offer
              </button>`;
 
         card.innerHTML = `
           <div class="item-title">${escapeHtml(item.title)}</div>
+          ${item.price ? `<div class="item-price">${escapeHtml(item.price)}</div>` : ""}
           ${item.description ? `<div class="item-desc">${escapeHtml(item.description)}</div>` : ""}
           <div class="item-actions">${actionsHtml}</div>
           ${offersHtml}
@@ -734,6 +743,7 @@
     // ========== ADD / DELETE ==========
     async function saveItem() {
       const title = document.getElementById("itemTitle").value.trim();
+      const price = document.getElementById("itemPrice").value.trim();
       const description = document.getElementById("itemDesc").value.trim();
       if (!title) return showToast("Please enter an item name");
 
@@ -744,14 +754,16 @@
       try {
         await db.collection("users").doc(currentUser.uid).collection("items").add({
           title,
+          price: price || "",
           description,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         document.getElementById("itemTitle").value = "";
+        document.getElementById("itemPrice").value = "";
         document.getElementById("itemDesc").value = "";
         document.getElementById("addItemForm").classList.remove("active");
         document.getElementById("showAddBtn").style.display = "block";
-        showToast("✅ Item added!");
+        showToast("✅ Item listed for sale!");
       } catch (err) {
         console.error(err);
         showToast("Failed to add item");
@@ -771,7 +783,7 @@
       }
     }
 
-    // ========== CLAIM + CHAT ==========
+    // ========== OFFER + CHAT ==========
     let pendingClaim = { itemId: null, title: "" };
 
     function openClaimModal(itemId, title) {
@@ -782,7 +794,7 @@
       }
 
       pendingClaim = { itemId, title };
-      document.getElementById("claimItemName").textContent = `Offering: ${title}`;
+      document.getElementById("claimItemName").textContent = `Offering on: ${title}`;
       document.getElementById("claimEmail").value = currentUser.email || "";
       document.getElementById("claimMessage").value = "";
       document.getElementById("claimModal").classList.add("active");
@@ -810,7 +822,7 @@
           participants: [viewingUserId, currentUser.uid],
           itemId: pendingClaim.itemId,
           itemTitle: pendingClaim.title,
-          donorEmail: email,
+          buyerEmail: email,
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
@@ -819,7 +831,7 @@
           .collection("offers").add({
             email,
             message,
-            donorUid: currentUser.uid,
+            buyerUid: currentUser.uid,
             chatId: chatRef.id,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
           });
@@ -848,7 +860,7 @@
 
     function openChat(chatId, email) {
       if (!currentUser) {
-        showToast("Please log in to chat * leave at own risk!");
+        showToast("Please log in to chat");
         return;
       }
 
@@ -967,7 +979,7 @@
       if (!currentUser) return;
       const link = `${window.location.origin}${window.location.pathname}?u=${currentUser.uid}`;
       if (navigator.clipboard?.writeText) {
-        navigator.clipboard.writeText(link).then(() => showToast("✅ Link copied!"));
+        navigator.clipboard.writeText(link).then(() => showToast("✅ Shop link copied!"));
       } else {
         prompt("Copy this link:", link);
       }
