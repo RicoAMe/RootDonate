@@ -12,9 +12,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
 
-  <!-- SignalR Client (ASP.NET) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
-
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
 
   <style>
@@ -554,7 +551,7 @@
 
         <div id="itemsList"></div>
 
-        <!-- Chat Panel (SignalR) -->
+        <!-- Chat Panel (now pure Firestore) -->
         <div class="chat-panel" id="chatPanel">
           <div class="chat-header">
             <span id="chatTitle">Chat</span>
@@ -617,109 +614,7 @@
     let items = [];
     let currentChatId = null;
     let itemsUnsub = null;
-
-    // ========== SIGNALR (ASP.NET) ==========
-    // Change this to your ASP.NET backend URL
-    const SIGNALR_HUB_URL = "https://192.168.0.1:8080/chathub";
-
-    let connection = null;
-
-    async function initSignalR(userId) {
-      if (connection && connection.state === signalR.HubConnectionState.Connected) return;
-
-      connection = new signalR.HubConnectionBuilder()
-        .withUrl(`${SIGNALR_HUB_URL}?userId=${encodeURIComponent(userId)}`)
-        .withAutomaticReconnect()
-        .build();
-
-      connection.on("ReceiveMessage", (msg) => {
-        appendMessage(msg);
-      });
-
-      connection.on("ReceiveHistory", (messages) => {
-        const box = document.getElementById("chatMessages");
-        box.innerHTML = "";
-        messages.forEach(m => appendMessage(m));
-        box.scrollTop = box.scrollHeight;
-      });
-
-      try {
-        await connection.start();
-        console.log("SignalR connected");
-      } catch (err) {
-        console.error("SignalR connection error:", err);
-        showToast("Chat connection failed – is the ASP.NET backend running?");
-      }
-    }
-
-    function appendMessage(m) {
-      const box = document.getElementById("chatMessages");
-      const isMe = m.senderId === currentUser?.uid;
-      const div = document.createElement("div");
-      div.className = `msg ${isMe ? "me" : "them"}`;
-      div.textContent = m.text;
-      box.appendChild(div);
-      box.scrollTop = box.scrollHeight;
-    }
-
-    async function openChat(chatId, email) {
-      if (!currentUser) {
-        showToast("Please log in to chat");
-        return;
-      }
-
-      if (!connection || connection.state !== signalR.HubConnectionState.Connected) {
-        await initSignalR(currentUser.uid);
-      }
-
-      if (currentChatId && connection) {
-        try {
-          await connection.invoke("LeaveChat", currentChatId);
-        } catch {}
-      }
-
-      currentChatId = chatId;
-      document.getElementById("chatTitle").textContent = `Chat with ${email}`;
-      document.getElementById("chatPanel").classList.add("active");
-      document.getElementById("chatMessages").innerHTML = "";
-      document.getElementById("chatInput").value = "";
-      document.getElementById("chatInput").focus();
-
-      try {
-        await connection.invoke("JoinChat", chatId);
-      } catch (err) {
-        console.error(err);
-        showToast("Could not join chat");
-      }
-    }
-
-    async function sendChatMessage() {
-      const text = document.getElementById("chatInput").value.trim();
-      if (!text || !currentChatId || !currentUser || !connection) return;
-
-      document.getElementById("chatInput").value = "";
-
-      try {
-        await connection.invoke(
-          "SendMessage",
-          currentChatId,
-          currentUser.uid,
-          currentUser.email || "",
-          text
-        );
-      } catch (err) {
-        console.error(err);
-        showToast("Failed to send message");
-      }
-    }
-
-    function closeChat() {
-      if (connection && currentChatId) {
-        connection.invoke("LeaveChat", currentChatId).catch(() => {});
-      }
-      document.getElementById("chatPanel").classList.remove("active");
-      currentChatId = null;
-    }
+    let chatUnsub = null; // real-time messages listener
 
     // ========== HELPERS ==========
     function showToast(msg) {
@@ -760,6 +655,81 @@
       document.getElementById("logoutBtn").style.display = loggedIn ? "block" : "none";
       document.getElementById("loginHeaderBtn").style.display = loggedIn ? "none" : "block";
       document.getElementById("myProfileBtn").style.display = (loggedIn && !isOwnProfile) ? "block" : "none";
+    }
+
+    // ========== CHAT (Firestore real-time) ==========
+    function appendMessage(m) {
+      const box = document.getElementById("chatMessages");
+      const isMe = m.senderId === currentUser?.uid;
+      const div = document.createElement("div");
+      div.className = `msg ${isMe ? "me" : "them"}`;
+      div.textContent = m.text;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function openChat(chatId, email) {
+      if (!currentUser) {
+        showToast("Please log in to chat");
+        return;
+      }
+
+      // Clean up previous listener
+      if (chatUnsub) {
+        chatUnsub();
+        chatUnsub = null;
+      }
+
+      currentChatId = chatId;
+      document.getElementById("chatTitle").textContent = `Chat with ${email}`;
+      document.getElementById("chatPanel").classList.add("active");
+      document.getElementById("chatMessages").innerHTML = "";
+      document.getElementById("chatInput").value = "";
+      document.getElementById("chatInput").focus();
+
+      // Real-time listener for messages
+      chatUnsub = db.collection("chats").doc(chatId).collection("messages")
+        .orderBy("createdAt", "asc")
+        .onSnapshot((snap) => {
+          const box = document.getElementById("chatMessages");
+          box.innerHTML = "";
+          snap.forEach(doc => {
+            const m = doc.data();
+            appendMessage(m);
+          });
+          box.scrollTop = box.scrollHeight;
+        }, (err) => {
+          console.error("Chat listener error:", err);
+          showToast("Could not load chat messages");
+        });
+    }
+
+    async function sendChatMessage() {
+      const text = document.getElementById("chatInput").value.trim();
+      if (!text || !currentChatId || !currentUser) return;
+
+      document.getElementById("chatInput").value = "";
+
+      try {
+        await db.collection("chats").doc(currentChatId).collection("messages").add({
+          text,
+          senderId: currentUser.uid,
+          senderEmail: currentUser.email || "",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } catch (err) {
+        console.error(err);
+        showToast("Failed to send message");
+      }
+    }
+
+    function closeChat() {
+      if (chatUnsub) {
+        chatUnsub();
+        chatUnsub = null;
+      }
+      document.getElementById("chatPanel").classList.remove("active");
+      currentChatId = null;
     }
 
     // ========== LOAD PROFILE + ITEMS ==========
@@ -980,6 +950,7 @@
       btn.textContent = "Sending...";
 
       try {
+        // Create chat document
         const chatRef = await db.collection("chats").add({
           participants: [viewingUserId, currentUser.uid],
           itemId: pendingClaim.itemId,
@@ -988,6 +959,7 @@
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
+        // Save the offer
         await db.collection("users").doc(viewingUserId)
           .collection("items").doc(pendingClaim.itemId)
           .collection("offers").add({
@@ -998,9 +970,20 @@
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
           });
 
+        // Optional: also save the first message from the offer
+        if (message) {
+          await db.collection("chats").doc(chatRef.id).collection("messages").add({
+            text: message,
+            senderId: currentUser.uid,
+            senderEmail: email,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+
         document.getElementById("claimModal").classList.remove("active");
         showToast("✅ Offer sent!");
 
+        // Open the chat immediately
         openChat(chatRef.id, email);
 
       } catch (err) {
@@ -1073,12 +1056,6 @@
 
     async function handleLogout() {
       closeChat();
-      if (connection) {
-        try {
-          await connection.stop();
-        } catch {}
-        connection = null;
-      }
       await auth.signOut();
       showToast("Logged out");
     }
@@ -1140,10 +1117,6 @@
     // ========== INIT ==========
     auth.onAuthStateChanged(async (user) => {
       currentUser = user;
-
-      if (user) {
-        initSignalR(user.uid);
-      }
 
       const urlUserId = new URLSearchParams(window.location.search).get("u");
 
