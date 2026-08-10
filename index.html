@@ -484,7 +484,7 @@
       white-space: nowrap;
     }
 
-    /* ===== NEW: Search + Nav ===== */
+    /* ===== Search + Nav ===== */
     .nav-tabs {
       display: none;
       gap: 8px;
@@ -542,6 +542,14 @@
       font-size: 0.85rem;
       color: var(--muted);
       margin-top: 4px;
+    }
+
+    .chat-actions {
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
     }
 
     @media (max-width: 380px) {
@@ -702,8 +710,8 @@
     let currentChatId = null;
     let itemsUnsub = null;
     let chatUnsub = null;
-    let currentView = "items";          // items | users | chats
-    let allChats = [];                  // for client-side filtering
+    let currentView = "items";
+    let allChats = [];
     let searchTimeout = null;
 
     // ========== HELPERS ==========
@@ -770,7 +778,7 @@
       searchInput.value = "";
     }
 
-    // ========== CHAT (Firestore real-time) ==========
+    // ========== CHAT ==========
     function appendMessage(m) {
       const box = document.getElementById("chatMessages");
       const isMe = m.senderId === currentUser?.uid;
@@ -799,7 +807,6 @@
       document.getElementById("chatInput").value = "";
       document.getElementById("chatInput").focus();
 
-      // Scroll the chat panel into view
       document.getElementById("chatPanel").scrollIntoView({ behavior: "smooth", block: "nearest" });
 
       chatUnsub = db.collection("chats").doc(chatId).collection("messages")
@@ -846,6 +853,42 @@
       currentChatId = null;
     }
 
+    // ========== DELETE CHAT ==========
+    async function deleteChat(chatId) {
+      if (!confirm("Delete this chat permanently?\nAll messages will be removed.")) return;
+
+      try {
+        // 1. Delete all messages
+        const messagesSnap = await db.collection("chats").doc(chatId).collection("messages").get();
+        
+        // Use batches (max 500 operations per batch)
+        const docs = messagesSnap.docs;
+        for (let i = 0; i < docs.length; i += 450) {
+          const batch = db.batch();
+          docs.slice(i, i + 450).forEach(doc => batch.delete(doc.ref));
+          await batch.commit();
+        }
+
+        // 2. Delete the chat document
+        await db.collection("chats").doc(chatId).delete();
+
+        showToast("✅ Chat deleted");
+
+        // Close if currently open
+        if (currentChatId === chatId) {
+          closeChat();
+        }
+
+        // Refresh list
+        const currentSearch = document.getElementById("searchInput").value;
+        loadMyChats(currentSearch);
+
+      } catch (err) {
+        console.error(err);
+        showToast("Failed to delete chat");
+      }
+    }
+
     // ========== LOAD PROFILE + ITEMS ==========
     async function loadProfile(uid) {
       if (!uid) return;
@@ -881,7 +924,6 @@
         document.getElementById("shareBtn").style.display = isOwnProfile ? "block" : "none";
         document.getElementById("addItemForm").classList.remove("active");
 
-        // Show nav + search only when logged in
         const showNav = !!currentUser;
         document.getElementById("navTabs").classList.toggle("visible", showNav);
         document.getElementById("searchWrap").classList.toggle("visible", showNav);
@@ -1014,13 +1056,11 @@
       }
 
       let handleQuery = q.startsWith("@") ? q : "@" + q;
-      // clean
       handleQuery = handleQuery.replace(/[^a-z0-9@_]/g, "");
 
       list.innerHTML = `<div class="empty-state">Searching...</div>`;
 
       try {
-        // Prefix search on handle
         const snap = await db.collection("users")
           .where("handle", ">=", handleQuery)
           .where("handle", "<=", handleQuery + "\uf8ff")
@@ -1085,7 +1125,6 @@
         renderChats(filterText);
       } catch (err) {
         console.error(err);
-        // Fallback if orderBy needs index
         try {
           const snap = await db.collection("chats")
             .where("participants", "array-contains", currentUser.uid)
@@ -1095,7 +1134,6 @@
           snap.forEach(doc => {
             allChats.push({ id: doc.id, ...doc.data() });
           });
-          // sort client-side
           allChats.sort((a, b) => {
             const ta = a.createdAt?.toMillis?.() || 0;
             const tb = b.createdAt?.toMillis?.() || 0;
@@ -1138,9 +1176,12 @@
         card.innerHTML = `
           <div class="item-title">${escapeHtml(title)}</div>
           <div class="chat-meta">with ${escapeHtml(email)}</div>
-          <div style="margin-top:12px;">
+          <div class="chat-actions">
             <button class="chat-btn open-chat-from-list" data-chat="${chat.id}" data-email="${escapeHtml(email)}">
               Open Chat
+            </button>
+            <button class="danger-btn delete-chat-btn" data-chat="${chat.id}">
+              Delete
             </button>
           </div>
         `;
@@ -1152,9 +1193,15 @@
           openChat(btn.dataset.chat, btn.dataset.email);
         });
       });
+
+      list.querySelectorAll(".delete-chat-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          deleteChat(btn.dataset.chat);
+        });
+      });
     }
 
-    // ========== ADD / DELETE ==========
+    // ========== ADD / DELETE ITEM ==========
     async function saveItem() {
       const title = document.getElementById("itemTitle").value.trim();
       const price = document.getElementById("itemPrice").value.trim();
