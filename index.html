@@ -845,32 +845,42 @@
       currentChatId = null;
     }
 
-    // ========== DELETE CHAT ==========
-    async function deleteChat(chatId) {
-      if (!confirm("Delete this chat permanently?\nAll messages will be removed.")) return;
+// ========== DELETE CHAT ==========
+async function deleteChat(chatId) {
+  if (!confirm("Delete this chat permanently?\nAll messages will be removed.")) return;
 
-      try {
-        const messagesSnap = await db.collection("chats").doc(chatId).collection("messages").get();
-        const docs = messagesSnap.docs;
+  try {
+    showToast("Deleting chat...");
 
-        for (let i = 0; i < docs.length; i += 450) {
-          const batch = db.batch();
-          docs.slice(i, i + 450).forEach(doc => batch.delete(doc.ref));
-          await batch.commit();
-        }
+    // 1. Delete all messages in batches
+    const messagesSnap = await db.collection("chats").doc(chatId).collection("messages").get();
+    const docs = messagesSnap.docs;
 
-        await db.collection("chats").doc(chatId).delete();
-        showToast("✅ Chat deleted");
-
-        if (currentChatId === chatId) closeChat();
-
-        const currentSearch = document.getElementById("searchInput").value;
-        loadMyChats(currentSearch);
-      } catch (err) {
-        console.error(err);
-        showToast("Failed to delete chat");
-      }
+    for (let i = 0; i < docs.length; i += 400) {
+      const batch = db.batch();
+      docs.slice(i, i + 400).forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
     }
+
+    // 2. Delete the chat document itself
+    await db.collection("chats").doc(chatId).delete();
+
+    showToast("✅ Chat deleted");
+
+    // Close chat panel if it was open
+    if (currentChatId === chatId) {
+      closeChat();
+    }
+
+    // Refresh the chats list
+    const currentSearch = document.getElementById("searchInput").value;
+    loadMyChats(currentSearch);
+
+  } catch (err) {
+    console.error("Delete chat error:", err);
+    showToast("Failed to delete chat. Please try again.");
+  }
+}
 
     // ========== LOAD PROFILE + ITEMS ==========
     async function loadProfile(uid) {
