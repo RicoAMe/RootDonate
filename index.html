@@ -206,7 +206,7 @@
       color: #ccc;
     }
 
-    .item-card {
+    .item-card, .user-card, .chat-card {
       background: #1a1a22;
       border: 1px solid #2a2a32;
       border-radius: 16px;
@@ -215,11 +215,11 @@
       transition: border-color 0.2s;
     }
 
-    .item-card:hover {
+    .item-card:hover, .user-card:hover, .chat-card:hover {
       border-color: #3a3a45;
     }
 
-    .item-title {
+    .item-title, .user-name {
       font-weight: 700;
       font-size: 1.05rem;
       margin-bottom: 4px;
@@ -233,7 +233,7 @@
       margin-bottom: 6px;
     }
 
-    .item-desc {
+    .item-desc, .user-handle {
       font-size: 0.9rem;
       color: var(--muted);
       margin-bottom: 14px;
@@ -484,6 +484,66 @@
       white-space: nowrap;
     }
 
+    /* ===== NEW: Search + Nav ===== */
+    .nav-tabs {
+      display: none;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .nav-tabs.visible {
+      display: flex;
+    }
+
+    .nav-btn {
+      flex: 1;
+      min-width: 90px;
+      padding: 10px 8px;
+      border-radius: 12px;
+      border: 1px solid #333;
+      background: #1a1a22;
+      color: #ccc;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .nav-btn.active {
+      background: var(--primary);
+      color: #000;
+      border-color: var(--primary);
+    }
+
+    .search-wrap {
+      display: none;
+      margin-bottom: 16px;
+    }
+
+    .search-wrap.visible {
+      display: block;
+    }
+
+    .search-wrap input {
+      padding: 13px 16px;
+      border-radius: 14px;
+    }
+
+    .view-section {
+      display: none;
+    }
+
+    .view-section.active {
+      display: block;
+    }
+
+    .chat-meta {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
     @media (max-width: 380px) {
       .header {
         padding: 22px 16px 18px;
@@ -535,23 +595,50 @@
       <div class="main-ui" id="mainUI">
         <div class="own-badge" id="ownBadge">This is your profile – add items you want to sell</div>
 
-        <div class="section-title">Items for Sale</div>
-
-        <div class="add-item-form" id="addItemForm">
-          <input type="text" id="itemTitle" placeholder="Item name (e.g. iPhone 13)">
-          <input type="text" id="itemPrice" placeholder="Price (e.g. $250 or Make Offer)">
-          <textarea id="itemDesc" rows="2" placeholder="Description (condition, size, etc.)"></textarea>
-          <button class="btn primary-btn" id="saveItemBtn">Add Item</button>
-          <button class="btn secondary-btn" id="cancelItemBtn">Cancel</button>
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs" id="navTabs">
+          <button class="nav-btn active" data-view="items">Items</button>
+          <button class="nav-btn" data-view="users">Find People</button>
+          <button class="nav-btn" data-view="chats">My Chats</button>
         </div>
 
-        <button class="btn primary-btn" id="showAddBtn" style="display:none; margin-bottom:20px;">
-          + Add Item for Sale
-        </button>
+        <!-- Search Bar -->
+        <div class="search-wrap" id="searchWrap">
+          <input type="text" id="searchInput" placeholder="Search..." autocomplete="off">
+        </div>
 
-        <div id="itemsList"></div>
+        <!-- ITEMS VIEW -->
+        <div class="view-section active" id="itemsView">
+          <div class="section-title" id="itemsSectionTitle">Items for Sale</div>
 
-        <!-- Chat Panel (now pure Firestore) -->
+          <div class="add-item-form" id="addItemForm">
+            <input type="text" id="itemTitle" placeholder="Item name (e.g. iPhone 13)">
+            <input type="text" id="itemPrice" placeholder="Price (e.g. $250 or Make Offer)">
+            <textarea id="itemDesc" rows="2" placeholder="Description (condition, size, etc.)"></textarea>
+            <button class="btn primary-btn" id="saveItemBtn">Add Item</button>
+            <button class="btn secondary-btn" id="cancelItemBtn">Cancel</button>
+          </div>
+
+          <button class="btn primary-btn" id="showAddBtn" style="display:none; margin-bottom:20px;">
+            + Add Item for Sale
+          </button>
+
+          <div id="itemsList"></div>
+        </div>
+
+        <!-- USERS SEARCH VIEW -->
+        <div class="view-section" id="usersView">
+          <div class="section-title">Find People</div>
+          <div id="usersList"></div>
+        </div>
+
+        <!-- CHATS VIEW -->
+        <div class="view-section" id="chatsView">
+          <div class="section-title">My Chats</div>
+          <div id="chatsList"></div>
+        </div>
+
+        <!-- Chat Panel -->
         <div class="chat-panel" id="chatPanel">
           <div class="chat-header">
             <span id="chatTitle">Chat</span>
@@ -614,7 +701,10 @@
     let items = [];
     let currentChatId = null;
     let itemsUnsub = null;
-    let chatUnsub = null; // real-time messages listener
+    let chatUnsub = null;
+    let currentView = "items";          // items | users | chats
+    let allChats = [];                  // for client-side filtering
+    let searchTimeout = null;
 
     // ========== HELPERS ==========
     function showToast(msg) {
@@ -657,6 +747,29 @@
       document.getElementById("myProfileBtn").style.display = (loggedIn && !isOwnProfile) ? "block" : "none";
     }
 
+    // ========== VIEW SWITCHING ==========
+    function switchView(view) {
+      currentView = view;
+      document.querySelectorAll(".nav-btn").forEach(b => {
+        b.classList.toggle("active", b.dataset.view === view);
+      });
+      document.querySelectorAll(".view-section").forEach(s => s.classList.remove("active"));
+      document.getElementById(view + "View").classList.add("active");
+
+      const searchInput = document.getElementById("searchInput");
+      if (view === "items") {
+        searchInput.placeholder = "Search items...";
+        renderItems();
+      } else if (view === "users") {
+        searchInput.placeholder = "Search by handle (e.g. john or @john)";
+        document.getElementById("usersList").innerHTML = `<div class="empty-state">Type a handle to search for people</div>`;
+      } else if (view === "chats") {
+        searchInput.placeholder = "Search chats...";
+        loadMyChats();
+      }
+      searchInput.value = "";
+    }
+
     // ========== CHAT (Firestore real-time) ==========
     function appendMessage(m) {
       const box = document.getElementById("chatMessages");
@@ -674,7 +787,6 @@
         return;
       }
 
-      // Clean up previous listener
       if (chatUnsub) {
         chatUnsub();
         chatUnsub = null;
@@ -687,7 +799,9 @@
       document.getElementById("chatInput").value = "";
       document.getElementById("chatInput").focus();
 
-      // Real-time listener for messages
+      // Scroll the chat panel into view
+      document.getElementById("chatPanel").scrollIntoView({ behavior: "smooth", block: "nearest" });
+
       chatUnsub = db.collection("chats").doc(chatId).collection("messages")
         .orderBy("createdAt", "asc")
         .onSnapshot((snap) => {
@@ -738,6 +852,7 @@
 
       viewingUserId = uid;
       closeChat();
+      switchView("items");
 
       const loading = document.getElementById("loadingText");
       loading.style.display = "block";
@@ -765,6 +880,11 @@
         document.getElementById("showAddBtn").style.display = isOwnProfile ? "block" : "none";
         document.getElementById("shareBtn").style.display = isOwnProfile ? "block" : "none";
         document.getElementById("addItemForm").classList.remove("active");
+
+        // Show nav + search only when logged in
+        const showNav = !!currentUser;
+        document.getElementById("navTabs").classList.toggle("visible", showNav);
+        document.getElementById("searchWrap").classList.toggle("visible", showNav);
 
         itemsUnsub = db.collection("users").doc(uid).collection("items")
           .orderBy("createdAt", "desc")
@@ -803,20 +923,31 @@
       }
     }
 
-    function renderItems() {
+    function renderItems(filterText = "") {
       const list = document.getElementById("itemsList");
       list.innerHTML = "";
 
-      if (items.length === 0) {
+      const q = filterText.trim().toLowerCase();
+      const filtered = q
+        ? items.filter(item =>
+            (item.title || "").toLowerCase().includes(q) ||
+            (item.price || "").toLowerCase().includes(q) ||
+            (item.description || "").toLowerCase().includes(q)
+          )
+        : items;
+
+      if (filtered.length === 0) {
         list.innerHTML = `<div class="empty-state">${
-          isOwnProfile
-            ? "No items yet.<br>Add something you want to sell!"
-            : "This person hasn't listed any items for sale yet."
+          items.length === 0
+            ? (isOwnProfile
+                ? "No items yet.<br>Add something you want to sell!"
+                : "This person hasn't listed any items for sale yet.")
+            : "No items match your search."
         }</div>`;
         return;
       }
 
-      items.forEach((item) => {
+      filtered.forEach((item) => {
         const card = document.createElement("div");
         card.className = "item-card";
 
@@ -868,6 +999,157 @@
           } else {
             showToast("Chat not ready yet");
           }
+        });
+      });
+    }
+
+    // ========== SEARCH USERS ==========
+    async function searchUsers(query) {
+      const list = document.getElementById("usersList");
+      const q = query.trim().toLowerCase();
+
+      if (!q) {
+        list.innerHTML = `<div class="empty-state">Type a handle to search for people</div>`;
+        return;
+      }
+
+      let handleQuery = q.startsWith("@") ? q : "@" + q;
+      // clean
+      handleQuery = handleQuery.replace(/[^a-z0-9@_]/g, "");
+
+      list.innerHTML = `<div class="empty-state">Searching...</div>`;
+
+      try {
+        // Prefix search on handle
+        const snap = await db.collection("users")
+          .where("handle", ">=", handleQuery)
+          .where("handle", "<=", handleQuery + "\uf8ff")
+          .limit(20)
+          .get();
+
+        if (snap.empty) {
+          list.innerHTML = `<div class="empty-state">No users found for "${escapeHtml(query)}"</div>`;
+          return;
+        }
+
+        list.innerHTML = "";
+        snap.forEach(doc => {
+          const u = doc.data();
+          const card = document.createElement("div");
+          card.className = "user-card";
+          card.innerHTML = `
+            <div class="user-name">${escapeHtml(u.name || "User")}</div>
+            <div class="user-handle">${escapeHtml(u.handle || "")}</div>
+            <button class="btn primary-btn view-profile-btn" style="padding:11px 18px;font-size:0.9rem;width:auto;min-height:42px;"
+              data-uid="${doc.id}">
+              View Shop
+            </button>
+          `;
+          list.appendChild(card);
+        });
+
+        list.querySelectorAll(".view-profile-btn").forEach(btn => {
+          btn.addEventListener("click", () => {
+            window.history.replaceState({}, "", `?u=${btn.dataset.uid}`);
+            loadProfile(btn.dataset.uid);
+          });
+        });
+      } catch (err) {
+        console.error(err);
+        list.innerHTML = `<div class="empty-state">Search failed. Try again.</div>`;
+      }
+    }
+
+    // ========== MY CHATS ==========
+    async function loadMyChats(filterText = "") {
+      if (!currentUser) {
+        document.getElementById("chatsList").innerHTML = `<div class="empty-state">Please log in to see your chats</div>`;
+        return;
+      }
+
+      const list = document.getElementById("chatsList");
+      list.innerHTML = `<div class="empty-state">Loading chats...</div>`;
+
+      try {
+        const snap = await db.collection("chats")
+          .where("participants", "array-contains", currentUser.uid)
+          .orderBy("createdAt", "desc")
+          .limit(50)
+          .get();
+
+        allChats = [];
+        snap.forEach(doc => {
+          allChats.push({ id: doc.id, ...doc.data() });
+        });
+
+        renderChats(filterText);
+      } catch (err) {
+        console.error(err);
+        // Fallback if orderBy needs index
+        try {
+          const snap = await db.collection("chats")
+            .where("participants", "array-contains", currentUser.uid)
+            .limit(50)
+            .get();
+          allChats = [];
+          snap.forEach(doc => {
+            allChats.push({ id: doc.id, ...doc.data() });
+          });
+          // sort client-side
+          allChats.sort((a, b) => {
+            const ta = a.createdAt?.toMillis?.() || 0;
+            const tb = b.createdAt?.toMillis?.() || 0;
+            return tb - ta;
+          });
+          renderChats(filterText);
+        } catch (e2) {
+          console.error(e2);
+          list.innerHTML = `<div class="empty-state">Could not load chats</div>`;
+        }
+      }
+    }
+
+    function renderChats(filterText = "") {
+      const list = document.getElementById("chatsList");
+      list.innerHTML = "";
+
+      const q = filterText.trim().toLowerCase();
+      const filtered = q
+        ? allChats.filter(c =>
+            (c.itemTitle || "").toLowerCase().includes(q) ||
+            (c.buyerEmail || "").toLowerCase().includes(q)
+          )
+        : allChats;
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="empty-state">${
+          allChats.length === 0
+            ? "No chats yet.<br>Make or receive an offer to start chatting!"
+            : "No chats match your search."
+        }</div>`;
+        return;
+      }
+
+      filtered.forEach(chat => {
+        const card = document.createElement("div");
+        card.className = "chat-card";
+        const title = chat.itemTitle || "Item";
+        const email = chat.buyerEmail || "User";
+        card.innerHTML = `
+          <div class="item-title">${escapeHtml(title)}</div>
+          <div class="chat-meta">with ${escapeHtml(email)}</div>
+          <div style="margin-top:12px;">
+            <button class="chat-btn open-chat-from-list" data-chat="${chat.id}" data-email="${escapeHtml(email)}">
+              Open Chat
+            </button>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+
+      list.querySelectorAll(".open-chat-from-list").forEach(btn => {
+        btn.addEventListener("click", () => {
+          openChat(btn.dataset.chat, btn.dataset.email);
         });
       });
     }
@@ -950,7 +1232,6 @@
       btn.textContent = "Sending...";
 
       try {
-        // Create chat document
         const chatRef = await db.collection("chats").add({
           participants: [viewingUserId, currentUser.uid],
           itemId: pendingClaim.itemId,
@@ -959,7 +1240,6 @@
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // Save the offer
         await db.collection("users").doc(viewingUserId)
           .collection("items").doc(pendingClaim.itemId)
           .collection("offers").add({
@@ -970,7 +1250,6 @@
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
           });
 
-        // Optional: also save the first message from the offer
         if (message) {
           await db.collection("chats").doc(chatRef.id).collection("messages").add({
             text: message,
@@ -982,8 +1261,6 @@
 
         document.getElementById("claimModal").classList.remove("active");
         showToast("✅ Offer sent!");
-
-        // Open the chat immediately
         openChat(chatRef.id, email);
 
       } catch (err) {
@@ -1112,6 +1389,25 @@
     });
     document.getElementById("signupPassword").addEventListener("keydown", (e) => {
       if (e.key === "Enter") handleSignup();
+    });
+
+    // Nav tabs
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => switchView(btn.dataset.view));
+    });
+
+    // Live search
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+      const val = e.target.value;
+      clearTimeout(searchTimeout);
+
+      if (currentView === "items") {
+        renderItems(val);
+      } else if (currentView === "chats") {
+        renderChats(val);
+      } else if (currentView === "users") {
+        searchTimeout = setTimeout(() => searchUsers(val), 350);
+      }
     });
 
     // ========== INIT ==========
