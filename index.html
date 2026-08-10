@@ -853,7 +853,6 @@
         const messagesSnap = await db.collection("chats").doc(chatId).collection("messages").get();
         const docs = messagesSnap.docs;
 
-        // Batch delete (max \~450 ops per batch)
         for (let i = 0; i < docs.length; i += 450) {
           const batch = db.batch();
           docs.slice(i, i + 450).forEach(doc => batch.delete(doc.ref));
@@ -942,4 +941,518 @@
             showToast("Failed to load items");
           });
 
-     ​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
+      } catch (err) {
+        console.error(err);
+        showToast("Failed to load profile");
+        loading.textContent = "Error loading profile";
+      }
+    }
+
+    function renderItems(filterText = "") {
+      const list = document.getElementById("itemsList");
+      list.innerHTML = "";
+
+      const q = filterText.trim().toLowerCase();
+      const filtered = q
+        ? items.filter(item =>
+            (item.title || "").toLowerCase().includes(q) ||
+            (item.price || "").toLowerCase().includes(q) ||
+            (item.description || "").toLowerCase().includes(q)
+          )
+        : items;
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="empty-state">${
+          items.length === 0
+            ? (isOwnProfile
+                ? "No items yet.<br>Add something you want to sell!"
+                : "This person hasn't listed any items for sale yet.")
+            : "No items match your search."
+        }</div>`;
+        return;
+      }
+
+      filtered.forEach((item) => {
+        const card = document.createElement("div");
+        card.className = "item-card";
+
+        let offersHtml = "";
+        if (isOwnProfile && item.offers?.length > 0) {
+          offersHtml = `
+            <div class="offers-list">
+              <strong style="color:#ccc;">Offers (${item.offers.length}):</strong>
+              ${item.offers.map(o => `
+                <div class="offer-item">
+                  <div>
+                    <div class="offer-email">${escapeHtml(o.email)}</div>
+                    ${o.message ? `<div style="color:#aaa;margin-top:4px;font-size:0.85rem;">${escapeHtml(o.message)}</div>` : ""}
+                  </div>
+                  <button class="chat-btn open-chat" data-chat="${o.chatId || ""}" data-email="${escapeHtml(o.email)}">Chat</button>
+                </div>
+              `).join("")}
+            </div>
+          `;
+        }
+
+        const actionsHtml = isOwnProfile
+          ? `<button class="danger-btn delete-btn" data-id="${item.id}">Delete</button>`
+          : `<button class="btn primary-btn claim-btn" style="padding:11px 18px;font-size:0.9rem;width:auto;min-height:42px;"
+               data-id="${item.id}" data-title="${escapeHtml(item.title)}">
+               Make Offer
+             </button>`;
+
+        card.innerHTML = `
+          <div class="item-title">${escapeHtml(item.title)}</div>
+          ${item.price ? `<div class="item-price">${escapeHtml(item.price)}</div>` : ""}
+          ${item.description ? `<div class="item-desc">${escapeHtml(item.description)}</div>` : ""}
+          <div class="item-actions">${actionsHtml}</div>
+          ${offersHtml}
+        `;
+        list.appendChild(card);
+      });
+
+      list.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.addEventListener("click", () => deleteItem(btn.dataset.id));
+      });
+      list.querySelectorAll(".claim-btn").forEach(btn => {
+        btn.addEventListener("click", () => openClaimModal(btn.dataset.id, btn.dataset.title));
+      });
+      list.querySelectorAll(".open-chat").forEach(btn => {
+        btn.addEventListener("click", () => {
+          if (btn.dataset.chat) {
+            openChat(btn.dataset.chat, btn.dataset.email);
+          } else {
+            showToast("Chat not ready yet");
+          }
+        });
+      });
+    }
+
+    // ========== SEARCH USERS ==========
+    async function searchUsers(query) {
+      const list = document.getElementById("usersList");
+      const q = query.trim().toLowerCase();
+
+      if (!q) {
+        list.innerHTML = `<div class="empty-state">Type a handle to search for people</div>`;
+        return;
+      }
+
+      let handleQuery = q.startsWith("@") ? q : "@" + q;
+      handleQuery = handleQuery.replace(/[^a-z0-9@_]/g, "");
+
+      list.innerHTML = `<div class="empty-state">Searching...</div>`;
+
+      try {
+        const snap = await db.collection("users")
+          .where("handle", ">=", handleQuery)
+          .where("handle", "<=", handleQuery + "\uf8ff")
+          .limit(20)
+          .get();
+
+        if (snap.empty) {
+          list.innerHTML = `<div class="empty-state">No users found for "${escapeHtml(query)}"</div>`;
+          return;
+        }
+
+        list.innerHTML = "";
+        snap.forEach(doc => {
+          const u = doc.data();
+          const card = document.createElement("div");
+          card.className = "user-card";
+          card.innerHTML = `
+            <div class="user-name">${escapeHtml(u.name || "User")}</div>
+            <div class="user-handle">${escapeHtml(u.handle || "")}</div>
+            <button class="btn primary-btn view-profile-btn" style="padding:11px 18px;font-size:0.9rem;width:auto;min-height:42px;"
+              data-uid="${doc.id}">
+              View Shop
+            </button>
+          `;
+          list.appendChild(card);
+        });
+
+        list.querySelectorAll(".view-profile-btn").forEach(btn => {
+          btn.addEventListener("click", () => {
+            window.history.replaceState({}, "", `?u=${btn.dataset.uid}`);
+            loadProfile(btn.dataset.uid);
+          });
+        });
+      } catch (err) {
+        console.error(err);
+        list.innerHTML = `<div class="empty-state">Search failed. Try again.</div>`;
+      }
+    }
+
+    // ========== MY CHATS ==========
+    async function loadMyChats(filterText = "") {
+      if (!currentUser) {
+        document.getElementById("chatsList").innerHTML = `<div class="empty-state">Please log in to see your chats</div>`;
+        return;
+      }
+
+      const list = document.getElementById("chatsList");
+      list.innerHTML = `<div class="empty-state">Loading chats...</div>`;
+
+      try {
+        const snap = await db.collection("chats")
+          .where("participants", "array-contains", currentUser.uid)
+          .orderBy("createdAt", "desc")
+          .limit(50)
+          .get();
+
+        allChats = [];
+        snap.forEach(doc => {
+          allChats.push({ id: doc.id, ...doc.data() });
+        });
+
+        renderChats(filterText);
+      } catch (err) {
+        console.error(err);
+        try {
+          const snap = await db.collection("chats")
+            .where("participants", "array-contains", currentUser.uid)
+            .limit(50)
+            .get();
+          allChats = [];
+          snap.forEach(doc => {
+            allChats.push({ id: doc.id, ...doc.data() });
+          });
+          allChats.sort((a, b) => {
+            const ta = a.createdAt?.toMillis?.() || 0;
+            const tb = b.createdAt?.toMillis?.() || 0;
+            return tb - ta;
+          });
+          renderChats(filterText);
+        } catch (e2) {
+          console.error(e2);
+          list.innerHTML = `<div class="empty-state">Could not load chats</div>`;
+        }
+      }
+    }
+
+    function renderChats(filterText = "") {
+      const list = document.getElementById("chatsList");
+      list.innerHTML = "";
+
+      const q = filterText.trim().toLowerCase();
+      const filtered = q
+        ? allChats.filter(c =>
+            (c.itemTitle || "").toLowerCase().includes(q) ||
+            (c.buyerEmail || "").toLowerCase().includes(q)
+          )
+        : allChats;
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="empty-state">${
+          allChats.length === 0
+            ? "No chats yet.<br>Make or receive an offer to start chatting!"
+            : "No chats match your search."
+        }</div>`;
+        return;
+      }
+
+      filtered.forEach(chat => {
+        const card = document.createElement("div");
+        card.className = "chat-card";
+        const title = chat.itemTitle || "Item";
+        const email = chat.buyerEmail || "User";
+        card.innerHTML = `
+          <div class="item-title">${escapeHtml(title)}</div>
+          <div class="chat-meta">with ${escapeHtml(email)}</div>
+          <div class="chat-actions">
+            <button class="chat-btn open-chat-from-list" data-chat="${chat.id}" data-email="${escapeHtml(email)}">
+              Open Chat
+            </button>
+            <button class="danger-btn delete-chat-btn" data-chat="${chat.id}">
+              Delete
+            </button>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+
+      list.querySelectorAll(".open-chat-from-list").forEach(btn => {
+        btn.addEventListener("click", () => {
+          openChat(btn.dataset.chat, btn.dataset.email);
+        });
+      });
+
+      list.querySelectorAll(".delete-chat-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          deleteChat(btn.dataset.chat);
+        });
+      });
+    }
+
+    // ========== ADD / DELETE ITEM ==========
+    async function saveItem() {
+      const title = document.getElementById("itemTitle").value.trim();
+      const price = document.getElementById("itemPrice").value.trim();
+      const description = document.getElementById("itemDesc").value.trim();
+      if (!title) return showToast("Please enter an item name");
+
+      const btn = document.getElementById("saveItemBtn");
+      btn.disabled = true;
+      btn.textContent = "Saving...";
+
+      try {
+        await db.collection("users").doc(currentUser.uid).collection("items").add({
+          title,
+          price: price || "",
+          description,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        document.getElementById("itemTitle").value = "";
+        document.getElementById("itemPrice").value = "";
+        document.getElementById("itemDesc").value = "";
+        document.getElementById("addItemForm").classList.remove("active");
+        document.getElementById("showAddBtn").style.display = "block";
+        showToast("✅ Item listed for sale!");
+      } catch (err) {
+        console.error(err);
+        showToast("Failed to add item");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Add Item";
+      }
+    }
+
+    async function deleteItem(itemId) {
+      if (!confirm("Delete this item?")) return;
+      try {
+        await db.collection("users").doc(currentUser.uid).collection("items").doc(itemId).delete();
+        showToast("Item deleted");
+      } catch (err) {
+        showToast("Failed to delete item");
+      }
+    }
+
+    // ========== OFFER ==========
+    function openClaimModal(itemId, title) {
+      if (!currentUser) {
+        showToast("Please log in first to send an offer");
+        showAuth("login");
+        return;
+      }
+
+      pendingClaim = { itemId, title };
+      document.getElementById("claimItemName").textContent = `Offering on: ${title}`;
+      document.getElementById("claimEmail").value = currentUser.email || "";
+      document.getElementById("claimMessage").value = "";
+      document.getElementById("claimModal").classList.add("active");
+    }
+
+    async function confirmClaim() {
+      const email = document.getElementById("claimEmail").value.trim();
+      const message = document.getElementById("claimMessage").value.trim();
+
+      if (!email || !email.includes("@")) {
+        showToast("Please enter a valid email");
+        return;
+      }
+      if (!currentUser) {
+        showToast("You must be logged in");
+        return;
+      }
+
+      const btn = document.getElementById("confirmClaimBtn");
+      btn.disabled = true;
+      btn.textContent = "Sending...";
+
+      try {
+        const chatRef = await db.collection("chats").add({
+          participants: [viewingUserId, currentUser.uid],
+          itemId: pendingClaim.itemId,
+          itemTitle: pendingClaim.title,
+          buyerEmail: email,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        await db.collection("users").doc(viewingUserId)
+          .collection("items").doc(pendingClaim.itemId)
+          .collection("offers").add({
+            email,
+            message,
+            buyerUid: currentUser.uid,
+            chatId: chatRef.id,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+        if (message) {
+          await db.collection("chats").doc(chatRef.id).collection("messages").add({
+            text: message,
+            senderId: currentUser.uid,
+            senderEmail: email,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+
+        document.getElementById("claimModal").classList.remove("active");
+        showToast("✅ Offer sent!");
+        openChat(chatRef.id, email);
+
+      } catch (err) {
+        console.error(err);
+        showToast("Failed to send offer");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Send Offer";
+      }
+    }
+
+    // ========== AUTH ==========
+    async function handleLogin() {
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      if (!email || !password) return showToast("Enter email and password");
+
+      const btn = document.getElementById("loginBtn");
+      btn.disabled = true;
+      btn.textContent = "Logging in...";
+
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        showToast("✅ Logged in!");
+      } catch (err) {
+        showToast(err.message || "Login failed");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Log In";
+      }
+    }
+
+    async function handleSignup() {
+      const name = document.getElementById("signupName").value.trim();
+      let handle = document.getElementById("signupHandle").value.trim();
+      const email = document.getElementById("signupEmail").value.trim();
+      const password = document.getElementById("signupPassword").value;
+
+      if (!name || !handle || !email || !password) return showToast("Please fill all fields");
+      if (password.length < 6) return showToast("Password must be at least 6 characters");
+
+      if (!handle.startsWith("@")) handle = "@" + handle;
+      handle = handle.toLowerCase().replace(/[^a-z0-9@_]/g, "");
+
+      const btn = document.getElementById("signupBtn");
+      btn.disabled = true;
+      btn.textContent = "Creating...";
+
+      try {
+        const handleSnap = await db.collection("users").where("handle", "==", handle).get();
+        if (!handleSnap.empty) {
+          showToast("Handle already taken");
+          return;
+        }
+
+        const cred = await auth.createUserWithEmailAndPassword(email, password);
+        await db.collection("users").doc(cred.user.uid).set({
+          name,
+          handle,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showToast("✅ Account created!");
+      } catch (err) {
+        showToast(err.message || "Sign up failed");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Create Account";
+      }
+    }
+
+    async function handleLogout() {
+      closeChat();
+      await auth.signOut();
+      showToast("Logged out");
+    }
+
+    function shareProfile() {
+      if (!currentUser) return;
+      const link = `${window.location.origin}${window.location.pathname}?u=${currentUser.uid}`;
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(link).then(() => showToast("✅ Shop link copied!"));
+      } else {
+        prompt("Copy this link:", link);
+      }
+    }
+
+    // ========== EVENTS ==========
+    document.getElementById("loginBtn").addEventListener("click", handleLogin);
+    document.getElementById("signupBtn").addEventListener("click", handleSignup);
+    document.getElementById("logoutBtn").addEventListener("click", handleLogout);
+    document.getElementById("loginHeaderBtn").addEventListener("click", () => showAuth("login"));
+    document.getElementById("myProfileBtn").addEventListener("click", () => {
+      if (currentUser) {
+        window.history.replaceState({}, "", `?u=${currentUser.uid}`);
+        loadProfile(currentUser.uid);
+      }
+    });
+    document.getElementById("showSignup").addEventListener("click", () => showAuth("signup"));
+    document.getElementById("showLogin").addEventListener("click", () => showAuth("login"));
+
+    document.getElementById("showAddBtn").addEventListener("click", () => {
+      document.getElementById("addItemForm").classList.add("active");
+      document.getElementById("showAddBtn").style.display = "none";
+      document.getElementById("itemTitle").focus();
+    });
+    document.getElementById("cancelItemBtn").addEventListener("click", () => {
+      document.getElementById("addItemForm").classList.remove("active");
+      document.getElementById("showAddBtn").style.display = "block";
+    });
+    document.getElementById("saveItemBtn").addEventListener("click", saveItem);
+    document.getElementById("shareBtn").addEventListener("click", shareProfile);
+
+    document.getElementById("confirmClaimBtn").addEventListener("click", confirmClaim);
+    document.getElementById("cancelClaimBtn").addEventListener("click", () => {
+      document.getElementById("claimModal").classList.remove("active");
+    });
+
+    document.getElementById("closeChatBtn").addEventListener("click", closeChat);
+    document.getElementById("chatSendBtn").addEventListener("click", sendChatMessage);
+    document.getElementById("chatInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") sendChatMessage();
+    });
+
+    document.getElementById("loginPassword").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") handleLogin();
+    });
+    document.getElementById("signupPassword").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") handleSignup();
+    });
+
+    // Nav tabs
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => switchView(btn.dataset.view));
+    });
+
+    // Live search
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+      const val = e.target.value;
+      clearTimeout(searchTimeout);
+
+      if (currentView === "items") {
+        renderItems(val);
+      } else if (currentView === "chats") {
+        renderChats(val);
+      } else if (currentView === "users") {
+        searchTimeout = setTimeout(() => searchUsers(val), 350);
+      }
+    });
+
+    // ========== INIT ==========
+    auth.onAuthStateChanged(async (user) => {
+      currentUser = user;
+
+      const urlUserId = new URLSearchParams(window.location.search).get("u");
+
+      if (urlUserId) {
+        await loadProfile(urlUserId);
+      } else if (user) {
+        window.history.replaceState({}, "", `?u=${user.uid}`);
+        await loadProfile(user.uid);
+      } else {
+        showAuth("login");
+      }
+    });
+  </script>
+</body>
+</html>
