@@ -1195,7 +1195,7 @@
       }
     }
 
-    // ========== MY CHATS ==========
+    // ========== MY CHATS (FIXED) ==========
     async function loadMyChats(filterText = "") {
       if (!currentUser) {
         document.getElementById("chatsList").innerHTML = `<div class="empty-state">Please log in to see your chats</div>`;
@@ -1206,47 +1206,32 @@
       list.innerHTML = `<div class="empty-state">Loading chats...</div>`;
 
       try {
+        // Simple query (no orderBy) → no composite index required
         const snap = await db.collection("chats")
           .where("participants", "array-contains", currentUser.uid)
-          .orderBy("createdAt", "desc")
           .limit(50)
           .get();
 
         allChats = [];
         snap.forEach(doc => {
           const data = doc.data();
-          const otherUid = data.participants.find(p => p !== currentUser.uid);
-          if (!blockedUsers.has(otherUid)) {
+          const otherUid = (data.participants || []).find(p => p !== currentUser.uid);
+          if (otherUid && !blockedUsers.has(otherUid)) {
             allChats.push({ id: doc.id, ...data, otherUid });
           }
         });
 
+        // Sort client-side (newest first)
+        allChats.sort((a, b) => {
+          const ta = a.createdAt?.toMillis?.() || a.createdAt?.seconds * 1000 || 0;
+          const tb = b.createdAt?.toMillis?.() || b.createdAt?.seconds * 1000 || 0;
+          return tb - ta;
+        });
+
         renderChats(filterText);
       } catch (err) {
-        console.error(err);
-        try {
-          const snap = await db.collection("chats")
-            .where("participants", "array-contains", currentUser.uid)
-            .limit(50)
-            .get();
-          allChats = [];
-          snap.forEach(doc => {
-            const data = doc.data();
-            const otherUid = data.participants.find(p => p !== currentUser.uid);
-            if (!blockedUsers.has(otherUid)) {
-              allChats.push({ id: doc.id, ...data, otherUid });
-            }
-          });
-          allChats.sort((a, b) => {
-            const ta = a.createdAt?.toMillis?.() || 0;
-            const tb = b.createdAt?.toMillis?.() || 0;
-            return tb - ta;
-          });
-          renderChats(filterText);
-        } catch (e2) {
-          console.error(e2);
-          list.innerHTML = `<div class="empty-state">Could not load chats</div>`;
-        }
+        console.error("Load chats error:", err);
+        list.innerHTML = `<div class="empty-state">Could not load chats.<br><small style="color:#888">${escapeHtml(err.message || "Unknown error")}</small></div>`;
       }
     }
 
