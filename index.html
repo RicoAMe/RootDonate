@@ -958,6 +958,34 @@
       }
     }
 
+    // ========== NEW: REPORT ITEM ==========
+    async function reportItem(itemId, itemTitle, ownerUid) {
+      if (!currentUser) {
+        showToast("Please log in to report an item");
+        return;
+      }
+      if (!itemId || !ownerUid) return;
+
+      const reason = prompt("Why are you reporting this item? (optional)", "Suspicious or scam listing");
+      if (reason === null) return; // user cancelled
+
+      try {
+        await db.collection("reports").add({
+          type: "item",
+          reporterId: currentUser.uid,
+          reportedUid: ownerUid,
+          itemId: itemId,
+          itemTitle: itemTitle || "",
+          reason: reason || "Suspicious activity",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showToast("Item reported. Thank you.");
+      } catch (err) {
+        console.error(err);
+        showToast("Failed to send report");
+      }
+    }
+
     async function loadBlockedUsers() {
       if (!currentUser) return;
       try {
@@ -1102,10 +1130,18 @@
 
         const actionsHtml = isOwnProfile
           ? `<button class="danger-btn delete-btn" data-id="${item.id}">Delete</button>`
-          : `<button class="btn primary-btn claim-btn" style="padding:11px 18px;font-size:0.9rem;width:auto;min-height:42px;"
-               data-id="${item.id}" data-title="${escapeHtml(item.title)}">
-               Make Offer
-             </button>`;
+          : `
+            <button class="btn primary-btn claim-btn" style="padding:11px 18px;font-size:0.9rem;width:auto;min-height:42px;"
+              data-id="${item.id}" data-title="${escapeHtml(item.title)}">
+              Make Offer
+            </button>
+            <button class="danger-btn report-item-btn" 
+              data-id="${item.id}" 
+              data-title="${escapeHtml(item.title)}"
+              data-owner="${viewingUserId}">
+              Report
+            </button>
+          `;
 
         card.innerHTML = `
           <div class="item-title">${escapeHtml(item.title)}</div>
@@ -1137,6 +1173,12 @@
       });
       list.querySelectorAll(".block-btn").forEach(btn => {
         btn.addEventListener("click", () => blockUser(btn.dataset.uid, btn.dataset.email));
+      });
+      // NEW: Report Item buttons
+      list.querySelectorAll(".report-item-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          reportItem(btn.dataset.id, btn.dataset.title, btn.dataset.owner);
+        });
       });
     }
 
@@ -1195,7 +1237,7 @@
       }
     }
 
-    // ========== MY CHATS (FIXED) ==========
+    // ========== MY CHATS ==========
     async function loadMyChats(filterText = "") {
       if (!currentUser) {
         document.getElementById("chatsList").innerHTML = `<div class="empty-state">Please log in to see your chats</div>`;
@@ -1206,7 +1248,6 @@
       list.innerHTML = `<div class="empty-state">Loading chats...</div>`;
 
       try {
-        // Simple query (no orderBy) → no composite index required
         const snap = await db.collection("chats")
           .where("participants", "array-contains", currentUser.uid)
           .limit(50)
@@ -1221,7 +1262,6 @@
           }
         });
 
-        // Sort client-side (newest first)
         allChats.sort((a, b) => {
           const ta = a.createdAt?.toMillis?.() || a.createdAt?.seconds * 1000 || 0;
           const tb = b.createdAt?.toMillis?.() || b.createdAt?.seconds * 1000 || 0;
