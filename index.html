@@ -178,8 +178,7 @@
 
     .add-item-form {
       display: none;
-      flex-direction: column;
-      gap: 12px;
+      flex-direction: column; gap: 12px;
       margin-bottom: 20px;
       padding: 16px;
       background: #1a1a22;
@@ -366,6 +365,23 @@
       width: 100%;
       margin-bottom: 16px;
     }
+
+    /* New: buttons side-by-side in Find People */
+    .user-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .user-actions .btn,
+    .user-actions .danger-btn {
+      width: auto;
+      flex: 1;
+      min-width: 110px;
+      padding: 11px 14px;
+      font-size: 0.9rem;
+      margin: 0;
+    }
   </style>
 </head>
 <body>
@@ -400,7 +416,6 @@
       <div class="main-ui" id="mainUI">
         <div class="own-badge" id="ownBadge">This is your profile – add items you want to sell</div>
 
-        <!-- BLOCK USER BUTTON (shows on other people's profiles) -->
         <button class="btn danger-btn block-profile-btn" id="blockProfileBtn">
           🚫 Block This User
         </button>
@@ -673,9 +688,10 @@
       }
     }
 
-    // ========== BLOCK USER (strong version) ==========
+    // ========== BLOCK USER ==========
     async function blockUser(targetUid, targetEmail = "") {
       if (!currentUser || !targetUid) return;
+      if (targetUid === currentUser.uid) return showToast("You cannot block yourself");
       if (!confirm(`Block this user?\nYou will no longer see their profile, items, offers or chats.`)) return;
 
       try {
@@ -693,6 +709,13 @@
 
         loadMyChats();
         if (currentChatId) closeChat();
+
+        // Refresh Find People list if currently open
+        if (currentView === "users") {
+          const val = document.getElementById("searchInput").value;
+          if (val.trim()) searchUsers(val);
+          else document.getElementById("usersList").innerHTML = `<div class="empty-state">Type a handle to search</div>`;
+        }
       } catch (err) {
         console.error(err);
         showToast("Failed to block user");
@@ -750,7 +773,7 @@
       }
     }
 
-    // ========== SHOW BLOCKED PROFILE (this blocks the share link) ==========
+    // ========== SHOW BLOCKED PROFILE (blocks the share link) ==========
     function showBlockedProfile(message = "This profile is blocked.") {
       if (itemsUnsub) {
         itemsUnsub();
@@ -780,7 +803,7 @@
       updateHeaderButtons(!!currentUser);
     }
 
-    // ========== LOAD PROFILE – THIS IS WHERE SHARE LINK IS BLOCKED ==========
+    // ========== LOAD PROFILE – share link is blocked here ==========
     async function loadProfile(uid) {
       if (!uid) return;
 
@@ -969,6 +992,7 @@
       });
     }
 
+    // ========== FIND PEOPLE – Block button beside View Shop ==========
     async function searchUsers(query) {
       const list = document.getElementById("usersList");
       const q = query.trim().toLowerCase();
@@ -995,8 +1019,13 @@
         }
 
         list.innerHTML = "";
+        let shown = 0;
+
         snap.forEach(doc => {
-          if (blockedUsers.has(doc.id)) return; // hide blocked users
+          // Hide users you have already blocked
+          if (blockedUsers.has(doc.id)) return;
+          // Don't show yourself
+          if (currentUser && doc.id === currentUser.uid) return;
 
           const u = doc.data();
           const card = document.createElement("div");
@@ -1004,16 +1033,34 @@
           card.innerHTML = `
             <div class="user-name">${escapeHtml(u.name || "User")}</div>
             <div class="user-handle">${escapeHtml(u.handle || "")}</div>
-            <button class="btn primary-btn view-profile-btn" style="padding:11px 18px;font-size:0.9rem;width:auto;"
-              data-uid="${doc.id}">View Shop</button>
+            <div class="user-actions">
+              <button class="btn primary-btn view-profile-btn"
+                data-uid="${doc.id}">View Shop</button>
+              <button class="danger-btn block-from-search-btn"
+                data-uid="${doc.id}"
+                data-email="${escapeHtml(u.email || "")}">Block</button>
+            </div>
           `;
           list.appendChild(card);
+          shown++;
         });
 
+        if (shown === 0) {
+          list.innerHTML = `<div class="empty-state">No users found</div>`;
+        }
+
+        // View Shop
         list.querySelectorAll(".view-profile-btn").forEach(btn => {
           btn.addEventListener("click", () => {
             window.history.replaceState({}, "", `?u=${btn.dataset.uid}`);
             loadProfile(btn.dataset.uid);
+          });
+        });
+
+        // Block beside View Shop
+        list.querySelectorAll(".block-from-search-btn").forEach(btn => {
+          btn.addEventListener("click", () => {
+            blockUser(btn.dataset.uid, btn.dataset.email);
           });
         });
       } catch (err) {
@@ -1335,7 +1382,7 @@
       currentUser = user;
 
       if (user) {
-        await loadBlockedUsers();   // important: wait until blocked list is ready
+        await loadBlockedUsers();
       } else {
         blockedUsers.clear();
       }
@@ -1343,7 +1390,7 @@
       const urlUserId = new URLSearchParams(window.location.search).get("u");
 
       if (urlUserId) {
-        await loadProfile(urlUserId);   // this will now correctly block the share link
+        await loadProfile(urlUserId);   // share link is blocked here
       } else if (user) {
         window.history.replaceState({}, "", `?u=${user.uid}`);
         await loadProfile(user.uid);
