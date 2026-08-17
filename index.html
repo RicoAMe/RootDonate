@@ -563,6 +563,17 @@
       line-height: 1.4;
     }
 
+    /* NEW FOOTER WARNING */
+    .footer-warning {
+      text-align: center;
+      font-size: 0.78rem;
+      color: #ff9aab;
+      padding: 18px 12px 6px;
+      margin-top: 24px;
+      border-top: 1px solid #2a2a32;
+      line-height: 1.45;
+    }
+
     @media (max-width: 380px) {
       .header { padding: 22px 16px 18px; }
       .content { padding: 16px 12px 22px; }
@@ -671,6 +682,12 @@
         <button class="btn secondary-btn" id="shareBtn" style="display:none; margin-top:16px;">
           🔗 Share My Shop Link
         </button>
+
+        <!-- NEW FOOTER WARNING -->
+        <div class="footer-warning">
+          ⚠ Meet at your own risk.<br>
+          Always meet in a public place. Root Donate is not responsible for any meetings or transactions.
+        </div>
       </div>
 
       <div class="loading-text" id="loadingText">Loading...</div>
@@ -924,7 +941,7 @@
     // ========== BLOCK & REPORT ==========
     async function blockUser(targetUid, targetEmail) {
       if (!currentUser || !targetUid) return;
-      if (!confirm(`Block ${maskEmail(targetEmail)}?\nYou will no longer see their messages or offers.`)) return;
+      if (!confirm(`Block ${maskEmail(targetEmail)}?\nYou will no longer see their messages, offers, or profile.`)) return;
 
       try {
         await db.collection("users").doc(currentUser.uid).collection("blocked").doc(targetUid).set({
@@ -933,6 +950,11 @@
         });
         blockedUsers.add(targetUid);
         showToast("User blocked");
+        
+        if (viewingUserId === targetUid) {
+          showBlockedProfile("You have blocked this user.");
+        }
+        
         loadMyChats();
         if (currentChatId) closeChat();
       } catch (err) {
@@ -958,7 +980,6 @@
       }
     }
 
-    // ========== NEW: REPORT ITEM ==========
     async function reportItem(itemId, itemTitle, ownerUid) {
       if (!currentUser) {
         showToast("Please log in to report an item");
@@ -967,7 +988,7 @@
       if (!itemId || !ownerUid) return;
 
       const reason = prompt("Why are you reporting this item? (optional)", "Suspicious or scam listing");
-      if (reason === null) return; // user cancelled
+      if (reason === null) return;
 
       try {
         await db.collection("reports").add({
@@ -995,6 +1016,36 @@
       } catch (e) {
         console.warn("Could not load blocked list", e);
       }
+    }
+
+    // ========== SHOW BLOCKED PROFILE ==========
+    function showBlockedProfile(message = "This profile is blocked.") {
+      if (itemsUnsub) {
+        itemsUnsub();
+        itemsUnsub = null;
+      }
+      
+      document.getElementById("profileName").textContent = "Blocked";
+      document.getElementById("ownBadge").style.display = "none";
+      document.getElementById("showAddBtn").style.display = "none";
+      document.getElementById("shareBtn").style.display = "none";
+      document.getElementById("addItemForm").classList.remove("active");
+      document.getElementById("navTabs").classList.remove("visible");
+      document.getElementById("searchWrap").classList.remove("visible");
+      document.getElementById("itemsSectionTitle").textContent = "Blocked";
+      
+      document.getElementById("itemsList").innerHTML = `
+        <div class="empty-state" style="color:var(--danger);">
+          🚫 ${escapeHtml(message)}<br><br>
+          You cannot view their items, offers, or chat with them.
+        </div>
+      `;
+      
+      document.getElementById("usersList").innerHTML = "";
+      document.getElementById("chatsList").innerHTML = "";
+      
+      showMainUI();
+      updateHeaderButtons(!!currentUser);
     }
 
     // ========== LOAD PROFILE + ITEMS ==========
@@ -1026,11 +1077,31 @@
         profile = doc.data();
         isOwnProfile = !!(currentUser && currentUser.uid === uid);
 
+        // BLOCK CHECK
+        if (currentUser && !isOwnProfile) {
+          if (blockedUsers.has(uid)) {
+            showBlockedProfile("You have blocked this user.");
+            return;
+          }
+
+          try {
+            const reverseBlock = await db.collection("users").doc(uid)
+              .collection("blocked").doc(currentUser.uid).get();
+            if (reverseBlock.exists) {
+              showBlockedProfile("This user has blocked you.");
+              return;
+            }
+          } catch (e) {
+            console.warn("Could not check reverse block", e);
+          }
+        }
+
         document.getElementById("profileName").textContent = profile.name || profile.handle || "User";
         document.getElementById("ownBadge").style.display = isOwnProfile ? "block" : "none";
         document.getElementById("showAddBtn").style.display = isOwnProfile ? "block" : "none";
         document.getElementById("shareBtn").style.display = isOwnProfile ? "block" : "none";
         document.getElementById("addItemForm").classList.remove("active");
+        document.getElementById("itemsSectionTitle").textContent = "Items for Sale";
 
         const showNav = !!currentUser;
         document.getElementById("navTabs").classList.toggle("visible", showNav);
@@ -1174,7 +1245,6 @@
       list.querySelectorAll(".block-btn").forEach(btn => {
         btn.addEventListener("click", () => blockUser(btn.dataset.uid, btn.dataset.email));
       });
-      // NEW: Report Item buttons
       list.querySelectorAll(".report-item-btn").forEach(btn => {
         btn.addEventListener("click", () => {
           reportItem(btn.dataset.id, btn.dataset.title, btn.dataset.owner);
@@ -1212,6 +1282,8 @@
         list.innerHTML = "";
         snap.forEach(doc => {
           const u = doc.data();
+          if (blockedUsers.has(doc.id)) return;
+
           const card = document.createElement("div");
           card.className = "user-card";
           card.innerHTML = `
@@ -1583,12 +1655,10 @@
       if (e.key === "Enter") handleSignup();
     });
 
-    // Nav tabs
     document.querySelectorAll(".nav-btn").forEach(btn => {
       btn.addEventListener("click", () => switchView(btn.dataset.view));
     });
 
-    // Live search
     document.getElementById("searchInput").addEventListener("input", (e) => {
       const val = e.target.value;
       clearTimeout(searchTimeout);
