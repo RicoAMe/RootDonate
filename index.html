@@ -178,7 +178,8 @@
 
     .add-item-form {
       display: none;
-      flex-direction: column; gap: 12px;
+      flex-direction: column;
+      gap: 12px;
       margin-bottom: 20px;
       padding: 16px;
       background: #1a1a22;
@@ -441,4 +442,956 @@
             <input type="text" id="itemPrice" placeholder="Price (e.g. $250 or Make Offer)">
             <textarea id="itemDesc" rows="2" placeholder="Description"></textarea>
             <button class="btn primary-btn" id="saveItemBtn">Add Item</button>
-            <button class="btn secondary-btn" id="cancelItemBtn">Cancel​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
+            <button class="btn secondary-btn" id="cancelItemBtn">Cancel</button>
+          </div>
+
+          <button class="btn primary-btn" id="showAddBtn" style="display:none; margin-bottom:20px;">
+            + Add Item for Sale
+          </button>
+
+          <div id="itemsList"></div>
+        </div>
+
+        <div class="view-section" id="usersView">
+          <div class="section-title">Find People</div>
+          <div id="usersList"></div>
+        </div>
+
+        <div class="view-section" id="chatsView">
+          <div class="section-title">My Chats</div>
+          <div id="chatsList"></div>
+        </div>
+
+        <div class="chat-panel" id="chatPanel">
+          <div class="chat-header">
+            <span id="chatTitle">Chat</span>
+            <button class="header-btn" id="closeChatBtn" style="background:rgba(255,255,255,0.1);color:#fff;">Close</button>
+          </div>
+          <div class="chat-messages" id="chatMessages"></div>
+          <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="Type a message..." maxlength="500">
+            <button class="chat-send" id="chatSendBtn">→</button>
+          </div>
+        </div>
+
+        <button class="btn secondary-btn" id="shareBtn" style="display:none; margin-top:16px;">
+          🔗 Share My Shop Link
+        </button>
+
+        <div class="footer-warning">
+          ⚠ Meet at your own risk.<br>
+          Always meet in a public place. Root Donate is not responsible for any meetings or transactions.
+        </div>
+      </div>
+
+      <div class="loading-text" id="loadingText">Loading...</div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="claimModal">
+    <div class="modal">
+      <h3>Make an Offer</h3>
+      <p style="color:#aaa;font-size:0.9rem;margin-bottom:14px;" id="claimItemName"></p>
+      <input type="email" id="claimEmail" placeholder="Your email">
+      <textarea id="claimMessage" rows="2" placeholder="Your offer..." style="margin-top:10px;"></textarea>
+      <div class="modal-actions">
+        <button class="btn secondary-btn" id="cancelClaimBtn">Cancel</button>
+        <button class="btn primary-btn" id="confirmClaimBtn">Send Offer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
+      authDomain: "rootdonate-61e61.firebaseapp.com",
+      databaseURL: "https://rootdonate-61e61-default-rtdb.firebaseio.com",
+      projectId: "rootdonate-61e61",
+      storageBucket: "rootdonate-61e61.firebasestorage.app",
+      messagingSenderId: "754240963907",
+      appId: "1:754240963907:web:5417c2763d8f02108bdbf6",
+      measurementId: "G-0SC5R5ELT1"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    let currentUser = null;
+    let viewingUserId = null;
+    let profile = {};
+    let isOwnProfile = false;
+    let items = [];
+    let currentChatId = null;
+    let itemsUnsub = null;
+    let chatUnsub = null;
+    let currentView = "items";
+    let allChats = [];
+    let searchTimeout = null;
+    let pendingClaim = { itemId: null, title: "" };
+    let blockedUsers = new Set();
+
+    const SCAM_WORDS = [
+      "western union", "moneygram", "wire transfer", "bank transfer first",
+      "send money", "gift card", "itunes", "steam card", "crypto", "bitcoin",
+      "ethereum", "usdt", "paypal friends", "friends and family", "cashapp",
+      "venmo", "zelle", "send deposit", "upfront payment", "escrow", "middleman",
+      "whatsapp me", "telegram me", "text me on", "call me on", "my number is"
+    ];
+
+    function containsScam(text) {
+      if (!text) return false;
+      const lower = text.toLowerCase();
+      return SCAM_WORDS.some(word => lower.includes(word));
+    }
+
+    function maskEmail(email) {
+      if (!email || !email.includes("@")) return email || "";
+      const [name, domain] = email.split("@");
+      if (name.length <= 3) return name[0] + "***@" + domain;
+      return name.slice(0, 3) + "***@" + domain;
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      clearTimeout(t._timeout);
+      t._timeout = setTimeout(() => t.style.display = "none", 4000);
+    }
+
+    function escapeHtml(text) {
+      if (!text) return "";
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function showAuth(mode = "login") {
+      document.getElementById("loadingText").style.display = "none";
+      document.getElementById("mainUI").classList.remove("active");
+      document.getElementById("loginForm").classList.toggle("active", mode === "login");
+      document.getElementById("signupForm").classList.toggle("active", mode === "signup");
+      document.getElementById("profileName").textContent = mode === "login" ? "Welcome back" : "Create Account";
+      updateHeaderButtons(false);
+      closeChat();
+    }
+
+    function showMainUI() {
+      document.getElementById("loadingText").style.display = "none";
+      document.getElementById("loginForm").classList.remove("active");
+      document.getElementById("signupForm").classList.remove("active");
+      document.getElementById("mainUI").classList.add("active");
+    }
+
+    function updateHeaderButtons(loggedIn) {
+      document.getElementById("logoutBtn").style.display = loggedIn ? "block" : "none";
+      document.getElementById("loginHeaderBtn").style.display = loggedIn ? "none" : "block";
+      document.getElementById("myProfileBtn").style.display = (loggedIn && !isOwnProfile) ? "block" : "none";
+    }
+
+    function switchView(view) {
+      currentView = view;
+      document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.view === view));
+      document.querySelectorAll(".view-section").forEach(s => s.classList.remove("active"));
+      document.getElementById(view + "View").classList.add("active");
+
+      const searchInput = document.getElementById("searchInput");
+      if (view === "items") {
+        searchInput.placeholder = "Search items...";
+        renderItems();
+      } else if (view === "users") {
+        searchInput.placeholder = "Search by handle...";
+        document.getElementById("usersList").innerHTML = `<div class="empty-state">Type a handle to search</div>`;
+      } else if (view === "chats") {
+        searchInput.placeholder = "Search chats...";
+        loadMyChats();
+      }
+      searchInput.value = "";
+    }
+
+    function appendMessage(m) {
+      const box = document.getElementById("chatMessages");
+      const isMe = m.senderId === currentUser?.uid;
+      const div = document.createElement("div");
+      div.className = `msg ${isMe ? "me" : "them"}`;
+      div.textContent = m.text;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function openChat(chatId, email) {
+      if (!currentUser) return showToast("Please log in to chat");
+      if (chatUnsub) { chatUnsub(); chatUnsub = null; }
+
+      currentChatId = chatId;
+      document.getElementById("chatTitle").textContent = `Chat with ${maskEmail(email)}`;
+      document.getElementById("chatPanel").classList.add("active");
+      document.getElementById("chatMessages").innerHTML = "";
+      document.getElementById("chatInput").value = "";
+      document.getElementById("chatInput").focus();
+      document.getElementById("chatPanel").scrollIntoView({ behavior: "smooth" });
+
+      chatUnsub = db.collection("chats").doc(chatId).collection("messages")
+        .orderBy("createdAt", "asc")
+        .onSnapshot(snap => {
+          const box = document.getElementById("chatMessages");
+          box.innerHTML = "";
+          snap.forEach(doc => appendMessage(doc.data()));
+          box.scrollTop = box.scrollHeight;
+        });
+    }
+
+    async function sendChatMessage() {
+      const text = document.getElementById("chatInput").value.trim();
+      if (!text || !currentChatId || !currentUser) return;
+      if (containsScam(text)) return showToast("Message blocked: possible scam language");
+
+      document.getElementById("chatInput").value = "";
+      try {
+        await db.collection("chats").doc(currentChatId).collection("messages").add({
+          text,
+          senderId: currentUser.uid,
+          senderEmail: currentUser.email || "",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      } catch (err) {
+        showToast("Failed to send message");
+      }
+    }
+
+    function closeChat() {
+      if (chatUnsub) { chatUnsub(); chatUnsub = null; }
+      document.getElementById("chatPanel").classList.remove("active");
+      currentChatId = null;
+    }
+
+    async function deleteChat(chatId) {
+      if (!confirm("Delete this chat permanently?")) return;
+      try {
+        showToast("Deleting...");
+        const messagesSnap = await db.collection("chats").doc(chatId).collection("messages").get();
+        const docs = messagesSnap.docs;
+        for (let i = 0; i < docs.length; i += 400) {
+          const batch = db.batch();
+          docs.slice(i, i + 400).forEach(doc => batch.delete(doc.ref));
+          await batch.commit();
+        }
+        await db.collection("chats").doc(chatId).delete();
+        showToast("✅ Chat deleted");
+        if (currentChatId === chatId) closeChat();
+        loadMyChats(document.getElementById("searchInput").value);
+      } catch (err) {
+        showToast("Failed to delete chat");
+      }
+    }
+
+    async function blockUser(targetUid, targetEmail = "") {
+      if (!currentUser || !targetUid) return;
+      if (targetUid === currentUser.uid) return showToast("You cannot block yourself");
+      if (!confirm(`Block this user?\nYou will no longer see their profile, items, offers or chats.`)) return;
+
+      try {
+        await db.collection("users").doc(currentUser.uid).collection("blocked").doc(targetUid).set({
+          blockedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          email: targetEmail || ""
+        });
+        blockedUsers.add(targetUid);
+        showToast("User blocked");
+
+        if (viewingUserId === targetUid) {
+          showBlockedProfile("You have blocked this user.");
+        }
+
+        loadMyChats();
+        if (currentChatId) closeChat();
+
+        if (currentView === "users") {
+          const val = document.getElementById("searchInput").value;
+          if (val.trim()) searchUsers(val);
+          else document.getElementById("usersList").innerHTML = `<div class="empty-state">Type a handle to search</div>`;
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Failed to block user");
+      }
+    }
+
+    async function reportUser(targetUid, targetEmail, reason = "Suspicious activity") {
+      if (!currentUser) return showToast("Please log in to report");
+      try {
+        await db.collection("reports").add({
+          reporterId: currentUser.uid,
+          reportedUid: targetUid,
+          reportedEmail: targetEmail || "",
+          reason,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showToast("Report submitted. Thank you.");
+      } catch (err) {
+        showToast("Failed to send report");
+      }
+    }
+
+    async function reportItem(itemId, itemTitle, ownerUid) {
+      if (!currentUser) return showToast("Please log in to report");
+      const reason = prompt("Why are you reporting this item?", "Suspicious listing");
+      if (reason === null) return;
+
+      try {
+        await db.collection("reports").add({
+          type: "item",
+          reporterId: currentUser.uid,
+          reportedUid: ownerUid,
+          itemId,
+          itemTitle: itemTitle || "",
+          reason: reason || "Suspicious",
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showToast("Item reported. Thank you.");
+      } catch (err) {
+        showToast("Failed to report");
+      }
+    }
+
+    async function loadBlockedUsers() {
+      if (!currentUser) {
+        blockedUsers.clear();
+        return;
+      }
+      try {
+        const snap = await db.collection("users").doc(currentUser.uid).collection("blocked").get();
+        blockedUsers.clear();
+        snap.forEach(doc => blockedUsers.add(doc.id));
+      } catch (e) {
+        console.warn("Could not load blocked list", e);
+      }
+    }
+
+    function showBlockedProfile(message = "This profile is blocked.") {
+      if (itemsUnsub) {
+        itemsUnsub();
+        itemsUnsub = null;
+      }
+
+      document.getElementById("profileName").textContent = "Blocked";
+      document.getElementById("ownBadge").style.display = "none";
+      document.getElementById("blockProfileBtn").style.display = "none";
+      document.getElementById("showAddBtn").style.display = "none";
+      document.getElementById("shareBtn").style.display = "none";
+      document.getElementById("addItemForm").classList.remove("active");
+      document.getElementById("navTabs").classList.remove("visible");
+      document.getElementById("searchWrap").classList.remove("visible");
+      document.getElementById("itemsSectionTitle").textContent = "Blocked";
+
+      document.getElementById("itemsList").innerHTML = `
+        <div class="empty-state" style="color:var(--danger);">
+          🚫 ${escapeHtml(message)}<br><br>
+          You cannot view their items, offers or chat with them.
+        </div>
+      `;
+
+      document.getElementById("usersList").innerHTML = "";
+      document.getElementById("chatsList").innerHTML = "";
+      showMainUI();
+      updateHeaderButtons(!!currentUser);
+    }
+
+    async function loadProfile(uid) {
+      if (!uid) return;
+
+      viewingUserId = uid;
+      closeChat();
+      switchView("items");
+
+      const loading = document.getElementById("loadingText");
+      loading.style.display = "block";
+      loading.textContent = "Loading profile...";
+      document.getElementById("mainUI").classList.remove("active");
+
+      if (itemsUnsub) {
+        itemsUnsub();
+        itemsUnsub = null;
+      }
+
+      try {
+        const doc = await db.collection("users").doc(uid).get();
+        if (!doc.exists) {
+          showToast("Profile not found");
+          loading.textContent = "Profile not found";
+          return;
+        }
+
+        profile = doc.data();
+        isOwnProfile = !!(currentUser && currentUser.uid === uid);
+
+        if (currentUser && !isOwnProfile) {
+          if (blockedUsers.has(uid)) {
+            showBlockedProfile("You have blocked this user.");
+            return;
+          }
+
+          try {
+            const reverse = await db.collection("users").doc(uid)
+              .collection("blocked").doc(currentUser.uid).get();
+            if (reverse.exists) {
+              showBlockedProfile("This user has blocked you.");
+              return;
+            }
+          } catch (e) {
+            console.warn("Reverse block check failed", e);
+          }
+        }
+
+        document.getElementById("profileName").textContent = profile.name || profile.handle || "User";
+        document.getElementById("ownBadge").style.display = isOwnProfile ? "block" : "none";
+        document.getElementById("showAddBtn").style.display = isOwnProfile ? "block" : "none";
+        document.getElementById("shareBtn").style.display = isOwnProfile ? "block" : "none";
+        document.getElementById("addItemForm").classList.remove("active");
+        document.getElementById("itemsSectionTitle").textContent = "Items for Sale";
+
+        const blockBtn = document.getElementById("blockProfileBtn");
+        if (currentUser && !isOwnProfile) {
+          blockBtn.style.display = "block";
+          blockBtn.onclick = () => blockUser(uid, profile.email || "");
+        } else {
+          blockBtn.style.display = "none";
+        }
+
+        const showNav = !!currentUser;
+        document.getElementById("navTabs").classList.toggle("visible", showNav);
+        document.getElementById("searchWrap").classList.toggle("visible", showNav);
+
+        itemsUnsub = db.collection("users").doc(uid).collection("items")
+          .orderBy("createdAt", "desc")
+          .onSnapshot(async (snap) => {
+            const promises = snap.docs.map(async (itemDoc) => {
+              const itemData = { id: itemDoc.id, ...itemDoc.data(), offers: [] };
+              if (isOwnProfile) {
+                try {
+                  const offersSnap = await db.collection("users").doc(uid)
+                    .collection("items").doc(itemDoc.id)
+                    .collection("offers").orderBy("createdAt", "desc").get();
+                  offersSnap.forEach(o => {
+                    const data = o.data();
+                    if (!blockedUsers.has(data.buyerUid)) {
+                      itemData.offers.push({ id: o.id, ...data });
+                    }
+                  });
+                } catch (e) {}
+              }
+              return itemData;
+            });
+
+            items = await Promise.all(promises);
+            renderItems();
+            showMainUI();
+            updateHeaderButtons(!!currentUser);
+          });
+
+      } catch (err) {
+        console.error(err);
+        showToast("Failed to load profile");
+        loading.textContent = "Error loading profile";
+      }
+    }
+
+    function renderItems(filterText = "") {
+      const list = document.getElementById("itemsList");
+      list.innerHTML = "";
+
+      const q = filterText.trim().toLowerCase();
+      const filtered = q
+        ? items.filter(item =>
+            (item.title || "").toLowerCase().includes(q) ||
+            (item.price || "").toLowerCase().includes(q) ||
+            (item.description || "").toLowerCase().includes(q)
+          )
+        : items;
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="empty-state">${
+          items.length === 0
+            ? (isOwnProfile ? "No items yet.<br>Add something you want to sell!" : "This person hasn't listed any items yet.")
+            : "No items match your search."
+        }</div>`;
+        return;
+      }
+
+      filtered.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "item-card";
+
+        let offersHtml = "";
+        if (isOwnProfile && item.offers?.length > 0) {
+          offersHtml = `
+            <div class="offers-list">
+              <strong style="color:#ccc;">Offers (${item.offers.length}):</strong>
+              ${item.offers.map(o => `
+                <div class="offer-item">
+                  <div>
+                    <div class="offer-email">${escapeHtml(maskEmail(o.email))}</div>
+                    ${o.message ? `<div style="color:#aaa;margin-top:4px;font-size:0.85rem;">${escapeHtml(o.message)}</div>` : ""}
+                  </div>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button class="chat-btn open-chat" data-chat="${o.chatId || ""}" data-email="${escapeHtml(o.email)}">Chat</button>
+                    <button class="danger-btn report-btn" data-uid="${o.buyerUid || ""}" data-email="${escapeHtml(o.email)}">Report</button>
+                    <button class="danger-btn block-btn" data-uid="${o.buyerUid || ""}" data-email="${escapeHtml(o.email)}">Block</button>
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+          `;
+        }
+
+        const actionsHtml = isOwnProfile
+          ? `<button class="danger-btn delete-btn" data-id="${item.id}">Delete</button>`
+          : `
+            <button class="btn primary-btn claim-btn" style="padding:11px 18px;font-size:0.9rem;width:auto;"
+              data-id="${item.id}" data-title="${escapeHtml(item.title)}">Make Offer</button>
+            <button class="danger-btn report-item-btn"
+              data-id="${item.id}" data-title="${escapeHtml(item.title)}" data-owner="${viewingUserId}">
+              Report
+            </button>
+            <button class="danger-btn block-btn"
+              data-uid="${viewingUserId}"
+              data-email="${escapeHtml(profile.email || '')}">
+              Block
+            </button>
+          `;
+
+        card.innerHTML = `
+          <div class="item-title">${escapeHtml(item.title)}</div>
+          ${item.price ? `<div class="item-price">${escapeHtml(item.price)}</div>` : ""}
+          ${item.description ? `<div class="item-desc">${escapeHtml(item.description)}</div>` : ""}
+          <div class="item-actions">${actionsHtml}</div>
+          ${offersHtml}
+        `;
+        list.appendChild(card);
+      });
+
+      list.querySelectorAll(".delete-btn").forEach(btn => btn.addEventListener("click", () => deleteItem(btn.dataset.id)));
+      list.querySelectorAll(".claim-btn").forEach(btn => btn.addEventListener("click", () => openClaimModal(btn.dataset.id, btn.dataset.title)));
+      list.querySelectorAll(".open-chat").forEach(btn => {
+        btn.addEventListener("click", () => {
+          if (btn.dataset.chat) openChat(btn.dataset.chat, btn.dataset.email);
+          else showToast("Chat not ready");
+        });
+      });
+      list.querySelectorAll(".report-btn").forEach(btn => btn.addEventListener("click", () => reportUser(btn.dataset.uid, btn.dataset.email)));
+      list.querySelectorAll(".block-btn").forEach(btn => btn.addEventListener("click", () => blockUser(btn.dataset.uid, btn.dataset.email)));
+      list.querySelectorAll(".report-item-btn").forEach(btn => {
+        btn.addEventListener("click", () => reportItem(btn.dataset.id, btn.dataset.title, btn.dataset.owner));
+      });
+    }
+
+    async function searchUsers(query) {
+      const list = document.getElementById("usersList");
+      const q = query.trim().toLowerCase();
+      if (!q) {
+        list.innerHTML = `<div class="empty-state">Type a handle to search</div>`;
+        return;
+      }
+
+      let handleQuery = q.startsWith("@") ? q : "@" + q;
+      handleQuery = handleQuery.replace(/[^a-z0-9@_]/g, "");
+
+      list.innerHTML = `<div class="empty-state">Searching...</div>`;
+
+      try {
+        const snap = await db.collection("users")
+          .where("handle", ">=", handleQuery)
+          .where("handle", "<=", handleQuery + "\uf8ff")
+          .limit(20)
+          .get();
+
+        if (snap.empty) {
+          list.innerHTML = `<div class="empty-state">No users found</div>`;
+          return;
+        }
+
+        list.innerHTML = "";
+        let shown = 0;
+
+        snap.forEach(doc => {
+          if (blockedUsers.has(doc.id)) return;
+          if (currentUser && doc.id === currentUser.uid) return;
+
+          const u = doc.data();
+          const card = document.createElement("div");
+          card.className = "user-card";
+          card.innerHTML = `
+            <div class="user-name">${escapeHtml(u.name || "User")}</div>
+            <div class="user-handle">${escapeHtml(u.handle || "")}</div>
+            <div class="user-actions">
+              <button class="btn primary-btn view-profile-btn" data-uid="${doc.id}">View Shop</button>
+              <button class="danger-btn report-from-search-btn"
+                data-uid="${doc.id}"
+                data-email="${escapeHtml(u.email || "")}">Report</button>
+              <button class="danger-btn block-from-search-btn"
+                data-uid="${doc.id}"
+                data-email="${escapeHtml(u.email || "")}">Block</button>
+            </div>
+          `;
+          list.appendChild(card);
+          shown++;
+        });
+
+        if (shown === 0) {
+          list.innerHTML = `<div class="empty-state">No users found</div>`;
+        }
+
+        list.querySelectorAll(".view-profile-btn").forEach(btn => {
+          btn.addEventListener("click", () => {
+            window.history.replaceState({}, "", `?u=${btn.dataset.uid}`);
+            loadProfile(btn.dataset.uid);
+          });
+        });
+
+        list.querySelectorAll(".report-from-search-btn").forEach(btn => {
+          btn.addEventListener("click", () => reportUser(btn.dataset.uid, btn.dataset.email));
+        });
+
+        list.querySelectorAll(".block-from-search-btn").forEach(btn => {
+          btn.addEventListener("click", () => blockUser(btn.dataset.uid, btn.dataset.email));
+        });
+      } catch (err) {
+        list.innerHTML = `<div class="empty-state">Search failed</div>`;
+      }
+    }
+
+    async function loadMyChats(filterText = "") {
+      if (!currentUser) {
+        document.getElementById("chatsList").innerHTML = `<div class="empty-state">Please log in</div>`;
+        return;
+      }
+
+      const list = document.getElementById("chatsList");
+      list.innerHTML = `<div class="empty-state">Loading chats...</div>`;
+
+      try {
+        const snap = await db.collection("chats")
+          .where("participants", "array-contains", currentUser.uid)
+          .limit(50)
+          .get();
+
+        allChats = [];
+        snap.forEach(doc => {
+          const data = doc.data();
+          const otherUid = (data.participants || []).find(p => p !== currentUser.uid);
+          if (otherUid && !blockedUsers.has(otherUid)) {
+            allChats.push({ id: doc.id, ...data, otherUid });
+          }
+        });
+
+        allChats.sort((a, b) => {
+          const ta = a.createdAt?.toMillis?.() || 0;
+          const tb = b.createdAt?.toMillis?.() || 0;
+          return tb - ta;
+        });
+
+        renderChats(filterText);
+      } catch (err) {
+        list.innerHTML = `<div class="empty-state">Could not load chats</div>`;
+      }
+    }
+
+    function renderChats(filterText = "") {
+      const list = document.getElementById("chatsList");
+      list.innerHTML = "";
+
+      const q = filterText.trim().toLowerCase();
+      const filtered = q
+        ? allChats.filter(c => (c.itemTitle || "").toLowerCase().includes(q) || (c.buyerEmail || "").toLowerCase().includes(q))
+        : allChats;
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="empty-state">${allChats.length === 0 ? "No chats yet" : "No matches"}</div>`;
+        return;
+      }
+
+      filtered.forEach(chat => {
+        const card = document.createElement("div");
+        card.className = "chat-card";
+        card.innerHTML = `
+          <div class="item-title">${escapeHtml(chat.itemTitle || "Item")}</div>
+          <div class="chat-meta">with ${escapeHtml(maskEmail(chat.buyerEmail || "User"))}</div>
+          <div class="chat-actions">
+            <button class="chat-btn open-chat-from-list" data-chat="${chat.id}" data-email="${escapeHtml(chat.buyerEmail || "")}">Open Chat</button>
+            <button class="danger-btn report-btn" data-uid="${chat.otherUid || ""}" data-email="${escapeHtml(chat.buyerEmail || "")}">Report</button>
+            <button class="danger-btn block-btn" data-uid="${chat.otherUid || ""}" data-email="${escapeHtml(chat.buyerEmail || "")}">Block</button>
+            <button class="danger-btn delete-chat-btn" data-chat="${chat.id}">Delete</button>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+
+      list.querySelectorAll(".open-chat-from-list").forEach(btn => {
+        btn.addEventListener("click", () => openChat(btn.dataset.chat, btn.dataset.email));
+      });
+      list.querySelectorAll(".delete-chat-btn").forEach(btn => {
+        btn.addEventListener("click", () => deleteChat(btn.dataset.chat));
+      });
+      list.querySelectorAll(".report-btn").forEach(btn => {
+        btn.addEventListener("click", () => reportUser(btn.dataset.uid, btn.dataset.email));
+      });
+      list.querySelectorAll(".block-btn").forEach(btn => {
+        btn.addEventListener("click", () => blockUser(btn.dataset.uid, btn.dataset.email));
+      });
+    }
+
+    async function saveItem() {
+      const title = document.getElementById("itemTitle").value.trim();
+      const price = document.getElementById("itemPrice").value.trim();
+      const description = document.getElementById("itemDesc").value.trim();
+      if (!title) return showToast("Please enter an item name");
+      if (containsScam(title + " " + description)) return showToast("Item blocked: scam language");
+
+      const btn = document.getElementById("saveItemBtn");
+      btn.disabled = true;
+      btn.textContent = "Saving...";
+
+      try {
+        await db.collection("users").doc(currentUser.uid).collection("items").add({
+          title, price: price || "", description,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        document.getElementById("itemTitle").value = "";
+        document.getElementById("itemPrice").value = "";
+        document.getElementById("itemDesc").value = "";
+        document.getElementById("addItemForm").classList.remove("active");
+        document.getElementById("showAddBtn").style.display = "block";
+        showToast("✅ Item listed!");
+      } catch (err) {
+        showToast("Failed to add item");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Add Item";
+      }
+    }
+
+    async function deleteItem(itemId) {
+      if (!confirm("Delete this item?")) return;
+      try {
+        await db.collection("users").doc(currentUser.uid).collection("items").doc(itemId).delete();
+        showToast("Item deleted");
+      } catch (err) {
+        showToast("Failed to delete");
+      }
+    }
+
+    function openClaimModal(itemId, title) {
+      if (!currentUser) {
+        showToast("Please log in first");
+        showAuth("login");
+        return;
+      }
+      pendingClaim = { itemId, title };
+      document.getElementById("claimItemName").textContent = `Offering on: ${title}`;
+      document.getElementById("claimEmail").value = currentUser.email || "";
+      document.getElementById("claimMessage").value = "";
+      document.getElementById("claimModal").classList.add("active");
+    }
+
+    async function confirmClaim() {
+      const email = document.getElementById("claimEmail").value.trim();
+      const message = document.getElementById("claimMessage").value.trim();
+      if (!email || !email.includes("@")) return showToast("Valid email required");
+      if (containsScam(message)) return showToast("Offer blocked: scam language");
+
+      const btn = document.getElementById("confirmClaimBtn");
+      btn.disabled = true;
+      btn.textContent = "Sending...";
+
+      try {
+        const chatRef = await db.collection("chats").add({
+          participants: [viewingUserId, currentUser.uid],
+          itemId: pendingClaim.itemId,
+          itemTitle: pendingClaim.title,
+          buyerEmail: email,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        await db.collection("users").doc(viewingUserId)
+          .collection("items").doc(pendingClaim.itemId)
+          .collection("offers").add({
+            email, message,
+            buyerUid: currentUser.uid,
+            chatId: chatRef.id,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+        if (message) {
+          await db.collection("chats").doc(chatRef.id).collection("messages").add({
+            text: message,
+            senderId: currentUser.uid,
+            senderEmail: email,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+
+        document.getElementById("claimModal").classList.remove("active");
+        showToast("✅ Offer sent!");
+        openChat(chatRef.id, email);
+      } catch (err) {
+        showToast("Failed to send offer");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Send Offer";
+      }
+    }
+
+    async function handleLogin() {
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      if (!email || !password) return showToast("Enter email and password");
+
+      const btn = document.getElementById("loginBtn");
+      btn.disabled = true;
+      btn.textContent = "Logging in...";
+
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        showToast("✅ Logged in!");
+      } catch (err) {
+        showToast(err.message || "Login failed");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Log In";
+      }
+    }
+
+    async function handleSignup() {
+      const name = document.getElementById("signupName").value.trim();
+      let handle = document.getElementById("signupHandle").value.trim();
+      const email = document.getElementById("signupEmail").value.trim();
+      const password = document.getElementById("signupPassword").value;
+
+      if (!name || !handle || !email || !password) return showToast("Fill all fields");
+      if (password.length < 6) return showToast("Password min 6 characters");
+
+      if (!handle.startsWith("@")) handle = "@" + handle;
+      handle = handle.toLowerCase().replace(/[^a-z0-9@_]/g, "");
+
+      const btn = document.getElementById("signupBtn");
+      btn.disabled = true;
+      btn.textContent = "Creating...";
+
+      try {
+        const handleSnap = await db.collection("users").where("handle", "==", handle).get();
+        if (!handleSnap.empty) {
+          showToast("Handle already taken");
+          return;
+        }
+
+        const cred = await auth.createUserWithEmailAndPassword(email, password);
+        await db.collection("users").doc(cred.user.uid).set({
+          name, handle,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showToast("✅ Account created!");
+      } catch (err) {
+        showToast(err.message || "Sign up failed");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Create Account";
+      }
+    }
+
+    async function handleLogout() {
+      closeChat();
+      await auth.signOut();
+      showToast("Logged out");
+    }
+
+    function shareProfile() {
+      if (!currentUser) return;
+      const link = `${window.location.origin}${window.location.pathname}?u=${currentUser.uid}`;
+      if (navigator.clipboard?.writeText) {
+        navigator.clipboard.writeText(link).then(() => showToast("✅ Shop link copied!"));
+      } else {
+        prompt("Copy this link:", link);
+      }
+    }
+
+    // Events
+    document.getElementById("loginBtn").addEventListener("click", handleLogin);
+    document.getElementById("signupBtn").addEventListener("click", handleSignup);
+    document.getElementById("logoutBtn").addEventListener("click", handleLogout);
+    document.getElementById("loginHeaderBtn").addEventListener("click", () => showAuth("login"));
+    document.getElementById("myProfileBtn").addEventListener("click", () => {
+      if (currentUser) {
+        window.history.replaceState({}, "", `?u=${currentUser.uid}`);
+        loadProfile(currentUser.uid);
+      }
+    });
+    document.getElementById("showSignup").addEventListener("click", () => showAuth("signup"));
+    document.getElementById("showLogin").addEventListener("click", () => showAuth("login"));
+
+    document.getElementById("showAddBtn").addEventListener("click", () => {
+      document.getElementById("addItemForm").classList.add("active");
+      document.getElementById("showAddBtn").style.display = "none";
+    });
+    document.getElementById("cancelItemBtn").addEventListener("click", () => {
+      document.getElementById("addItemForm").classList.remove("active");
+      document.getElementById("showAddBtn").style.display = "block";
+    });
+    document.getElementById("saveItemBtn").addEventListener("click", saveItem);
+    document.getElementById("shareBtn").addEventListener("click", shareProfile);
+
+    document.getElementById("confirmClaimBtn").addEventListener("click", confirmClaim);
+    document.getElementById("cancelClaimBtn").addEventListener("click", () => {
+      document.getElementById("claimModal").classList.remove("active");
+    });
+
+    document.getElementById("closeChatBtn").addEventListener("click", closeChat);
+    document.getElementById("chatSendBtn").addEventListener("click", sendChatMessage);
+    document.getElementById("chatInput").addEventListener("keydown", e => {
+      if (e.key === "Enter") sendChatMessage();
+    });
+
+    document.getElementById("loginPassword").addEventListener("keydown", e => {
+      if (e.key === "Enter") handleLogin();
+    });
+    document.getElementById("signupPassword").addEventListener("keydown", e => {
+      if (e.key === "Enter") handleSignup();
+    });
+
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => switchView(btn.dataset.view));
+    });
+
+    document.getElementById("searchInput").addEventListener("input", e => {
+      const val = e.target.value;
+      clearTimeout(searchTimeout);
+      if (currentView === "items") renderItems(val);
+      else if (currentView === "chats") renderChats(val);
+      else if (currentView === "users") searchTimeout = setTimeout(() => searchUsers(val), 350);
+    });
+
+    // INIT
+    auth.onAuthStateChanged(async (user) => {
+      currentUser = user;
+
+      if (user) {
+        await loadBlockedUsers();
+      } else {
+        blockedUsers.clear();
+      }
+
+      const urlUserId = new URLSearchParams(window.location.search).get("u");
+
+      if (urlUserId) {
+        await loadProfile(urlUserId);
+      } else if (user) {
+        window.history.replaceState({}, "", `?u=${user.uid}`);
+        await loadProfile(user.uid);
+      } else {
+        showAuth("login");
+      }
+    });
+  </script>
+</body>
+</html>
