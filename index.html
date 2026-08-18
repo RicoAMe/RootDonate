@@ -946,6 +946,15 @@
           `;
         }
 
+        // Flag button ONLY appears on items that have a price (money)
+        const hasMoney = item.price && item.price.trim() !== "";
+        const flagButton = hasMoney
+          ? `<button class="danger-btn flag-item-btn"
+               data-id="${item.id}" data-title="${escapeHtml(item.title)}" data-owner="${viewingUserId}">
+               Flag
+             </button>`
+          : "";
+
         const actionsHtml = isOwnProfile
           ? `<button class="danger-btn delete-btn" data-id="${item.id}">Delete</button>`
           : `
@@ -955,11 +964,7 @@
               data-id="${item.id}" data-title="${escapeHtml(item.title)}" data-owner="${viewingUserId}">
               Report
             </button>
-            <button class="danger-btn block-btn"
-              data-uid="${viewingUserId}"
-              data-email="${escapeHtml(profile.email || '')}">
-              Block
-            </button>
+            ${flagButton}
           `;
 
         card.innerHTML = `
@@ -983,6 +988,9 @@
       list.querySelectorAll(".report-btn").forEach(btn => btn.addEventListener("click", () => reportUser(btn.dataset.uid, btn.dataset.email)));
       list.querySelectorAll(".block-btn").forEach(btn => btn.addEventListener("click", () => blockUser(btn.dataset.uid, btn.dataset.email)));
       list.querySelectorAll(".report-item-btn").forEach(btn => {
+        btn.addEventListener("click", () => reportItem(btn.dataset.id, btn.dataset.title, btn.dataset.owner));
+      });
+      list.querySelectorAll(".flag-item-btn").forEach(btn => {
         btn.addEventListener("click", () => reportItem(btn.dataset.id, btn.dataset.title, btn.dataset.owner));
       });
     }
@@ -1395,3 +1403,4 @@
   </script>
 </body>
 </html>
+```​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
