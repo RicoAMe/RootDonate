@@ -72,6 +72,16 @@
       word-break: break-word;
     }
 
+    /* Date & Time - now underlined */
+    #currentDateTime {
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-top: 6px;
+      opacity: 0.85;
+      letter-spacing: 0.2px;
+      text-decoration: underline;   /* ← underlined */
+    }
+
     .header-actions {
       position: absolute;
       top: 12px;
@@ -389,6 +399,7 @@
     <div class="header">
       <h1>Root Donate</h1>
       <div class="profile-name" id="profileName">Loading...</div>
+      <div id="currentDateTime"></div>
       <div class="header-actions">
         <button class="header-btn" id="myProfileBtn" style="display:none;">My Profile</button>
         <button class="header-btn" id="logoutBtn" style="display:none;">Logout</button>
@@ -568,6 +579,24 @@
       div.textContent = text;
       return div.innerHTML;
     }
+
+    // Live Date & Time (underlined)
+    function updateDateTime() {
+      const now = new Date();
+      const options = {
+        weekday: 'short',
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      };
+      document.getElementById("currentDateTime").textContent = now.toLocaleString(undefined, options);
+    }
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
 
     function showAuth(mode = "login") {
       document.getElementById("loadingText").style.display = "none";
@@ -946,7 +975,6 @@
           `;
         }
 
-        // Flag button ONLY appears on items that have a price (money)
         const hasMoney = item.price && item.price.trim() !== "";
         const flagButton = hasMoney
           ? `<button class="danger-btn flag-item-btn"
@@ -955,8 +983,12 @@
              </button>`
           : "";
 
+        // Own items now have both Close + Delete (both do the same thing)
         const actionsHtml = isOwnProfile
-          ? `<button class="danger-btn delete-btn" data-id="${item.id}">Delete</button>`
+          ? `
+            <button class="danger-btn close-btn" data-id="${item.id}">Close</button>
+            <button class="danger-btn delete-btn" data-id="${item.id}">Delete</button>
+          `
           : `
             <button class="btn primary-btn claim-btn" style="padding:11px 18px;font-size:0.9rem;width:auto;"
               data-id="${item.id}" data-title="${escapeHtml(item.title)}">Make Offer</button>
@@ -977,7 +1009,11 @@
         list.appendChild(card);
       });
 
-      list.querySelectorAll(".delete-btn").forEach(btn => btn.addEventListener("click", () => deleteItem(btn.dataset.id)));
+      // Both Close and Delete use the same function
+      list.querySelectorAll(".close-btn, .delete-btn").forEach(btn => {
+        btn.addEventListener("click", () => deleteItem(btn.dataset.id));
+      });
+
       list.querySelectorAll(".claim-btn").forEach(btn => btn.addEventListener("click", () => openClaimModal(btn.dataset.id, btn.dataset.title)));
       list.querySelectorAll(".open-chat").forEach(btn => {
         btn.addEventListener("click", () => {
@@ -1180,13 +1216,14 @@
       }
     }
 
+    // Close & Delete both use this (same action)
     async function deleteItem(itemId) {
-      if (!confirm("Delete this item?")) return;
+      if (!confirm("Close / Delete this item?")) return;
       try {
         await db.collection("users").doc(currentUser.uid).collection("items").doc(itemId).delete();
-        showToast("Item deleted");
+        showToast("Item closed / deleted");
       } catch (err) {
-        showToast("Failed to delete");
+        showToast("Failed to close item");
       }
     }
 
@@ -1403,4 +1440,3 @@
   </script>
 </body>
 </html>
-```​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​
