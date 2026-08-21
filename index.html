@@ -79,7 +79,7 @@
       margin-top: 6px;
       opacity: 0.85;
       letter-spacing: 0.2px;
-      text-decoration: underline;   /* ← underlined */
+      text-decoration: underline;
     }
 
     .header-actions {
@@ -425,7 +425,7 @@
       </div>
 
       <div class="main-ui" id="mainUI">
-        <div class="own-badge" id="ownBadge">This is your profile – add items you want to sell</div>
+        <div class="own-badge" id="ownBadge">This is your profile – add items you want to donate</div>
 
         <button class="btn danger-btn block-profile-btn" id="blockProfileBtn">
           🚫 Block This User
@@ -446,18 +446,18 @@
         </div>
 
         <div class="view-section active" id="itemsView">
-          <div class="section-title" id="itemsSectionTitle">Items for Sale</div>
+          <div class="section-title" id="itemsSectionTitle">Items Available for Donation</div>
 
           <div class="add-item-form" id="addItemForm">
             <input type="text" id="itemTitle" placeholder="Item name (e.g. iPhone 13)">
-            <input type="text" id="itemPrice" placeholder="Price (e.g. $250 or Make Offer)">
+            <input type="text" id="itemPrice" placeholder="Condition / notes (e.g. Good condition, Free)">
             <textarea id="itemDesc" rows="2" placeholder="Description"></textarea>
             <button class="btn primary-btn" id="saveItemBtn">Add Item</button>
             <button class="btn secondary-btn" id="cancelItemBtn">Cancel</button>
           </div>
 
           <button class="btn primary-btn" id="showAddBtn" style="display:none; margin-bottom:20px;">
-            + Add Item for Sale
+            + Add Item to Donate
           </button>
 
           <div id="itemsList"></div>
@@ -486,12 +486,12 @@
         </div>
 
         <button class="btn secondary-btn" id="shareBtn" style="display:none; margin-top:16px;">
-          🔗 Share My Shop Link
+          🔗 Share My Donation Page Link
         </button>
 
         <div class="footer-warning">
           ⚠ Meet at your own risk.<br>
-          Always meet in a public place. Root Donate is not responsible for any meetings or transactions.
+          Always meet in a public place. Root Donate is not responsible for any meetings or donations.
         </div>
       </div>
 
@@ -501,13 +501,13 @@
 
   <div class="modal-overlay" id="claimModal">
     <div class="modal">
-      <h3>Make an Offer</h3>
+      <h3>Request this Item</h3>
       <p style="color:#aaa;font-size:0.9rem;margin-bottom:14px;" id="claimItemName"></p>
       <input type="email" id="claimEmail" placeholder="Your email">
-      <textarea id="claimMessage" rows="2" placeholder="Your offer..." style="margin-top:10px;"></textarea>
+      <textarea id="claimMessage" rows="2" placeholder="Your message / reason..." style="margin-top:10px;"></textarea>
       <div class="modal-actions">
         <button class="btn secondary-btn" id="cancelClaimBtn">Cancel</button>
-        <button class="btn primary-btn" id="confirmClaimBtn">Send Offer</button>
+        <button class="btn primary-btn" id="confirmClaimBtn">Send Request</button>
       </div>
     </div>
   </div>
@@ -720,7 +720,7 @@
     async function blockUser(targetUid, targetEmail = "") {
       if (!currentUser || !targetUid) return;
       if (targetUid === currentUser.uid) return showToast("You cannot block yourself");
-      if (!confirm(`Block this user?\nYou will no longer see their profile, items, offers or chats.`)) return;
+      if (!confirm(`Block this user?\nYou will no longer see their profile, items, requests or chats.`)) return;
 
       try {
         await db.collection("users").doc(currentUser.uid).collection("blocked").doc(targetUid).set({
@@ -818,7 +818,7 @@
       document.getElementById("itemsList").innerHTML = `
         <div class="empty-state" style="color:var(--danger);">
           🚫 ${escapeHtml(message)}<br><br>
-          You cannot view their items, offers or chat with them.
+          You cannot view their items, requests or chat with them.
         </div>
       `;
 
@@ -879,7 +879,7 @@
         document.getElementById("showAddBtn").style.display = isOwnProfile ? "block" : "none";
         document.getElementById("shareBtn").style.display = isOwnProfile ? "block" : "none";
         document.getElementById("addItemForm").classList.remove("active");
-        document.getElementById("itemsSectionTitle").textContent = "Items for Sale";
+        document.getElementById("itemsSectionTitle").textContent = "Items Available for Donation";
 
         const blockBtn = document.getElementById("blockProfileBtn");
         if (currentUser && !isOwnProfile) {
@@ -943,7 +943,7 @@
       if (filtered.length === 0) {
         list.innerHTML = `<div class="empty-state">${
           items.length === 0
-            ? (isOwnProfile ? "No items yet.<br>Add something you want to sell!" : "This person hasn't listed any items yet.")
+            ? (isOwnProfile ? "No items yet.<br>Add something you want to donate!" : "This person hasn't listed any items yet.")
             : "No items match your search."
         }</div>`;
         return;
@@ -957,7 +957,7 @@
         if (isOwnProfile && item.offers?.length > 0) {
           offersHtml = `
             <div class="offers-list">
-              <strong style="color:#ccc;">Offers (${item.offers.length}):</strong>
+              <strong style="color:#ccc;">Requests (${item.offers.length}):</strong>
               ${item.offers.map(o => `
                 <div class="offer-item">
                   <div>
@@ -991,7 +991,7 @@
           `
           : `
             <button class="btn primary-btn claim-btn" style="padding:11px 18px;font-size:0.9rem;width:auto;"
-              data-id="${item.id}" data-title="${escapeHtml(item.title)}">Make Offer</button>
+              data-id="${item.id}" data-title="${escapeHtml(item.title)}">Request Item</button>
             <button class="danger-btn report-item-btn"
               data-id="${item.id}" data-title="${escapeHtml(item.title)}" data-owner="${viewingUserId}">
               Report
@@ -1070,7 +1070,7 @@
             <div class="user-name">${escapeHtml(u.name || "User")}</div>
             <div class="user-handle">${escapeHtml(u.handle || "")}</div>
             <div class="user-actions">
-              <button class="btn primary-btn view-profile-btn" data-uid="${doc.id}">View Shop</button>
+              <button class="btn primary-btn view-profile-btn" data-uid="${doc.id}">View Profile</button>
               <button class="danger-btn report-from-search-btn"
                 data-uid="${doc.id}"
                 data-email="${escapeHtml(u.email || "")}">Report</button>
@@ -1207,7 +1207,7 @@
         document.getElementById("itemDesc").value = "";
         document.getElementById("addItemForm").classList.remove("active");
         document.getElementById("showAddBtn").style.display = "block";
-        showToast("✅ Item listed!");
+        showToast("✅ Item listed for donation!");
       } catch (err) {
         showToast("Failed to add item");
       } finally {
@@ -1234,7 +1234,7 @@
         return;
       }
       pendingClaim = { itemId, title };
-      document.getElementById("claimItemName").textContent = `Offering on: ${title}`;
+      document.getElementById("claimItemName").textContent = `Requesting: ${title}`;
       document.getElementById("claimEmail").value = currentUser.email || "";
       document.getElementById("claimMessage").value = "";
       document.getElementById("claimModal").classList.add("active");
@@ -1244,7 +1244,7 @@
       const email = document.getElementById("claimEmail").value.trim();
       const message = document.getElementById("claimMessage").value.trim();
       if (!email || !email.includes("@")) return showToast("Valid email required");
-      if (containsScam(message)) return showToast("Offer blocked: scam language");
+      if (containsScam(message)) return showToast("Request blocked: scam language");
 
       const btn = document.getElementById("confirmClaimBtn");
       btn.disabled = true;
@@ -1278,13 +1278,13 @@
         }
 
         document.getElementById("claimModal").classList.remove("active");
-        showToast("✅ Offer sent!");
+        showToast("✅ Request sent!");
         openChat(chatRef.id, email);
       } catch (err) {
-        showToast("Failed to send offer");
+        showToast("Failed to send request");
       } finally {
         btn.disabled = false;
-        btn.textContent = "Send Offer";
+        btn.textContent = "Send Request";
       }
     }
 
@@ -1355,7 +1355,7 @@
       if (!currentUser) return;
       const link = `${window.location.origin}${window.location.pathname}?u=${currentUser.uid}`;
       if (navigator.clipboard?.writeText) {
-        navigator.clipboard.writeText(link).then(() => showToast("✅ Shop link copied!"));
+        navigator.clipboard.writeText(link).then(() => showToast("✅ Donation page link copied!"));
       } else {
         prompt("Copy this link:", link);
       }
