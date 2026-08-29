@@ -933,12 +933,6 @@
            </button>`
         : "";
 
-      const shareButton = `
-        <button class="share-btn share-item-btn ${extraClass}" data-id="${item.id}" data-title="${escapeHtml(item.title)}">
-          Share
-        </button>
-      `;
-
       if (isOwnProfile) {
         return `
           ${shareButton}
