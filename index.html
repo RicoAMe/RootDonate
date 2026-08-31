@@ -908,7 +908,7 @@
       const title = profile.name || profile.handle || "Root Donate";
       try {
         if (navigator.share) {
-          await navigator.share({ title, text: "Hardware on Root Donate", url });
+          await navigator.share({ title, text: url });
         } else {
           await navigator.clipboard.writeText(url);
           showToast("Link copied");
