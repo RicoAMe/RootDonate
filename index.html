@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CB — local chat</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a222c;
+      --line: #2c3642;
+      --text: #e8eef4;
+      --muted: #8b9aab;
+      --accent: #7eb0d6;
+      --you: #243044;
+      --bot: #1c2834;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+    header h1 { font-size: 16px; margin: 0; font-weight: 600; }
+    header span { color: var(--muted); font-size: 12px; }
+    #log {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 18px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .msg {
+      max-width: 720px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .you { align-self: flex-end; background: var(--you); }
+    .cb { align-self: flex-start; background: var(--bot); border: 1px solid var(--line); }
+    form {
+      display: flex;
+      gap: 8px;
+      padding: 12px 18px 16px;
+      border-top: 1px solid var(--line);
+    }
+    input[type="text"] {
+      flex: 1;
+      background: var(--panel);
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 15px;
+    }
+    button {
+      background: var(--accent);
+      color: #0b1218;
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    button:disabled { opacity: 0.5; cursor: wait; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>CB</h1>
+    <span id="status">Internet lookup on · memory kept in this browser</span>
+  </header>
+  <div id="log"></div>
+  <form id="form">
+    <input id="box" type="text" autocomplete="off" autofocus placeholder="Type as you would in a normal conversation">
+    <button id="go" type="submit">Send</button>
+  </form>
+<script>
+const MEM_KEY = "cb_memory_v1";
+const SNIPPET_LIMIT = 380;
+const MAX_LOOKUPS = 40;
+
+const ACK = ["Understood.", "That makes sense.", "Got it.", "Noted.", "Thanks for sharing that."];
+const PROMPTS = [
+  "What would you like to talk about?",
+  "Go on — I'm listening.",
+  "Interesting. Tell me a bit more.",
+  "Fair enough. What else is on your mind?"
+];
+const GREETS = ["Hello.", "Hi there.", "Good to see you."];
+const HOWAMI = [
+  "I'm well, thank you. How are you?",
+  "Doing fine. How about you?",
+  "All good on my side. What's new with you?"
+];
+const QREPLIES = [
+  "I'm not sure I have a good answer. What do you think?",
+  "That's a fair question. How would you approach it?",
+  "I don't know enough to be definite. What's your take?"
+];
+const SMALL = new Set([
+  "hello","hi","hey","yo","hiya","howdy","bye","goodbye","quit","exit",
+  "how are you","how are you?","how's it going","how's it going?",
+  "how are you doing","how are you doing?","what's up","whats up","sup",
+  "who are you","what is your name","what's your name",
+  "who am i","what do you know about me","what do you remember",
+  "thank you","thanks","thanks a lot","cheers",
+  "good morning","good afternoon","good evening","good night"
+]);
+const AUTOCORRECT = {
+  onlie:"online", onlin:"online", onlne:"online", onine:"online",
+  memmory:"memory", memroy:"memory", remeber:"remember", rember:"remember",
+  foget:"forget", helpp:"help", helo:"hello", hallo:"hello",
+  whats:"what's", wats:"what's", wat:"what", teh:"the",
+  defin:"define", explane:"explain"
+};
+const PATTERNS = [
+  [/\b(?:my name is|call me|i'm called)\s+([a-z][\w .'-]{0,40})/i, "name"],
+  [/\bi live in\s+([a-z][\w ,.'-]{0,50})/i, "location"],
+  [/\bi(?:'m| am) from\s+([a-z][\w ,.'-]{0,50})/i, "from"],
+  [/\bi work (?:as|at|for)\s+([a-z][\w ,.'-]{0,50})/i, "work"],
+  [/\bmy job is\s+([a-z][\w ,.'-]{0,50})/i, "job"],
+  [/\bi (?:like|love|enjoy)\s+(.{1,50})$/i, "likes"],
+  [/\bi (?:hate|dislike|can't stand)\s+(.{1,50})$/i, "dislikes"]
+];
+
+function coerceOnline(v) {
+  if (typeof v === "boolean") return v;
+  if (typeof v === "string") {
+    const s = v.toLowerCase().trim();
+    if (["off", "false", "0", "no", "disabled"].includes(s)) return false;
+    if (["on", "true", "1", "yes", "enabled"].includes(s)) return true;
+  }
+  if (v === 0 || v === 1) return !!v;
+  return true;
+}
+
+function inferKindAndValue(rawText) {
+  const text = String(rawText || "").replace(/\s+/g, " ").trim();
+  const m = text.match(/^([a-z][a-z0-9_-]{0,24})\s*:\s*(.+)$/i);
+  if (m) return { kind: m[1].toLowerCase(), value: m[2].trim(), text: m[1].toLowerCase() + ": " + m[2].trim() };
+  return { kind: "note", value: text, text: "note: " + text };
+}
+
+function normalizeNode(item, index) {
+  if (item == null) return null;
+  if (typeof item === "string" || typeof item === "number") {
+    const parsed = inferKindAndValue(String(item));
+    if (!parsed.value) return null;
+    return { id: index + 1, kind: parsed.kind, value: parsed.value, text: parsed.text, saved: stamp() };
+  }
+  if (typeof item !== "object") return null;
+
+  const kindRaw = item.kind || item.type || item.k || "";
+  const valueRaw = item.value != null ? item.value
+    : item.val != null ? item.val
+    : item.fact != null ? item.fact
+    : item.content != null ? item.content
+    : item.body != null ? item.body
+    : item.snippet != null ? item.snippet
+    : item.note != null ? item.note
+    : "";
+  const textRaw = item.text || item.label || "";
+
+  let kind = String(kindRaw || "").toLowerCase().trim();
+  let value = String(valueRaw || "").replace(/\s+/g, " ").trim();
+  let text = String(textRaw || "").replace(/\s+/g, " ").trim();
+
+  if (!value && text) {
+    const parsed = inferKindAndValue(text);
+    if (!kind) kind = parsed.kind;
+    value = parsed.value;
+    text = parsed.text;
+  }
+  if (!kind) kind = "note";
+  if (!value) return null;
+  if (!text) text = kind + ": " + value;
+
+  const node = {
+    id: Number.isFinite(item.id) ? item.id : index + 1,
+    kind,
+    value,
+    text,
+    saved: item.saved || item.updated || item.ts || stamp()
+  };
+  if (kind === "lookup") {
+    node.key = item.key || lookupKey(item.query || value);
+    if (item.query) node.query = String(item.query);
+  }
+  return node;
+}
+
+function collectRawNodes(data) {
+  if (Array.isArray(data)) return data;
+  if (!data || typeof data !== "object") return [];
+  if (Array.isArray(data.nodes)) return data.nodes;
+  if (Array.isArray(data.memory)) return data.memory;
+  if (Array.isArray(data.memories)) return data.memories;
+  if (Array.isArray(data.facts)) return data.facts;
+  if (Array.isArray(data.items)) return data.items;
+  return [];
+}
+
+function normalizeStore(data) {
+  const rawNodes = collectRawNodes(data);
+  const nodes = [];
+  for (let i = 0; i < rawNodes.length; i++) {
+    const n = normalizeNode(rawNodes[i], nodes.length);
+    if (n) nodes.push(n);
+  }
+  nodes.forEach((n, i) => { n.id = i + 1; });
+  const online = data && typeof data === "object" && !Array.isArray(data)
+    ? coerceOnline(data.online)
+    : true;
+  return { online, nodes };
+}
+
+function loadStore() {
+  try {
+    const raw = localStorage.getItem(MEM_KEY);
+    if (!raw) return { online: true, nodes: [] };
+    const data = JSON.parse(raw);
+    const store = normalizeStore(data);
+    saveStore(store);
+    return store;
+  } catch {
+    return { online: true, nodes: [] };
+  }
+}
+function saveStore(store) {
+  const clean = normalizeStore(store);
+  localStorage.setItem(MEM_KEY, JSON.stringify(clean));
+}
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function stamp() { return new Date().toISOString().slice(0, 19).replace("T", " "); }
+
+function autocorrect(text) {
+  return text.split(/\s+/).map(part => {
+    let raw = part, punct = "";
+    while (raw && "?!,.;:".includes(raw.slice(-1))) {
+      punct = raw.slice(-1) + punct;
+      raw = raw.slice(0, -1);
+    }
+    const key = raw.toLowerCase();
+    if (AUTOCORRECT[key]) {
+      let r = AUTOCORRECT[key];
+      if (raw[0] && raw[0] === raw[0].toUpperCase()) r = r[0].toUpperCase() + r.slice(1);
+      return r + punct;
+    }
+    return part;
+  }).join(" ");
+}
+
+function nodeByKind(store, kind) {
+  return store.nodes.find(n => n.kind === kind) || null;
+}
+function valueOf(store, kind) {
+  const n = nodeByKind(store, kind);
+  return n ? n.value : null;
+}
+function upsert(store, kind, value) {
+  value = String(value || "").replace(/\s+/g, " ").replace(/[ .!?,;:]+$/g, "").trim();
+  if (!value) return false;
+  const text = kind + ": " + value;
+  const existing = nodeByKind(store, kind);
+  if (existing) {
+    if (existing.text.toLowerCase() === text.toLowerCase()) return false;
+    existing.text = text;
+    existing.value = value;
+    existing.saved = stamp();
+  } else {
+    store.nodes.push({ id: store.nodes.length + 1, kind, value, text, saved: stamp() });
+  }
+  saveStore(store);
+  return true;
+}
+
+function forgetNodes(store, query) {
+  const q = query.trim().toLowerCase();
+  if (!q) return "Please tell me which fact to forget.";
+  const keep = [];
+  let dropped = 0;
+  for (const node of store.nodes) {
+    const blob = [node.kind, node.value, node.text].join(" ").toLowerCase();
+    if (blob.includes(q)) dropped += 1;
+    else keep.push(node);
+  }
+  store.nodes = keep.map((n, i) => ({ ...n, id: i + 1 }));
+  saveStore(store);
+  return dropped ? ("Forgotten " + dropped + " saved fact" + (dropped === 1 ? "." : "s.")) : "Nothing matched that description.";
+}
+
+function listNodes(store) {
+  if (!store.nodes.length) return "Nothing stored yet. Just talk naturally and I'll remember the useful bits.";
+  return "Memory (" + store.nodes.length + "):\n" + store.nodes.map(n => "  " + n.text).join("\n");
+}
+
+function autoLearn(store, text) {
+  if (!text || text.endsWith("?")) return false;
+  let learned = false;
+  for (const [re, kind] of PATTERNS) {
+    const m = text.match(re);
+    if (m) learned = upsert(store, kind, m[1]) || learned;
+  }
+  return learned;
+}
+
+function looksFactual(q) {
+  if (SMALL.has(q) || q.includes("my name") || q.startsWith("who am i")) return false;
+  if (/^(what is|what's|whats|who is|who's|when is|where is|why is|how does|how do|how many|how much|define |explain |what are|who was)/.test(q)) return true;
+  return q.endsWith("?") && /^(what |who |when |where |why |which |how )/.test(q);
+}
+
+function clip(text) {
+  text = String(text || "").replace(/\s+/g, " ").trim();
+  if (text.length <= SNIPPET_LIMIT) return text;
+  return text.slice(0, SNIPPET_LIMIT).replace(/\s+\S*$/, "") + "…";
+}
+
+function lookupKey(query) {
+  return query.toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\b(what|whats|who|when|where|why|how|is|are|was|were|the|a|an|define|explain|please|tell|me|about)\b/g, " ")
+    .replace(/\s+/g, " ").trim();
+}
+
+function findSaved(store, query) {
+  const key = lookupKey(query);
+  if (!key) return null;
+  for (let i = store.nodes.length - 1; i >= 0; i--) {
+    const n = store.nodes[i];
+    if (n.kind !== "lookup") continue;
+    const sk = n.key || lookupKey(n.value || "");
+    if (key === sk || key.includes(sk) || sk.includes(key)) return n.value;
+  }
+  return null;
+}
+
+function keepLookup(store, query, snippet) {
+  const key = lookupKey(query) || query.toLowerCase();
+  if (!key || !snippet) return;
+  let existing = store.nodes.find(n => n.kind === "lookup" && n.key === key);
+  const text = "lookup: " + snippet;
+  if (existing) {
+    existing.value = snippet;
+    existing.text = text;
+    existing.query = query;
+    existing.saved = stamp();
+  } else {
+    store.nodes.push({ id: store.nodes.length + 1, kind: "lookup", key, query, value: snippet, text, saved: stamp() });
+    const lookups = store.nodes.filter(n => n.kind === "lookup");
+    if (lookups.length > MAX_LOOKUPS) {
+      const drop = new Set(lookups.slice(0, lookups.length - MAX_LOOKUPS).map(n => n.id));
+      store.nodes = store.nodes.filter(n => !drop.has(n.id));
+    }
+    store.nodes.forEach((n, i) => n.id = i + 1);
+  }
+  saveStore(store);
+}
+
+function phraseOnline(query, snippet, fromMemory) {
+  snippet = clip(snippet);
+  if (!snippet) return snippet;
+  if (snippet[0] === snippet[0].toLowerCase()) snippet = snippet[0].toUpperCase() + snippet.slice(1);
+  if (!".!?…".includes(snippet.slice(-1))) snippet += ".";
+  const q = query.toLowerCase().replace(/[?!.,]+$/g, "");
+  let openers;
+  if (fromMemory) openers = ["From what we saved earlier: ", "I still have this on file: ", "As noted previously: "];
+  else if (/^(what is|what's|whats|define)/.test(q)) openers = ["In short, ", "The usual answer is this: ", "Here’s a concise picture: "];
+  else if (/^(who is|who's|who was)/.test(q)) openers = ["They are generally described this way: ", "The standard profile is: ", "In brief: "];
+  else openers = ["A clear way to put it: ", "The available summary is: ", "In brief: "];
+  const closer = pick([" Happy to go a little deeper if useful.", " Say if you want that narrowed or expanded.", ""]);
+  return pick(openers) + snippet + closer;
+}
+
+async function wikiSnippet(query) {
+  let cleaned = query.replace(/^(what(?:'s|s| is)|who(?:'s| is| was)|where(?:'s| is)|when(?:'s| is)|define|explain|tell me about)\s+/i, "");
+  cleaned = cleaned.replace(/[ ?!.]+$/g, "") || query;
+  const searchUrl = "https://en.wikipedia.org/w/api.php?action=opensearch&search=" +
+    encodeURIComponent(cleaned) + "&limit=1&namespace=0&format=json&origin=*";
+  const sRes = await fetch(searchUrl);
+  if (!sRes.ok) return null;
+  const payload = await sRes.json();
+  if (!payload || !payload[1] || !payload[1][0]) return null;
+  const title = payload[1][0];
+  const sumUrl = "https://en.wikipedia.org/api/rest_v1/page/summary/" + encodeURIComponent(title);
+  const r = await fetch(sumUrl, { headers: { Accept: "application/json" } });
+  if (!r.ok) return null;
+  const data = await r.json();
+  return data && data.extract ? clip(data.extract) : null;
+}
+
+function whoUser(store) {
+  const labels = { name: "name", location: "lives in", from: "from", work: "works", job: "job", likes: "likes" };
+  const bits = [];
+  for (const [kind, label] of Object.entries(labels)) {
+    const v = valueOf(store, kind);
+    if (v) bits.push(label + " " + v);
+  }
+  if (!bits.length) return "I don't know much about you yet. Feel free to tell me.";
+  return "Here's what I have: " + bits.join("; ") + ".";
+}
+
+function helpText() {
+  return "Just type as you would in a normal chat.\nCommands: nodes  |  forget <text>  |  remember <text>  |  online on|off  |  bye\nOnline answers come from Wikipedia and are kept in this browser.";
+}
+
+function canned(store, q) {
+  if (["bye","goodbye","quit","exit"].includes(q)) {
+    const name = valueOf(store, "name");
+    return "Goodbye" + (name ? ", " + name : "") + ". Take care. You can keep this tab open or close it.";
+  }
+  if (["hello","hi","hey","yo","hiya","howdy"].includes(q)) {
+    const name = valueOf(store, "name");
+    const base = pick(GREETS);
+    return name ? base.replace(/\.$/, "") + " " + name + " — good to have you back." : base;
+  }
+  if (["good morning","good afternoon","good evening"].includes(q)) return q[0].toUpperCase() + q.slice(1) + ". How are you?";
+  if (q === "good night") return "Good night. Sleep well.";
+  if (q.includes("how are you") || q.includes("how's it going") || q.includes("how are you doing")) return pick(HOWAMI);
+  if (["what's up","whats up","sup"].includes(q)) return "Not much. How are you getting on?";
+  if (q.includes("your name") || q === "who are you") return "You can call me CB.";
+  if (["who am i","what do you know about me","what do you remember"].includes(q)) return whoUser(store);
+  if (q.includes("thank")) return "You're welcome.";
+  if (["help","commands","?"].includes(q)) return helpText();
+  if (!q) return "Whenever you're ready.";
+  if (q.endsWith("?")) return pick(QREPLIES);
+  return pick(PROMPTS);
+}
+
+async function reply(store, text) {
+  const raw = autocorrect((text || "").trim());
+  const q = raw.toLowerCase();
+
+  if (["nodes","memory","memories","list nodes"].includes(q)) return listNodes(store);
+  if (q.startsWith("forget ")) return forgetNodes(store, raw.slice(7));
+  if (q.startsWith("remember ")) {
+    upsert(store, "note", raw.slice(9));
+    return "I'll keep that in mind.";
+  }
+  if (["online on","online enable","online enabled"].includes(q)) {
+    store.online = true; saveStore(store); setStatus(store); return "Internet lookup is on.";
+  }
+  if (["online off","online disable","online disabled"].includes(q)) {
+    store.online = false; saveStore(store); setStatus(store); return "Internet lookup is off.";
+  }
+  if (q === "online") return "Internet lookup is " + (store.online ? "on." : "off.");
+  if (["help","commands"].includes(q)) return helpText();
+
+  const learned = autoLearn(store, raw);
+  if (["who am i","what do you know about me","what do you remember"].includes(q)) return whoUser(store);
+
+  if (looksFactual(q)) {
+    const saved = findSaved(store, raw);
+    if (saved) return phraseOnline(raw, saved, true);
+    if (store.online) {
+      try {
+        const snippet = await wikiSnippet(raw);
+        if (snippet) {
+          keepLookup(store, raw, snippet);
+          return phraseOnline(raw, snippet, false);
+        }
+      } catch (err) { /* network */ }
+      return "I checked online and could not find a reliable short answer. If you rephrase it, I will try again.";
+    }
+    return "Internet lookup is off, and I do not have a saved note on that. Type 'online on' if you would like me to look it up.";
+  }
+
+  if (learned) {
+    const name = valueOf(store, "name");
+    if (name && q.includes("name")) return "Nice to meet you, " + name + ".";
+    const location = valueOf(store, "location");
+    if (location && (q.includes("live") || q.includes("from"))) return "Thanks — I'll remember that you live in " + location + ".";
+    return pick(ACK);
+  }
+  return canned(store, q);
+}
+
+const logEl = document.getElementById("log");
+const box = document.getElementById("box");
+const form = document.getElementById("form");
+const go = document.getElementById("go");
+const store = loadStore();
+
+function setStatus(s) {
+  document.getElementById("status").textContent =
+    "Internet lookup " + (s.online ? "on" : "off") + " · memory kept in this browser";
+}
+function addMsg(role, text) {
+  const div = document.createElement("div");
+  div.className = "msg " + (role === "you" ? "you" : "cb");
+  div.textContent = text;
+  logEl.appendChild(div);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+setStatus(store);
+const name = valueOf(store, "name");
+addMsg("cb", "CB is ready. Type naturally, or type help.");
+if (name) addMsg("cb", "Welcome back, " + name + ".");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const line = box.value;
+  if (!line.trim()) return;
+  box.value = "";
+  addMsg("you", line);
+  go.disabled = true;
+  try {
+    const answer = await reply(store, line);
+    addMsg("cb", answer);
+  } catch (err) {
+    addMsg("cb", "Something went wrong looking that up. Please try again.");
+  }
+  go.disabled = false;
+  box.focus();
+});
+</script>
+</body>
+</html>
