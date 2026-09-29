@@ -429,8 +429,8 @@ form.addEventListener("submit", async (e) => {
   addMsg("you", line);
   go.disabled = true;
   try {
-    const answer = await reply(store, line(q));
-    addMsg("cb", answer);
+    const answer = await reply(store, line);
+    addMsg("cb", answer(q));
   } catch (err) {
     addMsg("cb", "Something went wrong looking that up. Please try again.");
   }
