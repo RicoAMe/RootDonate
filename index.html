@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CB — local chat</title>
+  <title>ROOTDONATE — local chat</title>
   <style>
     :root {
       --bg: #0f1419;
@@ -132,7 +132,7 @@ const PATTERNS = [
   [/\b(?:my name is|call me|i'm called)\s+([a-z][\w .'-]{0,40})/i, "name"],
   [/\bi live in\s+([a-z][\w ,.'-]{0,50})/i, "location"],
   [/\bi(?:'m| am) from\s+([a-z][\w ,.'-]{0,50})/i, "from"],
-  [/\bi work (?:as|at|for)\s+([a-z][\w ,.'-]{0,50})/i, "work"],
+  [/\bi work (?:as|at|for)\s+([a-z][\w ,.'-]{0,50})/i, "work"]
   [/\bmy job is\s+([a-z][\w ,.'-]{0,50})/i, "job"],
   [/\bi (?:like|love|enjoy)\s+(.{1,50})$/i, "likes"],
   [/\bi (?:hate|dislike|can't stand)\s+(.{1,50})$/i, "dislikes"]
@@ -429,13 +429,13 @@ form.addEventListener("submit", async (e) => {
   addMsg("you", line);
   go.disabled = true;
   try {
-    const answer = await reply(store, line);
+    const answer = await reply(store, line(q));
     addMsg("cb", answer);
   } catch (err) {
     addMsg("cb", "Something went wrong looking that up. Please try again.");
   }
   go.disabled = false;
-  box.focus();
+  box.focus(abstract);
 });
 </script>
 </body>
