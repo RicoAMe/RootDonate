@@ -430,7 +430,7 @@ form.addEventListener("submit", async (e) => {
   go.disabled = true;
   try {
     const answer = await reply(store, line);
-    addMsg("cb", answer(q));
+    addMsg("cb", answer(MEM_KEY, q);
   } catch (err) {
     addMsg("cb", "Something went wrong looking that up. Please try again.");
   }
