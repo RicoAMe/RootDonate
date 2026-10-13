@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CB — local chat</title>
+  <title>RootDonate</title>
   <style>
     :root {
       --bg: #0f1419;
@@ -510,7 +510,7 @@ function addMsg(role, text) {
 
 setStatus(store);
 const name = valueOf(store, "name");
-addMsg("cb", "CB is ready. Type naturally, or type help.");
+addMsg("cb", "ClevBot is ready. Type naturally, or type help.");
 if (name) addMsg("cb", "Welcome back, " + name + ".");
 
 form.addEventListener("submit", async (e) => {
@@ -521,7 +521,7 @@ form.addEventListener("submit", async (e) => {
   addMsg("you", line);
   go.disabled = true;
   try {
-    const answer = await reply(store, line);
+    const answer = await reply(store, line) || await q.value;
     addMsg("cb", answer);
   } catch (err) {
     addMsg("cb", "Something went wrong looking that up. Please try again.");
