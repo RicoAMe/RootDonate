@@ -251,6 +251,7 @@
     }
     body.chat-mode #login-overlay { display: none; }
   </style>
+  <script src="https://www.google.com/recaptcha/enterprise.js?render=6Lez9P8tAAAAAOZ3CyOswTKxjCHyFceQ6yla28IM"></script>
 </head>
 <body>
 
@@ -286,7 +287,13 @@
     <input id="box" type="text" autocomplete="off" autofocus placeholder="Talk naturally — I remember and I look things up">
     <button id="go" type="submit">Send</button>
   </form>
-<script>
+  <script>
+  function onClick(e) {
+    e.preventDefault();
+    grecaptcha.enterprise.ready(async () => {
+      const token = await grecaptcha.enterprise.execute('6Lez9P8tAAAAAOZ3CyOswTKxjCHyFceQ6yla28IM', {action: 'LOGIN'});
+    });
+  }
 const SNIPPET_LIMIT = 420;
 const MAX_LOOKUPS = 50;
 let MEM_KEY = "cb_memory_v2"; // will be set to include guest ID
