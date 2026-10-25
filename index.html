@@ -251,7 +251,6 @@
     }
     body.chat-mode #login-overlay { display: none; }
   </style>
-  <script src="https://www.google.com/recaptcha/enterprise.js?render=6Lez9P8tAAAAAOZ3CyOswTKxjCHyFceQ6yla28IM"></script>
 </head>
 <body>
 
@@ -266,10 +265,6 @@
           I agree to the processing of my chat data and guest ID stored locally in this browser for the purpose of providing this service, in line with GDPR. 
           <a href="#" id="privacy-link">Privacy notice</a>
         </label>
-      </div>
-
-      <div id="recaptcha-wrap">
-        <div class="g-recaptcha" data-sitekey="6Lez9P8tAAAAAOZ3CyOswTKxjCHyFceQ6yla28IM" data-callback="onRecaptchaSuccess" data-expired-callback="onRecaptchaExpired"></div>
       </div>
 
       <button id="guest-btn" type="button" disabled>Continue as Guest</button>
@@ -287,13 +282,7 @@
     <input id="box" type="text" autocomplete="off" autofocus placeholder="Talk naturally — I remember and I look things up">
     <button id="go" type="submit">Send</button>
   </form>
-  <script>
-  function onClick(e) {
-    e.preventDefault();
-    grecaptcha.enterprise.ready(async () => {
-      const token = await grecaptcha.enterprise.execute('6Lez9P8tAAAAAOZ3CyOswTKxjCHyFceQ6yla28IM', {action: 'LOGIN'});
-    });
-  }
+<script>
 const SNIPPET_LIMIT = 420;
 const MAX_LOOKUPS = 50;
 let MEM_KEY = "cb_memory_v2"; // will be set to include guest ID
