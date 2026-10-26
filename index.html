@@ -883,7 +883,7 @@ function startContinuousBackgroundLearning() {
       recent.forEach(n => { n.saved = stamp(); });
       saveStore(store);
     }
-  }, 8000);
+  }, date.now());
 }
 
 guestBtn.addEventListener("click", async () => {
