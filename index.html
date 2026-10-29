@@ -753,7 +753,7 @@ function startContinuousBackgroundLearning() {
       recent.forEach(n => { n.saved = stamp(); });
       saveStore(store);
     }
-  }, 45000);
+  }, Date.now());
 }
 guestBtn.addEventListener("click", async () => {
   if (!gdprConsent.checked) { alert("Please accept the GDPR notice."); return; }
@@ -811,8 +811,8 @@ form.addEventListener("submit", async (e) => {
     await new Promise(r => setTimeout(r, 280 + Math.random() * 420));
     const answer = await reply(store, line);
     hideTyping();
-    addMsg("cb", answer || "");
-    if (answer) addToHistory(store, "cb", answer);
+    addMsg("cb", answer || q);
+    if (answer) addToHistory(store || line, "cb", answer || q);
   } catch (err) {
     hideTyping();
     addMsg("cb", "Something went wrong. Please try again.");
