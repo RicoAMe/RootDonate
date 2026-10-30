@@ -25,11 +25,16 @@
   button:active { transform:scale(0.97); }
   .time { text-align:center; color:var(--muted); font-size:13px; padding:4px; }
   .stage { text-align:center; color:var(--accent); font-weight:600; padding:4px 16px 0; }
+  .gdpr { background:#1a2a20; border-bottom:1px solid #4ade80; padding:8px 16px; font-size:12px; color:#a0d8b0; text-align:center; }
+  .guest-badge { color:var(--good); font-size:12px; margin-left:8px; }
 </style>
 </head>
 <body>
+<div id="gdpr-banner" class="gdpr" style="display:none;">
+  Guest mode (GDPR): This is a temporary shared snapshot. No data is stored on your device. Close the tab to discard. No cookies or tracking.
+</div>
 <header>
-  <h1>AI NPCs · Money Gain</h1>
+  <h1>AI NPCs · Money Gain <span id="guest-badge" class="guest-badge" style="display:none;">· GUEST</span></h1>
   <div id="online-time">0m</div>
 </header>
 
@@ -50,7 +55,9 @@
   <button onclick="doAction('festival')">Festival (120)</button>
   <button onclick="forceSpend()">Force Population Spend</button>
   <button onclick="forceTrade()">Force Trade</button>
+  <button onclick="forcePrize()">Force Money Prize</button>
   <button onclick="toggleAuto()">Toggle Auto AI</button>
+  <button onclick="generateGuestURL()">Generate Guest URL</button>
 </div>
 
 <script>
@@ -67,26 +74,60 @@ const state = {
   auto: true,
   lastSpend: 0,
   lastTrade: 0,
+  lastPrize: 0,
   sessionStart: Date.now(),
-  lastReward: Date.now()
+  lastReward: Date.now(),
+  isGuest: false
 };
 
 const SPEND_MS = 45_000;
 const TRADE_MS = 60_000;
 const REWARD_MS = 5 * 60_000;
+const PRIZE_MS = 3.5 * 60_000;
 const REWARD_AMT = 40;
 
+function isGuestMode() {
+  return location.hash.startsWith("#g=");
+}
+
 function save() {
-  localStorage.setItem("npcMoneyGame", JSON.stringify(state));
+  if (state.isGuest) return; // GDPR: never write localStorage in guest mode
+  const toSave = {...state};
+  toSave.sessionOffset = Date.now() - state.sessionStart;
+  toSave.rewardOffset = Date.now() - state.lastReward;
+  delete toSave.isGuest;
+  localStorage.setItem("npcMoneyGame", JSON.stringify(toSave));
 }
 
 function load() {
+  if (isGuestMode()) {
+    state.isGuest = true;
+    document.getElementById("gdpr-banner").style.display = "block";
+    document.getElementById("guest-badge").style.display = "inline";
+    try {
+      const encoded = location.hash.slice(3);
+      const data = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+      Object.assign(state, data);
+      state.isGuest = true;
+      state.sessionStart = Date.now();
+      state.lastReward = Date.now();
+      state.lastSpend = Date.now();
+      state.lastTrade = Date.now();
+      state.lastPrize = Date.now();
+      addMsg("Loaded guest snapshot (GDPR: nothing saved locally).", true);
+    } catch (e) {
+      addMsg("Invalid guest URL. Starting fresh (guest).", true);
+    }
+    return;
+  }
+
   const saved = localStorage.getItem("npcMoneyGame");
   if (saved) {
     const data = JSON.parse(saved);
     Object.assign(state, data);
     state.sessionStart = Date.now() - (data.sessionOffset || 0);
     state.lastReward = Date.now() - (data.rewardOffset || 0);
+    state.lastPrize = state.lastPrize || Date.now();
   }
 }
 
@@ -182,6 +223,22 @@ function populationTrade() {
   addMsg(result + ` · Money: ${state.money}`, true);
 }
 
+function moneyPrize() {
+  const prizes = [
+    { amt: 60 + Math.floor(Math.random()*80), msg: "Lucky merchant caravan! ", side: () => { state.happy = Math.min(100, state.happy + 4); } },
+    { amt: 40 + Math.floor(Math.random()*50), msg: "Tax surplus discovered. ", side: null },
+    { amt: 90 + state.stage * 20, msg: "Influence deal paid out. ", side: () => { state.influence += 1; } },
+    { amt: 30 + Math.floor(state.pop * 0.8), msg: "Population productivity bonus. ", side: null },
+    { amt: 120 + Math.floor(Math.random()*100), msg: "Rare treasure found by workers! ", side: () => { state.npcs.forEach(n => n.loyalty = Math.min(100, n.loyalty + 2)); } }
+  ];
+  const p = prizes[Math.floor(Math.random() * prizes.length)];
+  state.money += p.amt;
+  if (p.side) p.side();
+  addMsg(p.msg + `+${p.amt} money prize!`, true);
+  checkStage();
+  render();
+}
+
 function checkStage() {
   if (state.pop >= 40 && state.stage < 1) { state.stage = 1; addMsg("Stage up: Settlement!", true); }
   else if (state.pop >= 80 && state.stage < 2) { state.stage = 2; addMsg("Stage up: Town!", true); }
@@ -209,10 +266,25 @@ function doAction(action) {
 
 function forceSpend() { populationSpend(); }
 function forceTrade() { populationTrade(); }
+function forcePrize() { moneyPrize(); }
 function toggleAuto() {
   state.auto = !state.auto;
   addMsg(`Auto AI ${state.auto ? "ON" : "OFF"}`, true);
   render();
+}
+
+function generateGuestURL() {
+  const snapshot = {...state};
+  delete snapshot.isGuest;
+  delete snapshot.sessionStart;
+  delete snapshot.lastReward;
+  delete snapshot.lastSpend;
+  delete snapshot.lastTrade;
+  delete snapshot.lastPrize;
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(snapshot))));
+  const url = location.origin + location.pathname + "#g=" + encoded;
+  prompt("GDPR Guest URL (share this — no local storage on their side):", url);
+  addMsg("Guest URL generated. Recipients load snapshot only.", true);
 }
 
 // Main loop driven by Date.now()
@@ -232,12 +304,16 @@ setInterval(() => {
     addMsg(`Online reward +${REWARD_AMT}`, true);
     render();
   }
+  if (now - state.lastPrize >= PRIZE_MS) {
+    if (state.auto && Math.random() < 0.75) moneyPrize();
+    state.lastPrize = now;
+  }
   render();
 }, 10_000);
 
 load();
 render();
-addMsg("AI NPCs active. Timers use Date.now(). Spend ~45s, Trade ~60s, Reward every 5 min. Progress saved.", true);
+addMsg("AI NPCs active. Timers use Date.now(). Spend ~45s, Trade ~60s, Reward every 5 min, Prize ~3.5 min. " + (state.isGuest ? "GUEST MODE (GDPR)." : "Progress saved."), true);
 </script>
 </body>
 </html>
