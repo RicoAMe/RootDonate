@@ -174,7 +174,8 @@
     <button data-action="build">Build Housing</button>
     <button data-action="festival">Festival</button>
     <button data-action="promote">Promote</button>
-    <button data-action="popspend" style="grid-column:1/-1;">Let Population Spend</button>
+    <button data-action="popspend" style="grid-column:1/-1;">Let Population Act</button>
+    <button data-action="trade" style="grid-column:1/-1;">Force Trade Attempt</button>
   </div>
   <div style="padding:0 16px 8px;color:var(--muted);font-size:13px;">Hierarchy · Population Voice (AI-driven)</div>
   <div class="npc-scroller" id="npcs"></div>
@@ -213,9 +214,13 @@ let uid = null;
 let unsubscribeCities = null;
 let unsubscribeChallenges = null;
 let heartbeatTimer = null;
-let popSpendTimer = null;
+let popActTimer = null;
+let lastPopSpend = 0;
+let lastTrade = 0;
 
 const ONLINE_WINDOW_MS = 8 * 60 * 1000;
+const SPEND_INTERVAL_MS = 45 * 1000;
+const TRADE_INTERVAL_MS = 60 * 1000;
 
 const AUTOCORRECT = {
   teh: "the", recieve: "receive", seperate: "separate", occured: "occurred",
@@ -258,7 +263,9 @@ const state = {
   name: "Your City",
   x: 35 + Math.random() * 30,
   y: 35 + Math.random() * 30,
-  autoPopSpend: true
+  autoPopAct: true,
+  lastPopSpend: 0,
+  lastTrade: 0
 };
 
 const mapEl = document.getElementById("map");
@@ -331,9 +338,13 @@ async function startOnline() {
       x: data.x ?? state.x,
       y: data.y ?? state.y,
       npcs: data.npcs || state.npcs,
-      autoPopSpend: data.autoPopSpend !== false
+      autoPopAct: data.autoPopAct !== false,
+      lastPopSpend: data.lastPopSpend || 0,
+      lastTrade: data.lastTrade || 0
     });
   }
+  lastPopSpend = state.lastPopSpend || 0;
+  lastTrade = state.lastTrade || 0;
   await saveCity();
 
   if (unsubscribeCities) unsubscribeCities();
@@ -364,14 +375,26 @@ async function startOnline() {
   if (heartbeatTimer) clearInterval(heartbeatTimer);
   heartbeatTimer = setInterval(() => { if (uid) saveCity(); }, 2 * 60 * 1000);
 
-  if (popSpendTimer) clearInterval(popSpendTimer);
-  if (state.autoPopSpend) {
-    popSpendTimer = setInterval(populationSpend, 45 * 1000); // every 45s
+  if (popActTimer) clearInterval(popActTimer);
+  if (state.autoPopAct) {
+    popActTimer = setInterval(() => {
+      const now = Date.now();
+      if (now - lastPopSpend >= SPEND_INTERVAL_MS) {
+        populationSpend();
+        lastPopSpend = now;
+        state.lastPopSpend = now;
+      }
+      if (now - lastTrade >= TRADE_INTERVAL_MS) {
+        populationTrade();
+        lastTrade = now;
+        state.lastTrade = now;
+      }
+    }, 10 * 1000);
   }
 
   updateResumeUrl();
   renderCity();
-  addMsg("system", "Online. Population (AI NPCs) can spend money. Map markers grow with population.");
+  addMsg("system", "Online. Population AI NPCs spend and trade on real time (Date.now()). Map markers grow with population.");
 }
 
 function saveCity() {
@@ -386,7 +409,9 @@ function saveCity() {
     x: state.x,
     y: state.y,
     npcs: state.npcs,
-    autoPopSpend: state.autoPopSpend,
+    autoPopAct: state.autoPopAct,
+    lastPopSpend: state.lastPopSpend || 0,
+    lastTrade: state.lastTrade || 0,
     updated: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true }).catch(err => console.warn("Save failed", err));
 }
@@ -599,28 +624,28 @@ function addMsg(who, text) {
 function npcReply(npc) {
   const stage = state.stages[state.stage] || "Outpost";
   const mood = state.happy >= 70 ? "content" : state.happy >= 45 ? "restless" : "unhappy";
-  const onlineCount = allCities.filter(c => c.yours || isOnline(c.updated)).length;
+  const onlineCount = allCities.filter(c => !c.yours && isOnline(c.updated)).length;
 
   const voice = {
     pragmatic: [
-      `Advisor: Happiness ${state.happy} (${mood}). Stage ${stage}. Money ${state.money}. We should spend wisely on growth.`,
-      `Only ${onlineCount} cities online. Population wants steady expansion.`,
-      `Pop ${state.pop}. Practical path: build when we can afford it.`
+      `Advisor: Happiness ${state.happy} (${mood}). Stage ${stage}. Money ${state.money}. Trade when profitable.`,
+      `Online trade partners: ${onlineCount}. Population supports steady growth.`,
+      `Pop ${state.pop}. Practical path includes trading for income.`
     ],
     greedy: [
-      `Merchant: Money ${state.money}. Low competition (${onlineCount} online). Invest in growth for more trade.`,
-      `Stage ${stage}. Population will spend if it increases future income.`,
-      `Happiness ${state.happy} secondary. Let’s expand housing when profitable.`
+      `Merchant: Money ${state.money}. ${onlineCount} cities online — good trading conditions.`,
+      `Stage ${stage}. Let’s trade hard and grow the treasury.`,
+      `Happiness ${state.happy} secondary. Profit from trades first.`
     ],
     idealistic: [
-      `Citizen lead: People feel ${mood} (happy ${state.happy}). They want festivals and better living.`,
-      `Pop ${state.pop} in a ${stage}. The voice of the people supports spending on quality of life.`,
-      `We grow stronger together. Online cities: ${onlineCount}.`
+      `Citizen lead: People feel ${mood} (happy ${state.happy}). Fair trade helps everyone.`,
+      `Pop ${state.pop} in a ${stage}. The people support honest trading.`,
+      `Online partners: ${onlineCount}. We grow stronger through exchange.`
     ],
     blunt: [
-      `Worker: Just spend the money and build. Happy ${state.happy}, pop ${state.pop}, stage ${stage}.`,
-      `If money is there, housing goes up. No more talking.`,
-      `Online count ${onlineCount}. Keep the city growing.`
+      `Worker: Trade if it makes money. Happy ${state.happy}, pop ${state.pop}, stage ${stage}.`,
+      `If there’s profit, take the deal. No more talking.`,
+      `Online count ${onlineCount}. Keep the city growing and trading.`
     ]
   };
 
@@ -628,9 +653,8 @@ function npcReply(npc) {
   return `${npc.name}: ${pool[Math.floor(Math.random() * pool.length)]}`;
 }
 
-// AI-driven population spending
 function populationSpend() {
-  if (!state.autoPopSpend || state.money < 80) return;
+  if (!state.autoPopAct || state.money < 80) return;
 
   const npc = state.npcs[Math.floor(Math.random() * state.npcs.length)];
   let action = null;
@@ -668,20 +692,63 @@ function populationSpend() {
     state.happy = Math.min(100, state.happy + 12);
   } else if (action === "promote") {
     state.influence += 2;
-    state.npcs[state.selected].loyalty = Math.min(100, state.npcs[state.selected].loyalty + 5);
   }
 
   checkStage();
   saveCity();
   renderCity();
   addMsg("system", msg + ` (Money left: ${state.money})`);
-  // Force map refresh if viewing map
   if (document.getElementById("map-view").classList.contains("active")) renderMap();
+}
+
+function populationTrade() {
+  if (!state.autoPopAct) return;
+
+  const onlineOthers = allCities.filter(c => !c.yours && isOnline(c.updated));
+  if (onlineOthers.length === 0) {
+    addMsg("system", "No other cities online to trade with.");
+    return;
+  }
+
+  const target = onlineOthers[Math.floor(Math.random() * onlineOthers.length)];
+  const npc = state.npcs.find(n => n.personality === "greedy") || state.npcs[0];
+
+  const myPower = state.influence + Math.floor(state.pop / 15) + state.stage * 3 + Math.floor(Math.random() * 6);
+  const theirPower = (target.influence || 5) + Math.floor((target.pop || 10) / 15) + (target.stage || 0) * 3 + Math.floor(Math.random() * 6);
+
+  let profit = 0;
+  let resultMsg = "";
+
+  if (myPower > theirPower) {
+    profit = 40 + Math.floor(Math.random() * 80) + state.influence * 2 + state.stage * 10;
+    resultMsg = `${npc.name} successfully traded with ${target.name || "a city"}. Profit: +${profit}.`;
+    state.influence = Math.min(50, state.influence + 1);
+  } else if (myPower > theirPower - 4) {
+    profit = 15 + Math.floor(Math.random() * 30);
+    resultMsg = `${npc.name} made a modest trade with ${target.name || "a city"}. Profit: +${profit}.`;
+  } else {
+    profit = -(10 + Math.floor(Math.random() * 25));
+    resultMsg = `${npc.name} tried to trade with ${target.name || "a city"} but got a bad deal. Loss: ${profit}.`;
+    state.happy = Math.max(10, state.happy - 2);
+  }
+
+  state.money = Math.max(0, state.money + profit);
+  saveCity();
+  renderCity();
+  addMsg("system", resultMsg + ` Money now: ${state.money}`);
 }
 
 function doAction(action) {
   if (action === "popspend") {
     populationSpend();
+    lastPopSpend = Date.now();
+    state.lastPopSpend = lastPopSpend;
+    return;
+  }
+  if (action === "trade") {
+    populationTrade();
+    lastTrade = Date.now();
+    state.lastTrade = lastTrade;
     return;
   }
   if (action === "tax") {
