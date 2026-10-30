@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Open World City · Online PvP</title>
+<title>Open World City · Online Only</title>
 <style>
   :root {
     --bg: #070a0e; --surface: #121820; --card: #1a2230; --line: #2c3a4d;
@@ -48,9 +48,7 @@
   .stat-card .label { font-size: 11px; color: var(--muted); }
   .stat-card .value { font-size: 15px; font-weight: 650; }
 
-  .rename-row {
-    display: flex; gap: 8px; padding: 0 16px 12px;
-  }
+  .rename-row { display: flex; gap: 8px; padding: 0 16px 12px; }
   .rename-row input {
     flex: 1; background: var(--card); color: var(--text); border: 1px solid var(--line);
     border-radius: 12px; padding: 10px 12px; font-size: 14.5px;
@@ -125,7 +123,7 @@
 <div id="login-overlay">
   <div id="login-card">
     <h2>Open World City</h2>
-    <p>Continue as a guest. Turn-based PvP is open to anyone.</p>
+    <p>Continue as a guest. Only online cities appear on the map.</p>
     <div id="gdpr-row">
       <input type="checkbox" id="gdpr-consent" checked>
       <label for="gdpr-consent">
@@ -212,6 +210,9 @@ const db = firebase.firestore();
 let uid = null;
 let unsubscribeCities = null;
 let unsubscribeChallenges = null;
+let heartbeatTimer = null;
+
+const ONLINE_WINDOW_MS = 8 * 60 * 1000; // 8 minutes
 
 const AUTOCORRECT = {
   teh: "the", recieve: "receive", seperate: "separate", occured: "occurred",
@@ -234,6 +235,11 @@ function autocorrect(text) {
     }
     return word;
   }).join(" ");
+}
+
+function isOnline(updated) {
+  if (!updated || !updated.toDate) return false;
+  return (Date.now() - updated.toDate().getTime()) < ONLINE_WINDOW_MS;
 }
 
 const state = {
@@ -281,7 +287,7 @@ updateResumeUrl();
 
 privacyLink.onclick = (e) => {
   e.preventDefault();
-  alert("Privacy notice (GDPR)\n\n• Anonymous guest ID, city data, and PvP challenges are stored in Firebase Firestore.\n• Other players can see your public city stats and challenge you.\n• Bookmark the resume URL to keep the same guest identity.\n• No email or password is required.");
+  alert("Privacy notice (GDPR)\n\n• Anonymous guest ID, city data, and PvP challenges are stored in Firebase Firestore.\n• Only currently online cities appear on the map.\n• Bookmark the resume URL to keep the same guest identity.");
 };
 
 guestBtn.onclick = async () => {
@@ -322,9 +328,8 @@ async function startOnline() {
       y: data.y ?? state.y,
       npcs: data.npcs || state.npcs
     });
-  } else {
-    await saveCity();
   }
+  await saveCity(); // mark online immediately
 
   if (unsubscribeCities) unsubscribeCities();
   unsubscribeCities = db.collection("cities").onSnapshot(snap => {
@@ -351,9 +356,15 @@ async function startOnline() {
       if (document.getElementById("pvp-view").classList.contains("active")) renderPvp();
     }, err => console.warn("Challenges listener error", err));
 
+  // Heartbeat so you stay online while the page is open
+  if (heartbeatTimer) clearInterval(heartbeatTimer);
+  heartbeatTimer = setInterval(() => {
+    if (uid) saveCity();
+  }, 2 * 60 * 1000);
+
   updateResumeUrl();
   renderCity();
-  addMsg("system", "Online. You can rename your city on the City tab and remove challenges on the PvP tab.");
+  addMsg("system", "Online. Only cities active in the last 8 minutes appear on the map.");
 }
 
 function saveCity() {
@@ -387,7 +398,12 @@ async function renameCity() {
 
 function renderMap() {
   mapEl.innerHTML = "";
-  allCities.forEach(c => {
+  const onlineCities = allCities.filter(c => c.yours || isOnline(c.updated));
+  if (onlineCities.length === 0) {
+    mapEl.innerHTML = "<div style='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);'>No cities online</div>";
+    return;
+  }
+  onlineCities.forEach(c => {
     const m = document.createElement("div");
     m.className = "city-marker" + (c.yours ? " yours" : "");
     m.style.left = (c.x || 50) + "%";
@@ -562,10 +578,10 @@ function addMsg(who, text) {
 
 function npcReply(npc) {
   const replies = {
-    pragmatic: ["A challenge is coming. Prepare influence.", "Turn-based fights reward patience.", "Keep the treasury healthy."],
-    greedy: ["Winning PvP can bring money.", "Watch the other cities carefully.", "Trade is safer than war."],
-    idealistic: ["We can still negotiate even in conflict.", "Not every challenge needs to be violent.", "Loyalty matters more than force."],
-    blunt: ["Hit them when it's our turn.", "Get stronger first.", "Just build more housing."]
+    pragmatic: ["Only online cities are visible right now.", "Keep active if you want to stay on the map."],
+    greedy: ["Fewer cities online means less competition.", "Good time to grow."],
+    idealistic: ["People come and go. Focus on our own city.", "Alliances are easier when fewer are around."],
+    blunt: ["If they're not online, ignore them.", "Just keep building."]
   };
   const pool = replies[npc.personality] || replies.pragmatic;
   return `${npc.name}: ${pool[Math.floor(Math.random() * pool.length)]}`;
