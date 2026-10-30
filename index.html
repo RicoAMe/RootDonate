@@ -34,7 +34,7 @@
 
   #map { flex: 1; position: relative; background: radial-gradient(circle at 30% 40%, #1a2838 0%, #0a1018 70%); }
   .city-marker {
-    position: absolute; width: 56px; height: 56px; border-radius: 50%;
+    position: absolute; width: 60px; height: 60px; border-radius: 50%;
     background: var(--card); border: 2px solid var(--accent);
     display: flex; align-items: center; justify-content: center; flex-direction: column;
     font-size: 11px; font-weight: 650; text-align: center; cursor: pointer;
@@ -174,7 +174,7 @@
     <button data-action="festival">Festival</button>
     <button data-action="promote">Promote</button>
   </div>
-  <div style="padding:0 16px 8px;color:var(--muted);font-size:13px;">Hierarchy</div>
+  <div style="padding:0 16px 8px;color:var(--muted);font-size:13px;">Hierarchy · Population Voice</div>
   <div class="npc-scroller" id="npcs"></div>
 </div>
 
@@ -212,7 +212,7 @@ let unsubscribeCities = null;
 let unsubscribeChallenges = null;
 let heartbeatTimer = null;
 
-const ONLINE_WINDOW_MS = 8 * 60 * 1000; // 8 minutes
+const ONLINE_WINDOW_MS = 8 * 60 * 1000;
 
 const AUTOCORRECT = {
   teh: "the", recieve: "receive", seperate: "separate", occured: "occurred",
@@ -329,7 +329,7 @@ async function startOnline() {
       npcs: data.npcs || state.npcs
     });
   }
-  await saveCity(); // mark online immediately
+  await saveCity();
 
   if (unsubscribeCities) unsubscribeCities();
   unsubscribeCities = db.collection("cities").onSnapshot(snap => {
@@ -356,7 +356,6 @@ async function startOnline() {
       if (document.getElementById("pvp-view").classList.contains("active")) renderPvp();
     }, err => console.warn("Challenges listener error", err));
 
-  // Heartbeat so you stay online while the page is open
   if (heartbeatTimer) clearInterval(heartbeatTimer);
   heartbeatTimer = setInterval(() => {
     if (uid) saveCity();
@@ -364,7 +363,7 @@ async function startOnline() {
 
   updateResumeUrl();
   renderCity();
-  addMsg("system", "Online. Only cities active in the last 8 minutes appear on the map.");
+  addMsg("system", "Online. NPC hierarchy is the population voice. Only cities active in the last 8 minutes appear on the map.");
 }
 
 function saveCity() {
@@ -562,7 +561,7 @@ function renderCity() {
       state.selected = i;
       renderCity();
       switchView("talk");
-      addMsg("system", `Talking to ${n.name}`);
+      addMsg("system", `Talking to ${n.name} (population voice)`);
     };
     npcsEl.appendChild(div);
   });
@@ -577,13 +576,34 @@ function addMsg(who, text) {
 }
 
 function npcReply(npc) {
-  const replies = {
-    pragmatic: ["Only online cities are visible right now.", "Keep active if you want to stay on the map."],
-    greedy: ["Fewer cities online means less competition.", "Good time to grow."],
-    idealistic: ["People come and go. Focus on our own city.", "Alliances are easier when fewer are around."],
-    blunt: ["If they're not online, ignore them.", "Just keep building."]
+  const stage = state.stages[state.stage] || "Outpost";
+  const mood = state.happy >= 70 ? "content" : state.happy >= 45 ? "restless" : "unhappy";
+  const onlineCount = allCities.filter(c => c.yours || isOnline(c.updated)).length;
+
+  const voice = {
+    pragmatic: [
+      `As advisor I speak for efficiency. Happiness is ${state.happy} (${mood}). Stage: ${stage}.`,
+      `Only ${onlineCount} cities are online right now. Stay active if you want to stay visible.`,
+      `Money is ${state.money}. Population ${state.pop}. Practical growth first.`
+    ],
+    greedy: [
+      `Merchant voice: competition is low with only ${onlineCount} cities online. Good time to expand.`,
+      `Taxes and trade matter. Current money ${state.money}. Don't leave gold on the table.`,
+      `Happiness ${state.happy} is secondary to profit. Stage ${stage} has potential.`
+    ],
+    idealistic: [
+      `Citizen lead here. The people feel ${mood} (happiness ${state.happy}). We want a better ${stage}.`,
+      `Population ${state.pop} looks to us. Focus on our own city while others are offline.`,
+      `Alliances and festivals keep the voice of the people positive.`
+    ],
+    blunt: [
+      `Worker speaking. If they're not online, ignore them. Just build.`,
+      `Happy is ${state.happy}. Pop ${state.pop}. Stage ${stage}. Get on with it.`,
+      `Money ${state.money}. Don't waste time talking if we can build housing.`
+    ]
   };
-  const pool = replies[npc.personality] || replies.pragmatic;
+
+  const pool = voice[npc.personality] || voice.pragmatic;
   return `${npc.name}: ${pool[Math.floor(Math.random() * pool.length)]}`;
 }
 
