@@ -2,135 +2,250 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>City Builder · AI NPCs Prototype</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Open World City · Multiplayer Prototype</title>
 <style>
   :root {
-    --bg: #0b0f14;
-    --panel: #151c25;
-    --line: #2a3542;
-    --text: #e8eef6;
-    --muted: #8a9bb0;
-    --accent: #6eb5e8;
-    --you: #1e2a3a;
-    --bot: #141c26;
+    --bg: #070a0e;
+    --surface: #121820;
+    --card: #1a2230;
+    --line: #2c3a4d;
+    --text: #f0f4f8;
+    --muted: #8b9bb0;
+    --accent: #5eb0ff;
+    --good: #4ade80;
+    --you: #1e3a5f;
+    --bot: #161e2a;
   }
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
   body {
-    margin: 0;
-    font-family: system-ui, -apple-system, sans-serif;
-    background: #0b0f14;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
     color: var(--text);
-    display: grid;
-    grid-template-columns: 280px 1fr 320px;
-    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    min-height: 100dvh;
   }
   header {
-    grid-column: 1 / -1;
     padding: 12px 16px;
+    background: #0f141c;
     border-bottom: 1px solid var(--line);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #0f141b;
+    flex-shrink: 0;
   }
-  .panel {
-    border-right: 1px solid var(--line);
-    padding: 16px;
-    overflow-y: auto;
+  header h1 { margin: 0; font-size: 18px; font-weight: 650; }
+  .tabs {
+    display: flex;
+    gap: 6px;
   }
-  .panel:last-child { border-right: none; border-left: 1px solid var(--line); }
-  h2 { margin: 0 0 12px; font-size: 15px; color: var(--accent); }
-  .stat { display: flex; justify-content: space-between; margin: 6px 0; font-size: 14px; }
-  .npc {
-    padding: 10px 12px;
-    margin: 6px 0;
-    background: var(--panel);
+  .tabs button {
+    background: transparent;
+    color: var(--muted);
     border: 1px solid var(--line);
-    border-radius: 10px;
-    cursor: pointer;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 13px;
   }
-  .npc.active { border-color: var(--accent); background: #1a2838; }
-  .npc .role { color: var(--muted); font-size: 12px; }
-  #log {
+  .tabs button.active {
+    background: rgba(94,176,255,0.15);
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .view { flex: 1; display: none; flex-direction: column; overflow: hidden; }
+  .view.active { display: flex; }
+
+  /* Map */
+  #map-view { position: relative; background: #0a1018; }
+  #map {
+    flex: 1;
+    position: relative;
+    background: radial-gradient(circle at 30% 40%, #1a2838 0%, #0a1018 70%);
+    overflow: hidden;
+  }
+  .city-marker {
+    position: absolute;
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 2px solid var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 650;
+    text-align: center;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+  .city-marker.yours { border-color: var(--good); background: #1a3a2a; }
+  .city-marker .pop { font-size: 9px; color: var(--muted); margin-top: 1px; }
+
+  /* City view */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    padding: 12px 16px;
+  }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 8px 4px;
+    text-align: center;
+  }
+  .stat-card .label { font-size: 11px; color: var(--muted); }
+  .stat-card .value { font-size: 15px; font-weight: 650; }
+
+  .npc-scroller {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px 10px;
+    overflow-x: auto;
+  }
+  .npc-card {
+    flex: 0 0 auto;
+    min-width: 120px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 8px 10px;
+  }
+  .npc-card.active { border-color: var(--accent); }
+  .npc-card .name { font-weight: 650; font-size: 13.5px; }
+  .npc-card .role { font-size: 11.5px; color: var(--muted); }
+
+  #chat {
     flex: 1;
     overflow-y: auto;
-    padding: 12px;
+    padding: 10px 16px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
   }
   .msg {
-    max-width: 85%;
-    padding: 10px 14px;
+    max-width: 80%;
+    padding: 9px 13px;
     border-radius: 14px;
-    line-height: 1.45;
-    white-space: pre-wrap;
+    font-size: 14.5px;
+    line-height: 1.4;
   }
   .you { align-self: flex-end; background: var(--you); }
   .npc-msg { align-self: flex-start; background: var(--bot); border: 1px solid var(--line); }
-  form { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--line); }
-  input, button, select {
-    background: var(--panel);
+  .system { align-self: flex-start; color: var(--muted); font-size: 13px; }
+
+  .composer {
+    display: flex;
+    gap: 6px;
+    padding: 8px 12px 12px;
+    background: #0e131a;
+  }
+  .composer input {
+    flex: 1;
+    background: var(--card);
     color: var(--text);
     border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 10px 12px;
+    border-radius: 12px;
+    padding: 11px 12px;
+    font-size: 15px;
   }
-  input { flex: 1; }
-  button { background: var(--accent); color: #081018; font-weight: 600; cursor: pointer; }
-  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-  .stage { font-weight: 650; color: var(--accent); }
-  @media (max-width: 900px) {
-    body { grid-template-columns: 1fr; }
-    .panel { border: none; border-bottom: 1px solid var(--line); }
+  .composer button {
+    background: var(--accent);
+    color: #081018;
+    border: 0;
+    border-radius: 12px;
+    padding: 0 14px;
+    font-weight: 650;
+  }
+
+  .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 0 16px 12px;
+  }
+  .actions button {
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 11px;
+    font-size: 13px;
+  }
+
+  .other-city-panel {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 14px;
+    display: none;
+  }
+  .other-city-panel.show { display: block; }
+  .other-city-panel button { margin-top: 8px; margin-right: 6px; }
+
+  @media (min-width: 700px) {
+    body { max-width: 460px; margin: 0 auto; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
   }
 </style>
 </head>
 <body>
 <header>
-  <div>
-    <strong>City Builder Prototype</strong>
-    <span id="stage" class="stage">Stage: Outpost</span>
-  </div>
-  <div>
-    <button id="voice-toggle">Voice: Off</button>
-    <button id="reset">Reset City</button>
+  <h1>Open World</h1>
+  <div class="tabs">
+    <button id="tab-map" class="active">Map</button>
+    <button id="tab-city">City</button>
+    <button id="tab-talk">Talk</button>
   </div>
 </header>
 
-<div class="panel" id="left">
-  <h2>City Stats</h2>
-  <div class="stat">Money: <span id="money">1000</span></div>
-  <div class="stat">Population: <span id="pop">12</span></div>
-  <div class="stat">Happiness: <span id="happy">62</span></div>
-  <div class="stat">Influence: <span id="influence">5</span></div>
-
-  <h2 style="margin-top:20px">Hierarchy</h2>
-  <div id="npcs"></div>
+<!-- Map View -->
+<div id="map-view" class="view active">
+  <div id="map"></div>
+  <div class="other-city-panel" id="other-panel">
+    <strong id="other-name">City</strong>
+    <div style="font-size:13.5px;color:var(--muted);margin-top:4px;" id="other-info"></div>
+    <button onclick="sendMessage()">Send Message</button>
+    <button onclick="proposeTrade()">Propose Trade</button>
+    <button onclick="closeOther()">Close</button>
+  </div>
 </div>
 
-<div style="display:flex;flex-direction:column;overflow:hidden">
-  <div id="log"></div>
-  <form id="form">
-    <input id="box" type="text" placeholder="Talk to the selected NPC…" autocomplete="off">
-    <button type="submit">Send</button>
-  </form>
-</div>
-
-<div class="panel" id="right">
-  <h2>Actions</h2>
+<!-- City View -->
+<div id="city-view" class="view">
+  <div class="stats">
+    <div class="stat-card"><div class="label">Money</div><div class="value" id="money">1000</div></div>
+    <div class="stat-card"><div class="label">People</div><div class="value" id="pop">12</div></div>
+    <div class="stat-card"><div class="label">Happy</div><div class="value" id="happy">62</div></div>
+    <div class="stat-card"><div class="label">Stage</div><div class="value" id="stage">Outpost</div></div>
+  </div>
   <div class="actions">
     <button data-action="tax">Raise Taxes</button>
     <button data-action="build">Build Housing</button>
-    <button data-action="festival">Hold Festival</button>
-    <button data-action="promote">Promote Citizen</button>
+    <button data-action="festival">Festival</button>
+    <button data-action="promote">Promote</button>
   </div>
-  <h2 style="margin-top:20px">Stage Progress</h2>
-  <div id="progress"></div>
-  <p style="color:var(--muted);font-size:13px;margin-top:16px">
-    Experiment: select an NPC on the left, then talk. Voice input uses the browser’s speech recognition.
-  </p>
+  <div style="padding:0 16px 8px;color:var(--muted);font-size:13px;">Hierarchy</div>
+  <div class="npc-scroller" id="npcs"></div>
+</div>
+
+<!-- Talk View -->
+<div id="talk-view" class="view">
+  <div id="chat"></div>
+  <form class="composer" id="form">
+    <input id="box" type="text" placeholder="Talk to selected NPC…" autocomplete="off">
+    <button type="submit">Send</button>
+  </form>
 </div>
 
 <script>
@@ -145,145 +260,153 @@ const state = {
   npcs: [
     { name: "Aria", role: "Advisor", loyalty: 70, personality: "pragmatic" },
     { name: "Borin", role: "Merchant", loyalty: 55, personality: "greedy" },
-    { name: "Cora", role: "Citizen Leader", loyalty: 80, personality: "idealistic" },
+    { name: "Cora", role: "Citizen Lead", loyalty: 80, personality: "idealistic" },
     { name: "Dax", role: "Worker", loyalty: 45, personality: "blunt" }
+  ],
+  cities: [
+    { id: "you", name: "Your City", x: 50, y: 55, pop: 12, money: 1000, yours: true },
+    { id: "north", name: "Northreach", x: 30, y: 25, pop: 48, money: 2100, yours: false },
+    { id: "east", name: "Eastport", x: 75, y: 40, pop: 31, money: 1450, yours: false },
+    { id: "south", name: "Southvale", x: 45, y: 78, pop: 22, money: 890, yours: false }
   ]
 };
 
-const logEl = document.getElementById("log");
+const mapEl = document.getElementById("map");
+const chat = document.getElementById("chat");
 const box = document.getElementById("box");
 const form = document.getElementById("form");
 const npcsEl = document.getElementById("npcs");
-const voiceToggle = document.getElementById("voice-toggle");
-let voiceOn = false;
-let recognition = null;
+const otherPanel = document.getElementById("other-panel");
+let selectedOther = null;
 
-if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  recognition = new SR();
-  recognition.continuous = false;
-  recognition.interimResults = false;
-  recognition.onresult = (e) => {
-    const text = e.results[0][0].transcript;
-    box.value = text;
-    form.requestSubmit();
-  };
-}
-
-function save() { localStorage.setItem("city-proto", JSON.stringify(state)); }
+function save() { localStorage.setItem("open-city-v1", JSON.stringify(state)); }
 function load() {
-  const s = localStorage.getItem("city-proto");
+  const s = localStorage.getItem("open-city-v1");
   if (s) Object.assign(state, JSON.parse(s));
 }
 load();
 
-function render() {
+function renderMap() {
+  mapEl.innerHTML = "";
+  state.cities.forEach(c => {
+    const m = document.createElement("div");
+    m.className = "city-marker" + (c.yours ? " yours" : "");
+    m.style.left = c.x + "%";
+    m.style.top = c.y + "%";
+    m.innerHTML = `${c.name.split(" ")[0]}<div class="pop">${c.pop}</div>`;
+    m.onclick = () => selectCity(c);
+    mapEl.appendChild(m);
+  });
+}
+
+function selectCity(c) {
+  if (c.yours) {
+    switchView("city");
+    return;
+  }
+  selectedOther = c;
+  document.getElementById("other-name").textContent = c.name;
+  document.getElementById("other-info").textContent = `Pop ${c.pop} · Money ${c.money}`;
+  otherPanel.classList.add("show");
+}
+
+function closeOther() {
+  otherPanel.classList.remove("show");
+  selectedOther = null;
+}
+
+function sendMessage() {
+  if (!selectedOther) return;
+  const msg = prompt(`Message to ${selectedOther.name}:`);
+  if (msg) addMsg("system", `Sent to ${selectedOther.name}: "${msg}"`);
+  closeOther();
+}
+
+function proposeTrade() {
+  if (!selectedOther) return;
+  addMsg("system", `Trade proposal sent to ${selectedOther.name}. (Prototype stub)`);
+  closeOther();
+}
+
+function renderCity() {
   document.getElementById("money").textContent = state.money;
   document.getElementById("pop").textContent = state.pop;
   document.getElementById("happy").textContent = state.happy;
-  document.getElementById("influence").textContent = state.influence;
-  document.getElementById("stage").textContent = "Stage: " + state.stages[state.stage];
+  document.getElementById("stage").textContent = state.stages[state.stage];
 
   npcsEl.innerHTML = "";
   state.npcs.forEach((n, i) => {
     const div = document.createElement("div");
-    div.className = "npc" + (i === state.selected ? " active" : "");
-    div.innerHTML = `<strong>${n.name}</strong><div class="role">${n.role} · Loyalty ${n.loyalty}</div>`;
-    div.onclick = () => { state.selected = i; render(); addMsg("system", `Now talking to ${n.name}.`); };
+    div.className = "npc-card" + (i === state.selected ? " active" : "");
+    div.innerHTML = `<div class="name">${n.name}</div><div class="role">${n.role}</div>`;
+    div.onclick = () => {
+      state.selected = i;
+      renderCity();
+      switchView("talk");
+      addMsg("system", `Talking to ${n.name}`);
+    };
     npcsEl.appendChild(div);
   });
-
-  const prog = document.getElementById("progress");
-  prog.innerHTML = state.stages.map((s, i) => 
-    `<div style="opacity:${i <= state.stage ? 1 : 0.4}">${i === state.stage ? "▶ " : "○ "}${s}</div>`
-  ).join("");
 }
 
 function addMsg(who, text) {
   const div = document.createElement("div");
-  div.className = "msg " + (who === "you" ? "you" : "npc-msg");
+  div.className = "msg " + (who === "you" ? "you" : who === "system" ? "system" : "npc-msg");
   div.textContent = text;
-  logEl.appendChild(div);
-  logEl.scrollTop = logEl.scrollHeight;
-  if (voiceOn && who !== "you" && "speechSynthesis" in window) {
-    const u = new SpeechSynthesisUtterance(text);
-    speechSynthesis.speak(u);
-  }
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
 }
 
 function npcReply(npc, userText) {
-  const q = userText.toLowerCase();
   const replies = {
-    pragmatic: [
-      "We need more money in the treasury before expanding.",
-      "Taxes are a tool. Use them carefully or loyalty drops.",
-      "Hierarchy works better when people see clear benefits."
-    ],
-    greedy: [
-      "I can move more goods if the taxes stay low.",
-      "Money makes the city grow. Don’t scare the traders.",
-      "Promote people who actually produce value."
-    ],
-    idealistic: [
-      "The people want to be heard, not just managed.",
-      "A festival would raise happiness more than another tax.",
-      "True strength comes from loyal citizens, not just coin."
-    ],
-    blunt: [
-      "Just build more housing. People need places to live.",
-      "Stop talking and raise the money somehow.",
-      "I’m just a worker. Decisions are above me."
-    ]
+    pragmatic: ["Grow carefully. Secure money before expanding influence.", "Other cities watch how strong we become."],
+    greedy: ["Trade routes with the east would help.", "Their money looks useful."],
+    idealistic: ["We should build alliances, not just walls.", "People in other cities talk too."],
+    blunt: ["Just get stronger than the neighbors.", "Map shows plenty of room to grow."]
   };
   const pool = replies[npc.personality] || replies.pragmatic;
-  let base = pool[Math.floor(Math.random() * pool.length)];
-
-  if (q.includes("tax") || q.includes("money")) base = `${npc.name}: ` + base;
-  else if (q.includes("hello") || q.includes("hi")) base = `Hello. I’m ${npc.name}, ${npc.role}.`;
-  else if (q.includes("loyalty") || q.includes("happy")) base = `My loyalty is ${npc.loyalty}. Happiness in the city is ${state.happy}.`;
-  else base = `${npc.name}: ` + base;
-
-  return base;
+  return `${npc.name}: ${pool[Math.floor(Math.random() * pool.length)]}`;
 }
 
 function doAction(action) {
   if (action === "tax") {
-    state.money += 150;
-    state.happy = Math.max(20, state.happy - 8);
-    state.npcs.forEach(n => n.loyalty = Math.max(10, n.loyalty - 4));
-    addMsg("system", "Taxes raised. Money +150, happiness and loyalty drop.");
-  } else if (action === "build") {
-    if (state.money >= 200) {
-      state.money -= 200;
-      state.pop += 5;
-      state.happy = Math.min(100, state.happy + 5);
-      addMsg("system", "Housing built. Population +5.");
-    } else addMsg("system", "Not enough money.");
-  } else if (action === "festival") {
-    if (state.money >= 120) {
-      state.money -= 120;
-      state.happy = Math.min(100, state.happy + 15);
-      state.npcs.forEach(n => n.loyalty = Math.min(100, n.loyalty + 6));
-      addMsg("system", "Festival held. Happiness and loyalty rise.");
-    } else addMsg("system", "Not enough money.");
+    state.money += 160;
+    state.happy = Math.max(15, state.happy - 8);
+  } else if (action === "build" && state.money >= 200) {
+    state.money -= 200;
+    state.pop += 5;
+  } else if (action === "festival" && state.money >= 120) {
+    state.money -= 120;
+    state.happy = Math.min(100, state.happy + 14);
   } else if (action === "promote") {
-    const n = state.npcs[state.selected];
-    n.loyalty = Math.min(100, n.loyalty + 12);
-    n.role = n.role.includes("Senior") ? n.role : "Senior " + n.role;
+    state.npcs[state.selected].loyalty = Math.min(100, state.npcs[state.selected].loyalty + 10);
     state.influence += 2;
-    addMsg("system", `${n.name} promoted. Loyalty and influence increase.`);
   }
+  // update your city on map
+  const yours = state.cities.find(c => c.yours);
+  if (yours) { yours.pop = state.pop; yours.money = state.money; }
   checkStage();
   save();
-  render();
+  renderCity();
+  renderMap();
 }
 
 function checkStage() {
   if (state.pop >= 40 && state.stage < 1) state.stage = 1;
-  else if (state.pop >= 80 && state.money >= 2000 && state.stage < 2) state.stage = 2;
-  else if (state.pop >= 150 && state.influence >= 20 && state.stage < 3) state.stage = 3;
-  else if (state.pop >= 300 && state.stage < 4) state.stage = 4;
+  else if (state.pop >= 80 && state.stage < 2) state.stage = 2;
+  else if (state.pop >= 140 && state.stage < 3) state.stage = 3;
 }
+
+function switchView(name) {
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  document.getElementById(name + "-view").classList.add("active");
+  document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
+  document.getElementById("tab-" + name).classList.add("active");
+}
+
+document.getElementById("tab-map").onclick = () => switchView("map");
+document.getElementById("tab-city").onclick = () => switchView("city");
+document.getElementById("tab-talk").onclick = () => switchView("talk");
 
 form.addEventListener("submit", (e) => {
   e.preventDefault();
@@ -291,39 +414,16 @@ form.addEventListener("submit", (e) => {
   if (!text) return;
   box.value = "";
   addMsg("you", text);
-  const npc = state.npcs[state.selected];
-  const reply = npcReply(npc, text);
-  setTimeout(() => addMsg("npc", reply), 400);
+  setTimeout(() => addMsg("npc", npcReply(state.npcs[state.selected], text)), 300);
 });
 
 document.querySelectorAll("[data-action]").forEach(btn => {
   btn.addEventListener("click", () => doAction(btn.dataset.action));
 });
 
-voiceToggle.addEventListener("click", () => {
-  voiceOn = !voiceOn;
-  voiceToggle.textContent = "Voice: " + (voiceOn ? "On" : "Off");
-  if (voiceOn && recognition) {
-    recognition.start();
-    voiceToggle.textContent = "Voice: Listening…";
-    recognition.onend = () => {
-      if (voiceOn) recognition.start();
-      voiceToggle.textContent = "Voice: On";
-    };
-  } else if (recognition) {
-    recognition.stop();
-  }
-});
-
-document.getElementById("reset").addEventListener("click", () => {
-  if (confirm("Reset the city?")) {
-    localStorage.removeItem("city-proto");
-    location.reload();
-  }
-});
-
-render();
-addMsg("system", "Prototype ready. Select an NPC and talk. Try the actions on the right.");
+renderMap();
+renderCity();
+addMsg("system", "Open world map active. Tap other cities to interact. Switch to City or Talk tabs.");
 </script>
 </body>
 </html>
