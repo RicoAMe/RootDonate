@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI NPCs Gain Money · Date.now()</title>
 <style>
-  :root { --bg:#070a0e; --card:#1a2230; --text:#f0f4f8; --muted:#8b9bb0; --accent:#5eb0ff; --good:#4ade80; }
+  :root { --bg:#070a0e; --card:#1a2230; --text:#f0f4f8; --muted:#8b9bb0; --accent:#5eb0ff; --good:#4ade80; --bad:#f87171; }
   * { box-sizing:border-box; }
   body { margin:0; font-family:system-ui,sans-serif; background:var(--bg); color:var(--text); display:flex; flex-direction:column; min-height:100vh; }
   header { padding:12px 16px; background:#0f141c; border-bottom:1px solid #2c3a4d; display:flex; justify-content:space-between; align-items:center; }
@@ -17,7 +17,7 @@
   .npcs { display:flex; gap:8px; padding:0 16px 10px; overflow-x:auto; }
   .npc { min-width:130px; background:var(--card); border:1px solid #2c3a4d; border-radius:12px; padding:8px 10px; cursor:pointer; font-size:13px; }
   .npc.active { border-color:var(--accent); background:#1c2a40; }
-  .log { flex:1; overflow-y:auto; padding:10px 16px; font-size:14px; line-height:1.4; }
+  .log { flex:1; overflow-y:auto; padding:10px 16px; font-size:14px; line-height:1.4; min-height:120px; }
   .msg { margin:6px 0; padding:8px 12px; border-radius:10px; background:#161e2a; border:1px solid #2c3a4d; }
   .msg.system { color:var(--muted); font-size:13px; }
   .actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 16px 16px; }
@@ -27,6 +27,13 @@
   .stage { text-align:center; color:var(--accent); font-weight:600; padding:4px 16px 0; }
   .gdpr { background:#1a2a20; border-bottom:1px solid #4ade80; padding:8px 16px; font-size:12px; color:#a0d8b0; text-align:center; }
   .guest-badge { color:var(--good); font-size:12px; margin-left:8px; }
+  /* Talk Map */
+  #talk-map { display:none; background:var(--card); border:1px solid #2c3a4d; border-radius:12px; margin:0 16px 12px; padding:12px; }
+  #talk-map h3 { margin:0 0 8px; font-size:15px; }
+  .talk-option { display:block; width:100%; text-align:left; margin:4px 0; padding:8px 10px; background:#121a26; border:1px solid #2c3a4d; border-radius:8px; cursor:pointer; font-size:13px; }
+  .talk-option:hover { border-color:var(--accent); }
+  /* PvP result */
+  .pvp-result { font-weight:600; }
 </style>
 </head>
 <body>
@@ -48,6 +55,15 @@
 <div class="time">Next reward in <span id="next-reward">5m</span> · Auto actions via Date.now()</div>
 
 <div class="npcs" id="npcs"></div>
+
+<!-- AI Talk Map -->
+<div id="talk-map">
+  <h3>AI Talk Map · <span id="talk-npc-name"></span></h3>
+  <div id="talk-options"></div>
+  <div id="talk-response" style="margin-top:10px; font-size:13px; color:var(--muted);"></div>
+  <button onclick="closeTalkMap()" style="margin-top:8px; width:100%;">Close Talk Map</button>
+</div>
+
 <div class="log" id="log"></div>
 <div class="actions">
   <button onclick="doAction('tax')">Raise Taxes (+160)</button>
@@ -57,6 +73,8 @@
   <button onclick="forceTrade()">Force Trade</button>
   <button onclick="forcePrize()">Force Money Prize</button>
   <button onclick="toggleAuto()">Toggle Auto AI</button>
+  <button onclick="openTalkMap()">AI Talk Map</button>
+  <button onclick="startPvP()">PvP Arena</button>
   <button onclick="generateGuestURL()">Generate Guest URL</button>
 </div>
 
@@ -86,12 +104,33 @@ const REWARD_MS = 5 * 60_000;
 const PRIZE_MS = 3.5 * 60_000;
 const REWARD_AMT = 40;
 
+// ---------- GDPR Guest URL helpers (cleaned) ----------
+function encodeSnapshot(obj) {
+  try {
+    const json = JSON.stringify(obj);
+    return btoa(unescape(encodeURIComponent(json)));
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+}
+
+function decodeSnapshot(encoded) {
+  try {
+    const json = decodeURIComponent(escape(atob(encoded)));
+    return JSON.parse(json);
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+}
+
 function isGuestMode() {
   return location.hash.startsWith("#g=");
 }
 
 function save() {
-  if (state.isGuest) return; // GDPR: never write localStorage in guest mode
+  if (state.isGuest) return;
   const toSave = {...state};
   toSave.sessionOffset = Date.now() - state.sessionStart;
   toSave.rewardOffset = Date.now() - state.lastReward;
@@ -104,18 +143,20 @@ function load() {
     state.isGuest = true;
     document.getElementById("gdpr-banner").style.display = "block";
     document.getElementById("guest-badge").style.display = "inline";
-    try {
-      const encoded = location.hash.slice(3);
-      const data = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+    const encoded = location.hash.slice(3);
+    const data = decodeSnapshot(encoded);
+    if (data) {
       Object.assign(state, data);
       state.isGuest = true;
-      state.sessionStart = Date.now();
-      state.lastReward = Date.now();
-      state.lastSpend = Date.now();
-      state.lastTrade = Date.now();
-      state.lastPrize = Date.now();
+      // Reset volatile timers for the new session
+      const now = Date.now();
+      state.sessionStart = now;
+      state.lastReward = now;
+      state.lastSpend = now;
+      state.lastTrade = now;
+      state.lastPrize = now;
       addMsg("Loaded guest snapshot (GDPR: nothing saved locally).", true);
-    } catch (e) {
+    } else {
       addMsg("Invalid guest URL. Starting fresh (guest).", true);
     }
     return;
@@ -123,11 +164,15 @@ function load() {
 
   const saved = localStorage.getItem("npcMoneyGame");
   if (saved) {
-    const data = JSON.parse(saved);
-    Object.assign(state, data);
-    state.sessionStart = Date.now() - (data.sessionOffset || 0);
-    state.lastReward = Date.now() - (data.rewardOffset || 0);
-    state.lastPrize = state.lastPrize || Date.now();
+    try {
+      const data = JSON.parse(saved);
+      Object.assign(state, data);
+      state.sessionStart = Date.now() - (data.sessionOffset || 0);
+      state.lastReward = Date.now() - (data.rewardOffset || 0);
+      state.lastPrize = state.lastPrize || Date.now();
+    } catch (e) {
+      addMsg("Save data corrupted. Starting fresh.", true);
+    }
   }
 }
 
@@ -163,6 +208,7 @@ function render() {
   save();
 }
 
+// ---------- Core AI actions (unchanged logic, minor safety) ----------
 function populationSpend() {
   if (!state.auto || state.money < 60) return;
   const npc = state.npcs[Math.floor(Math.random() * state.npcs.length)];
@@ -281,10 +327,107 @@ function generateGuestURL() {
   delete snapshot.lastSpend;
   delete snapshot.lastTrade;
   delete snapshot.lastPrize;
-  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(snapshot))));
+
+  const encoded = encodeSnapshot(snapshot);
+  if (!encoded) {
+    addMsg("Failed to generate guest URL.", true);
+    return;
+  }
   const url = location.origin + location.pathname + "#g=" + encoded;
-  prompt("GDPR Guest URL (share this — no local storage on their side):", url);
-  addMsg("Guest URL generated. Recipients load snapshot only.", true);
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(() => {
+      addMsg("Guest URL copied to clipboard (GDPR: no local storage on recipient side).", true);
+    }).catch(() => {
+      prompt("GDPR Guest URL (share this):", url);
+    });
+  } else {
+    prompt("GDPR Guest URL (share this):", url);
+  }
+}
+
+// ---------- AI Talk Map ----------
+const talkTopics = {
+  pragmatic: [
+    { label: "Advise on taxes vs growth", effect: () => { state.happy = Math.max(20, state.happy - 3); state.money += 40; return "Aria: 'Raise taxes now while loyalty is high. Growth can wait.'"; } },
+    { label: "Efficient housing plan", effect: () => { if (state.money >= 150) { state.money -= 150; state.pop += 8; return "Aria: 'This layout saves materials. +8 people.'"; } return "Aria: 'Not enough funds for the optimal plan.'"; } },
+    { label: "Loyalty check", effect: () => { state.npcs[state.selected].loyalty = Math.min(100, state.npcs[state.selected].loyalty + 5); return "Aria: 'I remain practical and loyal.'"; } }
+  ],
+  greedy: [
+    { label: "Push a risky trade", effect: () => { const gain = 30 + Math.floor(Math.random()*70); state.money += gain; state.happy = Math.max(10, state.happy - 4); return `Borin: 'We squeeze them for +${gain}. Morale dips a bit.'`; } },
+    { label: "Invest in influence", effect: () => { if (state.money >= 80) { state.money -= 80; state.influence += 3; return "Borin: 'Bribes open doors. Influence +3.'"; } return "Borin: 'Need more coin to grease palms.'"; } },
+    { label: "Demand a cut", effect: () => { state.npcs[state.selected].loyalty = Math.max(20, state.npcs[state.selected].loyalty - 5); state.money += 25; return "Borin: 'I take my share. Loyalty falls.'"; } }
+  ],
+  idealistic: [
+    { label: "Festival for the people", effect: () => { if (state.money >= 90) { state.money -= 90; state.happy = Math.min(100, state.happy + 18); return "Cora: 'Joy strengthens the community.'"; } return "Cora: 'We cannot celebrate on empty pockets.'"; } },
+    { label: "Protect citizen rights", effect: () => { state.happy = Math.min(100, state.happy + 8); state.influence = Math.max(0, state.influence - 1); return "Cora: 'Fairness over pure power.'"; } },
+    { label: "Build trust", effect: () => { state.npcs.forEach(n => n.loyalty = Math.min(100, n.loyalty + 4)); return "Cora: 'Everyone feels heard.'"; } }
+  ],
+  blunt: [
+    { label: "Hard truth about taxes", effect: () => { state.happy = Math.max(15, state.happy - 6); state.money += 70; return "Dax: 'Stop coddling them. Tax them hard.'"; } },
+    { label: "Force housing", effect: () => { if (state.money >= 160) { state.money -= 160; state.pop += 7; state.happy = Math.max(20, state.happy - 3); return "Dax: 'Build it and shut up.'"; } return "Dax: 'No money, no houses.'"; } },
+    { label: "Direct loyalty test", effect: () => { state.npcs[state.selected].loyalty = Math.min(100, state.npcs[state.selected].loyalty + 8); return "Dax: 'I say what I think. Still here.'"; } }
+  ]
+};
+
+function openTalkMap() {
+  const npc = state.npcs[state.selected];
+  document.getElementById("talk-npc-name").textContent = `${npc.name} (${npc.personality})`;
+  const opts = document.getElementById("talk-options");
+  opts.innerHTML = "";
+  const topics = talkTopics[npc.personality] || talkTopics.pragmatic;
+  topics.forEach(t => {
+    const btn = document.createElement("button");
+    btn.className = "talk-option";
+    btn.textContent = t.label;
+    btn.onclick = () => {
+      const response = t.effect();
+      document.getElementById("talk-response").textContent = response;
+      addMsg(`[Talk Map] ${response}`, true);
+      checkStage();
+      render();
+    };
+    opts.appendChild(btn);
+  });
+  document.getElementById("talk-response").textContent = "Choose a branch on the map…";
+  document.getElementById("talk-map").style.display = "block";
+}
+
+function closeTalkMap() {
+  document.getElementById("talk-map").style.display = "none";
+}
+
+// ---------- PvP Arena ----------
+function startPvP() {
+  const npc = state.npcs[state.selected];
+  const loyaltyBonus = Math.floor(npc.loyalty / 15);
+  const myPower = state.influence + Math.floor(state.pop / 10) + state.stage * 5 + loyaltyBonus + Math.floor(Math.random() * 8);
+  const rivalPower = 10 + Math.floor(Math.random() * 25) + Math.floor(Math.random() * state.stage * 3);
+
+  let result = "", moneyChange = 0, happyChange = 0, infChange = 0;
+
+  if (myPower > rivalPower + 4) {
+    moneyChange = 80 + Math.floor(Math.random() * 120) + state.stage * 20;
+    infChange = 2;
+    result = `Decisive victory! ${npc.name} crushes the rival. +${moneyChange} money, +${infChange} influence.`;
+  } else if (myPower >= rivalPower - 3) {
+    moneyChange = 20 + Math.floor(Math.random() * 50);
+    result = `Narrow win. ${npc.name} scrapes by. +${moneyChange} money.`;
+  } else {
+    moneyChange = -(40 + Math.floor(Math.random() * 80));
+    happyChange = -5;
+    infChange = -1;
+    result = `Defeat. Rival outmaneuvers ${npc.name}. ${moneyChange} money, happiness and influence drop.`;
+  }
+
+  state.money = Math.max(0, state.money + moneyChange);
+  state.happy = Math.max(10, Math.min(100, state.happy + happyChange));
+  state.influence = Math.max(0, state.influence + infChange);
+  npc.loyalty = Math.min(100, Math.max(10, npc.loyalty + (moneyChange > 0 ? 3 : -4)));
+
+  addMsg(`[PvP] ${result} (Power: you ${myPower} vs rival ${rivalPower})`, true);
+  checkStage();
+  render();
 }
 
 // Main loop driven by Date.now()
