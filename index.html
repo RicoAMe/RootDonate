@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Open World City · Turn-Based PvP</title>
+<title>Open World City · Online PvP</title>
 <style>
   :root {
     --bg: #070a0e; --surface: #121820; --card: #1a2230; --line: #2c3a4d;
@@ -19,13 +19,13 @@
   }
   header {
     padding: 12px 16px; background: #0f141c; border-bottom: 1px solid var(--line);
-    display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+    display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; gap: 8px;
   }
-  header h1 { margin: 0; font-size: 18px; font-weight: 650; }
+  header h1 { margin: 0; font-size: 17px; font-weight: 650; }
   .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
   .tabs button {
     background: transparent; color: var(--muted); border: 1px solid var(--line);
-    border-radius: 999px; padding: 6px 11px; font-size: 12.5px;
+    border-radius: 999px; padding: 6px 11px; font-size: 12.5px; cursor: pointer;
   }
   .tabs button.active { background: rgba(94,176,255,0.15); color: var(--accent); border-color: var(--accent); }
 
@@ -34,52 +34,59 @@
 
   #map { flex: 1; position: relative; background: radial-gradient(circle at 30% 40%, #1a2838 0%, #0a1018 70%); }
   .city-marker {
-    position: absolute; width: 54px; height: 54px; border-radius: 50%;
+    position: absolute; width: 56px; height: 56px; border-radius: 50%;
     background: var(--card); border: 2px solid var(--accent);
     display: flex; align-items: center; justify-content: center; flex-direction: column;
     font-size: 11px; font-weight: 650; text-align: center; cursor: pointer;
-    transform: translate(-50%, -50%); box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    transform: translate(-50%, -50%); box-shadow: 0 4px 14px rgba(0,0,0,0.45);
   }
   .city-marker.yours { border-color: var(--good); background: #1a3a2a; }
-  .city-marker .pop { font-size: 9px; color: var(--muted); }
+  .city-marker .pop { font-size: 9px; color: var(--muted); margin-top: 1px; }
 
   .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px 16px; }
   .stat-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 4px; text-align: center; }
   .stat-card .label { font-size: 11px; color: var(--muted); }
   .stat-card .value { font-size: 15px; font-weight: 650; }
 
-  .npc-scroller { display: flex; gap: 8px; padding: 0 16px 10px; overflow-x: auto; }
-  .npc-card { flex: 0 0 auto; min-width: 120px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; }
-  .npc-card.active { border-color: var(--accent); }
+  .npc-scroller { display: flex; gap: 8px; padding: 0 16px 10px; overflow-x: auto; scrollbar-width: none; }
+  .npc-scroller::-webkit-scrollbar { display: none; }
+  .npc-card { flex: 0 0 auto; min-width: 124px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; cursor: pointer; }
+  .npc-card.active { border-color: var(--accent); background: #1c2a40; }
   .npc-card .name { font-weight: 650; font-size: 13.5px; }
   .npc-card .role { font-size: 11.5px; color: var(--muted); }
 
   #chat { flex: 1; overflow-y: auto; padding: 10px 16px; display: flex; flex-direction: column; gap: 8px; }
-  .msg { max-width: 80%; padding: 9px 13px; border-radius: 14px; font-size: 14.5px; line-height: 1.4; }
+  .msg { max-width: 82%; padding: 9px 13px; border-radius: 14px; font-size: 14.5px; line-height: 1.4; word-wrap: break-word; }
   .you { align-self: flex-end; background: var(--you); }
   .npc-msg { align-self: flex-start; background: var(--bot); border: 1px solid var(--line); }
   .system { align-self: flex-start; color: var(--muted); font-size: 13px; }
 
-  .composer { display: flex; gap: 6px; padding: 8px 12px 12px; background: #0e131a; }
-  .composer input { flex: 1; background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px; font-size: 15px; }
-  .composer button { background: var(--accent); color: #081018; border: 0; border-radius: 12px; padding: 0 14px; font-weight: 650; }
+  .composer { display: flex; gap: 6px; padding: 8px 12px 14px; background: #0e131a; }
+  .composer input {
+    flex: 1; background: var(--card); color: var(--text); border: 1px solid var(--line);
+    border-radius: 12px; padding: 12px 14px; font-size: 15.5px; outline: none;
+  }
+  .composer input:focus { border-color: var(--accent); }
+  .composer button { background: var(--accent); color: #081018; border: 0; border-radius: 12px; padding: 0 16px; font-weight: 650; }
 
   .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 16px 12px; }
-  .actions button { background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: 12px; padding: 11px; font-size: 13px; }
+  .actions button { background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-size: 13.5px; cursor: pointer; }
+  .actions button:active { transform: scale(0.97); }
 
-  .other-city-panel, .pvp-panel {
+  .other-city-panel {
     position: absolute; bottom: 12px; left: 12px; right: 12px;
     background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: none;
   }
-  .other-city-panel.show, .pvp-panel.show { display: block; }
-  .other-city-panel button, .pvp-panel button { margin-top: 8px; margin-right: 6px; }
+  .other-city-panel.show { display: block; }
+  .other-city-panel button { margin-top: 8px; margin-right: 6px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--text); }
 
   #pvp-list { flex: 1; overflow-y: auto; padding: 12px 16px; }
   .challenge-card {
     background: var(--card); border: 1px solid var(--line); border-radius: 12px;
     padding: 12px; margin-bottom: 10px;
   }
-  .challenge-card .turn { color: var(--warn); font-size: 12.5px; font-weight: 600; }
+  .challenge-card .turn { color: var(--warn); font-size: 12.5px; font-weight: 600; margin: 4px 0; }
+  .challenge-card button { margin: 4px 4px 0 0; padding: 7px 11px; border-radius: 8px; border: 1px solid var(--line); background: #1e2a3a; color: var(--text); font-size: 13px; }
 
   #login-overlay {
     position: fixed; inset: 0; background: rgba(7,10,14,0.96); backdrop-filter: blur(8px);
@@ -93,7 +100,7 @@
   #login-card p { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
   #gdpr-row { display: flex; align-items: flex-start; gap: 10px; text-align: left; margin: 0 0 16px; font-size: 13px; color: var(--muted); }
   #gdpr-row a { color: var(--accent); }
-  #guest-btn { width: 100%; padding: 14px; font-size: 15.5px; background: var(--accent); color: #081018; border: 0; border-radius: 12px; font-weight: 650; }
+  #guest-btn { width: 100%; padding: 14px; font-size: 15.5px; background: var(--accent); color: #081018; border: 0; border-radius: 12px; font-weight: 650; cursor: pointer; }
   #resume-url { margin-top: 14px; padding: 10px; background: #0a1018; border: 1px solid var(--line); border-radius: 8px; font-size: 12px; word-break: break-all; color: var(--accent); cursor: pointer; }
   body.online #login-overlay { display: none; }
 
@@ -190,6 +197,30 @@ let uid = null;
 let unsubscribeCities = null;
 let unsubscribeChallenges = null;
 
+const AUTOCORRECT = {
+  teh: "the", recieve: "receive", seperate: "separate", occured: "occurred",
+  definately: "definitely", enviroment: "environment", goverment: "government",
+  adress: "address", tommorow: "tomorrow", tommorrow: "tomorrow",
+  wich: "which", wht: "what", hwo: "how", yuo: "you", yuor: "your", thier: "their",
+  u: "you", ur: "your", im: "I'm", ive: "I've", dont: "don't", cant: "can't",
+  wont: "won't", hows: "how's", thats: "that's", its: "it's",
+  challange: "challenge", challange: "challenge", atack: "attack",
+  negociate: "negotiate", sabotge: "sabotage", influnce: "influence"
+};
+
+function autocorrect(text) {
+  return text.split(/\s+/).map(word => {
+    const lower = word.toLowerCase().replace(/[.,!?;:]+$/, "");
+    const punct = word.slice(lower.length);
+    if (AUTOCORRECT[lower]) {
+      let fixed = AUTOCORRECT[lower];
+      if (word[0] === word[0].toUpperCase() && word.length > 1) fixed = fixed[0].toUpperCase() + fixed.slice(1);
+      return fixed + punct;
+    }
+    return word;
+  }).join(" ");
+}
+
 const state = {
   money: 1000, pop: 12, happy: 62, influence: 5, stage: 0,
   stages: ["Outpost", "Settlement", "Town", "City", "Metropolis"],
@@ -225,15 +256,16 @@ function updateResumeUrl() {
   const url = window.location.origin + window.location.pathname + (uid ? "?guest=" + uid : "");
   resumeUrlEl.textContent = url;
   resumeUrlEl.onclick = () => navigator.clipboard.writeText(url).then(() => {
+    const orig = resumeUrlEl.textContent;
     resumeUrlEl.textContent = "Copied! Bookmark this URL.";
-    setTimeout(updateResumeUrl, 1800);
-  });
+    setTimeout(() => { resumeUrlEl.textContent = orig; }, 1600);
+  }).catch(() => {});
 }
 updateResumeUrl();
 
 privacyLink.onclick = (e) => {
   e.preventDefault();
-  alert("Privacy notice (GDPR)\n\n• Anonymous guest ID, city data, and PvP challenges are stored in Firebase Firestore.\n• Other players can see your public city stats and challenge you.\n• Bookmark the resume URL to keep the same guest identity.");
+  alert("Privacy notice (GDPR)\n\n• Anonymous guest ID, city data, and PvP challenges are stored in Firebase Firestore.\n• Other players can see your public city stats and challenge you.\n• Bookmark the resume URL to keep the same guest identity.\n• No email or password is required.");
 };
 
 guestBtn.onclick = async () => {
@@ -252,7 +284,8 @@ guestBtn.onclick = async () => {
     await startOnline();
     document.body.classList.add("online");
   } catch (err) {
-    alert("Could not connect: " + err.message);
+    console.error(err);
+    alert("Could not connect: " + (err.message || err));
     guestBtn.disabled = false;
     guestBtn.textContent = "Continue as Guest";
   }
@@ -263,14 +296,14 @@ async function startOnline() {
   if (doc.exists) {
     const data = doc.data();
     Object.assign(state, {
-      money: data.money || state.money,
-      pop: data.pop || state.pop,
-      happy: data.happy || state.happy,
-      influence: data.influence || state.influence,
-      stage: data.stage || 0,
+      money: data.money ?? state.money,
+      pop: data.pop ?? state.pop,
+      happy: data.happy ?? state.happy,
+      influence: data.influence ?? state.influence,
+      stage: data.stage ?? 0,
       name: data.name || state.name,
-      x: data.x || state.x,
-      y: data.y || state.y,
+      x: data.x ?? state.x,
+      y: data.y ?? state.y,
       npcs: data.npcs || state.npcs
     });
   } else {
@@ -287,7 +320,7 @@ async function startOnline() {
       allCities.push(c);
     });
     renderMap();
-  });
+  }, err => console.warn("Cities listener error", err));
 
   if (unsubscribeChallenges) unsubscribeChallenges();
   unsubscribeChallenges = db.collection("challenges")
@@ -299,17 +332,17 @@ async function startOnline() {
         ch.id = d.id;
         myChallenges.push(ch);
       });
-      renderPvp();
-    });
+      if (document.getElementById("pvp-view").classList.contains("active")) renderPvp();
+    }, err => console.warn("Challenges listener error", err));
 
   updateResumeUrl();
   renderCity();
-  addMsg("system", "Online. Turn-based PvP is open. Tap any city to challenge.");
+  addMsg("system", "Online. Turn-based PvP is open to anyone. Tap a city on the map to challenge.");
 }
 
 function saveCity() {
-  if (!uid) return;
-  db.collection("cities").doc(uid).set({
+  if (!uid) return Promise.resolve();
+  return db.collection("cities").doc(uid).set({
     name: state.name,
     money: state.money,
     pop: state.pop,
@@ -320,7 +353,7 @@ function saveCity() {
     y: state.y,
     npcs: state.npcs,
     updated: firebase.firestore.FieldValue.serverTimestamp()
-  }, { merge: true });
+  }, { merge: true }).catch(err => console.warn("Save failed", err));
 }
 
 function renderMap() {
@@ -348,27 +381,31 @@ function closeOther() { otherPanel.classList.remove("show"); selectedOther = nul
 function sendMessage() {
   if (!selectedOther) return;
   const msg = prompt(`Message to ${selectedOther.name}:`);
-  if (msg) addMsg("system", `Sent to ${selectedOther.name}: "${msg}"`);
+  if (msg) addMsg("system", `Sent to ${selectedOther.name}: "${autocorrect(msg)}"`);
   closeOther();
 }
 
 async function startChallenge() {
   if (!selectedOther || !uid) return;
-  const targetId = selectedOther.id;
-  await db.collection("challenges").add({
-    participants: [uid, targetId],
-    initiator: uid,
-    target: targetId,
-    initiatorName: state.name,
-    targetName: selectedOther.name,
-    turn: uid,
-    status: "active",
-    log: ["Challenge started by " + state.name],
-    created: firebase.firestore.FieldValue.serverTimestamp()
-  });
-  addMsg("system", `Challenge sent to ${selectedOther.name}. Check the PvP tab.`);
-  closeOther();
-  switchView("pvp");
+  try {
+    await db.collection("challenges").add({
+      participants: [uid, selectedOther.id],
+      initiator: uid,
+      target: selectedOther.id,
+      initiatorName: state.name,
+      targetName: selectedOther.name,
+      turn: uid,
+      status: "active",
+      log: ["Challenge started by " + state.name],
+      created: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    addMsg("system", `Challenge sent to ${selectedOther.name}. Check the PvP tab.`);
+    closeOther();
+    switchView("pvp");
+  } catch (err) {
+    addMsg("system", "Could not start challenge.");
+    console.error(err);
+  }
 }
 
 function renderPvp() {
@@ -378,14 +415,14 @@ function renderPvp() {
     return;
   }
   myChallenges.forEach(ch => {
-    const isMyTurn = ch.turn === uid;
+    const isMyTurn = ch.turn === uid && ch.status === "active";
+    const opponent = ch.initiator === uid ? ch.targetName : ch.initiatorName;
     const div = document.createElement("div");
     div.className = "challenge-card";
-    const opponent = ch.initiator === uid ? ch.targetName : ch.initiatorName;
     div.innerHTML = `
-      <strong>vs ${opponent}</strong>
-      <div class="turn">${isMyTurn ? "Your turn" : "Waiting for opponent"}</div>
-      <div style="font-size:13px;color:var(--muted);margin:6px 0;">${(ch.log || []).slice(-2).join(" · ")}</div>
+      <strong>vs ${opponent || "Opponent"}</strong>
+      <div class="turn">${ch.status === "ended" ? "Ended" : isMyTurn ? "Your turn" : "Waiting for opponent"}</div>
+      <div style="font-size:13px;color:var(--muted);margin:6px 0;">${(ch.log || []).slice(-3).join(" · ")}</div>
       ${isMyTurn ? `
         <button onclick="pvpAction('${ch.id}', 'attack')">Attack</button>
         <button onclick="pvpAction('${ch.id}', 'negotiate')">Negotiate</button>
@@ -397,71 +434,68 @@ function renderPvp() {
 }
 
 async function pvpAction(challengeId, action) {
-  const chRef = db.collection("challenges").doc(challengeId);
-  const snap = await chRef.get();
-  if (!snap.exists) return;
-  const ch = snap.data();
-  if (ch.turn !== uid) return;
+  try {
+    const chRef = db.collection("challenges").doc(challengeId);
+    const snap = await chRef.get();
+    if (!snap.exists || snap.data().turn !== uid) return;
 
-  const myPower = state.influence + Math.floor(state.pop / 10) + Math.floor(Math.random() * 8);
-  const opponentId = ch.initiator === uid ? ch.target : ch.initiator;
-  const oppCity = allCities.find(c => c.id === opponentId) || { influence: 5, pop: 20 };
-  const oppPower = (oppCity.influence || 5) + Math.floor((oppCity.pop || 20) / 10) + Math.floor(Math.random() * 8);
+    const ch = snap.data();
+    const myPower = state.influence + Math.floor(state.pop / 10) + Math.floor(Math.random() * 8);
+    const opponentId = ch.initiator === uid ? ch.target : ch.initiator;
+    const oppCity = allCities.find(c => c.id === opponentId) || { influence: 5, pop: 20 };
+    const oppPower = (oppCity.influence || 5) + Math.floor((oppCity.pop || 20) / 10) + Math.floor(Math.random() * 8);
 
-  let result = "";
-  let nextTurn = opponentId;
-  let status = "active";
+    let result = "";
+    let nextTurn = opponentId;
+    let status = "active";
 
-  if (action === "attack") {
-    if (myPower > oppPower) {
-      result = "Attack succeeded. You gain influence.";
-      state.influence += 3;
-      state.money += 80;
-    } else {
-      result = "Attack failed. You lose some resources.";
-      state.money = Math.max(0, state.money - 60);
-      state.happy = Math.max(10, state.happy - 6);
+    if (action === "attack") {
+      if (myPower > oppPower) {
+        result = "Attack succeeded. Influence and money gained.";
+        state.influence += 3;
+        state.money += 80;
+      } else {
+        result = "Attack failed. Resources lost.";
+        state.money = Math.max(0, state.money - 60);
+        state.happy = Math.max(10, state.happy - 6);
+      }
+    } else if (action === "negotiate") {
+      result = "Negotiation offered. Influence and happiness rise.";
+      state.influence += 1;
+      state.happy = Math.min(100, state.happy + 4);
+    } else if (action === "sabotage") {
+      if (myPower + 3 > oppPower) {
+        result = "Sabotage worked.";
+        state.influence += 2;
+      } else {
+        result = "Sabotage detected. Backlash.";
+        state.happy = Math.max(10, state.happy - 8);
+      }
     }
-  } else if (action === "negotiate") {
-    result = "Negotiation offered. Influence slightly rises.";
-    state.influence += 1;
-    state.happy = Math.min(100, state.happy + 4);
-  } else if (action === "sabotage") {
-    if (myPower + 3 > oppPower) {
-      result = "Sabotage worked. Opponent weakened (simulated).";
-      state.influence += 2;
-    } else {
-      result = "Sabotage detected. Backlash.";
-      state.happy = Math.max(10, state.happy - 8);
+
+    const newLog = (ch.log || []).concat([state.name + " used " + action + ": " + result]);
+    if (newLog.length > 8) newLog.shift();
+    if (newLog.length >= 6) {
+      status = "ended";
+      nextTurn = null;
+      result += " Challenge ended.";
     }
+
+    await chRef.update({ turn: nextTurn, status, log: newLog });
+    await saveCity();
+    addMsg("system", result);
+    renderCity();
+  } catch (err) {
+    addMsg("system", "Action failed.");
+    console.error(err);
   }
-
-  const newLog = (ch.log || []).concat([state.name + " used " + action + ": " + result]);
-  if (newLog.length > 6) newLog.shift();
-
-  // Simple end condition after a few actions
-  if (newLog.length >= 5) {
-    status = "ended";
-    nextTurn = null;
-    result += " Challenge ended.";
-  }
-
-  await chRef.update({
-    turn: nextTurn,
-    status,
-    log: newLog
-  });
-
-  saveCity();
-  addMsg("system", result);
-  renderCity();
 }
 
 function renderCity() {
   document.getElementById("money").textContent = state.money;
   document.getElementById("pop").textContent = state.pop;
   document.getElementById("happy").textContent = state.happy;
-  document.getElementById("stage").textContent = state.stages[state.stage];
+  document.getElementById("stage").textContent = state.stages[state.stage] || "Outpost";
   npcsEl.innerHTML = "";
   state.npcs.forEach((n, i) => {
     const div = document.createElement("div");
@@ -487,22 +521,31 @@ function addMsg(who, text) {
 
 function npcReply(npc) {
   const replies = {
-    pragmatic: ["A challenge is coming. Prepare influence.", "Turn-based fights reward patience."],
-    greedy: ["Winning PvP can bring money.", "Watch the other cities carefully."],
-    idealistic: ["We can still negotiate even in conflict.", "Not every challenge needs to be violent."],
-    blunt: ["Hit them when it's our turn.", "Get stronger first."]
+    pragmatic: ["A challenge is coming. Prepare influence.", "Turn-based fights reward patience.", "Keep the treasury healthy."],
+    greedy: ["Winning PvP can bring money.", "Watch the other cities carefully.", "Trade is safer than war."],
+    idealistic: ["We can still negotiate even in conflict.", "Not every challenge needs to be violent.", "Loyalty matters more than force."],
+    blunt: ["Hit them when it's our turn.", "Get stronger first.", "Just build more housing."]
   };
   const pool = replies[npc.personality] || replies.pragmatic;
   return `${npc.name}: ${pool[Math.floor(Math.random() * pool.length)]}`;
 }
 
 function doAction(action) {
-  if (action === "tax") { state.money += 160; state.happy = Math.max(15, state.happy - 8); }
-  else if (action === "build" && state.money >= 200) { state.money -= 200; state.pop += 5; }
-  else if (action === "festival" && state.money >= 120) { state.money -= 120; state.happy = Math.min(100, state.happy + 14); }
-  else if (action === "promote") {
+  if (action === "tax") {
+    state.money += 160;
+    state.happy = Math.max(15, state.happy - 8);
+  } else if (action === "build" && state.money >= 200) {
+    state.money -= 200;
+    state.pop += 5;
+  } else if (action === "festival" && state.money >= 120) {
+    state.money -= 120;
+    state.happy = Math.min(100, state.happy + 14);
+  } else if (action === "promote") {
     state.npcs[state.selected].loyalty = Math.min(100, state.npcs[state.selected].loyalty + 10);
     state.influence += 2;
+  } else {
+    addMsg("system", "Not enough money.");
+    return;
   }
   checkStage();
   saveCity();
@@ -513,6 +556,7 @@ function checkStage() {
   if (state.pop >= 40 && state.stage < 1) state.stage = 1;
   else if (state.pop >= 80 && state.stage < 2) state.stage = 2;
   else if (state.pop >= 140 && state.stage < 3) state.stage = 3;
+  else if (state.pop >= 250 && state.stage < 4) state.stage = 4;
 }
 
 function switchView(name) {
@@ -530,11 +574,12 @@ document.getElementById("tab-pvp").onclick = () => switchView("pvp");
 
 form.addEventListener("submit", (e) => {
   e.preventDefault();
-  const text = box.value.trim();
+  let text = box.value.trim();
   if (!text) return;
+  text = autocorrect(text);
   box.value = "";
   addMsg("you", text);
-  setTimeout(() => addMsg("npc", npcReply(state.npcs[state.selected])), 300);
+  setTimeout(() => addMsg("npc", npcReply(state.npcs[state.selected])), 320);
 });
 
 document.querySelectorAll("[data-action]").forEach(btn => {
@@ -543,7 +588,9 @@ document.querySelectorAll("[data-action]").forEach(btn => {
 
 (async () => {
   const params = new URLSearchParams(location.search);
-  if (params.get("guest")) guestBtn.click();
+  if (params.get("guest")) {
+    setTimeout(() => guestBtn.click(), 200);
+  }
 })();
 </script>
 </body>
