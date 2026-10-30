@@ -165,6 +165,9 @@
     <div class="stat-card"><div class="label">Happy</div><div class="value" id="happy">62</div></div>
     <div class="stat-card"><div class="label">Stage</div><div class="value" id="stage">Outpost</div></div>
   </div>
+  <div style="padding:0 16px 8px;color:var(--muted);font-size:13px;text-align:center;">
+    Online: <span id="online-time">0m</span> · Next reward in <span id="next-reward">5m</span>
+  </div>
   <div class="rename-row">
     <input id="rename-input" type="text" placeholder="New city name" maxlength="24">
     <button onclick="renameCity()">Rename</button>
@@ -215,12 +218,17 @@ let unsubscribeCities = null;
 let unsubscribeChallenges = null;
 let heartbeatTimer = null;
 let popActTimer = null;
+let rewardTimer = null;
 let lastPopSpend = 0;
 let lastTrade = 0;
+let sessionStart = 0;
+let lastRewardTime = 0;
 
 const ONLINE_WINDOW_MS = 8 * 60 * 1000;
 const SPEND_INTERVAL_MS = 45 * 1000;
 const TRADE_INTERVAL_MS = 60 * 1000;
+const ONLINE_REWARD_INTERVAL_MS = 5 * 60 * 1000; // every 5 minutes
+const ONLINE_REWARD_AMOUNT = 40;
 
 const AUTOCORRECT = {
   teh: "the", recieve: "receive", seperate: "separate", occured: "occurred",
@@ -248,6 +256,21 @@ function autocorrect(text) {
 function isOnline(updated) {
   if (!updated || !updated.toDate) return false;
   return (Date.now() - updated.toDate().getTime()) < ONLINE_WINDOW_MS;
+}
+
+function formatMinutes(ms) {
+  return Math.floor(ms / 60000) + "m";
+}
+
+function updateOnlineDisplay() {
+  if (!sessionStart) return;
+  const now = Date.now();
+  const onlineMs = now - sessionStart;
+  const nextIn = Math.max(0, ONLINE_REWARD_INTERVAL_MS - (now - lastRewardTime));
+  const elTime = document.getElementById("online-time");
+  const elNext = document.getElementById("next-reward");
+  if (elTime) elTime.textContent = formatMinutes(onlineMs);
+  if (elNext) elNext.textContent = formatMinutes(nextIn);
 }
 
 const state = {
@@ -345,6 +368,10 @@ async function startOnline() {
   }
   lastPopSpend = state.lastPopSpend || 0;
   lastTrade = state.lastTrade || 0;
+
+  sessionStart = Date.now();
+  lastRewardTime = sessionStart;
+
   await saveCity();
 
   if (unsubscribeCities) unsubscribeCities();
@@ -392,9 +419,24 @@ async function startOnline() {
     }, 10 * 1000);
   }
 
+  if (rewardTimer) clearInterval(rewardTimer);
+  rewardTimer = setInterval(() => {
+    if (!uid) return;
+    const now = Date.now();
+    updateOnlineDisplay();
+    if (now - lastRewardTime >= ONLINE_REWARD_INTERVAL_MS) {
+      state.money += ONLINE_REWARD_AMOUNT;
+      lastRewardTime = now;
+      saveCity();
+      renderCity();
+      addMsg("system", `Online reward: +${ONLINE_REWARD_AMOUNT} money (stayed online).`);
+    }
+  }, 15 * 1000);
+
   updateResumeUrl();
   renderCity();
-  addMsg("system", "Online. Population AI NPCs spend and trade on real time (Date.now()). Map markers grow with population.");
+  updateOnlineDisplay();
+  addMsg("system", "Online. Population AI NPCs spend and trade on real time (Date.now()). Map markers grow with population. Online rewards every 5 minutes.");
 }
 
 function saveCity() {
@@ -611,6 +653,7 @@ function renderCity() {
     };
     npcsEl.appendChild(div);
   });
+  updateOnlineDisplay();
 }
 
 function addMsg(who, text) {
@@ -786,6 +829,7 @@ function switchView(name) {
   document.getElementById("tab-" + name).classList.add("active");
   if (name === "pvp") renderPvp();
   if (name === "map") renderMap();
+  if (name === "city") updateOnlineDisplay();
 }
 
 document.getElementById("tab-map").onclick = () => switchView("map");
