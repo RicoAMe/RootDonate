@@ -34,11 +34,12 @@
 
   #map { flex: 1; position: relative; background: radial-gradient(circle at 30% 40%, #1a2838 0%, #0a1018 70%); }
   .city-marker {
-    position: absolute; width: 60px; height: 60px; border-radius: 50%;
+    position: absolute; border-radius: 50%;
     background: var(--card); border: 2px solid var(--accent);
     display: flex; align-items: center; justify-content: center; flex-direction: column;
     font-size: 11px; font-weight: 650; text-align: center; cursor: pointer;
     transform: translate(-50%, -50%); box-shadow: 0 4px 14px rgba(0,0,0,0.45);
+    transition: width 0.4s, height 0.4s, box-shadow 0.4s;
   }
   .city-marker.yours { border-color: var(--good); background: #1a3a2a; }
   .city-marker .pop { font-size: 9px; color: var(--muted); margin-top: 1px; }
@@ -173,8 +174,9 @@
     <button data-action="build">Build Housing</button>
     <button data-action="festival">Festival</button>
     <button data-action="promote">Promote</button>
+    <button data-action="popspend" style="grid-column:1/-1;">Let Population Spend</button>
   </div>
-  <div style="padding:0 16px 8px;color:var(--muted);font-size:13px;">Hierarchy · Population Voice</div>
+  <div style="padding:0 16px 8px;color:var(--muted);font-size:13px;">Hierarchy · Population Voice (AI-driven)</div>
   <div class="npc-scroller" id="npcs"></div>
 </div>
 
@@ -211,6 +213,7 @@ let uid = null;
 let unsubscribeCities = null;
 let unsubscribeChallenges = null;
 let heartbeatTimer = null;
+let popSpendTimer = null;
 
 const ONLINE_WINDOW_MS = 8 * 60 * 1000;
 
@@ -254,7 +257,8 @@ const state = {
   ],
   name: "Your City",
   x: 35 + Math.random() * 30,
-  y: 35 + Math.random() * 30
+  y: 35 + Math.random() * 30,
+  autoPopSpend: true
 };
 
 const mapEl = document.getElementById("map");
@@ -326,7 +330,8 @@ async function startOnline() {
       name: data.name || state.name,
       x: data.x ?? state.x,
       y: data.y ?? state.y,
-      npcs: data.npcs || state.npcs
+      npcs: data.npcs || state.npcs,
+      autoPopSpend: data.autoPopSpend !== false
     });
   }
   await saveCity();
@@ -357,13 +362,16 @@ async function startOnline() {
     }, err => console.warn("Challenges listener error", err));
 
   if (heartbeatTimer) clearInterval(heartbeatTimer);
-  heartbeatTimer = setInterval(() => {
-    if (uid) saveCity();
-  }, 2 * 60 * 1000);
+  heartbeatTimer = setInterval(() => { if (uid) saveCity(); }, 2 * 60 * 1000);
+
+  if (popSpendTimer) clearInterval(popSpendTimer);
+  if (state.autoPopSpend) {
+    popSpendTimer = setInterval(populationSpend, 45 * 1000); // every 45s
+  }
 
   updateResumeUrl();
   renderCity();
-  addMsg("system", "Online. NPC hierarchy is the population voice. Only cities active in the last 8 minutes appear on the map.");
+  addMsg("system", "Online. Population (AI NPCs) can spend money. Map markers grow with population.");
 }
 
 function saveCity() {
@@ -378,6 +386,7 @@ function saveCity() {
     x: state.x,
     y: state.y,
     npcs: state.npcs,
+    autoPopSpend: state.autoPopSpend,
     updated: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true }).catch(err => console.warn("Save failed", err));
 }
@@ -395,6 +404,12 @@ async function renameCity() {
   addMsg("system", `City renamed to "${state.name}".`);
 }
 
+function markerSize(pop) {
+  const base = 52;
+  const extra = Math.min(48, Math.floor((pop || 0) / 8));
+  return base + extra;
+}
+
 function renderMap() {
   mapEl.innerHTML = "";
   const onlineCities = allCities.filter(c => c.yours || isOnline(c.updated));
@@ -405,8 +420,14 @@ function renderMap() {
   onlineCities.forEach(c => {
     const m = document.createElement("div");
     m.className = "city-marker" + (c.yours ? " yours" : "");
+    const size = markerSize(c.pop);
+    m.style.width = size + "px";
+    m.style.height = size + "px";
     m.style.left = (c.x || 50) + "%";
     m.style.top = (c.y || 50) + "%";
+    const stage = c.stage || 0;
+    if (stage >= 2) m.style.boxShadow = "0 0 18px rgba(94,176,255,0.45)";
+    if (stage >= 3) m.style.boxShadow = "0 0 24px rgba(74,222,128,0.55)";
     m.innerHTML = `${(c.name || "City").split(" ")[0]}<div class="pop">${c.pop || 0}</div>`;
     m.onclick = () => selectCity(c);
     mapEl.appendChild(m);
@@ -582,24 +603,24 @@ function npcReply(npc) {
 
   const voice = {
     pragmatic: [
-      `As advisor I speak for efficiency. Happiness is ${state.happy} (${mood}). Stage: ${stage}.`,
-      `Only ${onlineCount} cities are online right now. Stay active if you want to stay visible.`,
-      `Money is ${state.money}. Population ${state.pop}. Practical growth first.`
+      `Advisor: Happiness ${state.happy} (${mood}). Stage ${stage}. Money ${state.money}. We should spend wisely on growth.`,
+      `Only ${onlineCount} cities online. Population wants steady expansion.`,
+      `Pop ${state.pop}. Practical path: build when we can afford it.`
     ],
     greedy: [
-      `Merchant voice: competition is low with only ${onlineCount} cities online. Good time to expand.`,
-      `Taxes and trade matter. Current money ${state.money}. Don't leave gold on the table.`,
-      `Happiness ${state.happy} is secondary to profit. Stage ${stage} has potential.`
+      `Merchant: Money ${state.money}. Low competition (${onlineCount} online). Invest in growth for more trade.`,
+      `Stage ${stage}. Population will spend if it increases future income.`,
+      `Happiness ${state.happy} secondary. Let’s expand housing when profitable.`
     ],
     idealistic: [
-      `Citizen lead here. The people feel ${mood} (happiness ${state.happy}). We want a better ${stage}.`,
-      `Population ${state.pop} looks to us. Focus on our own city while others are offline.`,
-      `Alliances and festivals keep the voice of the people positive.`
+      `Citizen lead: People feel ${mood} (happy ${state.happy}). They want festivals and better living.`,
+      `Pop ${state.pop} in a ${stage}. The voice of the people supports spending on quality of life.`,
+      `We grow stronger together. Online cities: ${onlineCount}.`
     ],
     blunt: [
-      `Worker speaking. If they're not online, ignore them. Just build.`,
-      `Happy is ${state.happy}. Pop ${state.pop}. Stage ${stage}. Get on with it.`,
-      `Money ${state.money}. Don't waste time talking if we can build housing.`
+      `Worker: Just spend the money and build. Happy ${state.happy}, pop ${state.pop}, stage ${stage}.`,
+      `If money is there, housing goes up. No more talking.`,
+      `Online count ${onlineCount}. Keep the city growing.`
     ]
   };
 
@@ -607,7 +628,62 @@ function npcReply(npc) {
   return `${npc.name}: ${pool[Math.floor(Math.random() * pool.length)]}`;
 }
 
+// AI-driven population spending
+function populationSpend() {
+  if (!state.autoPopSpend || state.money < 80) return;
+
+  const npc = state.npcs[Math.floor(Math.random() * state.npcs.length)];
+  let action = null;
+  let cost = 0;
+  let msg = "";
+
+  if (npc.personality === "idealistic" && state.happy < 65 && state.money >= 120) {
+    action = "festival";
+    cost = 120;
+    msg = `${npc.name} (Citizen Lead) spent on a festival for the people.`;
+  } else if ((npc.personality === "pragmatic" || npc.personality === "blunt") && state.money >= 200) {
+    action = "build";
+    cost = 200;
+    msg = `${npc.name} pushed for housing. Population grows.`;
+  } else if (npc.personality === "greedy" && state.money >= 150 && state.influence < 20) {
+    action = "promote";
+    cost = 80;
+    msg = `${npc.name} spent to raise influence and trade.`;
+  } else if (state.money >= 200 && state.pop < 80) {
+    action = "build";
+    cost = 200;
+    msg = `Population demand: housing built.`;
+  } else if (state.happy < 50 && state.money >= 120) {
+    action = "festival";
+    cost = 120;
+    msg = `People demanded a festival. Happiness rises.`;
+  }
+
+  if (!action) return;
+
+  state.money -= cost;
+  if (action === "build") {
+    state.pop += 5;
+  } else if (action === "festival") {
+    state.happy = Math.min(100, state.happy + 12);
+  } else if (action === "promote") {
+    state.influence += 2;
+    state.npcs[state.selected].loyalty = Math.min(100, state.npcs[state.selected].loyalty + 5);
+  }
+
+  checkStage();
+  saveCity();
+  renderCity();
+  addMsg("system", msg + ` (Money left: ${state.money})`);
+  // Force map refresh if viewing map
+  if (document.getElementById("map-view").classList.contains("active")) renderMap();
+}
+
 function doAction(action) {
+  if (action === "popspend") {
+    populationSpend();
+    return;
+  }
   if (action === "tax") {
     state.money += 160;
     state.happy = Math.max(15, state.happy - 8);
@@ -642,6 +718,7 @@ function switchView(name) {
   document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
   document.getElementById("tab-" + name).classList.add("active");
   if (name === "pvp") renderPvp();
+  if (name === "map") renderMap();
 }
 
 document.getElementById("tab-map").onclick = () => switchView("map");
