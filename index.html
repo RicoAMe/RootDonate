@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>Open World City · Online Multiplayer</title>
+<title>Open World City · Turn-Based PvP</title>
 <style>
   :root {
     --bg: #070a0e; --surface: #121820; --card: #1a2230; --line: #2c3a4d;
     --text: #f0f4f8; --muted: #8b9bb0; --accent: #5eb0ff; --good: #4ade80;
-    --you: #1e3a5f; --bot: #161e2a;
+    --you: #1e3a5f; --bot: #161e2a; --warn: #fbbf24;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; margin: 0; }
@@ -22,10 +22,10 @@
     display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
   }
   header h1 { margin: 0; font-size: 18px; font-weight: 650; }
-  .tabs { display: flex; gap: 6px; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
   .tabs button {
     background: transparent; color: var(--muted); border: 1px solid var(--line);
-    border-radius: 999px; padding: 6px 12px; font-size: 13px;
+    border-radius: 999px; padding: 6px 11px; font-size: 12.5px;
   }
   .tabs button.active { background: rgba(94,176,255,0.15); color: var(--accent); border-color: var(--accent); }
 
@@ -67,12 +67,19 @@
   .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 16px 12px; }
   .actions button { background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: 12px; padding: 11px; font-size: 13px; }
 
-  .other-city-panel {
+  .other-city-panel, .pvp-panel {
     position: absolute; bottom: 12px; left: 12px; right: 12px;
     background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: none;
   }
-  .other-city-panel.show { display: block; }
-  .other-city-panel button { margin-top: 8px; margin-right: 6px; }
+  .other-city-panel.show, .pvp-panel.show { display: block; }
+  .other-city-panel button, .pvp-panel button { margin-top: 8px; margin-right: 6px; }
+
+  #pvp-list { flex: 1; overflow-y: auto; padding: 12px 16px; }
+  .challenge-card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+    padding: 12px; margin-bottom: 10px;
+  }
+  .challenge-card .turn { color: var(--warn); font-size: 12.5px; font-weight: 600; }
 
   #login-overlay {
     position: fixed; inset: 0; background: rgba(7,10,14,0.96); backdrop-filter: blur(8px);
@@ -99,11 +106,11 @@
 <div id="login-overlay">
   <div id="login-card">
     <h2>Open World City</h2>
-    <p>Continue as a guest. Your city is saved online and appears for other players.</p>
+    <p>Continue as a guest. Turn-based PvP is open to anyone.</p>
     <div id="gdpr-row">
       <input type="checkbox" id="gdpr-consent" checked>
       <label for="gdpr-consent">
-        I agree to the processing of my guest ID and city data stored in Firebase for this multiplayer prototype, in line with GDPR.
+        I agree to the processing of my guest ID, city data, and PvP challenges stored in Firebase, in line with GDPR.
         <a href="#" id="privacy-link">Privacy notice</a>
       </label>
     </div>
@@ -118,6 +125,7 @@
     <button id="tab-map" class="active">Map</button>
     <button id="tab-city">City</button>
     <button id="tab-talk">Talk</button>
+    <button id="tab-pvp">PvP</button>
   </div>
 </header>
 
@@ -126,8 +134,8 @@
   <div class="other-city-panel" id="other-panel">
     <strong id="other-name">City</strong>
     <div style="font-size:13.5px;color:var(--muted);margin-top:4px;" id="other-info"></div>
+    <button onclick="startChallenge()">Challenge (PvP)</button>
     <button onclick="sendMessage()">Send Message</button>
-    <button onclick="proposeTrade()">Propose Trade</button>
     <button onclick="closeOther()">Close</button>
   </div>
 </div>
@@ -157,6 +165,10 @@
   </form>
 </div>
 
+<div id="pvp-view" class="view">
+  <div id="pvp-list"></div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -176,6 +188,7 @@ const db = firebase.firestore();
 
 let uid = null;
 let unsubscribeCities = null;
+let unsubscribeChallenges = null;
 
 const state = {
   money: 1000, pop: 12, happy: 62, influence: 5, stage: 0,
@@ -188,8 +201,8 @@ const state = {
     { name: "Dax", role: "Worker", loyalty: 45, personality: "blunt" }
   ],
   name: "Your City",
-  x: 40 + Math.random() * 20,
-  y: 40 + Math.random() * 20
+  x: 35 + Math.random() * 30,
+  y: 35 + Math.random() * 30
 };
 
 const mapEl = document.getElementById("map");
@@ -198,10 +211,11 @@ const box = document.getElementById("box");
 const form = document.getElementById("form");
 const npcsEl = document.getElementById("npcs");
 const otherPanel = document.getElementById("other-panel");
+const pvpList = document.getElementById("pvp-list");
 let selectedOther = null;
 let allCities = [];
+let myChallenges = [];
 
-// GDPR + Login
 const guestBtn = document.getElementById("guest-btn");
 const gdprConsent = document.getElementById("gdpr-consent");
 const privacyLink = document.getElementById("privacy-link");
@@ -219,7 +233,7 @@ updateResumeUrl();
 
 privacyLink.onclick = (e) => {
   e.preventDefault();
-  alert("Privacy notice (GDPR)\n\n• Anonymous guest ID and your city data (name, population, money, position) are stored in Firebase Firestore.\n• No email or password is required.\n• Other players can see your public city stats on the map.\n• You can clear your data by deleting the document in Firebase or contacting the project owner.\n• Bookmark the resume URL to continue as the same guest.");
+  alert("Privacy notice (GDPR)\n\n• Anonymous guest ID, city data, and PvP challenges are stored in Firebase Firestore.\n• Other players can see your public city stats and challenge you.\n• Bookmark the resume URL to keep the same guest identity.");
 };
 
 guestBtn.onclick = async () => {
@@ -245,7 +259,6 @@ guestBtn.onclick = async () => {
 };
 
 async function startOnline() {
-  // Load or create city
   const doc = await db.collection("cities").doc(uid).get();
   if (doc.exists) {
     const data = doc.data();
@@ -264,7 +277,6 @@ async function startOnline() {
     await saveCity();
   }
 
-  // Real-time cities listener
   if (unsubscribeCities) unsubscribeCities();
   unsubscribeCities = db.collection("cities").onSnapshot(snap => {
     allCities = [];
@@ -277,14 +289,27 @@ async function startOnline() {
     renderMap();
   });
 
+  if (unsubscribeChallenges) unsubscribeChallenges();
+  unsubscribeChallenges = db.collection("challenges")
+    .where("participants", "array-contains", uid)
+    .onSnapshot(snap => {
+      myChallenges = [];
+      snap.forEach(d => {
+        const ch = d.data();
+        ch.id = d.id;
+        myChallenges.push(ch);
+      });
+      renderPvp();
+    });
+
   updateResumeUrl();
   renderCity();
-  addMsg("system", "Online. Your city is visible to other players. Bookmark the resume URL.");
+  addMsg("system", "Online. Turn-based PvP is open. Tap any city to challenge.");
 }
 
 function saveCity() {
   if (!uid) return;
-  const publicData = {
+  db.collection("cities").doc(uid).set({
     name: state.name,
     money: state.money,
     pop: state.pop,
@@ -295,8 +320,7 @@ function saveCity() {
     y: state.y,
     npcs: state.npcs,
     updated: firebase.firestore.FieldValue.serverTimestamp()
-  };
-  db.collection("cities").doc(uid).set(publicData, { merge: true });
+  }, { merge: true });
 }
 
 function renderMap() {
@@ -316,20 +340,121 @@ function selectCity(c) {
   if (c.yours) { switchView("city"); return; }
   selectedOther = c;
   document.getElementById("other-name").textContent = c.name || "City";
-  document.getElementById("other-info").textContent = `Pop ${c.pop || 0} · Money ${c.money || 0}`;
+  document.getElementById("other-info").textContent = `Pop ${c.pop || 0} · Money ${c.money || 0} · Inf ${c.influence || 0}`;
   otherPanel.classList.add("show");
 }
 function closeOther() { otherPanel.classList.remove("show"); selectedOther = null; }
+
 function sendMessage() {
   if (!selectedOther) return;
   const msg = prompt(`Message to ${selectedOther.name}:`);
-  if (msg) addMsg("system", `Sent to ${selectedOther.name}: "${msg}" (prototype — messages not yet synced)`);
+  if (msg) addMsg("system", `Sent to ${selectedOther.name}: "${msg}"`);
   closeOther();
 }
-function proposeTrade() {
-  if (!selectedOther) return;
-  addMsg("system", `Trade proposal sent to ${selectedOther.name}. (prototype stub)`);
+
+async function startChallenge() {
+  if (!selectedOther || !uid) return;
+  const targetId = selectedOther.id;
+  await db.collection("challenges").add({
+    participants: [uid, targetId],
+    initiator: uid,
+    target: targetId,
+    initiatorName: state.name,
+    targetName: selectedOther.name,
+    turn: uid,
+    status: "active",
+    log: ["Challenge started by " + state.name],
+    created: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  addMsg("system", `Challenge sent to ${selectedOther.name}. Check the PvP tab.`);
   closeOther();
+  switchView("pvp");
+}
+
+function renderPvp() {
+  pvpList.innerHTML = "";
+  if (!myChallenges.length) {
+    pvpList.innerHTML = "<div style='color:var(--muted);text-align:center;padding:40px;'>No active challenges. Challenge a city on the map.</div>";
+    return;
+  }
+  myChallenges.forEach(ch => {
+    const isMyTurn = ch.turn === uid;
+    const div = document.createElement("div");
+    div.className = "challenge-card";
+    const opponent = ch.initiator === uid ? ch.targetName : ch.initiatorName;
+    div.innerHTML = `
+      <strong>vs ${opponent}</strong>
+      <div class="turn">${isMyTurn ? "Your turn" : "Waiting for opponent"}</div>
+      <div style="font-size:13px;color:var(--muted);margin:6px 0;">${(ch.log || []).slice(-2).join(" · ")}</div>
+      ${isMyTurn ? `
+        <button onclick="pvpAction('${ch.id}', 'attack')">Attack</button>
+        <button onclick="pvpAction('${ch.id}', 'negotiate')">Negotiate</button>
+        <button onclick="pvpAction('${ch.id}', 'sabotage')">Sabotage</button>
+      ` : ""}
+    `;
+    pvpList.appendChild(div);
+  });
+}
+
+async function pvpAction(challengeId, action) {
+  const chRef = db.collection("challenges").doc(challengeId);
+  const snap = await chRef.get();
+  if (!snap.exists) return;
+  const ch = snap.data();
+  if (ch.turn !== uid) return;
+
+  const myPower = state.influence + Math.floor(state.pop / 10) + Math.floor(Math.random() * 8);
+  const opponentId = ch.initiator === uid ? ch.target : ch.initiator;
+  const oppCity = allCities.find(c => c.id === opponentId) || { influence: 5, pop: 20 };
+  const oppPower = (oppCity.influence || 5) + Math.floor((oppCity.pop || 20) / 10) + Math.floor(Math.random() * 8);
+
+  let result = "";
+  let nextTurn = opponentId;
+  let status = "active";
+
+  if (action === "attack") {
+    if (myPower > oppPower) {
+      result = "Attack succeeded. You gain influence.";
+      state.influence += 3;
+      state.money += 80;
+    } else {
+      result = "Attack failed. You lose some resources.";
+      state.money = Math.max(0, state.money - 60);
+      state.happy = Math.max(10, state.happy - 6);
+    }
+  } else if (action === "negotiate") {
+    result = "Negotiation offered. Influence slightly rises.";
+    state.influence += 1;
+    state.happy = Math.min(100, state.happy + 4);
+  } else if (action === "sabotage") {
+    if (myPower + 3 > oppPower) {
+      result = "Sabotage worked. Opponent weakened (simulated).";
+      state.influence += 2;
+    } else {
+      result = "Sabotage detected. Backlash.";
+      state.happy = Math.max(10, state.happy - 8);
+    }
+  }
+
+  const newLog = (ch.log || []).concat([state.name + " used " + action + ": " + result]);
+  if (newLog.length > 6) newLog.shift();
+
+  // Simple end condition after a few actions
+  if (newLog.length >= 5) {
+    status = "ended";
+    nextTurn = null;
+    result += " Challenge ended.";
+  }
+
+  await chRef.update({
+    turn: nextTurn,
+    status,
+    log: newLog
+  });
+
+  saveCity();
+  addMsg("system", result);
+  renderCity();
 }
 
 function renderCity() {
@@ -362,10 +487,10 @@ function addMsg(who, text) {
 
 function npcReply(npc) {
   const replies = {
-    pragmatic: ["Other cities are growing. We should keep pace.", "Online world means real competition."],
-    greedy: ["Their money looks interesting for trade.", "More players mean more opportunities."],
-    idealistic: ["We can build alliances across the map.", "People in other cities are watching too."],
-    blunt: ["Just get bigger than the others.", "Map is open — expand."]
+    pragmatic: ["A challenge is coming. Prepare influence.", "Turn-based fights reward patience."],
+    greedy: ["Winning PvP can bring money.", "Watch the other cities carefully."],
+    idealistic: ["We can still negotiate even in conflict.", "Not every challenge needs to be violent."],
+    blunt: ["Hit them when it's our turn.", "Get stronger first."]
   };
   const pool = replies[npc.personality] || replies.pragmatic;
   return `${npc.name}: ${pool[Math.floor(Math.random() * pool.length)]}`;
@@ -395,11 +520,13 @@ function switchView(name) {
   document.getElementById(name + "-view").classList.add("active");
   document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
   document.getElementById("tab-" + name).classList.add("active");
+  if (name === "pvp") renderPvp();
 }
 
 document.getElementById("tab-map").onclick = () => switchView("map");
 document.getElementById("tab-city").onclick = () => switchView("city");
 document.getElementById("tab-talk").onclick = () => switchView("talk");
+document.getElementById("tab-pvp").onclick = () => switchView("pvp");
 
 form.addEventListener("submit", (e) => {
   e.preventDefault();
@@ -414,12 +541,9 @@ document.querySelectorAll("[data-action]").forEach(btn => {
   btn.addEventListener("click", () => doAction(btn.dataset.action));
 });
 
-// Auto-resume if guest in URL
 (async () => {
   const params = new URLSearchParams(location.search);
-  if (params.get("guest")) {
-    guestBtn.click();
-  }
+  if (params.get("guest")) guestBtn.click();
 })();
 </script>
 </body>
