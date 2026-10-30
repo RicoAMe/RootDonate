@@ -48,6 +48,17 @@
   .stat-card .label { font-size: 11px; color: var(--muted); }
   .stat-card .value { font-size: 15px; font-weight: 650; }
 
+  .rename-row {
+    display: flex; gap: 8px; padding: 0 16px 12px;
+  }
+  .rename-row input {
+    flex: 1; background: var(--card); color: var(--text); border: 1px solid var(--line);
+    border-radius: 12px; padding: 10px 12px; font-size: 14.5px;
+  }
+  .rename-row button {
+    background: var(--accent); color: #081018; border: 0; border-radius: 12px; padding: 0 14px; font-weight: 650;
+  }
+
   .npc-scroller { display: flex; gap: 8px; padding: 0 16px 10px; overflow-x: auto; scrollbar-width: none; }
   .npc-scroller::-webkit-scrollbar { display: none; }
   .npc-card { flex: 0 0 auto; min-width: 124px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; cursor: pointer; }
@@ -86,7 +97,8 @@
     padding: 12px; margin-bottom: 10px;
   }
   .challenge-card .turn { color: var(--warn); font-size: 12.5px; font-weight: 600; margin: 4px 0; }
-  .challenge-card button { margin: 4px 4px 0 0; padding: 7px 11px; border-radius: 8px; border: 1px solid var(--line); background: #1e2a3a; color: var(--text); font-size: 13px; }
+  .challenge-card button { margin: 4px 4px 0 0; padding: 7px 11px; border-radius: 8px; border: 1px solid var(--line); background: #1e2a3a; color: var(--text); font-size: 13px; cursor: pointer; }
+  .challenge-card .remove { background: #3a1e1e; color: #f87171; }
 
   #login-overlay {
     position: fixed; inset: 0; background: rgba(7,10,14,0.96); backdrop-filter: blur(8px);
@@ -154,6 +166,10 @@
     <div class="stat-card"><div class="label">Happy</div><div class="value" id="happy">62</div></div>
     <div class="stat-card"><div class="label">Stage</div><div class="value" id="stage">Outpost</div></div>
   </div>
+  <div class="rename-row">
+    <input id="rename-input" type="text" placeholder="New city name" maxlength="24">
+    <button onclick="renameCity()">Rename</button>
+  </div>
   <div class="actions">
     <button data-action="tax">Raise Taxes</button>
     <button data-action="build">Build Housing</button>
@@ -204,8 +220,7 @@ const AUTOCORRECT = {
   wich: "which", wht: "what", hwo: "how", yuo: "you", yuor: "your", thier: "their",
   u: "you", ur: "your", im: "I'm", ive: "I've", dont: "don't", cant: "can't",
   wont: "won't", hows: "how's", thats: "that's", its: "it's",
-  challange: "challenge", challange: "challenge", atack: "attack",
-  negociate: "negotiate", sabotge: "sabotage", influnce: "influence"
+  challange: "challenge", atack: "attack", negociate: "negotiate", sabotge: "sabotage"
 };
 
 function autocorrect(text) {
@@ -243,6 +258,7 @@ const form = document.getElementById("form");
 const npcsEl = document.getElementById("npcs");
 const otherPanel = document.getElementById("other-panel");
 const pvpList = document.getElementById("pvp-list");
+const renameInput = document.getElementById("rename-input");
 let selectedOther = null;
 let allCities = [];
 let myChallenges = [];
@@ -337,7 +353,7 @@ async function startOnline() {
 
   updateResumeUrl();
   renderCity();
-  addMsg("system", "Online. Turn-based PvP is open to anyone. Tap a city on the map to challenge.");
+  addMsg("system", "Online. You can rename your city on the City tab and remove challenges on the PvP tab.");
 }
 
 function saveCity() {
@@ -354,6 +370,19 @@ function saveCity() {
     npcs: state.npcs,
     updated: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true }).catch(err => console.warn("Save failed", err));
+}
+
+async function renameCity() {
+  const newName = renameInput.value.trim();
+  if (!newName || newName.length < 2) {
+    addMsg("system", "Name must be at least 2 characters.");
+    return;
+  }
+  state.name = newName.slice(0, 24);
+  renameInput.value = "";
+  await saveCity();
+  renderCity();
+  addMsg("system", `City renamed to "${state.name}".`);
 }
 
 function renderMap() {
@@ -428,9 +457,21 @@ function renderPvp() {
         <button onclick="pvpAction('${ch.id}', 'negotiate')">Negotiate</button>
         <button onclick="pvpAction('${ch.id}', 'sabotage')">Sabotage</button>
       ` : ""}
+      <button class="remove" onclick="removeChallenge('${ch.id}')">Remove</button>
     `;
     pvpList.appendChild(div);
   });
+}
+
+async function removeChallenge(challengeId) {
+  if (!confirm("Remove this challenge?")) return;
+  try {
+    await db.collection("challenges").doc(challengeId).delete();
+    addMsg("system", "Challenge removed.");
+  } catch (err) {
+    addMsg("system", "Could not remove challenge.");
+    console.error(err);
+  }
 }
 
 async function pvpAction(challengeId, action) {
