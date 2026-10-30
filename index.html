@@ -2,280 +2,59 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>RootDonate · Open World City · Online Only</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI NPCs Gain Money · Date.now()</title>
 <style>
-  :root {
-    --bg: #070a0e; --surface: #121820; --card: #1a2230; --line: #2c3a4d;
-    --text: #f0f4f8; --muted: #8b9bb0; --accent: #5eb0ff; --good: #4ade80;
-    --you: #1e3a5f; --bot: #161e2a; --warn: #fbbf24;
-  }
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { height: 100%; margin: 0; }
-  body {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: var(--bg); color: var(--text);
-    display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh;
-  }
-  header {
-    padding: 12px 16px; background: #0f141c; border-bottom: 1px solid var(--line);
-    display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; gap: 8px;
-  }
-  header h1 { margin: 0; font-size: 17px; font-weight: 650; }
-  .tabs { display: flex; gap: 6px; flex-wrap: wrap; }
-  .tabs button {
-    background: transparent; color: var(--muted); border: 1px solid var(--line);
-    border-radius: 999px; padding: 6px 11px; font-size: 12.5px; cursor: pointer;
-  }
-  .tabs button.active { background: rgba(94,176,255,0.15); color: var(--accent); border-color: var(--accent); }
-
-  .view { flex: 1; display: none; flex-direction: column; overflow: hidden; }
-  .view.active { display: flex; }
-
-  #map { flex: 1; position: relative; background: radial-gradient(circle at 30% 40%, #1a2838 0%, #0a1018 70%); }
-  .city-marker {
-    position: absolute; border-radius: 50%;
-    background: var(--card); border: 2px solid var(--accent);
-    display: flex; align-items: center; justify-content: center; flex-direction: column;
-    font-size: 11px; font-weight: 650; text-align: center; cursor: pointer;
-    transform: translate(-50%, -50%); box-shadow: 0 4px 14px rgba(0,0,0,0.45);
-    transition: width 0.4s, height 0.4s, box-shadow 0.4s;
-  }
-  .city-marker.yours { border-color: var(--good); background: #1a3a2a; }
-  .city-marker .pop { font-size: 9px; color: var(--muted); margin-top: 1px; }
-
-  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px 16px; }
-  .stat-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 4px; text-align: center; }
-  .stat-card .label { font-size: 11px; color: var(--muted); }
-  .stat-card .value { font-size: 15px; font-weight: 650; }
-
-  .rename-row { display: flex; gap: 8px; padding: 0 16px 12px; }
-  .rename-row input {
-    flex: 1; background: var(--card); color: var(--text); border: 1px solid var(--line);
-    border-radius: 12px; padding: 10px 12px; font-size: 14.5px;
-  }
-  .rename-row button {
-    background: var(--accent); color: #081018; border: 0; border-radius: 12px; padding: 0 14px; font-weight: 650;
-  }
-
-  .npc-scroller { display: flex; gap: 8px; padding: 0 16px 10px; overflow-x: auto; scrollbar-width: none; }
-  .npc-scroller::-webkit-scrollbar { display: none; }
-  .npc-card { flex: 0 0 auto; min-width: 124px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; cursor: pointer; }
-  .npc-card.active { border-color: var(--accent); background: #1c2a40; }
-  .npc-card .name { font-weight: 650; font-size: 13.5px; }
-  .npc-card .role { font-size: 11.5px; color: var(--muted); }
-
-  #chat { flex: 1; overflow-y: auto; padding: 10px 16px; display: flex; flex-direction: column; gap: 8px; }
-  .msg { max-width: 82%; padding: 9px 13px; border-radius: 14px; font-size: 14.5px; line-height: 1.4; word-wrap: break-word; }
-  .you { align-self: flex-end; background: var(--you); }
-  .npc-msg { align-self: flex-start; background: var(--bot); border: 1px solid var(--line); }
-  .system { align-self: flex-start; color: var(--muted); font-size: 13px; }
-
-  .composer { display: flex; gap: 6px; padding: 8px 12px 14px; background: #0e131a; }
-  .composer input {
-    flex: 1; background: var(--card); color: var(--text); border: 1px solid var(--line);
-    border-radius: 12px; padding: 12px 14px; font-size: 15.5px; outline: none;
-  }
-  .composer input:focus { border-color: var(--accent); }
-  .composer button { background: var(--accent); color: #081018; border: 0; border-radius: 12px; padding: 0 16px; font-weight: 650; }
-
-  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 16px 12px; }
-  .actions button { background: var(--card); color: var(--text); border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-size: 13.5px; cursor: pointer; }
-  .actions button:active { transform: scale(0.97); }
-
-  .other-city-panel {
-    position: absolute; bottom: 12px; left: 12px; right: 12px;
-    background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: none;
-  }
-  .other-city-panel.show { display: block; }
-  .other-city-panel button { margin-top: 8px; margin-right: 6px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--text); }
-
-  #pvp-list { flex: 1; overflow-y: auto; padding: 12px 16px; }
-  .challenge-card {
-    background: var(--card); border: 1px solid var(--line); border-radius: 12px;
-    padding: 12px; margin-bottom: 10px;
-  }
-  .challenge-card .turn { color: var(--warn); font-size: 12.5px; font-weight: 600; margin: 4px 0; }
-  .challenge-card button { margin: 4px 4px 0 0; padding: 7px 11px; border-radius: 8px; border: 1px solid var(--line); background: #1e2a3a; color: var(--text); font-size: 13px; cursor: pointer; }
-  .challenge-card .remove { background: #3a1e1e; color: #f87171; }
-
-  #login-overlay {
-    position: fixed; inset: 0; background: rgba(7,10,14,0.96); backdrop-filter: blur(8px);
-    display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px;
-  }
-  #login-card {
-    background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
-    padding: 28px 22px; max-width: 400px; width: 100%; text-align: center;
-  }
-  #login-card h2 { margin: 0 0 8px; font-size: 20px; }
-  #login-card p { color: var(--muted); margin: 0 0 20px; font-size: 14px; }
-  #gdpr-row { display: flex; align-items: flex-start; gap: 10px; text-align: left; margin: 0 0 16px; font-size: 13px; color: var(--muted); }
-  #gdpr-row a { color: var(--accent); }
-  #guest-btn { width: 100%; padding: 14px; font-size: 15.5px; background: var(--accent); color: #081018; border: 0; border-radius: 12px; font-weight: 650; cursor: pointer; }
-  #resume-url { margin-top: 14px; padding: 10px; background: #0a1018; border: 1px solid var(--line); border-radius: 8px; font-size: 12px; word-break: break-all; color: var(--accent); cursor: pointer; }
-  body.online #login-overlay { display: none; }
-
-  @media (min-width: 700px) {
-    body { max-width: 460px; margin: 0 auto; border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
-  }
+  :root { --bg:#070a0e; --card:#1a2230; --text:#f0f4f8; --muted:#8b9bb0; --accent:#5eb0ff; --good:#4ade80; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,sans-serif; background:var(--bg); color:var(--text); display:flex; flex-direction:column; min-height:100vh; }
+  header { padding:12px 16px; background:#0f141c; border-bottom:1px solid #2c3a4d; display:flex; justify-content:space-between; align-items:center; }
+  h1 { margin:0; font-size:17px; }
+  .stats { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; padding:12px 16px; }
+  .stat { background:var(--card); border:1px solid #2c3a4d; border-radius:12px; padding:8px; text-align:center; }
+  .stat .label { font-size:11px; color:var(--muted); }
+  .stat .value { font-size:16px; font-weight:650; }
+  .npcs { display:flex; gap:8px; padding:0 16px 10px; overflow-x:auto; }
+  .npc { min-width:120px; background:var(--card); border:1px solid #2c3a4d; border-radius:12px; padding:8px 10px; cursor:pointer; }
+  .npc.active { border-color:var(--accent); background:#1c2a40; }
+  .log { flex:1; overflow-y:auto; padding:10px 16px; font-size:14px; line-height:1.4; }
+  .msg { margin:6px 0; padding:8px 12px; border-radius:10px; background:#161e2a; border:1px solid #2c3a4d; }
+  .msg.system { color:var(--muted); font-size:13px; }
+  .actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:0 16px 16px; }
+  button { background:var(--card); color:var(--text); border:1px solid #2c3a4d; border-radius:12px; padding:12px; font-size:14px; cursor:pointer; }
+  button:active { transform:scale(0.97); }
+  .time { text-align:center; color:var(--muted); font-size:13px; padding:4px; }
 </style>
 </head>
 <body>
-<div id="login-overlay">
-  <div id="login-card">
-    <h2>Open World City · RootDonate</h2>
-    <p>Continue as a guest. Only online cities appear on the map.</p>
-    <div id="gdpr-row">
-      <input type="checkbox" id="gdpr-consent" checked>
-      <label for="gdpr-consent">
-        I agree to the processing of my guest ID, city data, and PvP challenges stored in Firebase, in line with GDPR.
-        <a href="#" id="privacy-link">Privacy notice</a>
-      </label>
-    </div>
-    <button id="guest-btn" type="button">Continue as Guest</button>
-    <div id="resume-url">Loading resume URL…</div>
-  </div>
-</div>
-
 <header>
-  <h1>RootDonate</h1>
-  <div class="tabs">
-    <button id="tab-map" class="active">Map</button>
-    <button id="tab-city">City</button>
-    <button id="tab-talk">Talk</button>
-    <button id="tab-pvp">PvP</button>
-  </div>
+  <h1>AI NPCs · Money Gain</h1>
+  <div id="online-time">0m</div>
 </header>
 
-<div id="map-view" class="view active">
-  <div id="map"></div>
-  <div class="other-city-panel" id="other-panel">
-    <strong id="other-name">City</strong>
-    <div style="font-size:13.5px;color:var(--muted);margin-top:4px;" id="other-info"></div>
-    <button onclick="startChallenge()">Challenge (PvP)</button>
-    <button onclick="sendMessage()">Send Message</button>
-    <button onclick="closeOther()">Close</button>
-  </div>
+<div class="stats">
+  <div class="stat"><div class="label">Money</div><div class="value" id="money">1000</div></div>
+  <div class="stat"><div class="label">People</div><div class="value" id="pop">12</div></div>
+  <div class="stat"><div class="label">Happy</div><div class="value" id="happy">62</div></div>
+  <div class="stat"><div class="label">Influence</div><div class="value" id="inf">5</div></div>
 </div>
+<div class="time">Next reward in <span id="next-reward">5m</span> · Auto actions running via Date.now()</div>
 
-<div id="city-view" class="view">
-  <div class="stats">
-    <div class="stat-card"><div class="label">Money</div><div class="value" id="money">1000</div></div>
-    <div class="stat-card"><div class="label">People</div><div class="value" id="pop">12</div></div>
-    <div class="stat-card"><div class="label">Happy</div><div class="value" id="happy">62</div></div>
-    <div class="stat-card"><div class="label">Stage</div><div class="value" id="stage">Outpost</div></div>
-  </div>
-  <div style="padding:0 16px 8px;color:var(--muted);font-size:13px;text-align:center;">
-    Online: <span id="online-time">0m</span> · Next reward in <span id="next-reward">5m</span>
-  </div>
-  <div class="rename-row">
-    <input id="rename-input" type="text" placeholder="New city name" maxlength="24">
-    <button onclick="renameCity()">Rename</button>
-  </div>
-  <div class="actions">
-    <button data-action="tax">Raise Taxes</button>
-    <button data-action="build">Build Housing</button>
-    <button data-action="festival">Festival</button>
-    <button data-action="promote">Promote</button>
-    <button data-action="popspend" style="grid-column:1/-1;">Let Population Act</button>
-    <button data-action="trade" style="grid-column:1/-1;">Force Trade Attempt</button>
-  </div>
-  <div style="padding:0 16px 8px;color:var(--muted);font-size:13px;">Hierarchy · Population Voice (AI-driven)</div>
-  <div class="npc-scroller" id="npcs"></div>
+<div class="npcs" id="npcs"></div>
+<div class="log" id="log"></div>
+<div class="actions">
+  <button onclick="doAction('tax')">Raise Taxes</button>
+  <button onclick="doAction('build')">Build Housing</button>
+  <button onclick="doAction('festival')">Festival</button>
+  <button onclick="forceSpend()">Force Population Spend</button>
+  <button onclick="forceTrade()">Force Trade</button>
+  <button onclick="toggleAuto()">Toggle Auto AI</button>
 </div>
-
-<div id="talk-view" class="view">
-  <div id="chat"></div>
-  <form class="composer" id="form">
-    <input id="box" type="text" placeholder="Talk to selected NPC…" autocomplete="off">
-    <button type="submit">Send</button>
-  </form>
-</div>
-
-<div id="pvp-view" class="view">
-  <div id="pvp-list"></div>
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
-  authDomain: "rootdonate-61e61.firebaseapp.com",
-  projectId: "rootdonate-61e61",
-  storageBucket: "rootdonate-61e61.firebasestorage.app",
-  messagingSenderId: "754240963907",
-  appId: "1:754240963907:web:5417c2763d8f02108bdbf6"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-let uid = null;
-let unsubscribeCities = null;
-let unsubscribeChallenges = null;
-let heartbeatTimer = null;
-let popActTimer = null;
-let rewardTimer = null;
-let lastPopSpend = 0;
-let lastTrade = 0;
-let sessionStart = 0;
-let lastRewardTime = 0;
-
-const ONLINE_WINDOW_MS = 8 * 60 * 1000;
-const SPEND_INTERVAL_MS = 45 * 1000;
-const TRADE_INTERVAL_MS = 60 * 1000;
-const ONLINE_REWARD_INTERVAL_MS = 5 * 60 * 1000; // every 5 minutes
-const ONLINE_REWARD_AMOUNT = 40;
-
-const AUTOCORRECT = {
-  teh: "the", recieve: "receive", seperate: "separate", occured: "occurred",
-  definately: "definitely", enviroment: "environment", goverment: "government",
-  adress: "address", tommorow: "tomorrow", tommorrow: "tomorrow",
-  wich: "which", wht: "what", hwo: "how", yuo: "you", yuor: "your", thier: "their",
-  u: "you", ur: "your", im: "I'm", ive: "I've", dont: "don't", cant: "can't",
-  wont: "won't", hows: "how's", thats: "that's", its: "it's",
-  challange: "challenge", atack: "attack", negociate: "negotiate", sabotge: "sabotage"
-};
-
-function autocorrect(text) {
-  return text.split(/\s+/).map(word => {
-    const lower = word.toLowerCase().replace(/[.,!?;:]+$/, "");
-    const punct = word.slice(lower.length);
-    if (AUTOCORRECT[lower]) {
-      let fixed = AUTOCORRECT[lower];
-      if (word[0] === word[0].toUpperCase() && word.length > 1) fixed = fixed[0].toUpperCase() + fixed.slice(1);
-      return fixed + punct;
-    }
-    return word;
-  }).join(" ");
-}
-
-function isOnline(updated) {
-  if (!updated || !updated.toDate) return false;
-  return (Date.now() - updated.toDate().getTime()) < ONLINE_WINDOW_MS;
-}
-
-function formatMinutes(ms) {
-  return Math.floor(ms / 60000) + "m";
-}
-
-function updateOnlineDisplay() {
-  if (!sessionStart) return;
-  const now = Date.now();
-  const onlineMs = now - sessionStart;
-  const nextIn = Math.max(0, ONLINE_REWARD_INTERVAL_MS - (now - lastRewardTime));
-  const elTime = document.getElementById("online-time");
-  const elNext = document.getElementById("next-reward");
-  if (elTime) elTime.textContent = formatMinutes(onlineMs);
-  if (elNext) elNext.textContent = formatMinutes(nextIn);
-}
-
 const state = {
   money: 1000, pop: 12, happy: 62, influence: 5, stage: 0,
-  stages: ["Outpost", "Settlement", "Town", "City", "Metropolis"],
+  stages: ["Outpost","Settlement","Town","City"],
   selected: 0,
   npcs: [
     { name: "Aria", role: "Advisor", loyalty: 70, personality: "pragmatic" },
@@ -283,517 +62,115 @@ const state = {
     { name: "Cora", role: "Citizen Lead", loyalty: 80, personality: "idealistic" },
     { name: "Dax", role: "Worker", loyalty: 45, personality: "blunt" }
   ],
-  name: "Your City",
-  x: 35 + Math.random() * 30,
-  y: 35 + Math.random() * 30,
-  autoPopAct: true,
-  lastPopSpend: 0,
-  lastTrade: 0
+  auto: true,
+  lastSpend: 0,
+  lastTrade: 0,
+  sessionStart: Date.now(),
+  lastReward: Date.now()
 };
 
-const mapEl = document.getElementById("map");
-const chat = document.getElementById("chat");
-const box = document.getElementById("box");
-const form = document.getElementById("form");
-const npcsEl = document.getElementById("npcs");
-const otherPanel = document.getElementById("other-panel");
-const pvpList = document.getElementById("pvp-list");
-const renameInput = document.getElementById("rename-input");
-let selectedOther = null;
-let allCities = [];
-let myChallenges = [];
+const SPEND_MS = 45_000;
+const TRADE_MS = 60_000;
+const REWARD_MS = 5 * 60_000;
+const REWARD_AMT = 40;
 
-const guestBtn = document.getElementById("guest-btn");
-const gdprConsent = document.getElementById("gdpr-consent");
-const privacyLink = document.getElementById("privacy-link");
-const resumeUrlEl = document.getElementById("resume-url");
-
-function updateResumeUrl() {
-  const url = window.location.origin + window.location.pathname + (uid ? "?guest=" + uid : "");
-  resumeUrlEl.textContent = url;
-  resumeUrlEl.onclick = () => navigator.clipboard.writeText(url).then(() => {
-    const orig = resumeUrlEl.textContent;
-    resumeUrlEl.textContent = "Copied! Bookmark this URL.";
-    setTimeout(() => { resumeUrlEl.textContent = orig; }, 1600);
-  }).catch(() => {});
-}
-updateResumeUrl();
-
-privacyLink.onclick = (e) => {
-  e.preventDefault();
-  alert("Privacy notice (GDPR)\n\n• Anonymous guest ID, city data, and PvP challenges are stored in Firebase Firestore.\n• Only currently online cities appear on the map.\n• Bookmark the resume URL to keep the same guest identity.");
-};
-
-guestBtn.onclick = async () => {
-  if (!gdprConsent.checked) return alert("Please accept the notice.");
-  guestBtn.disabled = true;
-  guestBtn.textContent = "Connecting…";
-  try {
-    const params = new URLSearchParams(location.search);
-    const preferred = params.get("guest");
-    let user = auth.currentUser;
-    if (!user) {
-      const cred = await auth.signInAnonymously();
-      user = cred.user;
-    }
-    uid = preferred || user.uid;
-    await startOnline();
-    document.body.classList.add("online");
-  } catch (err) {
-    console.error(err);
-    alert("Could not connect: " + (err.message || err));
-    guestBtn.disabled = false;
-    guestBtn.textContent = "Continue as Guest";
-  }
-};
-
-async function startOnline() {
-  const doc = await db.collection("cities").doc(uid).get();
-  if (doc.exists) {
-    const data = doc.data();
-    Object.assign(state, {
-      money: data.money ?? state.money,
-      pop: data.pop ?? state.pop,
-      happy: data.happy ?? state.happy,
-      influence: data.influence ?? state.influence,
-      stage: data.stage ?? 0,
-      name: data.name || state.name,
-      x: data.x ?? state.x,
-      y: data.y ?? state.y,
-      npcs: data.npcs || state.npcs,
-      autoPopAct: data.autoPopAct !== false,
-      lastPopSpend: data.lastPopSpend || 0,
-      lastTrade: data.lastTrade || 0
-    });
-  }
-  lastPopSpend = state.lastPopSpend || 0;
-  lastTrade = state.lastTrade || 0;
-
-  sessionStart = Date.now();
-  lastRewardTime = sessionStart;
-
-  await saveCity();
-
-  if (unsubscribeCities) unsubscribeCities();
-  unsubscribeCities = db.collection("cities").onSnapshot(snap => {
-    allCities = [];
-    snap.forEach(d => {
-      const c = d.data();
-      c.id = d.id;
-      c.yours = d.id === uid;
-      allCities.push(c);
-    });
-    renderMap();
-  }, err => console.warn("Cities listener error", err));
-
-  if (unsubscribeChallenges) unsubscribeChallenges();
-  unsubscribeChallenges = db.collection("challenges")
-    .where("participants", "array-contains", uid)
-    .onSnapshot(snap => {
-      myChallenges = [];
-      snap.forEach(d => {
-        const ch = d.data();
-        ch.id = d.id;
-        myChallenges.push(ch);
-      });
-      if (document.getElementById("pvp-view").classList.contains("active")) renderPvp();
-    }, err => console.warn("Challenges listener error", err));
-
-  if (heartbeatTimer) clearInterval(heartbeatTimer);
-  heartbeatTimer = setInterval(() => { if (uid) saveCity(); }, 2 * 60 * 1000);
-
-  if (popActTimer) clearInterval(popActTimer);
-  if (state.autoPopAct) {
-    popActTimer = setInterval(() => {
-      const now = Date.now();
-      if (now - lastPopSpend >= SPEND_INTERVAL_MS) {
-        populationSpend();
-        lastPopSpend = now;
-        state.lastPopSpend = now;
-      }
-      if (now - lastTrade >= TRADE_INTERVAL_MS) {
-        populationTrade();
-        lastTrade = now;
-        state.lastTrade = now;
-      }
-    }, 10 * 1000);
-  }
-
-  if (rewardTimer) clearInterval(rewardTimer);
-  rewardTimer = setInterval(() => {
-    if (!uid) return;
-    const now = Date.now();
-    updateOnlineDisplay();
-    if (now - lastRewardTime >= ONLINE_REWARD_INTERVAL_MS) {
-      state.money += ONLINE_REWARD_AMOUNT;
-      lastRewardTime = now;
-      saveCity();
-      renderCity();
-      addMsg("system", `Online reward: +${ONLINE_REWARD_AMOUNT} money (stayed online).`);
-    }
-  }, 15 * 1000);
-
-  updateResumeUrl();
-  renderCity();
-  updateOnlineDisplay();
-  addMsg("system", "Online. Population AI NPCs spend and trade on real time (Date.now()). Map markers grow with population. Online rewards every 5 minutes.");
+function addMsg(text, system = false) {
+  const div = document.createElement("div");
+  div.className = "msg" + (system ? " system" : "");
+  div.textContent = text;
+  const log = document.getElementById("log");
+  log.prepend(div);
+  while (log.children.length > 30) log.removeChild(log.lastChild);
 }
 
-function saveCity() {
-  if (!uid) return Promise.resolve();
-  return db.collection("cities").doc(uid).set({
-    name: state.name,
-    money: state.money,
-    pop: state.pop,
-    happy: state.happy,
-    influence: state.influence,
-    stage: state.stage,
-    x: state.x,
-    y: state.y,
-    npcs: state.npcs,
-    autoPopAct: state.autoPopAct,
-    lastPopSpend: state.lastPopSpend || 0,
-    lastTrade: state.lastTrade || 0,
-    updated: firebase.firestore.FieldValue.serverTimestamp()
-  }, { merge: true }).catch(err => console.warn("Save failed", err));
-}
-
-async function renameCity() {
-  const newName = renameInput.value.trim();
-  if (!newName || newName.length < 2) {
-    addMsg("system", "Name must be at least 2 characters.");
-    return;
-  }
-  state.name = newName.slice(0, 24);
-  renameInput.value = "";
-  await saveCity();
-  renderCity();
-  addMsg("system", `City renamed to "${state.name}".`);
-}
-
-function markerSize(pop) {
-  const base = 52;
-  const extra = Math.min(48, Math.floor((pop || 0) / 8));
-  return base + extra;
-}
-
-function renderMap() {
-  mapEl.innerHTML = "";
-  const onlineCities = allCities.filter(c => c.yours || isOnline(c.updated));
-  if (onlineCities.length === 0) {
-    mapEl.innerHTML = "<div style='position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);'>No cities online</div>";
-    return;
-  }
-  onlineCities.forEach(c => {
-    const m = document.createElement("div");
-    m.className = "city-marker" + (c.yours ? " yours" : "");
-    const size = markerSize(c.pop);
-    m.style.width = size + "px";
-    m.style.height = size + "px";
-    m.style.left = (c.x || 50) + "%";
-    m.style.top = (c.y || 50) + "%";
-    const stage = c.stage || 0;
-    if (stage >= 2) m.style.boxShadow = "0 0 18px rgba(94,176,255,0.45)";
-    if (stage >= 3) m.style.boxShadow = "0 0 24px rgba(74,222,128,0.55)";
-    m.innerHTML = `${(c.name || "City").split(" ")[0]}<div class="pop">${c.pop || 0}</div>`;
-    m.onclick = () => selectCity(c);
-    mapEl.appendChild(m);
-  });
-}
-
-function selectCity(c) {
-  if (c.yours) { switchView("city"); return; }
-  selectedOther = c;
-  document.getElementById("other-name").textContent = c.name || "City";
-  document.getElementById("other-info").textContent = `Pop ${c.pop || 0} · Money ${c.money || 0} · Inf ${c.influence || 0}`;
-  otherPanel.classList.add("show");
-}
-function closeOther() { otherPanel.classList.remove("show"); selectedOther = null; }
-
-function sendMessage() {
-  if (!selectedOther) return;
-  const msg = prompt(`Message to ${selectedOther.name}:`);
-  if (msg) addMsg("system", `Sent to ${selectedOther.name}: "${autocorrect(msg)}"`);
-  closeOther();
-}
-
-async function startChallenge() {
-  if (!selectedOther || !uid) return;
-  try {
-    await db.collection("challenges").add({
-      participants: [uid, selectedOther.id],
-      initiator: uid,
-      target: selectedOther.id,
-      initiatorName: state.name,
-      targetName: selectedOther.name,
-      turn: uid,
-      status: "active",
-      log: ["Challenge started by " + state.name],
-      created: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    addMsg("system", `Challenge sent to ${selectedOther.name}. Check the PvP tab.`);
-    closeOther();
-    switchView("pvp");
-  } catch (err) {
-    addMsg("system", "Could not start challenge.");
-    console.error(err);
-  }
-}
-
-function renderPvp() {
-  pvpList.innerHTML = "";
-  if (!myChallenges.length) {
-    pvpList.innerHTML = "<div style='color:var(--muted);text-align:center;padding:40px;'>No active challenges. Challenge a city on the map.</div>";
-    return;
-  }
-  myChallenges.forEach(ch => {
-    const isMyTurn = ch.turn === uid && ch.status === "active";
-    const opponent = ch.initiator === uid ? ch.targetName : ch.initiatorName;
-    const div = document.createElement("div");
-    div.className = "challenge-card";
-    div.innerHTML = `
-      <strong>vs ${opponent || "Opponent"}</strong>
-      <div class="turn">${ch.status === "ended" ? "Ended" : isMyTurn ? "Your turn" : "Waiting for opponent"}</div>
-      <div style="font-size:13px;color:var(--muted);margin:6px 0;">${(ch.log || []).slice(-3).join(" · ")}</div>
-      ${isMyTurn ? `
-        <button onclick="pvpAction('${ch.id}', 'attack')">Attack</button>
-        <button onclick="pvpAction('${ch.id}', 'negotiate')">Negotiate</button>
-        <button onclick="pvpAction('${ch.id}', 'sabotage')">Sabotage</button>
-      ` : ""}
-      <button class="remove" onclick="removeChallenge('${ch.id}')">Remove</button>
-    `;
-    pvpList.appendChild(div);
-  });
-}
-
-async function removeChallenge(challengeId) {
-  if (!confirm("Remove this challenge?")) return;
-  try {
-    await db.collection("challenges").doc(challengeId).delete();
-    addMsg("system", "Challenge removed.");
-  } catch (err) {
-    addMsg("system", "Could not remove challenge.");
-    console.error(err);
-  }
-}
-
-async function pvpAction(challengeId, action) {
-  try {
-    const chRef = db.collection("challenges").doc(challengeId);
-    const snap = await chRef.get();
-    if (!snap.exists || snap.data().turn !== uid) return;
-
-    const ch = snap.data();
-    const myPower = state.influence + Math.floor(state.pop / 10) + Math.floor(Math.random() * 8);
-    const opponentId = ch.initiator === uid ? ch.target : ch.initiator;
-    const oppCity = allCities.find(c => c.id === opponentId) || { influence: 5, pop: 20 };
-    const oppPower = (oppCity.influence || 5) + Math.floor((oppCity.pop || 20) / 10) + Math.floor(Math.random() * 8);
-
-    let result = "";
-    let nextTurn = opponentId;
-    let status = "active";
-
-    if (action === "attack") {
-      if (myPower > oppPower) {
-        result = "Attack succeeded. Influence and money gained.";
-        state.influence += 3;
-        state.money += 80;
-      } else {
-        result = "Attack failed. Resources lost.";
-        state.money = Math.max(0, state.money - 60);
-        state.happy = Math.max(10, state.happy - 6);
-      }
-    } else if (action === "negotiate") {
-      result = "Negotiation offered. Influence and happiness rise.";
-      state.influence += 1;
-      state.happy = Math.min(100, state.happy + 4);
-    } else if (action === "sabotage") {
-      if (myPower + 3 > oppPower) {
-        result = "Sabotage worked.";
-        state.influence += 2;
-      } else {
-        result = "Sabotage detected. Backlash.";
-        state.happy = Math.max(10, state.happy - 8);
-      }
-    }
-
-    const newLog = (ch.log || []).concat([state.name + " used " + action + ": " + result]);
-    if (newLog.length > 8) newLog.shift();
-    if (newLog.length >= 6) {
-      status = "ended";
-      nextTurn = null;
-      result += " Challenge ended.";
-    }
-
-    await chRef.update({ turn: nextTurn, status, log: newLog });
-    await saveCity();
-    addMsg("system", result);
-    renderCity();
-  } catch (err) {
-    addMsg("system", "Action failed.");
-    console.error(err);
-  }
-}
-
-function renderCity() {
+function render() {
   document.getElementById("money").textContent = state.money;
   document.getElementById("pop").textContent = state.pop;
   document.getElementById("happy").textContent = state.happy;
-  document.getElementById("stage").textContent = state.stages[state.stage] || "Outpost";
-  npcsEl.innerHTML = "";
+  document.getElementById("inf").textContent = state.influence;
+
+  const now = Date.now();
+  document.getElementById("online-time").textContent = Math.floor((now - state.sessionStart) / 60000) + "m";
+  document.getElementById("next-reward").textContent = Math.max(0, Math.floor((REWARD_MS - (now - state.lastReward)) / 60000)) + "m";
+
+  const el = document.getElementById("npcs");
+  el.innerHTML = "";
   state.npcs.forEach((n, i) => {
-    const div = document.createElement("div");
-    div.className = "npc-card" + (i === state.selected ? " active" : "");
-    div.innerHTML = `<div class="name">${n.name}</div><div class="role">${n.role}</div>`;
-    div.onclick = () => {
-      state.selected = i;
-      renderCity();
-      switchView("talk");
-      addMsg("system", `Talking to ${n.name} (population voice)`);
-    };
-    npcsEl.appendChild(div);
+    const d = document.createElement("div");
+    d.className = "npc" + (i === state.selected ? " active" : "");
+    d.innerHTML = `<strong>${n.name}</strong><br><span style="font-size:11px;color:var(--muted)">${n.role}</span>`;
+    d.onclick = () => { state.selected = i; render(); addMsg(`Talking to ${n.name}`); };
+    el.appendChild(d);
   });
-  updateOnlineDisplay();
-}
-
-function addMsg(who, text) {
-  const div = document.createElement("div");
-  div.className = "msg " + (who === "you" ? "you" : who === "system" ? "system" : "npc-msg");
-  div.textContent = text;
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
-}
-
-function npcReply(npc) {
-  const stage = state.stages[state.stage] || "Outpost";
-  const mood = state.happy >= 70 ? "content" : state.happy >= 45 ? "restless" : "unhappy";
-  const onlineCount = allCities.filter(c => !c.yours && isOnline(c.updated)).length;
-
-  const voice = {
-    pragmatic: [
-      `Advisor: Happiness ${state.happy} (${mood}). Stage ${stage}. Money ${state.money}. Trade when profitable.`,
-      `Online trade partners: ${onlineCount}. Population supports steady growth.`,
-      `Pop ${state.pop}. Practical path includes trading for income.`
-    ],
-    greedy: [
-      `Merchant: Money ${state.money}. ${onlineCount} cities online — good trading conditions.`,
-      `Stage ${stage}. Let’s trade hard and grow the treasury.`,
-      `Happiness ${state.happy} secondary. Profit from trades first.`
-    ],
-    idealistic: [
-      `Citizen lead: People feel ${mood} (happy ${state.happy}). Fair trade helps everyone.`,
-      `Pop ${state.pop} in a ${stage}. The people support honest trading.`,
-      `Online partners: ${onlineCount}. We grow stronger through exchange.`
-    ],
-    blunt: [
-      `Worker: Trade if it makes money. Happy ${state.happy}, pop ${state.pop}, stage ${stage}.`,
-      `If there’s profit, take the deal. No more talking.`,
-      `Online count ${onlineCount}. Keep the city growing and trading.`
-    ]
-  };
-
-  const pool = voice[npc.personality] || voice.pragmatic;
-  return `${npc.name}: ${pool[Math.floor(Math.random() * pool.length)]}`;
 }
 
 function populationSpend() {
-  if (!state.autoPopAct || state.money < 80) return;
-
+  if (!state.auto || state.money < 60) return;
   const npc = state.npcs[Math.floor(Math.random() * state.npcs.length)];
-  let action = null;
-  let cost = 0;
-  let msg = "";
+  let action = null, cost = 0, msg = "";
 
-  if (npc.personality === "idealistic" && state.happy < 65 && state.money >= 120) {
-    action = "festival";
-    cost = 120;
-    msg = `${npc.name} (Citizen Lead) spent on a festival for the people.`;
-  } else if ((npc.personality === "pragmatic" || npc.personality === "blunt") && state.money >= 200) {
-    action = "build";
-    cost = 200;
-    msg = `${npc.name} pushed for housing. Population grows.`;
-  } else if (npc.personality === "greedy" && state.money >= 150 && state.influence < 20) {
-    action = "promote";
-    cost = 80;
-    msg = `${npc.name} spent to raise influence and trade.`;
-  } else if (state.money >= 200 && state.pop < 80) {
-    action = "build";
-    cost = 200;
-    msg = `Population demand: housing built.`;
-  } else if (state.happy < 50 && state.money >= 120) {
-    action = "festival";
-    cost = 120;
-    msg = `People demanded a festival. Happiness rises.`;
+  if (state.pop < 60 && state.money >= 180 && (npc.personality === "pragmatic" || npc.personality === "blunt" || Math.random() < 0.4)) {
+    action = "build"; cost = 180; msg = `${npc.name} pushed for efficient housing.`;
+  } else if (state.happy < 55 && state.money >= 100) {
+    action = "festival"; cost = 100; msg = `${npc.name} organized a cheap festival.`;
+  } else if (npc.personality === "greedy" && state.influence < 25 && state.money >= 70) {
+    action = "promote"; cost = 70; msg = `${npc.name} invested in influence.`;
+  } else if (state.money >= 250 && Math.random() < 0.5) {
+    action = "build"; cost = 200; msg = "Population demand forced new housing.";
   }
-
   if (!action) return;
 
   state.money -= cost;
   if (action === "build") {
-    state.pop += 5;
+    state.pop += 6 + Math.floor(state.stage * 1.5);
+    state.happy = Math.max(20, state.happy - 2);
   } else if (action === "festival") {
-    state.happy = Math.min(100, state.happy + 12);
+    state.happy = Math.min(100, state.happy + 15);
   } else if (action === "promote") {
     state.influence += 2;
+    state.npcs.forEach(n => n.loyalty = Math.min(100, n.loyalty + 3));
   }
+  const passive = Math.floor(state.pop * 0.4 + state.stage * 8);
+  state.money += passive;
+  msg += ` Passive +${passive}.`;
 
   checkStage();
-  saveCity();
-  renderCity();
-  addMsg("system", msg + ` (Money left: ${state.money})`);
-  if (document.getElementById("map-view").classList.contains("active")) renderMap();
+  render();
+  addMsg(msg + ` Money: ${state.money}`, true);
 }
 
 function populationTrade() {
-  if (!state.autoPopAct) return;
-
-  const onlineOthers = allCities.filter(c => !c.yours && isOnline(c.updated));
-  if (onlineOthers.length === 0) {
-    addMsg("system", "No other cities online to trade with.");
-    return;
-  }
-
-  const target = onlineOthers[Math.floor(Math.random() * onlineOthers.length)];
+  if (!state.auto) return;
   const npc = state.npcs.find(n => n.personality === "greedy") || state.npcs[0];
+  const loyaltyBonus = Math.floor((npc.loyalty || 50) / 20);
+  const myPower = state.influence + Math.floor(state.pop / 12) + state.stage * 4 + loyaltyBonus + Math.floor(Math.random() * 5);
+  const theirPower = 8 + Math.floor(Math.random() * 15);
 
-  const myPower = state.influence + Math.floor(state.pop / 15) + state.stage * 3 + Math.floor(Math.random() * 6);
-  const theirPower = (target.influence || 5) + Math.floor((target.pop || 10) / 15) + (target.stage || 0) * 3 + Math.floor(Math.random() * 6);
-
-  let profit = 0;
-  let resultMsg = "";
-
-  if (myPower > theirPower) {
-    profit = 40 + Math.floor(Math.random() * 80) + state.influence * 2 + state.stage * 10;
-    resultMsg = `${npc.name} successfully traded with ${target.name || "a city"}. Profit: +${profit}.`;
-    state.influence = Math.min(50, state.influence + 1);
-  } else if (myPower > theirPower - 4) {
-    profit = 15 + Math.floor(Math.random() * 30);
-    resultMsg = `${npc.name} made a modest trade with ${target.name || "a city"}. Profit: +${profit}.`;
+  let profit = 0, result = "";
+  if (myPower > theirPower + 2) {
+    profit = 50 + Math.floor(Math.random() * 90) + state.influence * 3 + state.stage * 15 + loyaltyBonus * 10;
+    result = `${npc.name} closed a strong trade. +${profit}`;
+    state.influence = Math.min(60, state.influence + 1);
+  } else if (myPower >= theirPower - 3) {
+    profit = 20 + Math.floor(Math.random() * 40) + state.stage * 5;
+    result = `${npc.name} made a solid trade. +${profit}`;
   } else {
-    profit = -(10 + Math.floor(Math.random() * 25));
-    resultMsg = `${npc.name} tried to trade with ${target.name || "a city"} but got a bad deal. Loss: ${profit}.`;
-    state.happy = Math.max(10, state.happy - 2);
+    profit = -(8 + Math.floor(Math.random() * 20));
+    result = `${npc.name} took a bad trade. ${profit}`;
+    state.happy = Math.max(10, state.happy - 1);
   }
-
   state.money = Math.max(0, state.money + profit);
-  saveCity();
-  renderCity();
-  addMsg("system", resultMsg + ` Money now: ${state.money}`);
+  render();
+  addMsg(result + ` · Money: ${state.money}`, true);
+}
+
+function checkStage() {
+  if (state.pop >= 40 && state.stage < 1) state.stage = 1;
+  else if (state.pop >= 80 && state.stage < 2) state.stage = 2;
+  else if (state.pop >= 140 && state.stage < 3) state.stage = 3;
 }
 
 function doAction(action) {
-  if (action === "popspend") {
-    populationSpend();
-    lastPopSpend = Date.now();
-    state.lastPopSpend = lastPopSpend;
-    return;
-  }
-  if (action === "trade") {
-    populationTrade();
-    lastTrade = Date.now();
-    state.lastTrade = lastTrade;
-    return;
-  }
   if (action === "tax") {
     state.money += 160;
     state.happy = Math.max(15, state.happy - 8);
@@ -803,60 +180,44 @@ function doAction(action) {
   } else if (action === "festival" && state.money >= 120) {
     state.money -= 120;
     state.happy = Math.min(100, state.happy + 14);
-  } else if (action === "promote") {
-    state.npcs[state.selected].loyalty = Math.min(100, state.npcs[state.selected].loyalty + 10);
-    state.influence += 2;
   } else {
-    addMsg("system", "Not enough money.");
+    addMsg("Not enough money.", true);
     return;
   }
   checkStage();
-  saveCity();
-  renderCity();
+  render();
+  addMsg(`You performed ${action}.`, true);
 }
 
-function checkStage() {
-  if (state.pop >= 40 && state.stage < 1) state.stage = 1;
-  else if (state.pop >= 80 && state.stage < 2) state.stage = 2;
-  else if (state.pop >= 140 && state.stage < 3) state.stage = 3;
-  else if (state.pop >= 250 && state.stage < 4) state.stage = 4;
+function forceSpend() { populationSpend(); }
+function forceTrade() { populationTrade(); }
+function toggleAuto() {
+  state.auto = !state.auto;
+  addMsg(`Auto AI ${state.auto ? "ON" : "OFF"}`, true);
 }
 
-function switchView(name) {
-  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
-  document.getElementById(name + "-view").classList.add("active");
-  document.querySelectorAll(".tabs button").forEach(b => b.classList.remove("active"));
-  document.getElementById("tab-" + name).classList.add("active");
-  if (name === "pvp") renderPvp();
-  if (name === "map") renderMap();
-  if (name === "city") updateOnlineDisplay();
-}
-
-document.getElementById("tab-map").onclick = () => switchView("map");
-document.getElementById("tab-city").onclick = () => switchView("city");
-document.getElementById("tab-talk").onclick = () => switchView("talk");
-document.getElementById("tab-pvp").onclick = () => switchView("pvp");
-
-form.addEventListener("submit", (e) => {
-  e.preventDefault();
-  let text = box.value.trim();
-  if (!text) return;
-  text = autocorrect(text);
-  box.value = "";
-  addMsg("you", text);
-  setTimeout(() => addMsg("npc", npcReply(state.npcs[state.selected])), 320);
-});
-
-document.querySelectorAll("[data-action]").forEach(btn => {
-  btn.addEventListener("click", () => doAction(btn.dataset.action));
-});
-
-(async () => {
-  const params = new URLSearchParams(location.search);
-  if (params.get("guest")) {
-    setTimeout(() => guestBtn.click(), 200);
+// Main loop driven by Date.now()
+setInterval(() => {
+  const now = Date.now();
+  if (now - state.lastSpend >= SPEND_MS) {
+    populationSpend();
+    state.lastSpend = now;
   }
-})();
+  if (now - state.lastTrade >= TRADE_MS) {
+    populationTrade();
+    state.lastTrade = now;
+  }
+  if (now - state.lastReward >= REWARD_MS) {
+    state.money += REWARD_AMT;
+    state.lastReward = now;
+    addMsg(`Online reward +${REWARD_AMT}`, true);
+    render();
+  }
+  render();
+}, 10_000);
+
+render();
+addMsg("AI NPCs active. Timers use Date.now(). Spend ~45s, Trade ~60s, Reward every 5 min.", true);
 </script>
 </body>
 </html>
