@@ -15,7 +15,7 @@
   .stat .label { font-size:11px; color:var(--muted); }
   .stat .value { font-size:16px; font-weight:650; }
   .npcs { display:flex; gap:8px; padding:0 16px 10px; overflow-x:auto; }
-  .npc { min-width:120px; background:var(--card); border:1px solid #2c3a4d; border-radius:12px; padding:8px 10px; cursor:pointer; }
+  .npc { min-width:130px; background:var(--card); border:1px solid #2c3a4d; border-radius:12px; padding:8px 10px; cursor:pointer; font-size:13px; }
   .npc.active { border-color:var(--accent); background:#1c2a40; }
   .log { flex:1; overflow-y:auto; padding:10px 16px; font-size:14px; line-height:1.4; }
   .msg { margin:6px 0; padding:8px 12px; border-radius:10px; background:#161e2a; border:1px solid #2c3a4d; }
@@ -24,6 +24,7 @@
   button { background:var(--card); color:var(--text); border:1px solid #2c3a4d; border-radius:12px; padding:12px; font-size:14px; cursor:pointer; }
   button:active { transform:scale(0.97); }
   .time { text-align:center; color:var(--muted); font-size:13px; padding:4px; }
+  .stage { text-align:center; color:var(--accent); font-weight:600; padding:4px 16px 0; }
 </style>
 </head>
 <body>
@@ -32,20 +33,21 @@
   <div id="online-time">0m</div>
 </header>
 
+<div class="stage" id="stage">Outpost</div>
 <div class="stats">
   <div class="stat"><div class="label">Money</div><div class="value" id="money">1000</div></div>
   <div class="stat"><div class="label">People</div><div class="value" id="pop">12</div></div>
   <div class="stat"><div class="label">Happy</div><div class="value" id="happy">62</div></div>
   <div class="stat"><div class="label">Influence</div><div class="value" id="inf">5</div></div>
 </div>
-<div class="time">Next reward in <span id="next-reward">5m</span> · Auto actions running via Date.now()</div>
+<div class="time">Next reward in <span id="next-reward">5m</span> · Auto actions via Date.now()</div>
 
 <div class="npcs" id="npcs"></div>
 <div class="log" id="log"></div>
 <div class="actions">
-  <button onclick="doAction('tax')">Raise Taxes</button>
-  <button onclick="doAction('build')">Build Housing</button>
-  <button onclick="doAction('festival')">Festival</button>
+  <button onclick="doAction('tax')">Raise Taxes (+160)</button>
+  <button onclick="doAction('build')">Build Housing (200)</button>
+  <button onclick="doAction('festival')">Festival (120)</button>
   <button onclick="forceSpend()">Force Population Spend</button>
   <button onclick="forceTrade()">Force Trade</button>
   <button onclick="toggleAuto()">Toggle Auto AI</button>
@@ -74,6 +76,20 @@ const TRADE_MS = 60_000;
 const REWARD_MS = 5 * 60_000;
 const REWARD_AMT = 40;
 
+function save() {
+  localStorage.setItem("npcMoneyGame", JSON.stringify(state));
+}
+
+function load() {
+  const saved = localStorage.getItem("npcMoneyGame");
+  if (saved) {
+    const data = JSON.parse(saved);
+    Object.assign(state, data);
+    state.sessionStart = Date.now() - (data.sessionOffset || 0);
+    state.lastReward = Date.now() - (data.rewardOffset || 0);
+  }
+}
+
 function addMsg(text, system = false) {
   const div = document.createElement("div");
   div.className = "msg" + (system ? " system" : "");
@@ -88,6 +104,7 @@ function render() {
   document.getElementById("pop").textContent = state.pop;
   document.getElementById("happy").textContent = state.happy;
   document.getElementById("inf").textContent = state.influence;
+  document.getElementById("stage").textContent = state.stages[state.stage] || "Outpost";
 
   const now = Date.now();
   document.getElementById("online-time").textContent = Math.floor((now - state.sessionStart) / 60000) + "m";
@@ -98,10 +115,11 @@ function render() {
   state.npcs.forEach((n, i) => {
     const d = document.createElement("div");
     d.className = "npc" + (i === state.selected ? " active" : "");
-    d.innerHTML = `<strong>${n.name}</strong><br><span style="font-size:11px;color:var(--muted)">${n.role}</span>`;
-    d.onclick = () => { state.selected = i; render(); addMsg(`Talking to ${n.name}`); };
+    d.innerHTML = `<strong>${n.name}</strong><br><span style="font-size:11px;color:var(--muted)">${n.role}</span><br>Loy: ${n.loyalty}`;
+    d.onclick = () => { state.selected = i; render(); addMsg(`Talking to ${n.name} (${n.personality})`); };
     el.appendChild(d);
   });
+  save();
 }
 
 function populationSpend() {
@@ -109,13 +127,13 @@ function populationSpend() {
   const npc = state.npcs[Math.floor(Math.random() * state.npcs.length)];
   let action = null, cost = 0, msg = "";
 
-  if (state.pop < 60 && state.money >= 180 && (npc.personality === "pragmatic" || npc.personality === "blunt" || Math.random() < 0.4)) {
+  if (state.pop < 60 && state.money >= 180 && (npc.personality === "pragmatic" || npc.personality === "blunt" || Math.random() < 0.45)) {
     action = "build"; cost = 180; msg = `${npc.name} pushed for efficient housing.`;
   } else if (state.happy < 55 && state.money >= 100) {
     action = "festival"; cost = 100; msg = `${npc.name} organized a cheap festival.`;
   } else if (npc.personality === "greedy" && state.influence < 25 && state.money >= 70) {
     action = "promote"; cost = 70; msg = `${npc.name} invested in influence.`;
-  } else if (state.money >= 250 && Math.random() < 0.5) {
+  } else if (state.money >= 250 && Math.random() < 0.55) {
     action = "build"; cost = 200; msg = "Population demand forced new housing.";
   }
   if (!action) return;
@@ -165,9 +183,9 @@ function populationTrade() {
 }
 
 function checkStage() {
-  if (state.pop >= 40 && state.stage < 1) state.stage = 1;
-  else if (state.pop >= 80 && state.stage < 2) state.stage = 2;
-  else if (state.pop >= 140 && state.stage < 3) state.stage = 3;
+  if (state.pop >= 40 && state.stage < 1) { state.stage = 1; addMsg("Stage up: Settlement!", true); }
+  else if (state.pop >= 80 && state.stage < 2) { state.stage = 2; addMsg("Stage up: Town!", true); }
+  else if (state.pop >= 140 && state.stage < 3) { state.stage = 3; addMsg("Stage up: City!", true); }
 }
 
 function doAction(action) {
@@ -194,6 +212,7 @@ function forceTrade() { populationTrade(); }
 function toggleAuto() {
   state.auto = !state.auto;
   addMsg(`Auto AI ${state.auto ? "ON" : "OFF"}`, true);
+  render();
 }
 
 // Main loop driven by Date.now()
@@ -216,8 +235,9 @@ setInterval(() => {
   render();
 }, 10_000);
 
+load();
 render();
-addMsg("AI NPCs active. Timers use Date.now(). Spend ~45s, Trade ~60s, Reward every 5 min.", true);
+addMsg("AI NPCs active. Timers use Date.now(). Spend ~45s, Trade ~60s, Reward every 5 min. Progress saved.", true);
 </script>
 </body>
 </html>
