@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZeroAI - Artificial Intelligence from Zero</title>
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #1a2332;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --user-bg: #1e3a5f;
+    --bot-bg: #1e293b;
+    --border: #334155;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  header h1 {
+    font-size: 1.25rem;
+    font-weight: 600;
+  }
+  header .subtitle {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+  }
+  #chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  .msg {
+    max-width: 75%;
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    line-height: 1.45;
+    word-wrap: break-word;
+    animation: fadeIn 0.2s ease;
+  }
+  .msg.user {
+    align-self: flex-end;
+    background: var(--user-bg);
+    border-bottom-right-radius: 0.25rem;
+  }
+  .msg.bot {
+    align-self: flex-start;
+    background: var(--bot-bg);
+    border-bottom-left-radius: 0.25rem;
+  }
+  .msg .sender {
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  footer {
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    padding: 0.75rem 1rem;
+    display: flex;
+    gap: 0.5rem;
+  }
+  #input {
+    flex: 1;
+    background: #0f172a;
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 0.75rem;
+    padding: 0.7rem 1rem;
+    font-size: 1rem;
+    outline: none;
+  }
+  #input:focus { border-color: var(--accent); }
+  #send {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 0.75rem;
+    padding: 0 1.25rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  #send:hover { background: var(--accent-hover); }
+  #send:active { transform: scale(0.97); }
+  .status {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 0.25rem;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>ZeroAI</h1>
+    <div class="subtitle">Artificial Intelligence from Zero · Browser edition</div>
+  </div>
+</header>
+
+<div id="chat"></div>
+<div class="status" id="status">Ready · Type a message and press Enter</div>
+
+<footer>
+  <input id="input" type="text" placeholder="Say something..." autocomplete="off" autofocus>
+  <button id="send">Send</button>
+</footer>
+
+<script>
+class SimpleAI {
+  constructor() {
+    this.name = "ZeroAI";
+    this.memory = [];
+    this.userName = null;
+    this.patterns = [
+      { re: /\b(hi|hello|hey|howdy|greetings)\b/i, replies: [
+        "Hello! I'm ZeroAI, a simple AI created from scratch.",
+        "Hi there! How can I assist you today?",
+        "Hey! What's on your mind?"
+      ]},
+      { re: /\b(my name is|i am|i'm)\s+(\w+)/i, handler: (m) => {
+        this.userName = m[2].charAt(0).toUpperCase() + m[2].slice(1);
+        return [`Nice to meet you, ${this.userName}!`, `Hello ${this.userName}! I'll remember that.`];
+      }},
+      { re: /\b(what is your name|who are you|your name)\b/i, replies: [
+        `I'm ${this.name}, a basic artificial intelligence built from zero.`,
+        "Call me ZeroAI. I'm a simple chatbot AI."
+      ]},
+      { re: /\b(how are you|how's it going|how do you feel)\b/i, replies: [
+        "I'm doing great, thank you! As an AI, I don't have feelings, but I'm functioning well.",
+        "All systems operational. How about you?"
+      ]},
+      { re: /\b(what time|current time|what day|today's date|date)\b/i, handler: () => {
+        const now = new Date();
+        return [`The current time is ${now.toLocaleTimeString()} on ${now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`];
+      }},
+      { re: /\b(weather|temperature|rain|forecast)\b/i, replies: [
+        "I don't have real-time weather data, but I hope it's nice where you are!",
+        "As a simple AI, I can't check the weather. Try a weather app!"
+      ]},
+      { re: /\b(help|what can you do|capabilities|features)\b/i, replies: [
+        "I can chat, remember your name, tell the time, answer simple questions, and keep a short conversation memory.",
+        "I'm a basic pattern-matching AI. Ask me about myself, the time, or just talk!"
+      ]},
+      { re: /\b(remember|do you remember|what did i say)\b/i, handler: () => {
+        if (!this.memory.length) return ["I don't have much in my memory yet. Keep talking!"];
+        const recent = this.memory.slice(-3).join(" / ");
+        return [`From our chat, I recall: ${recent}`];
+      }},
+      { re: /\b(bye|goodbye|exit|quit|see you|later)\b/i, replies: [
+        "Goodbye! It was nice chatting with you.",
+        "See you later! Have a great day.",
+        "Bye! Feel free to come back anytime."
+      ]},
+      { re: /.*/, replies: [
+        "That's interesting. Tell me more.",
+        "I'm not sure I understand completely. Can you rephrase?",
+        "Hmm, as a simple AI from zero, I'm still learning. What else?",
+        "I hear you. What's next?",
+        "Fascinating. Continue..."
+      ]}
+    ];
+  }
+
+  respond(input) {
+    const text = input.trim();
+    if (!text) return "Please say something!";
+    this.memory.push(text);
+    if (this.memory.length > 20) this.memory.shift();
+
+    for (const p of this.patterns) {
+      const m = text.match(p.re);
+      if (m) {
+        const replies = p.handler ? p.handler(m) : p.replies;
+        return replies[Math.floor(Math.random() * replies.length)];
+      }
+    }
+    return "I'm processing that...";
+  }
+}
+
+const ai = new SimpleAI();
+const chatEl = document.getElementById("chat");
+const inputEl = document.getElementById("input");
+const sendBtn = document.getElementById("send");
+const statusEl = document.getElementById("status");
+
+function addMessage(text, who) {
+  const div = document.createElement("div");
+  div.className = `msg ${who}`;
+  div.innerHTML = `<div class="sender">${who === "user" ? "You" : ai.name}</div>${escapeHtml(text)}`;
+  chatEl.appendChild(div);
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">");
+}
+
+function handleSend() {
+  const text = inputEl.value.trim();
+  if (!text) return;
+  addMessage(text, "user");
+  inputEl.value = "";
+  statusEl.textContent = "Thinking...";
+
+  setTimeout(() => {
+    const reply = ai.respond(text);
+    addMessage(reply, "bot");
+    statusEl.textContent = "Ready · Type a message and press Enter";
+    inputEl.focus();
+  }, 280 + Math.random() * 400);
+}
+
+sendBtn.addEventListener("click", handleSend);
+inputEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") handleSend();
+});
+
+// Welcome message
+setTimeout(() => {
+  addMessage("Hello! I'm ZeroAI — a simple artificial intelligence created from zero. Type 'help' to see what I can do, or just start chatting.", "bot");
+}, 300);
+</script>
+</body>
+</html>
