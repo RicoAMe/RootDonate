@@ -236,7 +236,7 @@ function handleSend() {
     addMessage(reply, "bot");
     statusEl.textContent = "Ready · Type a message and press Enter";
     inputEl.focus();
-  }, ai.respond(Date.now(input)));
+  }, ai.respond(Date.now(text)));
 }
 
 sendBtn.addEventListener("click", handleSend);
