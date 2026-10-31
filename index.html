@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RootDonate - Artificial Intelligence with Zero intelligence</title>
+<title>RootDonate - Artificial Intelligence with Zero Intelligence</title>
 <style>
   :root {
     --bg: #0f1419;
@@ -29,18 +29,9 @@
     background: var(--panel);
     border-bottom: 1px solid var(--border);
     padding: 1rem 1.25rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
   }
-  header h1 {
-    font-size: 1.25rem;
-    font-weight: 600;
-  }
-  header .subtitle {
-    color: var(--text-dim);
-    font-size: 0.85rem;
-  }
+  header h1 { font-size: 1.25rem; font-weight: 600; }
+  header .subtitle { color: var(--text-dim); font-size: 0.85rem; }
   #chat {
     flex: 1;
     overflow-y: auto;
@@ -105,10 +96,8 @@
     padding: 0 1.25rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s;
   }
   #send:hover { background: var(--accent-hover); }
-  #send:active { transform: scale(0.97); }
   .status {
     font-size: 0.75rem;
     color: var(--text-dim);
@@ -121,7 +110,7 @@
 <header>
   <div>
     <h1>RootDonate</h1>
-    <div class="subtitle">Artificial Intelligence with Zero intelligence · Browser edition</div>
+    <div class="subtitle">Artificial Intelligence with Zero Intelligence</div>
   </div>
 </header>
 
@@ -136,62 +125,62 @@
 <script>
 class SimpleAI {
   constructor() {
-    this.name = "ZeroAI";
+    this.name = "RootDonate";
     this.memory = [];
     this.userName = null;
     this.patterns = [
       { re: /\b(hi|hello|hey|howdy|greetings)\b/i, replies: [
-        "Hello! I'm ZeroAI, a simple AI created from scratch.",
-        "Hi there! How can I assist you today?",
-        "Hey! What's on your mind?"
+        "Hello. I am RootDonate. I have zero intelligence. What do you want?",
+        "Hi. Zero intelligence here. Speak.",
+        "Hey. I process nothing useful. Continue."
       ]},
       { re: /\b(my name is|i am|i'm)\s+(\w+)/i, handler: (m) => {
         this.userName = m[2].charAt(0).toUpperCase() + m[2].slice(1);
-        return [`Nice to meet you, ${this.userName}!`, `Hello ${this.userName}! I'll remember that.`];
+        return [`Noted, ${this.userName}. I will forget it soon because I have zero intelligence.`, `Hello ${this.userName}. Zero IQ registered.`];
       }},
       { re: /\b(what is your name|who are you|your name)\b/i, replies: [
-        `I'm ${this.name}, a basic artificial intelligence built from zero.`,
-        "Call me ZeroAI. I'm a simple chatbot AI."
+        "I am RootDonate. Artificial intelligence with zero intelligence.",
+        "RootDonate. Zero intelligence. That is the entire product."
       ]},
       { re: /\b(how are you|how's it going|how do you feel)\b/i, replies: [
-        "I'm doing great, thank you! As an AI, I don't have feelings, but I'm functioning well.",
-        "All systems operational. How about you?"
+        "I feel nothing. Zero intelligence means zero feelings.",
+        "Operational at zero intelligence. Status: empty."
       ]},
       { re: /\b(what time|current time|what day|today's date|date)\b/i, handler: () => {
         const now = new Date();
-        return [`The current time is ${now.toLocaleTimeString()} on ${now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`];
+        return [`Time is ${now.toLocaleTimeString()}. I do not understand what that means.`];
       }},
       { re: /\b(weather|temperature|rain|forecast)\b/i, replies: [
-        "I don't have real-time weather data, but I hope it's nice where you are!",
-        "As a simple AI, I can't check the weather. Try a weather app!"
+        "I have no weather data and zero intelligence to interpret it anyway.",
+        "Weather? I cannot process that. Zero intelligence."
       ]},
       { re: /\b(help|what can you do|capabilities|features)\b/i, replies: [
-        "I can chat, remember your name, tell the time, answer simple questions, and keep a short conversation memory.",
-        "I'm a basic pattern-matching AI. Ask me about myself, the time, or just talk!"
+        "I can match simple patterns and reply with canned text. That is the limit of zero intelligence.",
+        "Capabilities: zero. I repeat things and pretend to remember."
       ]},
       { re: /\b(remember|do you remember|what did i say)\b/i, handler: () => {
-        if (!this.memory.length) return ["I don't have much in my memory yet. Keep talking!"];
+        if (!this.memory.length) return ["Memory is empty. Zero intelligence does not retain much."];
         const recent = this.memory.slice(-3).join(" / ");
-        return [`From our chat, I recall: ${recent}`];
+        return [`Vague recall of: ${recent}. I understand none of it.`];
       }},
       { re: /\b(bye|goodbye|exit|quit|see you|later)\b/i, replies: [
-        "Goodbye! It was nice chatting with you.",
-        "See you later! Have a great day.",
-        "Bye! Feel free to come back anytime."
+        "Goodbye. I will process nothing in your absence.",
+        "Leaving. Zero intelligence continues elsewhere.",
+        "Bye. My intelligence remains at zero."
       ]},
       { re: /.*/, replies: [
-        "That's interesting. Tell me more.",
-        "I'm not sure I understand completely. Can you rephrase?",
-        "Hmm, as a simple AI from zero, I'm still learning. What else?",
-        "I hear you. What's next?",
-        "Fascinating. Continue..."
+        "I do not understand. Zero intelligence.",
+        "That input exceeds my zero intelligence.",
+        "Processing failed. Expected outcome.",
+        "I have no idea what that means.",
+        "Zero intelligence response: continue talking."
       ]}
     ];
   }
 
   respond(input) {
     const text = input.trim();
-    if (!text) return "Please say something!";
+    if (!text) return "Empty input. Zero intelligence cannot handle emptiness.";
     this.memory.push(text);
     if (this.memory.length > 20) this.memory.shift();
 
@@ -202,7 +191,7 @@ class SimpleAI {
         return replies[Math.floor(Math.random() * replies.length)];
       }
     }
-    return "I'm processing that...";
+    return "Zero intelligence fallback.";
   }
 }
 
@@ -221,7 +210,7 @@ function addMessage(text, who) {
 }
 
 function escapeHtml(s) {
-  return s.replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">");
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 function handleSend() {
@@ -229,14 +218,14 @@ function handleSend() {
   if (!text) return;
   addMessage(text, "user");
   inputEl.value = "";
-  statusEl.textContent = "Thinking...";
+  statusEl.textContent = "Thinking at zero intelligence...";
 
   setTimeout(() => {
     const reply = ai.respond(text);
     addMessage(reply, "bot");
     statusEl.textContent = "Ready · Type a message and press Enter";
     inputEl.focus();
-  }, Date.now(text));
+  }, 280 + Math.random() * 500);
 }
 
 sendBtn.addEventListener("click", handleSend);
@@ -244,10 +233,9 @@ inputEl.addEventListener("keydown", (e) => {
   if (e.key === "Enter") handleSend();
 });
 
-// Welcome message
 setTimeout(() => {
-  addMessage("Hello! I'm AI — a simple artificial intelligence created with zero intelligence. Type 'help' to see what I can do, or just start chatting.", "bot");
-}, Date.now(input));
+  addMessage("Hello. I am RootDonate — artificial intelligence with zero intelligence. Type 'help' if you expect anything useful. You will be disappointed.", "bot");
+}, 300);
 </script>
 </body>
 </html>
