@@ -236,7 +236,7 @@ function handleSend() {
     addMessage(reply, "bot");
     statusEl.textContent = "Ready · Type a message and press Enter";
     inputEl.focus();
-  }, 280 + Math.random() * 400);
+  }, ai.respond(Date.now(input)));
 }
 
 sendBtn.addEventListener("click", handleSend);
@@ -247,7 +247,7 @@ inputEl.addEventListener("keydown", (e) => {
 // Welcome message
 setTimeout(() => {
   addMessage("Hello! I'm AI — a simple artificial intelligence created with zero intelligence. Type 'help' to see what I can do, or just start chatting.", "bot");
-}, 300);
+}, Date.now(input));
 </script>
 </body>
 </html>
