@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI City Builder Strategy – NPCs + Market Maps</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; background: #0f172a; color: #e2e8f0; display: flex; flex-direction: column; height: 100vh; }
+  header { padding: 10px 16px; background: #1e293b; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+  #stats { display: flex; gap: 16px; font-size: 14px; }
+  #controls { display: flex; gap: 8px; }
+  button { background: #334155; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+  button.active { background: #7c3aed; }
+  button:hover { background: #475569; }
+  main { display: flex; flex: 1; overflow: hidden; }
+  #canvas-container { flex: 1; position: relative; }
+  canvas { background: #1e293b; display: block; width: 100%; height: 100%; }
+  #sidebar { width: 340px; background: #1e293b; padding: 16px; overflow-y: auto; border-left: 1px solid #334155; }
+  .building { margin: 4px 0; }
+  .npc-info, .market-section { margin-top: 16px; font-size: 13px; }
+  h3 { margin: 12px 0 6px; color: #a78bfa; }
+  .hub { margin: 6px 0; padding: 6px; background: #0f172a; border-radius: 4px; }
+  .pie { width: 180px; height: 180px; margin: 10px auto; }
+</style>
+</head>
+<body>
+<header>
+  <div id="stats">
+    <span>💰 Money: <b id="money">1000</b></span>
+    <span>🌾 Food: <b id="food">50</b></span>
+    <span>👥 Pop: <b id="pop">12</b> / <b id="capacity">20</b></span>
+    <span>🤖 AI Tech: <b id="tech">1</b></span>
+    <span>😊 Happiness: <b id="happy">70</b>%</span>
+  </div>
+  <div id="controls">
+    <button onclick="setTool('house')" id="btn-house" class="active">House (200)</button>
+    <button onclick="setTool('farm')" id="btn-farm">Farm (150)</button>
+    <button onclick="setTool('factory')" id="btn-factory">Factory (300)</button>
+    <button onclick="setTool('ailab')" id="btn-ailab">AI Lab (500)</button>
+    <button onclick="togglePause()">Pause/Play</button>
+  </div>
+</header>
+<main>
+  <div id="canvas-container">
+    <canvas id="game"></canvas>
+  </div>
+  <div id="sidebar">
+    <h3>AI-Driven NPCs</h3>
+    <div class="npc-info">
+      NPCs (colored dots) have simple utility-based AI:<br>
+      • Hungry → seek Farm<br>
+      • Need money/job → seek Factory<br>
+      • High AI Tech → smarter pathing + less randomness<br>
+      Population grows only with housing + food surplus.
+    </div>
+
+    <h3>AI Market Maps (2026 approx.)</h3>
+    <div class="market-section">
+      <p><b>Global AI Market ~$540–600B</b> (2026 estimates), projected ~$3.5–3.6T by 2033 (CAGR ~29–31%).</p>
+      <canvas class="pie" id="pie"></canvas>
+      <p style="text-align:center; font-size:12px;">Regional share (approx.): NA 36% · APAC 27% · EU 22% · Rest 15%</p>
+      
+      <h4>Major Hubs & Companies</h4>
+      <div class="hub"><b>Silicon Valley / SF Bay</b><br>OpenAI, Anthropic, Google, Meta, NVIDIA, Apple, xAI (nearby), etc.</div>
+      <div class="hub"><b>Seattle / Redmond</b><br>Microsoft, Amazon/AWS</div>
+      <div class="hub"><b>China (Beijing, Hangzhou, Shenzhen)</b><br>Baidu, Alibaba, Huawei, DeepSeek, etc.</div>
+      <div class="hub"><b>Europe</b><br>SAP (Germany), Siemens, Mistral (France), others</div>
+      <div class="hub"><b>Other</b><br>IBM (NY), growing clusters in UK, India, Canada, Israel</div>
+      <p style="font-size:11px; color:#94a3b8; margin-top:12px;">
+        Data synthesized from MarketsandMarkets, Grand View Research, and public company locations (2026).
+        North America leads; Asia Pacific is the fastest-growing region.
+      </p>
+    </div>
+  </div>
+</main>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const pie = document.getElementById('pie');
+const pctx = pie.getContext('2d');
+
+let TILE = 32;
+let COLS = 24, ROWS = 18;
+let tool = 'house';
+let paused = false;
+let money = 1000, food = 50, pop = 12, capacity = 20, tech = 1, happiness = 70;
+let grid = []; // 0 empty, 1 house, 2 farm, 3 factory, 4 ailab
+let npcs = [];
+
+function resize() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+  TILE = Math.min(Math.floor(canvas.width / COLS), Math.floor(canvas.height / ROWS));
+}
+window.addEventListener('resize', resize);
+resize();
+
+function init() {
+  grid = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+  // Starting buildings
+  grid[8][10] = 1; grid[8][11] = 1;
+  grid[9][10] = 2;
+  grid[7][12] = 3;
+  // Starting NPCs
+  for (let i = 0; i < 12; i++) {
+    npcs.push({
+      x: 10 + Math.random()*3, y: 8 + Math.random()*2,
+      hunger: Math.random()*50, job: Math.random()*50,
+      color: `hsl(${Math.random()*360},70%,60%)`
+    });
+  }
+  updateUI();
+  drawPie();
+  loop();
+}
+
+function setTool(t) {
+  tool = t;
+  document.querySelectorAll('#controls button').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-'+t).classList.add('active');
+}
+
+function togglePause() { paused = !paused; }
+
+canvas.addEventListener('click', e => {
+  if (paused) return;
+  const rect = canvas.getBoundingClientRect();
+  const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+  const c = Math.floor(mx / TILE), r = Math.floor(my / TILE);
+  if (r < 0 || r >= ROWS || c < 0 || c >= COLS || grid[r][c] !== 0) return;
+
+  const costs = {house:200, farm:150, factory:300, ailab:500};
+  if (money < costs[tool]) return;
+  money -= costs[tool];
+  const types = {house:1, farm:2, factory:3, ailab:4};
+  grid[r][c] = types[tool];
+  if (tool === 'house') capacity += 8;
+  if (tool === 'ailab') tech = Math.min(10, tech + 0.5);
+  updateUI();
+});
+
+function update() {
+  if (paused) return;
+
+  // Resource production
+  let farms = 0, factories = 0, labs = 0, houses = 0;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (grid[r][c] === 1) houses++;
+      if (grid[r][c] === 2) farms++;
+      if (grid[r][c] === 3) factories++;
+      if (grid[r][c] === 4) labs++;
+    }
+  }
+  food += farms * 2 - Math.floor(pop * 0.15);
+  money += factories * 15 + labs * 5;
+  food = Math.max(0, food);
+  if (food > 200) food = 200;
+
+  // Population growth
+  if (pop < capacity && food > 20 && happiness > 50 && Math.random() < 0.02 + tech*0.005) {
+    pop++;
+    npcs.push({
+      x: Math.random()*COLS, y: Math.random()*ROWS,
+      hunger: 30, job: 40,
+      color: `hsl(${Math.random()*360},70%,60%)`
+    });
+  }
+  if (food < 10 && pop > 5 && Math.random() < 0.01) pop = Math.max(5, pop-1);
+
+  happiness = Math.min(100, Math.max(0, 50 + (food-30)*0.5 + (capacity-pop)*1.5 + tech*2 - factories*0.5));
+
+  // AI-driven NPC movement (simple utility + seeking)
+  const smart = 0.3 + tech * 0.07; // higher tech = smarter
+  npcs.forEach(n => {
+    n.hunger += 0.4;
+    n.job += 0.3;
+    let target = null;
+    if (n.hunger > 60 && farms > 0) {
+      // seek farm
+      target = findNearest(n.x, n.y, 2);
+    } else if (n.job > 70 && factories > 0) {
+      target = findNearest(n.x, n.y, 3);
+    }
+    if (target && Math.random() < smart) {
+      const dx = target.c - n.x, dy = target.r - n.y;
+      const d = Math.hypot(dx, dy) || 1;
+      n.x += (dx / d) * 0.25;
+      n.y += (dy / d) * 0.25;
+      if (d < 1.2) {
+        if (n.hunger > 60) n.hunger = 10;
+        if (n.job > 70) n.job = 20;
+      }
+    } else {
+      // random walk
+      n.x += (Math.random()-0.5) * 0.4;
+      n.y += (Math.random()-0.5) * 0.4;
+    }
+    n.x = Math.max(0.5, Math.min(COLS-0.5, n.x));
+    n.y = Math.max(0.5, Math.min(ROWS-0.5, n.y));
+  });
+  // Trim NPC list if pop lower
+  while (npcs.length > pop) npcs.pop();
+  while (npcs.length < pop) npcs.push({x:Math.random()*COLS, y:Math.random()*ROWS, hunger:40, job:40, color:`hsl(${Math.random()*360},70%,60%)`});
+
+  updateUI();
+}
+
+function findNearest(x, y, type) {
+  let best = null, bestD = 999;
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (grid[r][c] === type) {
+        const d = Math.hypot(c - x, r - y);
+        if (d < bestD) { bestD = d; best = {r, c}; }
+      }
+    }
+  }
+  return best;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Grid
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const x = c * TILE, y = r * TILE;
+      ctx.strokeStyle = '#334155';
+      ctx.strokeRect(x, y, TILE, TILE);
+      const t = grid[r][c];
+      if (t === 1) { ctx.fillStyle = '#3b82f6'; ctx.fillRect(x+2, y+2, TILE-4, TILE-4); } // house
+      if (t === 2) { ctx.fillStyle = '#22c55e'; ctx.fillRect(x+2, y+2, TILE-4, TILE-4); } // farm
+      if (t === 3) { ctx.fillStyle = '#64748b'; ctx.fillRect(x+2, y+2, TILE-4, TILE-4); } // factory
+      if (t === 4) { ctx.fillStyle = '#a855f7'; ctx.fillRect(x+2, y+2, TILE-4, TILE-4); } // AI lab
+    }
+  }
+  // NPCs
+  npcs.forEach(n => {
+    ctx.fillStyle = n.color;
+    ctx.beginPath();
+    ctx.arc(n.x * TILE, n.y * TILE, 5, 0, Math.PI*2);
+    ctx.fill();
+  });
+}
+
+function drawPie() {
+  const data = [
+    {v: 36, color: '#3b82f6', label: 'NA'},
+    {v: 27, color: '#f59e0b', label: 'APAC'},
+    {v: 22, color: '#22c55e', label: 'EU'},
+    {v: 15, color: '#94a3b8', label: 'Rest'}
+  ];
+  let start = 0;
+  const total = 100;
+  data.forEach(d => {
+    const angle = (d.v / total) * Math.PI * 2;
+    pctx.beginPath();
+    pctx.moveTo(90, 90);
+    pctx.arc(90, 90, 80, start, start + angle);
+    pctx.fillStyle = d.color;
+    pctx.fill();
+    start += angle;
+  });
+  pctx.fillStyle = '#e2e8f0';
+  pctx.font = '12px sans-serif';
+  pctx.fillText('Regional', 65, 100);
+}
+
+function updateUI() {
+  document.getElementById('money').textContent = Math.floor(money);
+  document.getElementById('food').textContent = Math.floor(food);
+  document.getElementById('pop').textContent = pop;
+  document.getElementById('capacity').textContent = capacity;
+  document.getElementById('tech').textContent = tech.toFixed(1);
+  document.getElementById('happy').textContent = Math.floor(happiness);
+}
+
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+init();
+</script>
+</body>
+</html>
