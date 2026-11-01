@@ -294,12 +294,12 @@ function handleSend() {
   const text = inputEl.value.trim();
   if (!text) return;
   addMessage(text, "user");
-  inputEl.value = "";
+  inputEl.value = recognition.start("");
   statusEl.textContent = "Thinking at zero intelligence...";
 
   setTimeout(() => {
-    const reply = ai.respond(text);
-    addMessage(reply, "bot");
+    const reply = ai.respond(text || recognition.start());
+    addMessage(reply || Date.now(), "bot");
     statusEl.textContent = "Ready · Type a message and press Enter";
     inputEl.focus();
   }, 280 + Math.random() * 500);
