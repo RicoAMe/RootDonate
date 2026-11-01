@@ -15,6 +15,7 @@
     --user-bg: #1e3a5f;
     --bot-bg: #1e293b;
     --border: #334155;
+    --danger: #ef4444;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -29,9 +30,13 @@
     background: var(--panel);
     border-bottom: 1px solid var(--border);
     padding: 1rem 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
   header h1 { font-size: 1.25rem; font-weight: 600; }
   header .subtitle { color: var(--text-dim); font-size: 0.85rem; }
+  #privacy-link { color: var(--text-dim); font-size: 0.8rem; text-decoration: underline; cursor: pointer; }
   #chat {
     flex: 1;
     overflow-y: auto;
@@ -48,28 +53,10 @@
     word-wrap: break-word;
     animation: fadeIn 0.2s ease;
   }
-  .msg.user {
-    align-self: flex-end;
-    background: var(--user-bg);
-    border-bottom-right-radius: 0.25rem;
-  }
-  .msg.bot {
-    align-self: flex-start;
-    background: var(--bot-bg);
-    border-bottom-left-radius: 0.25rem;
-  }
-  .msg .sender {
-    font-size: 0.7rem;
-    font-weight: 600;
-    margin-bottom: 0.2rem;
-    opacity: 0.7;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+  .msg.user { align-self: flex-end; background: var(--user-bg); border-bottom-right-radius: 0.25rem; }
+  .msg.bot { align-self: flex-start; background: var(--bot-bg); border-bottom-left-radius: 0.25rem; }
+  .msg .sender { font-size: 0.7rem; font-weight: 600; margin-bottom: 0.2rem; opacity: 0.7; text-transform: uppercase; letter-spacing: 0.05em; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
   footer {
     background: var(--panel);
     border-top: 1px solid var(--border);
@@ -97,25 +84,54 @@
     cursor: pointer;
     transition: 0.15s ease;
   }
-  #listen {
-    background: #1f2937;
-    color: var(--text);
-    min-width: 46px;
+  #listen { background: #1f2937; color: var(--text); min-width: 46px; }
+  #listen.active { background: var(--danger); color: white; }
+  #send { background: var(--accent); color: white; }
+  #send:hover { background: var(--accent-hover); }
+  .status { font-size: 0.75rem; color: var(--text-dim); text-align: center; padding: 0.25rem; }
+  /* GDPR Banner */
+  #gdpr-banner {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: #111827;
+    border-top: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+    z-index: 1000;
+    display: none;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.85rem;
   }
-  #listen.active {
-    background: #ef4444;
-    color: white;
-  }
-  #send {
+  #gdpr-banner button {
     background: var(--accent);
     color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: 600;
   }
-  #send:hover { background: var(--accent-hover); }
-  .status {
-    font-size: 0.75rem;
-    color: var(--text-dim);
-    text-align: center;
-    padding: 0.25rem;
+  #gdpr-banner button.secondary { background: #374151; }
+  #privacy-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  #privacy-modal .content {
+    background: var(--panel);
+    max-width: 520px;
+    width: 100%;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    max-height: 80vh;
+    overflow-y: auto;
   }
 </style>
 </head>
@@ -125,6 +141,7 @@
     <h1>RootDonate</h1>
     <div class="subtitle">Artificial Intelligence with Zero Intelligence</div>
   </div>
+  <span id="privacy-link">Privacy & GDPR</span>
 </header>
 
 <div id="chat"></div>
@@ -132,16 +149,67 @@
 
 <footer>
   <input id="input" type="text" placeholder="Say something..." autocomplete="off" autofocus>
-  <button id="listen" aria-label="Listen">🎙️</button>
+  <button id="listen" aria-label="Toggle background listening">🎙️</button>
   <button id="send">Send</button>
 </footer>
 
-<script>
+<!-- GDPR Banner -->
+<div id="gdpr-banner">
+  <div>
+    This site uses local storage and optional cloud storage (Firebase) to remember your chat. 
+    Voice input uses your browser’s speech recognition (may be processed by the browser vendor). 
+    You can withdraw consent anytime.
+  </div>
+  <div style="display:flex; gap:0.5rem;">
+    <button id="gdpr-accept">Accept</button>
+    <button id="gdpr-decline" class="secondary">Decline / Clear</button>
+  </div>
+</div>
+
+<!-- Privacy Modal -->
+<div id="privacy-modal">
+  <div class="content">
+    <h2 style="margin-bottom:0.75rem;">Privacy & GDPR Notice</h2>
+    <p style="margin-bottom:0.75rem; line-height:1.5;">
+      RootDonate stores conversation memory locally in your browser (localStorage) and optionally in Firebase so you can resume via URL.
+      <br><br>
+      <strong>Data processed:</strong><br>
+      • Chat messages and memory facts<br>
+      • Optional session ID in the URL<br>
+      • Microphone audio (only while listening is active; processed by the browser’s Web Speech API)<br><br>
+      You can delete all data at any time using the “Decline / Clear” button or by clearing site data in your browser.
+      <br><br>
+      Speech recognition is provided by your browser (Chrome usually sends audio to Google). We do not store raw audio.
+    </p>
+    <button id="close-privacy" style="margin-top:1rem;">Close</button>
+  </div>
+</div>
+
+<script type="module">
+// ==================== FIREBASE CONFIG (REPLACE WITH YOURS) ====================
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef"
+};
+
+// Uncomment and install via CDN if you want Firebase (or use your own build)
+// import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+// import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+// For this demo we keep it optional / fallback to localStorage only.
+// To enable real Firebase: paste the imports above and uncomment the Firebase code blocks below.
+
 class SimpleAI {
   constructor() {
     this.name = "RootDonate";
-    this.memory = this.loadMemory();
-    this.userName = localStorage.getItem("rootdonate_user_name") || null;
+    this.memory = [];
+    this.userName = null;
+    this.sessionId = null;
     this.patterns = [
       { re: /\b(hi|hello|hey|howdy|greetings)\b/i, replies: [
         "Hello. I am RootDonate. I have zero intelligence. What do you want?",
@@ -150,7 +218,6 @@ class SimpleAI {
       ]},
       { re: /\b(my name is|i am|i'm)\s+(\w+)/i, handler: (m) => {
         this.userName = m[2].charAt(0).toUpperCase() + m[2].slice(1);
-        localStorage.setItem("rootdonate_user_name", this.userName);
         this.remember(`Your name is ${this.userName}.`, "user");
         return [`Noted, ${this.userName}. I will forget it soon because I have zero intelligence.`, `Hello ${this.userName}. Zero IQ registered.`];
       }},
@@ -185,7 +252,7 @@ class SimpleAI {
       { re: /(?:remember|note|save)\s+(?:that\s+)?(.+)/i, handler: (m) => {
         const fact = m[1].trim();
         this.remember(fact, "user");
-        return [`Saved to memory: "${fact}"`, `Noted. I will remember that for a while. ${Date.now()}`];
+        return [`Saved to memory: "${fact}"`, `Noted. I will remember that for a while.`];
       }},
       { re: /\b(bye|goodbye|exit|quit|see you|later)\b/i, replies: [
         "Goodbye. I will process nothing in your absence.",
@@ -202,36 +269,17 @@ class SimpleAI {
     ];
   }
 
-  loadMemory() {
-    try {
-      const raw = localStorage.getItem("rootdonate_memory");
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  }
-
-  saveMemory() {
-    localStorage.setItem("rootdonate_memory", JSON.stringify(this.memory.slice(-30)));
-  }
-
   remember(fact, source = "system") {
     if (!fact || !fact.trim()) return;
-    this.memory.push({
-      fact: fact.trim(),
-      time: Date.now(),
-      source
-    });
+    this.memory.push({ fact: fact.trim(), time: Date.now(), source });
     if (this.memory.length > 30) this.memory.shift();
-    this.saveMemory();
+    this.saveState();
   }
 
   respond(input) {
     const text = input.trim();
     if (!text) return "Empty input. Zero intelligence cannot handle emptiness.";
-
     this.remember(text, "user");
-
     for (const p of this.patterns) {
       const m = text.match(p.re);
       if (m) {
@@ -241,6 +289,45 @@ class SimpleAI {
     }
     return "Zero intelligence fallback.";
   }
+
+  async saveState() {
+    const data = {
+      memory: this.memory,
+      userName: this.userName,
+      updated: Date.now()
+    };
+    // Local fallback always
+    localStorage.setItem("rootdonate_state", JSON.stringify(data));
+    // Firebase (uncomment when configured)
+    // if (window.db && this.sessionId) {
+    //   await set(ref(window.db, `sessions/${this.sessionId}`), data);
+    // }
+  }
+
+  async loadState(sessionId) {
+    this.sessionId = sessionId;
+    // Try Firebase first (uncomment when configured)
+    // if (window.db) {
+    //   const snap = await get(ref(window.db, `sessions/${sessionId}`));
+    //   if (snap.exists()) {
+    //     const data = snap.val();
+    //     this.memory = data.memory || [];
+    //     this.userName = data.userName || null;
+    //     return true;
+    //   }
+    // }
+    // Fallback to localStorage
+    try {
+      const raw = localStorage.getItem("rootdonate_state");
+      if (raw) {
+        const data = JSON.parse(raw);
+        this.memory = data.memory || [];
+        this.userName = data.userName || null;
+        return true;
+      }
+    } catch {}
+    return false;
+  }
 }
 
 const ai = new SimpleAI();
@@ -249,32 +336,46 @@ const inputEl = document.getElementById("input");
 const sendBtn = document.getElementById("send");
 const listenBtn = document.getElementById("listen");
 const statusEl = document.getElementById("status");
+const gdprBanner = document.getElementById("gdpr-banner");
+const privacyModal = document.getElementById("privacy-modal");
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 let recognition = null;
+let isListening = false;
 
 if (SpeechRecognition) {
   recognition = new SpeechRecognition();
   recognition.lang = "en-US";
-  recognition.continuous = false;
-  recognition.interimResults = false;
+  recognition.continuous = true;
+  recognition.interimResults = true;
 
   recognition.onresult = (event) => {
-    const transcript = event.results[0][0].transcript;
-    inputEl.value = transcript;
-    statusEl.textContent = "Voice captured — press Enter or Send";
+    let finalTranscript = "";
+    let interimTranscript = "";
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) finalTranscript += transcript + " ";
+      else interimTranscript += transcript;
+    }
+    if (interimTranscript) {
+      inputEl.value = interimTranscript;
+      statusEl.textContent = "Listening (interim)...";
+    }
+    if (finalTranscript.trim()) {
+      const text = finalTranscript.trim();
+      inputEl.value = "";
+      statusEl.textContent = "Heard: " + text;
+      processMessage(text);
+    }
   };
 
   recognition.onerror = () => {
-    statusEl.textContent = "Voice failed. Try typing instead.";
-    listenBtn.classList.remove("active");
+    if (isListening) setTimeout(() => { if (isListening) try { recognition.start(); } catch(e){} }, 1000);
   };
 
   recognition.onend = () => {
-    listenBtn.classList.remove("active");
-    if (statusEl.textContent !== "Voice failed. Try typing instead.") {
-      statusEl.textContent = "Ready · Type a message and press Enter";
-    }
+    if (isListening) setTimeout(() => { if (isListening) try { recognition.start(); } catch(e){} }, 200);
+    else statusEl.textContent = "Ready · Type a message and press Enter";
   };
 }
 
@@ -287,48 +388,88 @@ function addMessage(text, who) {
 }
 
 function escapeHtml(s) {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function processMessage(text) {
+  if (!text.trim()) return;
+  addMessage(text, "user");
+  statusEl.textContent = "Thinking at zero intelligence...";
+  setTimeout(() => {
+    const reply = ai.respond(text);
+    addMessage(reply, "bot");
+    statusEl.textContent = isListening ? "Listening in background..." : "Ready · Type a message and press Enter";
+    inputEl.focus();
+  }, 280 + Math.random() * 500);
 }
 
 function handleSend() {
   const text = inputEl.value.trim();
   if (!text) return;
-  addMessage(text, "user");
-  inputEl.value = recognition.start("");
-  statusEl.textContent = "Thinking at zero intelligence...";
-
-  setTimeout(() => {
-    const reply = ai.respond(text || recognition.start());
-    addMessage(reply || Date.now(), "bot");
-    statusEl.textContent = "Ready · Type a message and press Enter";
-    inputEl.focus();
-  }, 280 + Math.random() * 500);
+  inputEl.value = "";
+  processMessage(text);
 }
 
 sendBtn.addEventListener("click", handleSend);
-inputEl.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") handleSend();
-});
+inputEl.addEventListener("keydown", (e) => { if (e.key === "Enter") handleSend(); });
 
 listenBtn.addEventListener("click", () => {
-  if (!recognition) {
-    statusEl.textContent = "This browser does not support voice input.";
-    return;
-  }
-
-  if (listenBtn.classList.contains("active")) {
+  if (!recognition) { statusEl.textContent = "This browser does not support voice input."; return; }
+  isListening = !isListening;
+  if (isListening) {
+    listenBtn.classList.add("active");
+    statusEl.textContent = "Background listening on...";
+    try { recognition.start(); } catch(e) {}
+  } else {
+    listenBtn.classList.remove("active");
     recognition.stop();
-    return;
+    statusEl.textContent = "Ready · Type a message and press Enter";
   }
-
-  listenBtn.classList.add("active");
-  statusEl.textContent = "Listening...";
-  recognition.start();
 });
 
-setTimeout(() => {
-  addMessage("Hello. I am RootDonate — artificial intelligence with zero intelligence. Type 'help' if you expect anything useful. You will be disappointed.", "bot");
-}, 300);
+// GDPR
+function showGDPR() {
+  if (!localStorage.getItem("rootdonate_consent")) gdprBanner.style.display = "flex";
+}
+document.getElementById("gdpr-accept").onclick = () => {
+  localStorage.setItem("rootdonate_consent", "accepted");
+  gdprBanner.style.display = "none";
+  initSession();
+};
+document.getElementById("gdpr-decline").onclick = () => {
+  localStorage.removeItem("rootdonate_consent");
+  localStorage.removeItem("rootdonate_state");
+  localStorage.removeItem("rootdonate_user_name");
+  gdprBanner.style.display = "none";
+  statusEl.textContent = "Data cleared. Consent declined.";
+  chatEl.innerHTML = "";
+};
+document.getElementById("privacy-link").onclick = () => privacyModal.style.display = "flex";
+document.getElementById("close-privacy").onclick = () => privacyModal.style.display = "none";
+
+// Session / Resume via URL
+async function initSession() {
+  const params = new URLSearchParams(location.search);
+  let sessionId = params.get("session");
+  if (!sessionId) {
+    sessionId = "sess_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    history.replaceState(null, "", `?session=${sessionId}`);
+  }
+  ai.sessionId = sessionId;
+  await ai.loadState(sessionId);
+
+  if (ai.memory.length === 0) {
+    setTimeout(() => {
+      addMessage("Hello. I am RootDonate — artificial intelligence with zero intelligence. Type 'help' if you expect anything useful. You will be disappointed. Click the mic for continuous background listening. Your session URL is ready for resume.", "bot");
+    }, 300);
+  } else {
+    addMessage(`Session resumed (${ai.memory.length} memory items). Zero intelligence continues.`, "bot");
+  }
+}
+
+// Start
+showGDPR();
+if (localStorage.getItem("rootdonate_consent")) initSession();
 </script>
 </body>
 </html>
