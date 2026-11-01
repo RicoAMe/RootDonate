@@ -76,6 +76,7 @@
     padding: 0.75rem 1rem;
     display: flex;
     gap: 0.5rem;
+    align-items: center;
   }
   #input {
     flex: 1;
@@ -88,14 +89,26 @@
     outline: none;
   }
   #input:focus { border-color: var(--accent); }
+  #listen, #send {
+    border: none;
+    border-radius: 0.75rem;
+    padding: 0.7rem 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s ease;
+  }
+  #listen {
+    background: #1f2937;
+    color: var(--text);
+    min-width: 46px;
+  }
+  #listen.active {
+    background: #ef4444;
+    color: white;
+  }
   #send {
     background: var(--accent);
     color: white;
-    border: none;
-    border-radius: 0.75rem;
-    padding: 0 1.25rem;
-    font-weight: 600;
-    cursor: pointer;
   }
   #send:hover { background: var(--accent-hover); }
   .status {
@@ -119,6 +132,7 @@
 
 <footer>
   <input id="input" type="text" placeholder="Say something..." autocomplete="off" autofocus>
+  <button id="listen" aria-label="Listen">🎙️</button>
   <button id="send">Send</button>
 </footer>
 
@@ -126,8 +140,8 @@
 class SimpleAI {
   constructor() {
     this.name = "RootDonate";
-    this.memory = [];
-    this.userName = null;
+    this.memory = this.loadMemory();
+    this.userName = localStorage.getItem("rootdonate_user_name") || null;
     this.patterns = [
       { re: /\b(hi|hello|hey|howdy|greetings)\b/i, replies: [
         "Hello. I am RootDonate. I have zero intelligence. What do you want?",
@@ -136,6 +150,8 @@ class SimpleAI {
       ]},
       { re: /\b(my name is|i am|i'm)\s+(\w+)/i, handler: (m) => {
         this.userName = m[2].charAt(0).toUpperCase() + m[2].slice(1);
+        localStorage.setItem("rootdonate_user_name", this.userName);
+        this.remember(`Your name is ${this.userName}.`, "user");
         return [`Noted, ${this.userName}. I will forget it soon because I have zero intelligence.`, `Hello ${this.userName}. Zero IQ registered.`];
       }},
       { re: /\b(what is your name|who are you|your name)\b/i, replies: [
@@ -155,13 +171,21 @@ class SimpleAI {
         "Weather? I cannot process that. Zero intelligence."
       ]},
       { re: /\b(help|what can you do|capabilities|features)\b/i, replies: [
-        "I can match simple patterns and reply with canned text. That is the limit of zero intelligence.",
-        "Capabilities: zero. I repeat things and pretend to remember."
+        "I can match simple patterns, listen, and remember timestamps. That is the limit of zero intelligence.",
+        "Capabilities: mostly zero. I repeat things and pretend to understand."
       ]},
-      { re: /\b(remember|do you remember|what did i say)\b/i, handler: () => {
+      { re: /\b(what do you remember|what have you learned|do you remember|what did i say)\b/i, handler: () => {
         if (!this.memory.length) return ["Memory is empty. Zero intelligence does not retain much."];
-        const recent = this.memory.slice(-3).join(" / ");
+        const recent = this.memory.slice(-3).map(entry => {
+          const stamp = new Date(entry.time).toLocaleString();
+          return `${entry.fact} (${stamp})`;
+        }).join(" / ");
         return [`Vague recall of: ${recent}. I understand none of it.`];
+      }},
+      { re: /(?:remember|note|save)\s+(?:that\s+)?(.+)/i, handler: (m) => {
+        const fact = m[1].trim();
+        this.remember(fact, "user");
+        return [`Saved to memory: "${fact}"`, `Noted. I will remember that for a while. ${Date.now()}`];
       }},
       { re: /\b(bye|goodbye|exit|quit|see you|later)\b/i, replies: [
         "Goodbye. I will process nothing in your absence.",
@@ -178,11 +202,35 @@ class SimpleAI {
     ];
   }
 
+  loadMemory() {
+    try {
+      const raw = localStorage.getItem("rootdonate_memory");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  saveMemory() {
+    localStorage.setItem("rootdonate_memory", JSON.stringify(this.memory.slice(-30)));
+  }
+
+  remember(fact, source = "system") {
+    if (!fact || !fact.trim()) return;
+    this.memory.push({
+      fact: fact.trim(),
+      time: Date.now(),
+      source
+    });
+    if (this.memory.length > 30) this.memory.shift();
+    this.saveMemory();
+  }
+
   respond(input) {
     const text = input.trim();
     if (!text) return "Empty input. Zero intelligence cannot handle emptiness.";
-    this.memory.push(text);
-    if (this.memory.length > 20) this.memory.shift();
+
+    this.remember(text, "user");
 
     for (const p of this.patterns) {
       const m = text.match(p.re);
@@ -199,7 +247,36 @@ const ai = new SimpleAI();
 const chatEl = document.getElementById("chat");
 const inputEl = document.getElementById("input");
 const sendBtn = document.getElementById("send");
+const listenBtn = document.getElementById("listen");
 const statusEl = document.getElementById("status");
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.lang = "en-US";
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    inputEl.value = transcript;
+    statusEl.textContent = "Voice captured — press Enter or Send";
+  };
+
+  recognition.onerror = () => {
+    statusEl.textContent = "Voice failed. Try typing instead.";
+    listenBtn.classList.remove("active");
+  };
+
+  recognition.onend = () => {
+    listenBtn.classList.remove("active");
+    if (statusEl.textContent !== "Voice failed. Try typing instead.") {
+      statusEl.textContent = "Ready · Type a message and press Enter";
+    }
+  };
+}
 
 function addMessage(text, who) {
   const div = document.createElement("div");
@@ -231,6 +308,22 @@ function handleSend() {
 sendBtn.addEventListener("click", handleSend);
 inputEl.addEventListener("keydown", (e) => {
   if (e.key === "Enter") handleSend();
+});
+
+listenBtn.addEventListener("click", () => {
+  if (!recognition) {
+    statusEl.textContent = "This browser does not support voice input.";
+    return;
+  }
+
+  if (listenBtn.classList.contains("active")) {
+    recognition.stop();
+    return;
+  }
+
+  listenBtn.classList.add("active");
+  statusEl.textContent = "Listening...";
+  recognition.start();
 });
 
 setTimeout(() => {
