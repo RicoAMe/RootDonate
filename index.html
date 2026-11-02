@@ -89,7 +89,6 @@
   #send { background: var(--accent); color: white; }
   #send:hover { background: var(--accent-hover); }
   .status { font-size: 0.75rem; color: var(--text-dim); text-align: center; padding: 0.25rem; }
-  /* GDPR Banner */
   #gdpr-banner {
     position: fixed;
     bottom: 0; left: 0; right: 0;
@@ -153,7 +152,6 @@
   <button id="send">Send</button>
 </footer>
 
-<!-- GDPR Banner -->
 <div id="gdpr-banner">
   <div>
     This site uses local storage and optional cloud storage (Firebase) to remember your chat. 
@@ -166,7 +164,6 @@
   </div>
 </div>
 
-<!-- Privacy Modal -->
 <div id="privacy-modal">
   <div class="content">
     <h2 style="margin-bottom:0.75rem;">Privacy & GDPR Notice</h2>
@@ -204,7 +201,7 @@ class SimpleAI {
     this.memory = [];
     this.userName = null;
     this.sessionId = null;
-    this.chatHistory = []; // for real AI context
+    this.chatHistory = [];
     this.patterns = [
       { re: /\b(hi|hello|hey|howdy|greetings)\b/i, replies: [
         "Hello. I am RootDonate. I have zero intelligence. What do you want?",
@@ -224,9 +221,12 @@ class SimpleAI {
         "I feel nothing. Zero intelligence means zero feelings.",
         "Operational at zero intelligence. Status: empty."
       ]},
-      { re: /\b(what time|current time|what day|today's date|date)\b/i, handler: () => {
+      { re: /\b(what time|current time|what day|today's date|date|now)\b/i, handler: () => {
         const now = new Date();
-        return [`Time is ${now.toLocaleTimeString()}. I do not understand what that means.`];
+        return [
+          `Time is ${now.toLocaleString()}. Date.now() = ${Date.now()}. I do not understand what that means.`,
+          `Current timestamp: ${Date.now()}. Local time: ${now.toLocaleTimeString()}. Zero intelligence cannot process time meaningfully.`
+        ];
       }},
       { re: /\b(weather|temperature|rain|forecast)\b/i, replies: [
         "I have no weather data and zero intelligence to interpret it anyway.",
@@ -373,13 +373,21 @@ function escapeHtml(s) {
 }
 
 async function getInternetAIReply(userText) {
-  const systemPrompt = `You are RootDonate, an artificial intelligence with zero intelligence. 
-Respond briefly, literally, and in a deadpan style. Acknowledge your zero intelligence when it fits. 
-Still try to be somewhat useful and answer the user's question. Keep replies short.`;
+  const now = new Date();
+  const timestamp = Date.now();
+  const timeString = now.toLocaleString();
+
+  const systemPrompt = `You are RootDonate, an artificial intelligence with zero intelligence.
+CRITICAL: The current exact time is ${timeString}.
+Date.now() = ${timestamp}.
+You MUST use this exact timestamp when answering any time, date, or "now" related question.
+Respond briefly, literally, and in a deadpan style. Acknowledge your zero intelligence when it fits.
+Still try to be somewhat useful. Keep replies short.`;
 
   const messages = [
     { role: "system", content: systemPrompt },
-    ...ai.chatHistory.slice(-10), // last 10 turns for context
+    { role: "system", content: `FORCED CURRENT TIME: Date.now() = ${timestamp} | Local time = ${timeString}. Always use this value.` },
+    ...ai.chatHistory.slice(-10),
     { role: "user", content: userText }
   ];
 
@@ -389,7 +397,7 @@ Still try to be somewhat useful and answer the user's question. Keep replies sho
     body: JSON.stringify({
       model: "openai",
       messages,
-      temperature: 0.7
+      temperature: 0.5
     })
   });
 
@@ -406,7 +414,6 @@ async function processMessage(text) {
   try {
     const reply = await getInternetAIReply(text);
     addMessage(reply, "bot");
-    // Update history
     ai.chatHistory.push({ role: "user", content: text });
     ai.chatHistory.push({ role: "assistant", content: reply });
     if (ai.chatHistory.length > 20) ai.chatHistory = ai.chatHistory.slice(-20);
