@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>RootDonate Internet AI · Pro</title>
+  <title>Internet AI · Pro</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -11,7 +11,6 @@
     :root {
       --bg: #0b0c10;
       --surface: #14161c;
-      --surface-2: #1c1f27;
       --border: rgba(255, 255, 255, 0.08);
       --text: #f0f2f5;
       --muted: #8b929e;
@@ -23,11 +22,7 @@
       --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
       height: 100%;
@@ -257,7 +252,7 @@
     <header>
       <div class="brand" id="brand" title="Click to clear chat">
         <div class="logo">AI</div>
-        RootDonate Internet AI
+        Internet AI
       </div>
       <div class="status">
         <div class="status-dot"></div>
@@ -267,8 +262,8 @@
 
     <div class="chat" id="chat">
       <div class="welcome" id="welcome">
-        <h2>RootDonate Internet AI</h2>
-        <p>Free real AI backend. Ask anything.</p>
+        <h2>Internet AI</h2>
+        <p>Free real AI. Ask anything.</p>
       </div>
     </div>
 
@@ -297,7 +292,7 @@
     const sendBtn = document.getElementById("send");
     const brand = document.getElementById("brand");
 
-    // Change this to your Cloudflare Worker URL after deploy
+    // ← Change this to your Cloudflare Worker URL
     const API_URL = "https://rootdonate-ai.2ys5jjm6c7.workers.dev/";
 
     let conversation = [];
@@ -362,13 +357,12 @@
       conversation = [];
       chat.innerHTML = `
         <div class="welcome" id="welcome">
-          <h2>RootDonate Internet AI</h2>
-          <p>Free real AI backend. Ask anything.</p>
+          <h2>Internet AI</h2>
+          <p>Free real AI. Ask anything.</p>
         </div>
       `;
     }
 
-    // Events
     brand.addEventListener("click", clearChat);
 
     input.addEventListener("input", () => {
@@ -419,7 +413,6 @@
       }
     });
 
-    // Live clock
     updateLiveTime();
     setInterval(updateLiveTime, 1000);
   </script>
