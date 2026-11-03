@@ -10,7 +10,181 @@
   <meta property="og:type" content="website">
   <title>RootDonate — AI with Zero Intelligence</title>
   <style>
-    :root{color-scheme:dark;--bg:#0f1419;--panel:#161e2b;--accent:#3b82f6;--text:#e2e8f0;--dim:#94a3b8;--border:#334155;--user:#1e3a5f;--bot:#1e293b;--danger:#ef4444}*{box-sizing:border-box}html,body{height:100%;margin:0}body{display:flex;flex-direction:column;min-height:100vh;background:var(--bg);color:var(--text);font:16px system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}header,footer{background:var(--panel);padding:.8rem 1rem;display:flex;align-items:center;gap:.7rem;justify-content:space-between}header{padding-top:calc(.8rem + env(safe-area-inset-top));border-bottom:1px solid var(--border)}header h1{font-size:1.15rem;margin:0}header .subtitle{font-size:.75rem;color:var(--dim)}button{font:inherit;cursor:pointer}#privacy-link{font-size:.8rem;color:var(--dim);background:none;border:0;text-decoration:underline}#chat{flex:1;overflow:auto;padding:1rem;display:flex;flex-direction:column;gap:.7rem;scroll-behavior:smooth}.msg{max-width:85%;padding:.7rem .9rem;border-radius:1rem;line-height:1.45;overflow-wrap:anywhere}.msg.user{align-self:flex-end;background:var(--user);border-bottom-right-radius:.3rem}.msg.bot{align-self:flex-start;background:var(--bot);border-bottom-left-radius:.3rem}.sender{font-size:.65rem;opacity:.7;text-transform:uppercase;font-weight:650;margin-bottom:.15rem}.status{text-align:center;color:var(--dim);font-size:.75rem;padding:.3rem}.status.online{color:#86efac}.status.error{color:#fca5a5}footer{border-top:1px solid var(--border);padding-bottom:calc(.7rem + env(safe-area-inset-bottom))}input{flex:1;min-width:0;background:#0f172a;color:var(--text);border:1px solid var(--border);border-radius:.8rem;padding:.75rem;font-size:16px;outline:none}input:focus{border-color:var(--accent)}footer button{height:46px;min-width:48px;border:0;border-radius:.8rem;background:var(--accent);color:white;padding:0 1rem}#listen{background:#374151;padding:0}#listen.active{background:var(--danger)}#gdpr-banner{position:fixed;inset:auto 0 0;background:#111827;border-top:1px solid var(--border);padding:1rem 1rem calc(1rem + env(safe-area-inset-bottom));display:none;z-index:5;gap:.75rem;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:.82rem;line-height:1.4}#gdpr-banner button,#close-privacy{background:var(--accent);color:white;border:0;border-radius:.5rem;padding:.55rem .9rem}#gdpr-decline{background:#374151!important}#privacy-modal{display:none;position:fixed;inset:0;background:#000b;z-index:6;align-items:center;justify-content:center;padding:1rem}#privacy-modal .content{background:var(--panel);max-width:32rem;padding:1.3rem;border-radius:1rem;line-height:1.5}#privacy-modal p{font-size:.9rem}#close-privacy{width:100%}.visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}@media(max-width:480px){.msg{max-width:92%}}
+    :root {
+      color-scheme: dark;
+      --bg: #0f1419;
+      --panel: #161e2b;
+      --accent: #3b82f6;
+      --text: #e2e8f0;
+      --dim: #94a3b8;
+      --border: #334155;
+      --user: #1e3a5f;
+      --bot: #1e293b;
+      --danger: #ef4444;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    button { font: inherit; cursor: pointer; }
+    button:focus-visible, input:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    header, footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .7rem;
+      padding: .8rem 1rem;
+      background: var(--panel);
+    }
+    header {
+      padding-top: calc(.8rem + env(safe-area-inset-top));
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 { margin: 0; font-size: 1.15rem; }
+    .subtitle { color: var(--dim); font-size: .75rem; }
+    #privacy-link {
+      border: 0;
+      background: none;
+      color: var(--dim);
+      font-size: .8rem;
+      text-decoration: underline;
+    }
+
+    #chat {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: .7rem;
+      overflow: auto;
+      padding: 1rem;
+      scroll-behavior: smooth;
+    }
+    .msg {
+      max-width: 85%;
+      padding: .7rem .9rem;
+      border-radius: 1rem;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+    .msg.user {
+      align-self: flex-end;
+      border-bottom-right-radius: .3rem;
+      background: var(--user);
+    }
+    .msg.bot {
+      align-self: flex-start;
+      border-bottom-left-radius: .3rem;
+      background: var(--bot);
+    }
+    .sender {
+      margin-bottom: .15rem;
+      font-size: .65rem;
+      font-weight: 650;
+      opacity: .7;
+      text-transform: uppercase;
+    }
+    .status { padding: .3rem; color: var(--dim); font-size: .75rem; text-align: center; }
+    .status.online { color: #86efac; }
+    .status.error { color: #fca5a5; }
+
+    footer {
+      justify-content: flex-start;
+      padding-bottom: calc(.7rem + env(safe-area-inset-bottom));
+      border-top: 1px solid var(--border);
+    }
+    input {
+      flex: 1;
+      min-width: 0;
+      padding: .75rem;
+      border: 1px solid var(--border);
+      border-radius: .8rem;
+      outline: none;
+      background: #0f172a;
+      color: var(--text);
+      font-size: 16px;
+    }
+    input:focus { border-color: var(--accent); }
+    footer button {
+      min-width: 48px;
+      height: 46px;
+      padding: 0 1rem;
+      border: 0;
+      border-radius: .8rem;
+      background: var(--accent);
+      color: white;
+    }
+    footer button:disabled { cursor: wait; opacity: .65; }
+    #listen { padding: 0; background: #374151; }
+    #listen.active { background: var(--danger); }
+
+    #gdpr-banner {
+      position: fixed;
+      z-index: 5;
+      inset: auto 0 0;
+      display: none;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: .75rem;
+      padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+      border-top: 1px solid var(--border);
+      background: #111827;
+      font-size: .82rem;
+      line-height: 1.4;
+    }
+    #gdpr-banner button, #close-privacy {
+      padding: .55rem .9rem;
+      border: 0;
+      border-radius: .5rem;
+      background: var(--accent);
+      color: white;
+    }
+    #gdpr-decline { background: #374151 !important; }
+    #privacy-modal {
+      position: fixed;
+      z-index: 6;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: #000b;
+    }
+    #privacy-modal .content {
+      max-width: 32rem;
+      padding: 1.3rem;
+      border-radius: 1rem;
+      background: var(--panel);
+      line-height: 1.5;
+    }
+    #privacy-modal p { font-size: .9rem; }
+    #close-privacy { width: 100%; }
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 480px) {
+      .msg { max-width: 92%; }
+    }
   </style>
 </head>
 <body>
@@ -21,21 +195,27 @@
     </div>
     <button id="privacy-link" type="button">Privacy &amp; GDPR</button>
   </header>
+
   <main id="chat" aria-label="Conversation" aria-live="polite" aria-relevant="additions"></main>
   <div class="status" id="status" role="status" aria-live="polite">Connecting to AI…</div>
+
   <footer>
     <label class="visually-hidden" for="input">Message</label>
     <input id="input" type="text" placeholder="Say something…" autocomplete="off">
     <button id="listen" type="button" aria-label="Start voice input" aria-pressed="false">🎙️</button>
     <button id="send" type="button">Send</button>
   </footer>
+
   <div id="gdpr-banner" role="region" aria-label="Privacy notice">
-    <div>Chat history is stored in this browser. Messages are sent to the RootDonate Firebase function and the configured AI provider. Optional voice input uses your browser’s speech recognition and may be processed by its vendor. Voice starts only when you press the microphone button.</div>
+    <div>
+      Chat history is stored in this browser. Messages are sent to the RootDonate Firebase function and the configured AI provider. Optional voice input uses your browser’s speech recognition and may be processed by its vendor. Voice starts only when you press the microphone button.
+    </div>
     <div style="display:flex;gap:.5rem">
       <button id="gdpr-accept" type="button">Accept</button>
       <button id="gdpr-decline" type="button">Decline / Clear</button>
     </div>
   </div>
+
   <div id="privacy-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="privacy-title">
     <div class="content">
       <h2 id="privacy-title">Privacy &amp; GDPR Notice</h2>
@@ -43,8 +223,9 @@
       <button id="close-privacy" type="button">Close</button>
     </div>
   </div>
+
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
     import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app-check.js";
     import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-functions.js";
 
@@ -59,12 +240,12 @@
       measurementId: "G-0SC5R5ELT1"
     };
     const RECAPTCHA_SITE_KEY = "6Lcetg0uAAAAAM7-ueqBqDWM7nhY5ROl9PNNH7OY";
-    const stateKey = "rootdonate_state";
-    const consentKey = "rootdonate_consent";
-    const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
-    const domainHint = localHosts.has(window.location.hostname)
+    const STATE_KEY = "rootdonate_state";
+    const CONSENT_KEY = "rootdonate_consent";
+    const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
+    const domainHint = LOCAL_HOSTS.has(window.location.hostname)
       ? "For localhost, add a Firebase App Check debug token in the Firebase console or test on a registered domain."
-      : `Check the domain registration for ${window.location.hostname} in Firebase App Check and confirm the function is deployed to the project.`;
+      : `Check that ${window.location.hostname} is registered in Firebase App Check and that the function is deployed to this project.`;
 
     const chatEl = document.getElementById("chat");
     const inputEl = document.getElementById("input");
@@ -77,24 +258,58 @@
     const closePrivacyBtn = document.getElementById("close-privacy");
 
     let aiReply = null;
+    let connectPromise = null;
     let recognition = null;
     let listening = false;
+    let busy = false;
     let restartTimer = null;
-    const state = { history: [] };
+    const state = { history: loadHistory() };
 
-    try {
-      const saved = JSON.parse(localStorage.getItem(stateKey) || "{}");
-      if (Array.isArray(saved.history)) state.history = saved.history.slice(-40);
-    } catch {
-      // Ignore malformed or unavailable saved chat data.
+    function storageGet(key) {
+      try {
+        return localStorage.getItem(key);
+      } catch (error) {
+        console.warn("Browser storage is unavailable", error);
+        return null;
+      }
     }
 
-    function save() {
+    function storageSet(key, value) {
       try {
-        localStorage.setItem(stateKey, JSON.stringify(state));
+        localStorage.setItem(key, value);
+        return true;
       } catch (error) {
-        console.warn("Could not save local chat", error);
+        console.warn("Could not save browser data", error);
+        return false;
       }
+    }
+
+    function storageRemove(key) {
+      try {
+        localStorage.removeItem(key);
+      } catch (error) {
+        console.warn("Could not remove browser data", error);
+      }
+    }
+
+    function loadHistory() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STATE_KEY) || "{}");
+        if (!Array.isArray(saved.history)) return [];
+        return saved.history
+          .filter((item) => item && ["user", "assistant"].includes(item.role) && typeof item.text === "string")
+          .slice(-40);
+      } catch {
+        return [];
+      }
+    }
+
+    function saveHistory() {
+      storageSet(STATE_KEY, JSON.stringify(state));
+    }
+
+    function hasConsent() {
+      return storageGet(CONSENT_KEY) === "accepted";
     }
 
     function addMessage(text, who) {
@@ -131,80 +346,90 @@
     function setPrivacyModalOpen(isOpen) {
       privacyModal.style.display = isOpen ? "flex" : "none";
       privacyModal.setAttribute("aria-hidden", String(!isOpen));
-      if (isOpen) {
-        closePrivacyBtn.focus();
-      } else {
-        privacyLink.focus();
-      }
+      if (isOpen) closePrivacyBtn.focus();
+      else privacyLink.focus();
     }
 
     async function connect() {
-      try {
-        const app = initializeApp(firebaseConfig);
-        initializeAppCheck(app, {
-          provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
-          isTokenAutoRefreshEnabled: true
-        });
-        const functions = getFunctions(app, "europe-west2");
-        aiReply = httpsCallable(functions, "chat", { timeout: 60000 });
-        setStatus("Firebase AI is ready.", "online");
-        return true;
-      } catch (error) {
-        console.error("Firebase initialization failed", error);
-        setStatus(`Firebase setup is required — ${domainHint} Check the Firebase project, App Check domain registration, and function deployment.`, "error");
-        return false;
-      }
+      if (aiReply) return true;
+      if (connectPromise) return connectPromise;
+
+      connectPromise = (async () => {
+        try {
+          const app = getApps().find((item) => item.name === "[DEFAULT]") || initializeApp(firebaseConfig);
+          initializeAppCheck(app, {
+            provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
+            isTokenAutoRefreshEnabled: true
+          });
+          const functions = getFunctions(app, "europe-west2");
+          aiReply = httpsCallable(functions, "chat", { timeout: 60000 });
+          setStatus("Firebase AI is ready.", "online");
+          return true;
+        } catch (error) {
+          console.error("Firebase initialization failed", error);
+          setStatus(`Firebase setup is required — ${domainHint} Check the Firebase project and App Check setup.`, "error");
+          return false;
+        } finally {
+          connectPromise = null;
+        }
+      })();
+
+      return connectPromise;
     }
 
-    async function processMessage(text) {
-      const message = text.trim();
-      if (!message) return;
+    async function processMessage(text, { clearInput = false } = {}) {
+      const message = String(text).trim();
+      if (!message || busy) return;
 
-      if (!aiReply) {
-        setStatus("Firebase AI is not ready yet. Checking configuration…", "error");
-        const ready = await connect();
-        if (!ready) return;
-      }
-
-      if (!localStorage.getItem(consentKey)) {
+      if (!hasConsent()) {
         gdprBanner.style.display = "flex";
         setStatus("Accept the privacy notice before sending messages.", "error");
         return;
       }
 
+      if (!aiReply) {
+        setStatus("Connecting to Firebase AI…");
+        const ready = await connect();
+        if (!ready) return;
+      }
+      if (busy) return;
+
+      busy = true;
+      sendBtn.disabled = true;
+      if (clearInput && inputEl.value.trim() === message) inputEl.value = "";
       addMessage(message, "user");
       state.history.push({ role: "user", text: message });
       state.history = state.history.slice(-40);
-      save();
+      saveHistory();
       setStatus("Thinking…");
-      sendBtn.disabled = true;
 
       try {
         const result = await aiReply({ text: message });
-        const answer = String(result.data?.reply || "The AI returned an empty reply.");
+        const answer = typeof result.data?.reply === "string" && result.data.reply.trim()
+          ? result.data.reply.trim()
+          : "The AI returned an empty reply.";
         addMessage(answer, "bot");
         state.history.push({ role: "assistant", text: answer });
         state.history = state.history.slice(-40);
-        save();
+        saveHistory();
         setStatus("Firebase AI is ready.", "online");
       } catch (error) {
         console.error("AI request failed", error);
-        const detail = error.code === "functions/failed-precondition"
+        const detail = error?.code === "functions/failed-precondition"
           ? `App Check denied this request. ${domainHint}`
-          : error.code === "functions/unavailable"
-            ? "The AI provider is temporarily unavailable."
-            : "Could not connect to Firebase AI. Check the deployment and App Check setup.";
+          : error?.code === "functions/unavailable"
+            ? "The AI provider is temporarily unavailable. Please try again."
+            : "Could not connect to Firebase AI. Check the function deployment and App Check setup.";
         addMessage(detail, "bot");
         setStatus(detail, "error");
       } finally {
+        busy = false;
         sendBtn.disabled = false;
       }
     }
 
     function send() {
-      const message = inputEl.value;
-      inputEl.value = "";
-      void processMessage(message);
+      void processMessage(inputEl.value, { clearInput: true });
     }
 
     sendBtn.addEventListener("click", send);
@@ -254,7 +479,7 @@
         setStatus("Voice input is not supported by this browser.", "error");
         return;
       }
-      if (!localStorage.getItem(consentKey)) {
+      if (!hasConsent()) {
         gdprBanner.style.display = "flex";
         setStatus("Accept the privacy notice before using the microphone.", "error");
         return;
@@ -262,7 +487,7 @@
       if (listening) {
         listening = false;
         clearTimeout(restartTimer);
-        recognition.stop();
+        try { recognition.stop(); } catch { /* Recognition may already be stopped. */ }
         syncListen();
         setStatus("Voice input stopped.");
         return;
@@ -274,7 +499,7 @@
         recognition.start();
         setStatus("Voice input is active — press the microphone button to stop.", "online");
       } catch (error) {
-        console.warn(error);
+        console.warn("Could not start speech recognition", error);
         listening = false;
         syncListen();
         setStatus("Could not start voice input. Try again.", "error");
@@ -282,24 +507,20 @@
     });
 
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "hidden" && recognition && listening) {
+      if (!recognition || !listening) return;
+      if (document.visibilityState === "hidden") {
         clearTimeout(restartTimer);
-        try {
-          recognition.stop();
-        } catch {
-          // Recognition may already be stopped.
-        }
-      } else if (document.visibilityState === "visible" && listening && recognition) {
-        try {
-          recognition.start();
-        } catch {
-          // Recognition may already be running.
-        }
+        try { recognition.stop(); } catch { /* Recognition may already be stopped. */ }
+      } else {
+        try { recognition.start(); } catch { /* Recognition may already be running. */ }
       }
     });
 
     document.getElementById("gdpr-accept").addEventListener("click", () => {
-      localStorage.setItem(consentKey, "accepted");
+      if (!storageSet(CONSENT_KEY, "accepted")) {
+        setStatus("Could not save your consent. Check your browser storage settings.", "error");
+        return;
+      }
       gdprBanner.style.display = "none";
       setStatus("Privacy notice accepted.", "online");
     });
@@ -307,15 +528,12 @@
     document.getElementById("gdpr-decline").addEventListener("click", () => {
       if (recognition && listening) {
         listening = false;
-        try {
-          recognition.stop();
-        } catch {
-          // Recognition may already be stopped.
-        }
+        clearTimeout(restartTimer);
+        try { recognition.stop(); } catch { /* Recognition may already be stopped. */ }
         syncListen();
       }
-      localStorage.removeItem(consentKey);
-      localStorage.removeItem(stateKey);
+      storageRemove(CONSENT_KEY);
+      storageRemove(STATE_KEY);
       state.history = [];
       chatEl.replaceChildren();
       gdprBanner.style.display = "none";
@@ -333,7 +551,7 @@
       }
     });
 
-    if (!localStorage.getItem(consentKey)) gdprBanner.style.display = "flex";
+    if (!hasConsent()) gdprBanner.style.display = "flex";
     showHistory();
     void connect();
   </script>
