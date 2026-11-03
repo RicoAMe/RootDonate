@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0f1419">
-  <meta name="description" content="RootDonate Public Internet AI — free, no API key required">
   <title>RootDonate — Public AI</title>
   <style>
     :root {
@@ -18,30 +17,20 @@
       --user: #1e3a5f;
       --bot: #1e293b;
       --success: #86efac;
-      --danger: #ef4444;
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; }
     body {
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      background: var(--bg);
-      color: var(--text);
+      display: flex; flex-direction: column; min-height: 100vh;
+      background: var(--bg); color: var(--text);
       font: 16px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
     button, input { font: inherit; }
     button { cursor: pointer; }
-    button:focus-visible, input:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
-    }
+    button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     header, footer {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.85rem 1rem;
-      background: var(--panel);
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.85rem 1rem; background: var(--panel);
     }
     header {
       justify-content: space-between;
@@ -51,94 +40,57 @@
     header h1 { margin: 0; font-size: 1.2rem; font-weight: 650; }
     .subtitle { color: var(--dim); font-size: 0.75rem; }
     .notice {
-      margin: 0;
-      padding: 0.6rem 1rem;
-      background: #111827;
-      color: var(--dim);
-      font-size: 0.75rem;
-      text-align: center;
-      border-bottom: 1px solid var(--border);
+      margin: 0; padding: 0.6rem 1rem; background: #111827; color: var(--dim);
+      font-size: 0.75rem; text-align: center; border-bottom: 1px solid var(--border);
     }
     #chat {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      overflow-y: auto;
-      padding: 1rem;
-      scroll-behavior: smooth;
+      flex: 1; display: flex; flex-direction: column; gap: 0.75rem;
+      overflow-y: auto; padding: 1rem; scroll-behavior: smooth;
     }
     .msg {
-      max-width: 85%;
-      padding: 0.75rem 0.95rem;
-      border-radius: 1rem;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
+      max-width: 85%; padding: 0.75rem 0.95rem; border-radius: 1rem;
+      white-space: pre-wrap; overflow-wrap: anywhere;
     }
     .msg.user { align-self: flex-end; background: var(--user); border-bottom-right-radius: 0.35rem; }
     .msg.bot  { align-self: flex-start; background: var(--bot);  border-bottom-left-radius: 0.35rem; }
     .sender {
-      font-size: 0.65rem;
-      font-weight: 650;
-      opacity: 0.7;
-      text-transform: uppercase;
-      margin-bottom: 0.2rem;
-      letter-spacing: 0.03em;
+      font-size: 0.65rem; font-weight: 650; opacity: 0.7;
+      text-transform: uppercase; margin-bottom: 0.2rem; letter-spacing: 0.03em;
     }
-    .status {
-      padding: 0.4rem 0.75rem;
-      text-align: center;
-      font-size: 0.75rem;
-      color: var(--dim);
-    }
+    .status { padding: 0.4rem 0.75rem; text-align: center; font-size: 0.75rem; color: var(--dim); }
     .status.online { color: var(--success); }
     .status.error  { color: #fca5a5; }
-    footer {
-      padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
-      border-top: 1px solid var(--border);
-    }
+    footer { padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)); border-top: 1px solid var(--border); }
     #input {
-      flex: 1;
-      padding: 0.8rem 0.9rem;
-      border: 1px solid var(--border);
-      border-radius: 0.8rem;
-      background: #0f172a;
-      color: var(--text);
-      font-size: 16px;
+      flex: 1; padding: 0.8rem 0.9rem; border: 1px solid var(--border);
+      border-radius: 0.8rem; background: #0f172a; color: var(--text); font-size: 16px;
     }
     #send {
-      height: 46px;
-      padding: 0 1.1rem;
-      border: 0;
-      border-radius: 0.8rem;
-      background: var(--accent);
-      color: white;
-      font-weight: 600;
+      height: 46px; padding: 0 1.1rem; border: 0; border-radius: 0.8rem;
+      background: var(--accent); color: white; font-weight: 600;
     }
     #send:disabled { opacity: 0.6; cursor: not-allowed; }
     .visually-hidden {
       position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
       overflow: hidden; clip: rect(0,0,0,0); border: 0;
     }
-    @media (max-width: 480px) {
-      .msg { max-width: 92%; }
-    }
+    @media (max-width: 480px) { .msg { max-width: 92%; } }
   </style>
 </head>
 <body>
   <header>
     <div>
       <h1>RootDonate</h1>
-      <div class="subtitle">Public Internet AI (no key)</div>
+      <div class="subtitle">Public Internet AI</div>
     </div>
   </header>
 
   <p class="notice">
-    Free public endpoint · GPT-OSS 20B · No API key needed · Rate limited per IP
+    Free public endpoint · LLM7.io · No API key required · Rate limited
   </p>
 
   <main id="chat" aria-label="Conversation" aria-live="polite"></main>
-  <div class="status" id="status">Ready — no setup required</div>
+  <div class="status" id="status">Ready — no setup needed</div>
 
   <footer>
     <label class="visually-hidden" for="input">Message</label>
@@ -152,7 +104,7 @@
     const statusEl = document.getElementById("status");
     const sendBtn = document.getElementById("send");
 
-    const STORAGE_KEY = "rootdonate_public_ai";
+    const STORAGE_KEY = "rootdonate_public_ai_v2";
     let history = [];
     let busy = false;
 
@@ -188,7 +140,7 @@
     function renderHistory() {
       chatEl.innerHTML = "";
       if (history.length === 0) {
-        addMessage("Hello! I'm a free public AI (GPT-OSS 20B). No API key needed. Just type and chat.", "bot");
+        addMessage("Hello! I'm a free public AI powered by LLM7. No API key needed — just start chatting.", "bot");
       } else {
         history.forEach(m => addMessage(m.content, m.role === "user" ? "user" : "bot"));
       }
@@ -211,22 +163,26 @@
       try {
         const messages = [
           { role: "system", content: "You are a helpful, concise assistant." },
-          ...history.slice(-10)
+          ...history.slice(-12)
         ];
 
-        const res = await fetch("https://text.pollinations.ai/openai", {
+        const res = await fetch("https://api.llm7.io/v1/chat/completions", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer unused"
+          },
           body: JSON.stringify({
-            model: "openai",
+            model: "gpt-oss",          // or "default", "fast", etc.
             messages,
-            temperature: 0.7
+            temperature: 0.7,
+            max_tokens: 1024
           })
         });
 
         if (!res.ok) {
-          const errText = await res.text();
-          throw new Error(errText || `HTTP ${res.status}`);
+          const err = await res.text();
+          throw new Error(err || `HTTP ${res.status}`);
         }
 
         const data = await res.json();
@@ -239,7 +195,7 @@
         setStatus("Ready", "online");
       } catch (err) {
         console.error(err);
-        const msg = "Request failed (rate limit, network, or CORS). Try again in a minute or check the console.";
+        const msg = "Request failed (rate limit, network, or temporary issue). Please try again in a moment.";
         addMessage(msg, "bot");
         setStatus("Error — try again later", "error");
       } finally {
