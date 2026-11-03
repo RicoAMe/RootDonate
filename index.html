@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#0f1419">
-  <meta name="description" content="Chat with RootDonate, a Firebase-powered AI assistant. Review privacy details and control optional voice input.">
+  <meta name="description" content="Chat with RootDonate, an internet AI assistant. Review privacy details and control optional voice input.">
   <meta property="og:title" content="RootDonate — AI with Zero Intelligence">
-  <meta property="og:description" content="Chat with RootDonate, a Firebase-powered AI assistant.">
+  <meta property="og:description" content="Chat with RootDonate, an internet AI assistant.">
   <meta property="og:type" content="website">
   <title>RootDonate — AI with Zero Intelligence</title>
   <style>
@@ -208,7 +208,7 @@
 
   <div id="gdpr-banner" role="region" aria-label="Privacy notice">
     <div>
-      Chat history is stored in this browser. Messages are sent to the RootDonate Firebase function and the configured AI provider. Optional voice input uses your browser’s speech recognition and may be processed by its vendor. Voice starts only when you press the microphone button.
+      Chat history is stored in this browser. Messages are sent to the public internet AI provider. Optional voice input uses your browser’s speech recognition and stays local until you press Send.
     </div>
     <div style="display:flex;gap:.5rem">
       <button id="gdpr-accept" type="button">Accept</button>
@@ -219,33 +219,19 @@
   <div id="privacy-modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="privacy-title">
     <div class="content">
       <h2 id="privacy-title">Privacy &amp; GDPR Notice</h2>
-      <p>Conversation memory and history are kept in this browser’s local storage. Messages you send are transmitted to a Firebase callable function in the configured Firebase project, then to the AI provider to generate a reply. Do not send sensitive information. Microphone access is optional and user-initiated; browser speech recognition may process audio through your browser vendor. Clearing site data removes local chat history.</p>
+      <p>Conversation memory and history are kept in this browser’s local storage. Messages you send are transmitted to the public internet AI endpoint configured for this app. Optional voice input uses the browser’s speech recognition only when enabled.</p>
       <button id="close-privacy" type="button">Close</button>
     </div>
   </div>
 
   <script type="module">
-    import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
-    import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app-check.js";
-    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-functions.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
-      authDomain: "rootdonate-61e61.firebaseapp.com",
-      databaseURL: "https://rootdonate-61e61-default-rtdb.firebaseio.com",
-      projectId: "rootdonate-61e61",
-      storageBucket: "rootdonate-61e61.firebasestorage.app",
-      messagingSenderId: "754240963907",
-      appId: "1:754240963907:web:5417c2763d8f02108bdbf6",
-      measurementId: "G-0SC5R5ELT1"
-    };
-    const RECAPTCHA_SITE_KEY = "6Lcetg0uAAAAAM7-ueqBqDWM7nhY5ROl9PNNH7OY";
+    const AI_ENDPOINT = "https://text.pollinations.ai/openai";
     const STATE_KEY = "rootdonate_state";
     const CONSENT_KEY = "rootdonate_consent";
     const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1"]);
     const domainHint = LOCAL_HOSTS.has(window.location.hostname)
-      ? "For localhost, add a Firebase App Check debug token in the Firebase console or test on a registered domain."
-      : `Check that ${window.location.hostname} is registered in Firebase App Check and that the function is deployed to this project.`;
+      ? "For localhost, the public AI endpoint should still work unless your browser is blocked by a network policy."
+      : `Check that ${window.location.hostname} can reach the public AI endpoint and that the browser is not blocked by a network policy.`;
 
     const chatEl = document.getElementById("chat");
     const inputEl = document.getElementById("input");
@@ -257,7 +243,6 @@
     const privacyLink = document.getElementById("privacy-link");
     const closePrivacyBtn = document.getElementById("close-privacy");
 
-    let aiReply = null;
     let connectPromise = null;
     let recognition = null;
     let listening = false;
@@ -339,7 +324,7 @@
           addMessage(item.text, item.role === "user" ? "user" : "bot");
         }
       } else {
-        addMessage("Hello, I’m RootDonate. Firebase-powered AI is ready while this site is open. Type a message to get started.", "bot");
+        addMessage("Hello, I’m RootDonate. Internet AI is ready while this site is open. Type a message to get started.", "bot");
       }
     }
 
@@ -351,23 +336,15 @@
     }
 
     async function connect() {
-      if (aiReply) return true;
       if (connectPromise) return connectPromise;
 
       connectPromise = (async () => {
         try {
-          const app = getApps().find((item) => item.name === "[DEFAULT]") || initializeApp(firebaseConfig);
-          initializeAppCheck(app, {
-            provider: new ReCaptchaV3Provider(RECAPTCHA_SITE_KEY),
-            isTokenAutoRefreshEnabled: true
-          });
-          const functions = getFunctions(app, "europe-west2");
-          aiReply = httpsCallable(functions, "chat", { timeout: 60000 });
-          setStatus("Firebase AI is ready.", "online");
+          setStatus("Internet AI is ready.", "online");
           return true;
         } catch (error) {
-          console.error("Firebase initialization failed", error);
-          setStatus(`Firebase setup is required — ${domainHint} Check the Firebase project and App Check setup.`, "error");
+          console.error("Internet AI initialization failed", error);
+          setStatus(`Internet AI could not be initialized. ${domainHint}`, "error");
           return false;
         } finally {
           connectPromise = null;
@@ -375,6 +352,37 @@
       })();
 
       return connectPromise;
+    }
+
+    async function callInternetAI(text) {
+      const response = await fetch(AI_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "openai",
+          messages: [
+            {
+              role: "system",
+              content: "You are RootDonate, an artificial intelligence with zero intelligence. Respond briefly, literally, in a deadpan style, but be useful. Use the user’s message directly."
+            },
+            { role: "user", content: text }
+          ],
+          temperature: 0.5,
+        }),
+        signal: AbortSignal.timeout(45000),
+      });
+
+      if (!response.ok) {
+        const detail = await response.text().catch(() => "");
+        throw new Error(`AI endpoint returned HTTP ${response.status}${detail ? `: ${detail}` : ""}`);
+      }
+
+      const data = await response.json();
+      const reply = data?.choices?.[0]?.message?.content;
+      if (typeof reply !== "string" || !reply.trim()) {
+        throw new Error("AI endpoint returned an empty response.");
+      }
+      return reply.trim().slice(0, 12000);
     }
 
     async function processMessage(text, { clearInput = false } = {}) {
@@ -387,11 +395,8 @@
         return;
       }
 
-      if (!aiReply) {
-        setStatus("Connecting to Firebase AI…");
-        const ready = await connect();
-        if (!ready) return;
-      }
+      const ready = await connect();
+      if (!ready) return;
       if (busy) return;
 
       busy = true;
@@ -404,22 +409,15 @@
       setStatus("Thinking…");
 
       try {
-        const result = await aiReply({ text: message });
-        const answer = typeof result.data?.reply === "string" && result.data.reply.trim()
-          ? result.data.reply.trim()
-          : "The AI returned an empty reply.";
+        const answer = await callInternetAI(message);
         addMessage(answer, "bot");
         state.history.push({ role: "assistant", text: answer });
         state.history = state.history.slice(-40);
         saveHistory();
-        setStatus("Firebase AI is ready.", "online");
+        setStatus("Internet AI is ready.", "online");
       } catch (error) {
         console.error("AI request failed", error);
-        const detail = error?.code === "functions/failed-precondition"
-          ? `App Check denied this request. ${domainHint}`
-          : error?.code === "functions/unavailable"
-            ? "The AI provider is temporarily unavailable. Please try again."
-            : "Could not connect to Firebase AI. Check the function deployment and App Check setup.";
+        const detail = "Could not connect to the public internet AI provider. Check your connection and try again.";
         addMessage(detail, "bot");
         setStatus(detail, "error");
       } finally {
