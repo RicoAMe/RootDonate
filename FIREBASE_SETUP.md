@@ -1,30 +1,36 @@
-# Firebase-backed AI setup
+# Firebase-backed online AI setup
 
-The web page uses Firebase project `rootdonate-61e61` and calls the `chat` Firebase callable function in `europe-west2`. The function forwards prompts to the configured OpenAI-compatible Pollinations endpoint. It requires Firebase App Check; the Firebase web config and reCAPTCHA v3 site key in `index.html` are public client identifiers, not server secrets.
+The site calls the `chat` Firebase callable function in `europe-west2`. The function searches Wikipedia for current reference material and forwards the prompt and results to Pollinations' OpenAI-compatible chat completions API. The provider API key is kept in Firebase Secret Manager and is never placed in the website or repository.
 
-## One-time Firebase Console setup
+## Required one-time setup
 
-1. Confirm the Firebase project is on the Blaze plan and enable Cloud Functions. Functions deployment requires billing; set a budget alert.
-2. Register the web app with the reCAPTCHA v3 site key in `index.html`. Add `rootdonate.co.uk` and any actual preview domains to the authorized domains for that reCAPTCHA key.
-3. Register the web app with Firebase App Check using the same reCAPTCHA v3 provider. Deploy the function, test it, and keep `enforceAppCheck: true`. If App Check rejects calls, inspect App Check metrics and confirm the registered domain/site key match.
-4. Install Node.js 20 and Firebase CLI, and authenticate with an account allowed to deploy to this Firebase project.
+1. Ensure the Firebase project `rootdonate-61e61` has Cloud Functions enabled and an appropriate billing plan. Configure budget alerts; function invocations and AI provider usage can incur costs.
+2. Obtain a server-side Pollinations API key from [Pollinations](https://enter.pollinations.ai). Do not put the key in `index.html`, source control, or a public issue.
+3. Install Node.js 20 and Firebase CLI, and authenticate with an account authorized to deploy to this Firebase project.
 
-## Deploy
+## Configure and deploy
 
-From the repository root:
+From the repository root, run:
 
 ```sh
-npm install --prefix functions
 npx firebase-tools login
+npx firebase-tools functions:secrets:set POLLINATIONS_API_KEY --project rootdonate-61e61
+npm install --prefix functions
 npx firebase-tools deploy --only functions:chat --project rootdonate-61e61
 ```
 
-The Firebase CLI may request enabling Google Cloud APIs. Review any billing prompt before accepting. The current site is served from GitHub Pages; it calls the Firebase function directly, so no Hosting migration or DNS change is required.
+When prompted, enter the Pollinations key securely in the CLI prompt. Do not add the key to a command-line argument, source file, or commit. Deploying Firebase resources requires an authorized project operator; a GitHub commit by itself does not deploy the function. After deployment, open the site, accept the privacy notice, and send a test message.
 
-## Limits and operations
+## Troubleshooting
 
-- This backend can answer requests while deployed; it cannot keep a browser tab or microphone running after the page is closed or an Apple device sleeps. Browsers may suspend background tabs.
-- The Pollinations endpoint is used without a private API credential. If switching to a provider requiring a key, store it as a Firebase Secret and access it only server-side; never commit it in the web files.
-- App Check reduces unauthorized traffic but does not guarantee cost protection. Monitor Cloud Functions and provider usage, configure budgets/alerts, and add authentication/rate limiting before broad public use.
-- Chat history remains in local browser storage. Prompts are sent to the Firebase function and external AI provider. Do not send sensitive information.
-- This commit adds configuration and code but does not deploy Firebase resources. Deployment must be run by an authorized Firebase project operator.
+- **Online AI is not configured yet:** Set the `POLLINATIONS_API_KEY` Firebase secret, then redeploy `chat`.
+- **Provider rejected its API key:** Check the key in Firebase Secret Manager and update the secret if needed, then redeploy.
+- **Could not connect / provider unavailable:** Check the Cloud Functions logs, provider status and account limits, and verify that the function can make outbound HTTPS requests.
+- **Function not found or HTTP 404:** Confirm `chat` is deployed in `europe-west2` in project `rootdonate-61e61`.
+- Confirm project billing and required Google Cloud APIs are enabled. App Check and abuse/cost controls should be reviewed before public launch; the callable currently has App Check enforcement disabled.
+
+## Privacy and runtime limits
+
+- The AI function runs on demand when the user sends a message; it is not an always-running background worker and cannot keep a browser or microphone active after the page is closed.
+- Chat history is stored in the user's browser. Messages are sent to the Firebase function, Wikipedia search, and the external AI provider. Do not send sensitive information.
+- Voice input is optional and user-initiated. Recognized text is placed in the input box and is sent only after the user presses Send.
