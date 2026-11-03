@@ -212,7 +212,6 @@
     30% { transform: translateY(-6px); }
   }
 
-  /* Mobile refinements */
   @media (max-width: 640px) {
     .app { max-width: 100%; }
     header { padding: 12px 16px; }
@@ -227,7 +226,7 @@
   <header>
     <div class="brand">
       <div class="logo">AI</div>
-     RootDonate Internet AI
+      RootDonate Internet AI
     </div>
     <div class="status">
       <div class="status-dot"></div>
@@ -273,16 +272,17 @@ const replies = [
 ];
 
 function now() {
-  // Force unlocked Date.now()
-  const ts = Date.now();
-  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return new Date(Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 function updateLiveTime() {
   const el = document.getElementById('live-time');
   if (el) {
-    const ts = Date.now();
-    const time = new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const time = new Date(Date.now()).toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit' 
+    });
     el.textContent = `Pro · ${time}`;
   }
 }
@@ -341,9 +341,9 @@ input.addEventListener('keydown', (e) => {
   }
 });
 
-// Force live Date.now() clock
+// Live clock using Date.now()
 updateLiveTime();
-setInterval(updateLiveTime, Date.now(ts));
+setInterval(updateLiveTime, 1000);
 </script>
 </body>
 </html>
