@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://js.puter.com/v2/"></script>
   <style>
     :root {
       --bg: #0b0c10;
@@ -263,7 +264,7 @@
     <div class="chat" id="chat">
       <div class="welcome" id="welcome">
         <h2>Internet AI</h2>
-        <p>Free real AI. Ask anything.</p>
+        <p>Free · No backend · Ask anything.</p>
       </div>
     </div>
 
@@ -291,9 +292,6 @@
     const form = document.getElementById("form");
     const sendBtn = document.getElementById("send");
     const brand = document.getElementById("brand");
-
-    // ← Change this to your Cloudflare Worker URL
-    const API_URL = "https://rootdonate-ai.2ys5jjm6c7.workers.dev/";
 
     let conversation = [];
 
@@ -358,7 +356,7 @@
       chat.innerHTML = `
         <div class="welcome" id="welcome">
           <h2>Internet AI</h2>
-          <p>Free real AI. Ask anything.</p>
+          <p>Free · No backend · Ask anything.</p>
         </div>
       `;
     }
@@ -393,23 +391,19 @@
       try {
         conversation.push({ role: "user", content: text });
 
-        const res = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: conversation })
+        const reply = await puter.ai.chat(conversation, {
+          model: "meta-llama/llama-3.1-8b-instruct"
+          // Other options: "meta-llama/llama-3.3-70b-instruct", "meta-llama/llama-4-scout", etc.
         });
 
-        if (!res.ok) throw new Error(await res.text());
+        const content = reply?.message?.content || reply || "No response";
 
-        const data = await res.json();
-        const reply = data.response || "No response";
-
-        conversation.push({ role: "assistant", content: reply });
+        conversation.push({ role: "assistant", content: content });
         typing.remove();
-        addMessage(reply, "ai");
+        addMessage(content, "ai");
       } catch (err) {
         typing.remove();
-        addMessage("Error: " + err.message, "ai");
+        addMessage("Error: " + (err.message || err), "ai");
       }
     });
 
