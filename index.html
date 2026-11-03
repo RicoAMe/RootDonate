@@ -86,11 +86,11 @@
   </header>
 
   <p class="notice">
-    Free public endpoint · LLM7.io · No API key required · Rate limited
+    Online AI with Wikipedia web references · Messages are sent to RootDonate's AI service
   </p>
 
   <main id="chat" aria-label="Conversation" aria-live="polite"></main>
-  <div class="status" id="status">Ready — no setup needed</div>
+  <div class="status" id="status">Ready — online AI available</div>
 
   <footer>
     <label class="visually-hidden" for="input">Message</label>
@@ -104,6 +104,7 @@
     const statusEl = document.getElementById("status");
     const sendBtn = document.getElementById("send");
 
+    const CHAT_ENDPOINT = "https://europe-west2-rootdonate-61e61.cloudfunctions.net/chat";
     const STORAGE_KEY = "rootdonate_public_ai_v2";
     let history = [];
     let busy = false;
@@ -140,7 +141,7 @@
     function renderHistory() {
       chatEl.innerHTML = "";
       if (history.length === 0) {
-        addMessage("Hello! I'm a free public AI powered by LLM7. No API key needed — just start chatting.", "bot");
+        addMessage("Hello! I'm RootDonate's online AI assistant. Ask a question to get started. Relevant answers may include Wikipedia reference material.", "bot");
       } else {
         history.forEach(m => addMessage(m.content, m.role === "user" ? "user" : "bot"));
       }
@@ -161,43 +162,40 @@
       setStatus("Thinking…");
 
       try {
-        const messages = [
-          { role: "system", content: "You are a helpful, concise assistant." },
-          ...history.slice(-12)
-        ];
-
-        const res = await fetch("https://api.llm7.io/v1/chat/completions", {
+        const res = await fetch(CHAT_ENDPOINT, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer unused"
-          },
-          body: JSON.stringify({
-            model: "gpt-oss",          // or "default", "fast", etc.
-            messages,
-            temperature: 0.7,
-            max_tokens: 1024
-          })
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ data: { text } })
         });
 
-        if (!res.ok) {
-          const err = await res.text();
-          throw new Error(err || `HTTP ${res.status}`);
+        let data;
+        try {
+          data = await res.json();
+        } catch {
+          throw new Error("The online AI service returned an unreadable response.");
         }
 
-        const data = await res.json();
-        const reply = data.choices?.[0]?.message?.content?.trim() || "No response.";
+        if (!res.ok || data.error) {
+          throw new Error(data.error?.message || `Online AI request failed (HTTP ${res.status}).`);
+        }
 
-        history.push({ role: "assistant", content: reply });
+        const reply = data.result?.reply;
+        if (typeof reply !== "string" || !reply.trim()) {
+          throw new Error("The online AI service returned an empty response.");
+        }
+
+        history.push({ role: "assistant", content: reply.trim() });
         if (history.length > 40) history = history.slice(-40);
-        addMessage(reply, "bot");
+        addMessage(reply.trim(), "bot");
         saveHistory();
-        setStatus("Ready", "online");
+        setStatus("Online AI ready", "online");
       } catch (err) {
-        console.error(err);
-        const msg = "Request failed (rate limit, network, or temporary issue). Please try again in a moment.";
-        addMessage(msg, "bot");
-        setStatus("Error — try again later", "error");
+        console.error("RootDonate online AI request failed", err);
+        const message = err instanceof TypeError
+          ? "Could not reach online AI. Check your connection and try again."
+          : (err.message || "Online AI is temporarily unavailable. Please try again.");
+        addMessage(message, "bot");
+        setStatus("Online AI unavailable — try again", "error");
       } finally {
         busy = false;
         sendBtn.disabled = false;
