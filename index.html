@@ -61,6 +61,10 @@
     const RECAPTCHA_SITE_KEY = "6Lcetg0uAAAAAM7-ueqBqDWM7nhY5ROl9PNNH7OY";
     const stateKey = "rootdonate_state";
     const consentKey = "rootdonate_consent";
+    const localHosts = new Set(["localhost", "127.0.0.1", "::1"]);
+    const domainHint = localHosts.has(window.location.hostname)
+      ? "For localhost, add a Firebase App Check debug token in the Firebase console or test on a registered domain."
+      : `Check the domain registration for ${window.location.hostname} in Firebase App Check and confirm the function is deployed to the project.`;
 
     const chatEl = document.getElementById("chat");
     const inputEl = document.getElementById("input");
@@ -144,15 +148,23 @@
         const functions = getFunctions(app, "europe-west2");
         aiReply = httpsCallable(functions, "chat", { timeout: 60000 });
         setStatus("Firebase AI is ready.", "online");
+        return true;
       } catch (error) {
         console.error("Firebase initialization failed", error);
-        setStatus("Firebase setup is required — see FIREBASE_SETUP.md.", "error");
+        setStatus(`Firebase setup is required — ${domainHint} Check the Firebase project, App Check domain registration, and function deployment.`, "error");
+        return false;
       }
     }
 
     async function processMessage(text) {
       const message = text.trim();
-      if (!message || !aiReply) return;
+      if (!message) return;
+
+      if (!aiReply) {
+        setStatus("Firebase AI is not ready yet. Checking configuration…", "error");
+        const ready = await connect();
+        if (!ready) return;
+      }
 
       if (!localStorage.getItem(consentKey)) {
         gdprBanner.style.display = "flex";
@@ -178,7 +190,7 @@
       } catch (error) {
         console.error("AI request failed", error);
         const detail = error.code === "functions/failed-precondition"
-          ? "App Check is not configured or this domain is not registered."
+          ? `App Check denied this request. ${domainHint}`
           : error.code === "functions/unavailable"
             ? "The AI provider is temporarily unavailable."
             : "Could not connect to Firebase AI. Check the deployment and App Check setup.";
