@@ -86,11 +86,11 @@
   </header>
 
   <p class="notice">
-    Online AI with Wikipedia web references · Messages are sent to RootDonate's AI service
+    Direct connection to LLM7 · No Firebase or API key · Provider availability and rate limits apply
   </p>
 
   <main id="chat" aria-label="Conversation" aria-live="polite"></main>
-  <div class="status" id="status">Ready — online AI available</div>
+  <div class="status" id="status">Ready — no setup needed</div>
 
   <footer>
     <label class="visually-hidden" for="input">Message</label>
@@ -104,7 +104,7 @@
     const statusEl = document.getElementById("status");
     const sendBtn = document.getElementById("send");
 
-    const CHAT_ENDPOINT = "https://europe-west2-rootdonate-61e61.cloudfunctions.net/chat";
+    const AI_ENDPOINT = "https://api.llm7.io/v1/chat/completions";
     const STORAGE_KEY = "rootdonate_public_ai_v2";
     let history = [];
     let busy = false;
@@ -112,7 +112,9 @@
     function loadHistory() {
       try {
         const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-        history = Array.isArray(data) ? data.slice(-40) : [];
+        history = Array.isArray(data) ? data.filter(m =>
+          m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string"
+        ).slice(-40) : [];
       } catch { history = []; }
     }
 
@@ -141,7 +143,7 @@
     function renderHistory() {
       chatEl.innerHTML = "";
       if (history.length === 0) {
-        addMessage("Hello! I'm RootDonate's online AI assistant. Ask a question to get started. Relevant answers may include Wikipedia reference material.", "bot");
+        addMessage("Hello! I'm a public online AI assistant. No API key or account setup is needed—ask a question to get started.", "bot");
       } else {
         history.forEach(m => addMessage(m.content, m.role === "user" ? "user" : "bot"));
       }
@@ -154,34 +156,42 @@
       busy = true;
       sendBtn.disabled = true;
       inputEl.value = "";
-
       history.push({ role: "user", content: text });
+      if (history.length > 40) history = history.slice(-40);
       addMessage(text, "user");
       saveHistory();
-
-      setStatus("Thinking…");
+      setStatus("Connecting to online AI…");
 
       try {
-        const res = await fetch(CHAT_ENDPOINT, {
+        const messages = [
+          { role: "system", content: "You are a helpful, concise assistant for RootDonate." },
+          ...history.slice(-12)
+        ];
+        const res = await fetch(AI_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ data: { text } })
+          body: JSON.stringify({
+            model: "gpt-oss",
+            messages,
+            temperature: 0.7,
+            max_tokens: 1024
+          })
         });
 
         let data;
         try {
           data = await res.json();
         } catch {
-          throw new Error("The online AI service returned an unreadable response.");
+          throw new Error(`The AI provider returned an unreadable response (HTTP ${res.status}).`);
+        }
+        if (!res.ok) {
+          const detail = data?.error?.message || data?.message;
+          throw new Error(detail || `The AI provider returned HTTP ${res.status}.`);
         }
 
-        if (!res.ok || data.error) {
-          throw new Error(data.error?.message || `Online AI request failed (HTTP ${res.status}).`);
-        }
-
-        const reply = data.result?.reply;
+        const reply = data.choices?.[0]?.message?.content;
         if (typeof reply !== "string" || !reply.trim()) {
-          throw new Error("The online AI service returned an empty response.");
+          throw new Error("The AI provider returned an empty response.");
         }
 
         history.push({ role: "assistant", content: reply.trim() });
@@ -190,12 +200,12 @@
         saveHistory();
         setStatus("Online AI ready", "online");
       } catch (err) {
-        console.error("RootDonate online AI request failed", err);
+        console.error("RootDonate public AI request failed", err);
         const message = err instanceof TypeError
-          ? "Could not reach online AI. Check your connection and try again."
+          ? "Could not reach the public AI provider. Check your connection; the provider may also block browser requests or be unavailable."
           : (err.message || "Online AI is temporarily unavailable. Please try again.");
         addMessage(message, "bot");
-        setStatus("Online AI unavailable — try again", "error");
+        setStatus("Online AI unavailable — try again later", "error");
       } finally {
         busy = false;
         sendBtn.disabled = false;
