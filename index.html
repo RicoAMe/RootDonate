@@ -81,7 +81,7 @@
 <body>
   <div class="app">
     <header>
-      <div class="brand" id="brand" title="Click to clear chat">
+      <div class="brand" id="brand" title="Click to clear chat history">
         <div class="logo">RAID</div>
         RootDonate
       </div>
@@ -98,7 +98,7 @@
       <div class="welcome" id="welcome">
         <h2>RootDonate Internet AI</h2>
         <p>Free · No backend · Ask anything.</p>
-        <p class="notice">Guest mode (localStorage) is always available. Sign in for optional cloud sync. Uses Puter.js (user-pays).</p>
+        <p class="notice">Guest mode (localStorage) is always available. Sign in for optional cloud sync. Uses Puter.js (user-pays). You stay signed in after clearing history & closing.</p>
       </div>
     </div>
 
@@ -227,9 +227,11 @@
         <div class="welcome" id="welcome">
           <h2>RootDonate Internet AI</h2>
           <p>Free · No backend · Ask anything.</p>
-          <p class="notice">Guest mode (localStorage) is always available. Sign in for optional cloud sync. Uses Puter.js (user-pays).</p>
+          <p class="notice">Guest mode (localStorage) is always available. Sign in for optional cloud sync. Uses Puter.js (user-pays). You stay signed in after clearing history & closing.</p>
         </div>
       `;
+      // Auth token (puter.auth.token.v2) is never touched — stays signed in
+      updateAuthUI();
     }
 
     function restoreHistory() {
@@ -259,7 +261,6 @@
     async function handleSignIn() {
       try {
         if (isMember) {
-          // Sign out → return to optional Guest mode
           await puter.auth.signOut();
           isMember = false;
           currentUser = null;
@@ -267,7 +268,6 @@
           clearChat();
           restoreHistory();
         } else {
-          // Sign in → optional Member mode
           await puter.auth.signIn();
           isMember = true;
           currentUser = await puter.auth.getUser();
@@ -355,7 +355,7 @@
       gdprBanner.classList.remove("visible");
     });
 
-    // Init
+    // Init — restores signed-in state automatically via Puter’s token
     (async () => {
       await updateAuthUI();
       await loadConvo();
