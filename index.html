@@ -98,7 +98,7 @@
       <div class="welcome" id="welcome">
         <h2>RootDonate Internet AI</h2>
         <p>Free · No backend · Ask anything.</p>
-        <p class="notice">Try <strong>5 free messages</strong> as Guest. Sign in for unlimited + cloud sync. Uses Puter.js (user-pays). You stay signed in after clearing history & closing.</p>
+        <p class="notice">Guest mode is free & unlimited. Sign in for cloud sync. Uses Puter.js (user-pays). You stay signed in after clearing history & closing.</p>
       </div>
     </div>
 
@@ -142,16 +142,7 @@
 
     const CONVO_KEY = "rootdonate-ai-convo";
     const GDPR_KEY = "rootdonate-ai-gdpr";
-    const GUEST_COUNT_KEY = "rootdonate-ai-guest-count";
-    const GUEST_LIMIT = 5;                 // <-- change this number if you want more/less free taste
     const DEFAULT_MODEL = "gemini-2.5-flash";
-
-    function getGuestCount() {
-      return parseInt(localStorage.getItem(GUEST_COUNT_KEY) || "0", 10);
-    }
-    function setGuestCount(n) {
-      localStorage.setItem(GUEST_COUNT_KEY, String(n));
-    }
 
     function now() {
       return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -160,8 +151,7 @@
     function updateLiveTime() {
       const status = isMember && currentUser ? (currentUser.username || "Member") : "Guest";
       const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-      const left = isMember ? "" : ` · ${Math.max(0, GUEST_LIMIT - getGuestCount())} free left`;
-      liveTime.textContent = `Pro · ${status}${left} · ${time}`;
+      liveTime.textContent = `Pro · ${status} · ${time}`;
     }
 
     async function saveConvo() {
@@ -237,7 +227,7 @@
         <div class="welcome" id="welcome">
           <h2>RootDonate Internet AI</h2>
           <p>Free · No backend · Ask anything.</p>
-          <p class="notice">Try <strong>5 free messages</strong> as Guest. Sign in for unlimited + cloud sync. Uses Puter.js (user-pays). You stay signed in after clearing history & closing.</p>
+          <p class="notice">Guest mode is free & unlimited. Sign in for cloud sync. Uses Puter.js (user-pays). You stay signed in after clearing history & closing.</p>
         </div>
       `;
       updateAuthUI();
@@ -313,14 +303,6 @@
       const text = input.value.trim();
       if (!text) return;
 
-      // Guest limit check
-      if (!isMember && getGuestCount() >= GUEST_LIMIT) {
-        addMessage("You've used your 5 free guest messages. Sign in to continue (free Puter credits included).", "ai");
-        // Optional: auto-trigger sign-in
-        setTimeout(() => handleSignIn(), 800);
-        return;
-      }
-
       isSending = true;
       sendBtn.disabled = true;
 
@@ -355,12 +337,6 @@
         if (!full) full = "No response";
         conversation.push({ role: "assistant", content: full });
         await saveConvo();
-
-        // Only count successful guest responses
-        if (!isMember) {
-          setGuestCount(getGuestCount() + 1);
-          updateLiveTime();
-        }
       } catch (err) {
         typing.remove();
         const msg = err.message || String(err);
