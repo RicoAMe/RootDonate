@@ -327,13 +327,13 @@
     .modal h3 { margin-bottom: 8px; font-size: 1.25rem; }
 
     .warning {
-      background: rgba(239, 68, 68, 0.12);
-      color: #fca5a5;
+      background: rgba(34, 197, 94, 0.12);
+      color: #86efac;
       padding: 10px 12px;
       border-radius: 10px;
       font-size: 0.82rem;
       margin: 10px 0 16px;
-      border: 1px solid rgba(239, 68, 68, 0.3);
+      border: 1px solid rgba(34, 197, 94, 0.3);
     }
 
     .pay-form label {
@@ -343,7 +343,7 @@
       margin: 12px 0 4px;
     }
 
-    .pay-form input, .pay-form select {
+    .pay-form select {
       width: 100%;
       padding: 10px 12px;
       border-radius: 10px;
@@ -353,13 +353,10 @@
       font-size: 0.95rem;
     }
 
-    .pay-form input:focus, .pay-form select:focus {
+    .pay-form select:focus {
       outline: none;
       border-color: var(--accent);
     }
-
-    .row { display: flex; gap: 10px; }
-    .row > div { flex: 1; }
 
     .pay-btn {
       width: 100%;
@@ -375,21 +372,6 @@
     }
 
     .pay-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-    .result {
-      margin-top: 14px;
-      padding: 12px;
-      border-radius: 10px;
-      text-align: center;
-      font-size: 0.9rem;
-      display: none;
-    }
-
-    .result.success {
-      background: rgba(34, 197, 94, 0.15);
-      color: #86efac;
-      display: block;
-    }
 
     .close-modal {
       margin-top: 14px;
@@ -461,16 +443,16 @@
     </div>
   </div>
 
-  <!-- Demo Donation Modal -->
+  <!-- Stripe Redirect Donation Modal -->
   <div class="modal-overlay" id="donate-modal">
     <div class="modal">
-      <h3>Demo Donation Form</h3>
+      <h3>Support RootDonate</h3>
       <div class="warning">
-        DEMO ONLY — This does not process real payments. No money is moved. No data is sent.
+        You will be redirected to Stripe’s secure checkout. No card details are handled on this site.
       </div>
 
       <form class="pay-form" id="pay-form">
-        <label for="amount">Amount</label>
+        <label for="amount">Select Amount</label>
         <select id="amount" required>
           <option value="5">$5</option>
           <option value="10" selected>$10</option>
@@ -479,27 +461,8 @@
           <option value="100">$100</option>
         </select>
 
-        <label for="name">Cardholder Name</label>
-        <input type="text" id="name" placeholder="Name on card" required>
-
-        <label for="card">Card Number</label>
-        <input type="text" id="card" placeholder="4242 4242 4242 4242" maxlength="19" required>
-
-        <div class="row">
-          <div>
-            <label for="expiry">Expiry</label>
-            <input type="text" id="expiry" placeholder="MM/YY" maxlength="5" required>
-          </div>
-          <div>
-            <label for="cvc">CVC</label>
-            <input type="text" id="cvc" placeholder="123" maxlength="4" required>
-          </div>
-        </div>
-
-        <button type="submit" class="pay-btn" id="pay-btn">Pay Now (Demo)</button>
+        <button type="submit" class="pay-btn" id="pay-btn">Continue to Stripe</button>
       </form>
-
-      <div class="result" id="result"></div>
 
       <button class="close-modal" id="close-donate">Close</button>
     </div>
@@ -539,6 +502,17 @@
     const CONVO_KEY = "rootdonate-ai-convo";
     const GDPR_KEY = "rootdonate-ai-gdpr";
     const DEFAULT_MODEL = "gemini-2.5-flash";
+
+    // ========== STRIPE PAYMENT LINKS ==========
+    // Replace these with your real Stripe Payment Links
+    const STRIPE_LINKS = {
+      "5":   "https://buy.stripe.com/REPLACE_WITH_5_DOLLAR_LINK",
+      "10":  "https://buy.stripe.com/REPLACE_WITH_10_DOLLAR_LINK",
+      "20":  "https://buy.stripe.com/REPLACE_WITH_20_DOLLAR_LINK",
+      "50":  "https://buy.stripe.com/REPLACE_WITH_50_DOLLAR_LINK",
+      "100": "https://buy.stripe.com/REPLACE_WITH_100_DOLLAR_LINK"
+    };
+    // ==========================================
 
     function now() {
       return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -673,34 +647,30 @@
       }
     }
 
-    // Demo payment form
+    // Stripe redirect form
     const payForm = document.getElementById("pay-form");
-    const result = document.getElementById("result");
     const payBtn = document.getElementById("pay-btn");
-
-    document.getElementById("card").addEventListener("input", (e) => {
-      let v = e.target.value.replace(/\D/g, "").slice(0, 16);
-      e.target.value = v.replace(/(.{4})/g, "$1 ").trim();
-    });
-
-    document.getElementById("expiry").addEventListener("input", (e) => {
-      let v = e.target.value.replace(/\D/g, "").slice(0, 4);
-      if (v.length >= 3) v = v.slice(0, 2) + "/" + v.slice(2);
-      e.target.value = v;
-    });
 
     payForm.addEventListener("submit", (e) => {
       e.preventDefault();
+      const amount = document.getElementById("amount").value;
+      const link = STRIPE_LINKS[amount];
+
+      if (!link || link.includes("REPLACE_WITH")) {
+        alert("Please configure your Stripe Payment Links in the code first.");
+        return;
+      }
+
       payBtn.disabled = true;
-      payBtn.textContent = "Processing…";
+      payBtn.textContent = "Redirecting to Stripe…";
+
+      window.open(link, "_blank", "noopener,noreferrer");
 
       setTimeout(() => {
-        result.className = "result success";
-        result.innerHTML = `<strong>Demo Success</strong><br>This was only a simulation.<br>No real payment was made. No data was sent.`;
-        payBtn.textContent = "Pay Now (Demo)";
+        donateModal.classList.remove("visible");
         payBtn.disabled = false;
-        payForm.reset();
-      }, 1500);
+        payBtn.textContent = "Continue to Stripe";
+      }, 600);
     });
 
     // Modal controls
