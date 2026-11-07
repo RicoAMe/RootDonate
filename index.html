@@ -26,63 +26,323 @@
       --green: #22c55e;
       --red: #ef4444;
     }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; }
-    .app { display: flex; flex-direction: column; height: 100dvh; max-width: 780px; margin: 0 auto; }
-    header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 1px solid var(--border); background: rgba(10, 11, 15, 0.88); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); position: sticky; top: 0; z-index: 20; }
-    .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 1rem; letter-spacing: -0.025em; cursor: pointer; user-select: none; }
-    .logo { width: 34px; height: 34px; border-radius: 11px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: grid; place-items: center; font-size: 13px; font-weight: 700; box-shadow: 0 0 18px rgba(91, 140, 255, 0.4); }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(10, 11, 15, 0.88);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      font-size: 1rem;
+      letter-spacing: -0.025em;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .logo {
+      width: 34px;
+      height: 34px;
+      border-radius: 11px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 0 18px rgba(91, 140, 255, 0.4);
+    }
+
     .controls { display: flex; align-items: center; gap: 8px; }
-    .status { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--muted); background: var(--surface); padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border); }
-    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18); }
-    .auth-btn, .donate-btn { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px; font-size: 0.78rem; font-weight: 500; cursor: pointer; }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      color: var(--muted);
+      background: var(--surface);
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
+    }
+
+    .auth-btn, .donate-btn {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 14px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
     .auth-btn:hover, .donate-btn:hover { background: #22262f; }
-    .donate-btn { background: linear-gradient(135deg, #16a34a, #22c55e); color: white; border: none; }
+
+    .donate-btn {
+      background: linear-gradient(135deg, #16a34a, var(--green));
+      color: white;
+      border: none;
+    }
+
     .donate-btn:hover { filter: brightness(1.1); }
-    .chat { flex: 1; overflow-y: auto; padding: 20px 16px 12px; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
-    .msg { display: flex; max-width: 82%; animation: fadeUp 0.22s ease; }
+
+    .chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      scroll-behavior: smooth;
+    }
+
+    .msg {
+      display: flex;
+      max-width: 82%;
+      animation: fadeUp 0.22s ease;
+    }
+
     .msg.user { align-self: flex-end; }
     .msg.ai { align-self: flex-start; }
-    .bubble { padding: 12px 16px; border-radius: var(--radius); line-height: 1.48; font-size: 0.95rem; word-wrap: break-word; box-shadow: var(--shadow); }
-    .msg.user .bubble { background: var(--user-bg); color: white; border-bottom-right-radius: 7px; }
-    .msg.ai .bubble { background: var(--ai-bg); border: 1px solid var(--border); border-bottom-left-radius: 7px; }
+
+    .bubble {
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      line-height: 1.48;
+      font-size: 0.95rem;
+      word-wrap: break-word;
+      box-shadow: var(--shadow);
+    }
+
+    .msg.user .bubble {
+      background: var(--user-bg);
+      color: white;
+      border-bottom-right-radius: 7px;
+    }
+
+    .msg.ai .bubble {
+      background: var(--ai-bg);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 7px;
+    }
+
     .msg.ai .bubble :is(p, ul, ol, pre, code, h1, h2, h3) { margin: 0.35em 0; }
-    .msg.ai .bubble pre { background: #0e1016; padding: 10px 12px; border-radius: 10px; overflow-x: auto; font-size: 0.84rem; }
-    .msg.ai .bubble code { background: rgba(255,255,255,0.09); padding: 2px 5px; border-radius: 4px; font-size: 0.88em; }
-    .time { font-size: 0.62rem; color: var(--muted); margin-top: 5px; opacity: 0.75; }
+    .msg.ai .bubble pre {
+      background: #0e1016;
+      padding: 10px 12px;
+      border-radius: 10px;
+      overflow-x: auto;
+      font-size: 0.84rem;
+    }
+    .msg.ai .bubble code {
+      background: rgba(255, 255, 255, 0.09);
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-size: 0.88em;
+    }
+
+    .time {
+      font-size: 0.62rem;
+      color: var(--muted);
+      margin-top: 5px;
+      opacity: 0.75;
+    }
+
     .msg.user .time { text-align: right; }
+
     .typing { display: flex; gap: 5px; padding: 14px 18px; }
-    .typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: bounce 1.2s infinite; }
+    .typing span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--muted);
+      animation: bounce 1.2s infinite;
+    }
     .typing span:nth-child(2) { animation-delay: 0.15s; }
     .typing span:nth-child(3) { animation-delay: 0.3s; }
-    .composer { padding: 10px 14px 14px; padding-bottom: calc(14px + env(safe-area-inset-bottom)); background: linear-gradient(to top, var(--bg) 60%, transparent); }
-    .input-wrap { display: flex; align-items: flex-end; gap: 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 26px; padding: 6px 6px 6px 18px; box-shadow: var(--shadow); }
-    textarea { flex: 1; background: transparent; border: none; color: var(--text); font-family: inherit; font-size: 0.96rem; resize: none; max-height: 130px; outline: none; padding: 9px 0; line-height: 1.45; }
+
+    .composer {
+      padding: 10px 14px 14px;
+      padding-bottom: calc(14px + env(safe-area-inset-bottom));
+      background: linear-gradient(to top, var(--bg) 60%, transparent);
+    }
+
+    .input-wrap {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 26px;
+      padding: 6px 6px 6px 18px;
+      box-shadow: var(--shadow);
+    }
+
+    textarea {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.96rem;
+      resize: none;
+      max-height: 130px;
+      outline: none;
+      padding: 9px 0;
+      line-height: 1.45;
+    }
+
     textarea::placeholder { color: var(--muted); }
-    button.send { width: 42px; height: 42px; border-radius: 50%; border: none; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; display: grid; place-items: center; cursor: pointer; flex-shrink: 0; }
+
+    button.send {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: white;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
     button.send:disabled { opacity: 0.38; cursor: not-allowed; }
     button.send:not(:disabled):active { transform: scale(0.94); }
-    .welcome { text-align: center; padding: 48px 24px; color: var(--muted); }
-    .welcome h2 { color: var(--text); font-size: 1.5rem; margin-bottom: 8px; font-weight: 600; letter-spacing: -0.02em; }
-    .gdpr-banner { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(22, 24, 31, 0.96); backdrop-filter: blur(12px); border-top: 1px solid var(--border); padding: 14px 16px; padding-bottom: calc(14px + env(safe-area-inset-bottom)); font-size: 0.78rem; color: var(--muted); z-index: 100; display: none; }
-    .gdpr-banner.visible { display: block; }
-    .gdpr-banner .content { max-width: 780px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-    .gdpr-banner button { background: var(--accent); color: white; border: none; border-radius: 12px; padding: 9px 18px; cursor: pointer; font-size: 0.8rem; font-weight: 500; }
 
-    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: none; align-items: center; justify-content: center; z-index: 300; }
+    .welcome {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--muted);
+    }
+
+    .welcome h2 {
+      color: var(--text);
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .gdpr-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(22, 24, 31, 0.96);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border);
+      padding: 14px 16px;
+      padding-bottom: calc(14px + env(safe-area-inset-bottom));
+      font-size: 0.78rem;
+      color: var(--muted);
+      z-index: 100;
+      display: none;
+    }
+
+    .gdpr-banner.visible { display: block; }
+
+    .gdpr-banner .content {
+      max-width: 780px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .gdpr-banner button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 9px 18px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+    }
+
     .modal-overlay.visible { display: flex; }
-    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; max-width: 440px; width: 92%; max-height: 90vh; overflow-y: auto; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 440px;
+      width: 92%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
     .modal h3 { margin-bottom: 8px; font-size: 1.25rem; }
+
     .warning {
-      background: rgba(239,68,68,0.12);
+      background: rgba(239, 68, 68, 0.12);
       color: #fca5a5;
       padding: 10px 12px;
       border-radius: 10px;
       font-size: 0.82rem;
       margin: 10px 0 16px;
-      border: 1px solid rgba(239,68,68,0.3);
+      border: 1px solid rgba(239, 68, 68, 0.3);
     }
-    .pay-form label { display: block; font-size: 0.78rem; color: var(--muted); margin: 12px 0 4px; }
+
+    .pay-form label {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin: 12px 0 4px;
+    }
+
     .pay-form input, .pay-form select {
       width: 100%;
       padding: 10px 12px;
@@ -92,22 +352,30 @@
       color: var(--text);
       font-size: 0.95rem;
     }
-    .pay-form input:focus, .pay-form select:focus { outline: none; border-color: var(--accent); }
+
+    .pay-form input:focus, .pay-form select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
     .row { display: flex; gap: 10px; }
     .row > div { flex: 1; }
+
     .pay-btn {
       width: 100%;
       margin-top: 16px;
       padding: 12px;
       border: none;
       border-radius: 12px;
-      background: linear-gradient(135deg, #16a34a, #22c55e);
+      background: linear-gradient(135deg, #16a34a, var(--green));
       color: white;
       font-weight: 600;
       font-size: 0.95rem;
       cursor: pointer;
     }
+
     .pay-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
     .result {
       margin-top: 14px;
       padding: 12px;
@@ -116,12 +384,36 @@
       font-size: 0.9rem;
       display: none;
     }
-    .result.success { background: rgba(34,197,94,0.15); color: #86efac; display: block; }
-    .close-modal { margin-top: 14px; width: 100%; padding: 11px; border-radius: 12px; border: none; background: var(--surface-2); color: var(--text); cursor: pointer; border: 1px solid var(--border); }
+
+    .result.success {
+      background: rgba(34, 197, 94, 0.15);
+      color: #86efac;
+      display: block;
+    }
+
+    .close-modal {
+      margin-top: 14px;
+      width: 100%;
+      padding: 11px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      cursor: pointer;
+    }
+
     .close-modal:hover { background: #22262f; }
 
-    @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-5px); } }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes bounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-5px); }
+    }
+
     @media (max-width: 640px) {
       .app { max-width: 100%; }
       header { padding: 10px 14px; }
@@ -169,7 +461,7 @@
     </div>
   </div>
 
-  <!-- Demo Payment Modal -->
+  <!-- Demo Donation Modal -->
   <div class="modal-overlay" id="donate-modal">
     <div class="modal">
       <h3>Demo Donation Form</h3>
@@ -178,7 +470,7 @@
       </div>
 
       <form class="pay-form" id="pay-form">
-        <label>Amount</label>
+        <label for="amount">Amount</label>
         <select id="amount" required>
           <option value="5">$5</option>
           <option value="10" selected>$10</option>
@@ -187,19 +479,19 @@
           <option value="100">$100</option>
         </select>
 
-        <label>Cardholder Name</label>
+        <label for="name">Cardholder Name</label>
         <input type="text" id="name" placeholder="Name on card" required>
 
-        <label>Card Number</label>
+        <label for="card">Card Number</label>
         <input type="text" id="card" placeholder="4242 4242 4242 4242" maxlength="19" required>
 
         <div class="row">
           <div>
-            <label>Expiry</label>
+            <label for="expiry">Expiry</label>
             <input type="text" id="expiry" placeholder="MM/YY" maxlength="5" required>
           </div>
           <div>
-            <label>CVC</label>
+            <label for="cvc">CVC</label>
             <input type="text" id="cvc" placeholder="123" maxlength="4" required>
           </div>
         </div>
@@ -260,11 +552,14 @@
 
     async function saveConvo() {
       try {
-        localStorage.setItem(CONVO_KEY, JSON.stringify(conversation.filter(m => m.role !== "system")));
+        const visible = conversation.filter(m => m.role !== "system");
+        localStorage.setItem(CONVO_KEY, JSON.stringify(visible));
         if (isMember && typeof puter !== "undefined" && puter.kv) {
-          await puter.kv.set(CONVO_KEY, conversation.filter(m => m.role !== "system"));
+          await puter.kv.set(CONVO_KEY, visible);
         }
-      } catch (e) { console.warn("Save failed", e); }
+      } catch (e) {
+        console.warn("Save failed", e);
+      }
     }
 
     async function loadConvo() {
@@ -278,16 +573,24 @@
         }
         const local = JSON.parse(localStorage.getItem(CONVO_KEY) || "[]");
         conversation = [{ role: "system", content: SYSTEM_PROMPT }, ...(Array.isArray(local) ? local : [])];
-      } catch { conversation = [{ role: "system", content: SYSTEM_PROMPT }]; }
+      } catch {
+        conversation = [{ role: "system", content: SYSTEM_PROMPT }];
+      }
     }
 
     function renderMarkdown(text) {
-      try { return marked.parse(text, { breaks: true, gfm: true }); }
-      catch { return escapeHtml(text); }
+      try {
+        return marked.parse(text, { breaks: true, gfm: true });
+      } catch {
+        return escapeHtml(text);
+      }
     }
 
     function escapeHtml(str) {
-      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
     }
 
     function removeWelcome() {
@@ -370,7 +673,7 @@
       }
     }
 
-    // Demo payment form logic
+    // Demo payment form
     const payForm = document.getElementById("pay-form");
     const result = document.getElementById("result");
     const payBtn = document.getElementById("pay-btn");
@@ -447,6 +750,7 @@
         let full = "";
         const aiDiv = addMessage("", "ai", true);
         const bubble = aiDiv.querySelector(".bubble");
+
         for await (const part of resp) {
           if (part?.type === "text" && part.text) {
             full += part.text;
@@ -454,6 +758,7 @@
             chat.scrollTop = chat.scrollHeight;
           }
         }
+
         if (!full) full = "No response";
         conversation.push({ role: "assistant", content: full });
         await saveConvo();
