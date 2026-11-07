@@ -73,12 +73,16 @@
     /* Donation Modal */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); display: none; align-items: center; justify-content: center; z-index: 300; }
     .modal-overlay.visible { display: flex; }
-    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; max-width: 440px; width: 92%; max-height: 90vh; overflow-y: auto; }
-    .modal h3 { margin-bottom: 8px; font-size: 1.25rem; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; max-width: 460px; width: 92%; max-height: 90vh; overflow-y: auto; }
+    .modal h3 { margin-bottom: 6px; font-size: 1.25rem; }
+    .amounts { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
+    .amount-btn { flex: 1; min-width: 70px; padding: 10px 8px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); cursor: pointer; font-weight: 500; font-size: 0.9rem; }
+    .amount-btn.active { background: var(--green); color: white; border-color: var(--green); }
+    .selected-amount { text-align: center; font-size: 1.4rem; font-weight: 600; margin: 8px 0 4px; color: var(--green); }
     .bank-details { background: var(--surface-2); padding: 14px; border-radius: 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.86rem; line-height: 1.65; margin: 12px 0; border: 1px solid var(--border); }
     .bank-details strong { color: var(--green); }
-    .copy-btn { background: var(--accent); color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; margin-top: 4px; }
-    .qr-container { text-align: center; margin: 16px 0; }
+    .copy-btn { background: var(--accent); color: white; border: none; padding: 9px 16px; border-radius: 10px; cursor: pointer; font-size: 0.85rem; width: 100%; margin-top: 6px; }
+    .qr-container { text-align: center; margin: 16px 0 8px; }
     .close-modal { margin-top: 12px; width: 100%; padding: 11px; border-radius: 12px; border: none; background: var(--surface-2); color: var(--text); cursor: pointer; border: 1px solid var(--border); }
     .close-modal:hover { background: #22262f; }
 
@@ -136,16 +140,30 @@
   <div class="modal-overlay" id="donate-modal">
     <div class="modal">
       <h3>Support RootDonate</h3>
-      <p style="color:var(--muted); font-size:0.9rem; margin-bottom:8px;">Send a donation via bank transfer. Thank you!</p>
-      <div class="bank-details" id="bank-details-box">
-        <strong>Account name:</strong> Your Name / Organization<br>
-        <strong>IBAN:</strong> <span id="iban-display">XX00 XXXX XXXX XXXX XXXX XXXX</span><br>
-        <strong>BIC / SWIFT:</strong> XXXXXXXX<br>
+      <p style="color:var(--muted); font-size:0.9rem;">Choose a fixed donation amount:</p>
+
+      <div class="amounts" id="amount-buttons">
+        <button class="amount-btn" data-amount="5">£5</button>
+        <button class="amount-btn" data-amount="10">£10</button>
+        <button class="amount-btn active" data-amount="20">£20</button>
+        <button class="amount-btn" data-amount="50">£50</button>
+      </div>
+
+      <div class="selected-amount" id="selected-amount">£20</div>
+
+      <div class="bank-details">
+        <strong>Account name:</strong> Rico Andre Morgan<br>
+        <strong>IBAN:</strong> <span id="iban-display">GB67 MONZ 0400 0451 3545 26</span><br>
+        <strong>BIC / SWIFT:</strong> MONZGB2L<br>
+        <strong>Amount:</strong> <span id="amount-display">£20.00</span><br>
         <strong>Reference:</strong> <span id="ref-display">Donation-RootDonate</span>
       </div>
+
       <button class="copy-btn" id="copy-bank">Copy Bank Details</button>
+
       <div class="qr-container" id="qr-code"></div>
-      <p style="font-size:0.78rem; color:var(--muted); text-align:center;">Scan with your banking app (SEPA compatible)</p>
+      <p style="font-size:0.78rem; color:var(--muted); text-align:center;">Scan with your banking app</p>
+
       <button class="close-modal" id="close-donate">Close</button>
     </div>
   </div>
@@ -174,8 +192,9 @@
     const donateModal = document.getElementById("donate-modal");
     const closeDonate = document.getElementById("close-donate");
     const copyBankBtn = document.getElementById("copy-bank");
+    const amountButtons = document.querySelectorAll(".amount-btn");
 
-    // ========== EDIT YOUR BANK DETAILS HERE ==========
+    // ========== BANK DETAILS ==========
     const BANK = {
       name: "Rico Andre Morgan",
       iban: "GB67MONZ04000451354526",
@@ -183,8 +202,9 @@
       reference: "Donation-RootDonate",
       currency: "GBP"
     };
-    // =================================================
+    // ==================================
 
+    let selectedAmount = 20;
     let conversation = [];
     let isSending = false;
     let isMember = false;
@@ -210,25 +230,18 @@
         if (isMember && typeof puter !== "undefined" && puter.kv) {
           await puter.kv.set(CONVO_KEY, conversation);
         }
-      } catch (e) {
-        console.warn("Save failed", e);
-      }
+      } catch (e) { console.warn("Save failed", e); }
     }
 
     async function loadConvo() {
       try {
         if (isMember && typeof puter !== "undefined" && puter.kv) {
           const cloud = await puter.kv.get(CONVO_KEY);
-          if (Array.isArray(cloud)) {
-            conversation = cloud;
-            return;
-          }
+          if (Array.isArray(cloud)) { conversation = cloud; return; }
         }
         const local = JSON.parse(localStorage.getItem(CONVO_KEY) || "[]");
         conversation = Array.isArray(local) ? local : [];
-      } catch {
-        conversation = [];
-      }
+      } catch { conversation = []; }
     }
 
     function renderMarkdown(text) {
@@ -250,12 +263,7 @@
       const div = document.createElement("div");
       div.className = `msg ${who}`;
       const content = who === "ai" && !isHtml ? renderMarkdown(text) : text;
-      div.innerHTML = `
-        <div>
-          <div class="bubble">${who === "ai" ? content : escapeHtml(text)}</div>
-          <div class="time">${now()}</div>
-        </div>
-      `;
+      div.innerHTML = `<div><div class="bubble">${who === "ai" ? content : escapeHtml(text)}</div><div class="time">${now()}</div></div>`;
       chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
       return div;
@@ -273,13 +281,7 @@
     function clearChat() {
       conversation = [];
       saveConvo();
-      chat.innerHTML = `
-        <div class="welcome" id="welcome">
-          <h2>RootDonate Internet AI</h2>
-          <p>Free · No backend · Ask anything.</p>
-          <p class="notice">Guest mode is free & unlimited. Sign in for cloud sync. Uses Puter.js (user-pays). You stay signed in after clearing history & closing.</p>
-        </div>
-      `;
+      chat.innerHTML = `<div class="welcome" id="welcome"><h2>RootDonate Internet AI</h2><p>Free · No backend · Ask anything.</p><p class="notice">Guest mode is free & unlimited. Sign in for cloud sync. Uses Puter.js (user-pays). You stay signed in after clearing history & closing.</p></div>`;
       updateAuthUI();
     }
 
@@ -330,21 +332,27 @@
       }
     }
 
-    // Donation logic
+    // ===== DONATION LOGIC =====
     function formatIban(iban) {
       return iban.replace(/(.{4})/g, "$1 ").trim();
+    }
+
+    function updateAmountDisplay() {
+      const formatted = `£${selectedAmount.toFixed(2)}`;
+      document.getElementById("selected-amount").textContent = `£${selectedAmount}`;
+      document.getElementById("amount-display").textContent = formatted;
     }
 
     function generateQR() {
       const container = document.getElementById("qr-code");
       container.innerHTML = "";
-      const amount = "";
+      const amountStr = selectedAmount.toFixed(2);
       const epc = [
         "BCD", "002", "1", "SCT",
         BANK.bic || "",
         BANK.name,
         BANK.iban.replace(/\s/g, ""),
-        amount ? `${BANK.currency}${amount}` : "",
+        `${BANK.currency}${amountStr}`,
         "", "", BANK.reference, ""
       ].join("\n");
 
@@ -355,9 +363,24 @@
       });
     }
 
+    function selectAmount(amount, btn) {
+      selectedAmount = amount;
+      amountButtons.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      updateAmountDisplay();
+      generateQR();
+    }
+
+    amountButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        selectAmount(parseFloat(btn.dataset.amount), btn);
+      });
+    });
+
     donateBtn.addEventListener("click", () => {
       document.getElementById("iban-display").textContent = formatIban(BANK.iban);
       document.getElementById("ref-display").textContent = BANK.reference;
+      updateAmountDisplay();
       generateQR();
       donateModal.classList.add("visible");
     });
@@ -368,10 +391,15 @@
     });
 
     copyBankBtn.addEventListener("click", () => {
-      const text = `Account name: ${BANK.name}\nIBAN: ${formatIban(BANK.iban)}\nBIC: ${BANK.bic}\nReference: ${BANK.reference}`;
+      const text = `Account name: ${BANK.name}
+IBAN: ${formatIban(BANK.iban)}
+BIC: ${BANK.bic}
+Amount: £${selectedAmount.toFixed(2)}
+Reference: ${BANK.reference}`;
       navigator.clipboard.writeText(text).then(() => alert("Bank details copied!"));
     });
 
+    // Rest of original chat logic (unchanged)
     brand.addEventListener("click", clearChat);
     authBtn.addEventListener("click", handleSignIn);
 
@@ -391,31 +419,23 @@
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       if (isSending || !localStorage.getItem(GDPR_KEY)) return;
-
       const text = input.value.trim();
       if (!text) return;
-
       isSending = true;
       sendBtn.disabled = true;
-
       addMessage(text, "user");
       input.value = "";
       input.style.height = "auto";
-
       const typing = showTyping();
       conversation.push({ role: "user", content: text });
       await saveConvo();
-
       try {
         if (typeof puter === "undefined" || !puter.ai) throw new Error("Puter.js not loaded.");
-
         const resp = await puter.ai.chat(conversation, { model: DEFAULT_MODEL, stream: true });
-
         typing.remove();
         let full = "";
         const aiDiv = addMessage("", "ai", true);
         const bubble = aiDiv.querySelector(".bubble");
-
         for await (const part of resp) {
           if (part?.type === "text" && part.text) {
             full += part.text;
@@ -425,7 +445,6 @@
             throw new Error(part.message || "Stream error");
           }
         }
-
         if (!full) full = "No response";
         conversation.push({ role: "assistant", content: full });
         await saveConvo();
@@ -444,14 +463,12 @@
       }
     });
 
-    // GDPR
     if (!localStorage.getItem(GDPR_KEY)) gdprBanner.classList.add("visible");
     gdprAccept.addEventListener("click", () => {
       localStorage.setItem(GDPR_KEY, "accepted");
       gdprBanner.classList.remove("visible");
     });
 
-    // Init
     (async () => {
       await updateAuthUI();
       await loadConvo();
