@@ -54,15 +54,11 @@
   }
   .logout-btn { background: #7f1d1d; border-color: #7f1d1d; }
   .main { flex: 1; display: flex; overflow: hidden; }
-  .map-area {
-    flex: 1;
-    overflow: auto;
-    background: #0e1016;
-  }
-  .grid-container { position: relative; min-width: 1200px; min-height: 1200px; }
+  .map-area { flex: 1; overflow: auto; background: #0e1016; }
+  .grid-container { position: relative; min-width: 1400px; min-height: 1400px; }
   .grid {
     display: grid;
-    grid-template-columns: repeat(30, 40px);
+    grid-template-columns: repeat(35, 40px);
     gap: 2px;
     padding: 40px;
   }
@@ -76,7 +72,6 @@
     place-items: center;
     font-size: 1.1rem;
     cursor: pointer;
-    transition: background 0.15s;
   }
   .cell:hover { background: #252936; }
   .cell.house { background: #3b2f5e; }
@@ -87,8 +82,8 @@
     position: absolute;
     top: 40px;
     left: 40px;
-    width: 1200px;
-    height: 1200px;
+    width: 1400px;
+    height: 1400px;
     pointer-events: none;
   }
   .citizen-dot, .player-dot {
@@ -117,7 +112,6 @@
   .tabs {
     display: flex;
     border-bottom: 1px solid var(--border);
-    background: var(--surface);
   }
   .tab {
     flex: 1;
@@ -128,10 +122,7 @@
     font-weight: 500;
     color: var(--muted);
   }
-  .tab.active {
-    color: white;
-    background: var(--accent);
-  }
+  .tab.active { color: white; background: var(--accent); }
   .panel {
     flex: 1;
     overflow-y: auto;
@@ -156,6 +147,7 @@
     margin-bottom: 6px;
     background: var(--surface-2);
     font-size: 0.88rem;
+    cursor: pointer;
   }
   .search {
     width: 100%;
@@ -165,7 +157,33 @@
     padding: 10px 12px;
     border-radius: 10px;
     margin-bottom: 10px;
-    font-size: 0.9rem;
+  }
+  .chat-panel {
+    height: 260px;
+    border-top: 1px solid var(--border);
+    display: none;
+    flex-direction: column;
+    background: #0e1016;
+  }
+  .chat-header { padding: 10px 14px; font-weight: 600; font-size: 0.9rem; }
+  .messages { flex: 1; overflow-y: auto; padding: 10px 14px; font-size: 0.85rem; }
+  .msg { margin-bottom: 8px; }
+  .msg.me { color: #93c5fd; text-align: right; }
+  .chat-input { display: flex; padding: 8px; gap: 6px; }
+  .chat-input input {
+    flex: 1;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 8px 12px;
+  }
+  .chat-input button {
+    background: var(--accent);
+    border: none;
+    color: white;
+    border-radius: 10px;
+    padding: 0 14px;
   }
   .global-chat { display: flex; flex-direction: column; height: 100%; }
   .global-messages { flex: 1; overflow-y: auto; }
@@ -184,7 +202,6 @@
     color: white;
     border-radius: 10px;
     padding: 0 16px;
-    font-weight: 500;
     cursor: pointer;
   }
   .auth-modal {
@@ -205,7 +222,6 @@
     max-width: 380px;
     border: 1px solid var(--border);
   }
-  .auth-box h3 { margin-bottom: 16px; font-size: 1.25rem; }
   .auth-box input {
     width: 100%;
     padding: 12px;
@@ -214,7 +230,6 @@
     border: 1px solid var(--border);
     background: var(--surface-2);
     color: var(--text);
-    font-size: 0.95rem;
   }
   .auth-box button {
     width: 100%;
@@ -231,13 +246,12 @@
     .main { flex-direction: column; }
     .sidebar {
       width: 100%;
-      height: 44%;
+      height: 46%;
       border-left: none;
       border-top: 1px solid var(--border);
     }
     header { padding: 10px 12px; }
     .resources { gap: 10px; font-size: 0.78rem; }
-    .title { font-size: 0.95rem; }
     .grid { padding: 20px; }
     .citizens-layer { top: 20px; left: 20px; }
   }
@@ -272,7 +286,7 @@
         <div class="tab active" data-tab="build">Build</div>
         <div class="tab" data-tab="citizens">Citizens</div>
         <div class="tab" data-tab="players">Players</div>
-        <div class="tab" data-tab="chat">Chat</div>
+        <div class="tab" data-tab="chat">Global</div>
       </div>
 
       <div class="panel active" id="panel-build">
@@ -301,6 +315,15 @@
             <input id="global-input" placeholder="Say something..." />
             <button id="global-send">Send</button>
           </div>
+        </div>
+      </div>
+
+      <div class="chat-panel" id="chat-panel">
+        <div class="chat-header" id="chat-header">Chat</div>
+        <div class="messages" id="messages"></div>
+        <div class="chat-input">
+          <input id="chat-input" placeholder="Type a message..." />
+          <button id="send-chat">Send</button>
         </div>
       </div>
     </div>
@@ -334,7 +357,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-const GRID_SIZE = 30;
+const GRID_SIZE = 35;
 const CELL_SIZE = 40;
 const firstNames = ["Emma","Liam","Olivia","Noah","Ava","Ethan","Sophia","Mason","Isabella","William","Mia","James","Charlotte","Benjamin","Amelia","Lucas","Harper","Henry","Evelyn","Alexander","Abigail","Michael","Emily","Daniel","Elizabeth","Matthew","Sofia","Jackson","Avery","David","Ella","Joseph","Scarlett","Samuel","Grace","Carter","Chloe","Wyatt","Victoria","John","Riley","Jack","Aria","Luke","Lily","Owen","Aurora","Gabriel","Zoey","Anthony"];
 const lastNames = ["Smith","Johnson","Williams","Brown","Jones","Garcia","Miller","Davis","Rodriguez","Martinez","Hernandez","Lopez","Gonzalez","Wilson","Anderson","Thomas","Taylor","Moore","Jackson","Martin","Lee","Perez","Thompson","White","Harris","Sanchez","Clark","Ramirez","Lewis","Robinson","Walker","Young","Allen","King","Wright","Scott","Torres","Nguyen","Hill","Flores","Green","Adams","Nelson","Baker","Hall","Rivera","Campbell","Mitchell","Carter","Roberts"];
@@ -480,12 +503,34 @@ function renderCitizens(filter = "") {
 
 function openChat(citizen) {
   selectedCitizen = citizen;
-  const msg = prompt(`Message to ${citizen.name}:`);
-  if (msg) {
-    citizen.messages.push({ from: "me", text: msg });
-    alert(`${citizen.name}: Got it!`);
-    savePersonal();
-  }
+  document.getElementById("chat-panel").style.display = "flex";
+  document.getElementById("chat-header").textContent = citizen.name;
+  renderMessages();
+  renderCitizens(document.getElementById("search").value);
+}
+
+function renderMessages() {
+  const box = document.getElementById("messages");
+  box.innerHTML = "";
+  if (!selectedCitizen) return;
+  selectedCitizen.messages.forEach(m => {
+    const div = document.createElement("div");
+    div.className = "msg " + (m.from === "me" ? "me" : "them");
+    div.textContent = m.text;
+    box.appendChild(div);
+  });
+  box.scrollTop = box.scrollHeight;
+}
+
+function sendMessage() {
+  const input = document.getElementById("chat-input");
+  const text = input.value.trim();
+  if (!text || !selectedCitizen) return;
+  selectedCitizen.messages.push({ from: "me", text });
+  selectedCitizen.messages.push({ from: "them", text: "Got it!" });
+  input.value = "";
+  renderMessages();
+  savePersonal();
 }
 
 function updateUI() {
@@ -601,6 +646,9 @@ document.getElementById("global-send").onclick = async () => {
   });
   input.value = "";
 };
+
+document.getElementById("send-chat").onclick = sendMessage;
+document.getElementById("chat-input").onkeydown = e => { if (e.key === "Enter") sendMessage(); };
 
 function updateAuthUI() {
   const status = document.getElementById("user-status");
