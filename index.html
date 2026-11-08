@@ -372,6 +372,8 @@ let grid = Array(GRID_SIZE * GRID_SIZE).fill(null);
 let currentUser = null;
 let isSignUp = false;
 let otherPlayers = {};
+let myX = 15;
+let myY = 15;
 
 function randomName() {
   return firstNames[Math.floor(Math.random() * firstNames.length)] + " " + lastNames[Math.floor(Math.random() * lastNames.length)];
@@ -470,7 +472,8 @@ function centerOnCitizen(citizen) {
   map.scrollTo({ left: Math.max(0, targetX), top: Math.max(0, targetY), behavior: "smooth" });
 }
 
-function moveCitizens() {
+function moveEntities() {
+  // Move citizens
   citizens.forEach(c => {
     if (c.task === "rest" || c.task === "home") return;
     const dirs = [[0,1],[0,-1],[1,0],[-1,0],[1,1],[-1,1],[1,-1],[-1,-1]];
@@ -478,13 +481,21 @@ function moveCitizens() {
     c.x = Math.max(0, Math.min(GRID_SIZE - 1, c.x + dx));
     c.y = Math.max(0, Math.min(GRID_SIZE - 1, c.y + dy));
   });
+
+  // Move myself (smooth walking)
   if (currentUser) {
+    const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+    const [dx, dy] = dirs[Math.floor(Math.random() * dirs.length)];
+    myX = Math.max(0, Math.min(GRID_SIZE - 1, myX + dx));
+    myY = Math.max(0, Math.min(GRID_SIZE - 1, myY + dy));
+
     db.collection("players").doc(currentUser.uid).set({
-      x: Math.floor(Math.random() * GRID_SIZE),
-      y: Math.floor(Math.random() * GRID_SIZE),
+      x: myX,
+      y: myY,
       lastSeen: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
   }
+
   renderAllDots();
 }
 
@@ -695,8 +706,8 @@ auth.onAuthStateChanged(async user => {
     await db.collection("players").doc(user.uid).set({
       name: user.email.split("@")[0],
       email: user.email,
-      x: 15,
-      y: 15,
+      x: myX,
+      y: myY,
       lastSeen: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true });
     await loadPersonal();
@@ -727,7 +738,7 @@ document.querySelectorAll(".build-btn").forEach(btn => {
 document.getElementById("search").oninput = e => renderCitizens(e.target.value);
 
 setInterval(gameTick, 3000);
-setInterval(moveCitizens, 1200);
+setInterval(moveEntities, 1000);
 </script>
 </body>
 </html>
