@@ -23,11 +23,7 @@
     height: 100dvh;
     overflow: hidden;
   }
-  .app {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-  }
+  .app { display: flex; flex-direction: column; height: 100%; }
   header {
     background: var(--surface);
     border-bottom: 1px solid var(--border);
@@ -36,47 +32,37 @@
     justify-content: space-between;
     align-items: center;
     flex-shrink: 0;
+    z-index: 10;
   }
-  .resources {
-    display: flex;
-    gap: 14px;
-    font-size: 0.85rem;
-  }
+  .resources { display: flex; gap: 14px; font-size: 0.85rem; }
   .res span { font-weight: 600; }
-  .main {
-    flex: 1;
-    display: flex;
-    overflow: hidden;
-    position: relative;
-  }
+  .main { flex: 1; display: flex; overflow: hidden; }
   .map-area {
     flex: 1;
-    padding: 12px;
     overflow: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: relative;
+    background: #0e1016;
   }
   .grid-container {
     position: relative;
-    width: 100%;
-    max-width: 520px;
-    aspect-ratio: 1;
+    min-width: 1200px;
+    min-height: 1200px;
   }
   .grid {
     display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    gap: 3px;
-    width: 100%;
-    height: 100%;
+    grid-template-columns: repeat(30, 40px);
+    gap: 2px;
+    padding: 40px;
   }
   .cell {
+    width: 40px;
+    height: 40px;
     background: #1c1f28;
-    border-radius: 5px;
+    border-radius: 4px;
     border: 1px solid var(--border);
     display: grid;
     place-items: center;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     cursor: pointer;
   }
   .cell.house { background: #3b2f5e; }
@@ -85,24 +71,27 @@
   .cell.park { background: #1e3a3a; }
   .citizens-layer {
     position: absolute;
-    inset: 0;
+    top: 40px;
+    left: 40px;
+    width: 1200px;
+    height: 1200px;
     pointer-events: none;
   }
   .citizen-dot {
     position: absolute;
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     border-radius: 50%;
     background: #5b8cff;
     border: 2px solid white;
     display: grid;
     place-items: center;
-    font-size: 10px;
+    font-size: 12px;
     pointer-events: auto;
     cursor: pointer;
-    transition: left 0.8s ease, top 0.8s ease;
+    transition: left 0.7s ease, top 0.7s ease;
     z-index: 2;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
   }
   .sidebar {
     width: 340px;
@@ -110,7 +99,6 @@
     border-left: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    flex-shrink: 0;
   }
   .build-menu {
     padding: 10px;
@@ -129,11 +117,7 @@
     font-size: 0.8rem;
   }
   .build-btn.active { background: var(--accent); }
-  .citizen-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 8px;
-  }
+  .citizen-list { flex: 1; overflow-y: auto; padding: 8px; }
   .citizen {
     padding: 10px 12px;
     border-radius: 10px;
@@ -144,7 +128,7 @@
   }
   .citizen:hover, .citizen.selected { background: var(--surface-2); }
   .chat-panel {
-    height: 280px;
+    height: 260px;
     border-top: 1px solid var(--border);
     display: none;
     flex-direction: column;
@@ -171,14 +155,12 @@
     .main { flex-direction: column; }
     .sidebar {
       width: 100%;
-      height: 42%;
+      height: 38%;
       border-left: none;
       border-top: 1px solid var(--border);
     }
-    .map-area { padding: 8px; }
-    .grid-container { max-width: 100%; }
-    header { padding: 10px 12px; }
-    .resources { gap: 10px; font-size: 0.8rem; }
+    .grid { grid-template-columns: repeat(30, 36px); padding: 20px; }
+    .citizens-layer { top: 20px; left: 20px; }
   }
 </style>
 </head>
@@ -195,7 +177,7 @@
   </header>
 
   <div class="main">
-    <div class="map-area">
+    <div class="map-area" id="map-area">
       <div class="grid-container" id="grid-container">
         <div class="grid" id="grid"></div>
         <div class="citizens-layer" id="citizens-layer"></div>
@@ -227,6 +209,8 @@
 </div>
 
 <script>
+const GRID_SIZE = 30;
+const CELL_SIZE = 40;
 const firstNames = ["Emma","Liam","Olivia","Noah","Ava","Ethan","Sophia","Mason","Isabella","William","Mia","James","Charlotte","Benjamin","Amelia","Lucas","Harper","Henry","Evelyn","Alexander","Abigail","Michael","Emily","Daniel","Elizabeth","Matthew","Sofia","Jackson","Avery","David","Ella","Joseph","Scarlett","Samuel","Grace","Carter","Chloe","Wyatt","Victoria","John","Riley","Jack","Aria","Luke","Lily","Owen","Aurora","Gabriel","Zoey","Anthony"];
 const lastNames = ["Smith","Johnson","Williams","Brown","Jones","Garcia","Miller","Davis","Rodriguez","Martinez","Hernandez","Lopez","Gonzalez","Wilson","Anderson","Thomas","Taylor","Moore","Jackson","Martin","Lee","Perez","Thompson","White","Harris","Sanchez","Clark","Ramirez","Lewis","Robinson","Walker","Young","Allen","King","Wright","Scott","Torres","Nguyen","Hill","Flores","Green","Adams","Nelson","Baker","Hall","Rivera","Campbell","Mitchell","Carter","Roberts"];
 
@@ -236,7 +220,7 @@ let food = 80;
 let happiness = 72;
 let selectedBuild = null;
 let selectedCitizen = null;
-let grid = Array(100).fill(null);
+let grid = Array(GRID_SIZE * GRID_SIZE).fill(null);
 
 function randomName() {
   return firstNames[Math.floor(Math.random()*firstNames.length)] + " " + lastNames[Math.floor(Math.random()*lastNames.length)];
@@ -248,19 +232,19 @@ function createCitizen() {
     name: randomName(),
     happiness: 60 + Math.floor(Math.random()*30),
     messages: [],
-    x: Math.floor(Math.random()*10),
-    y: Math.floor(Math.random()*10)
+    x: Math.floor(Math.random()*GRID_SIZE),
+    y: Math.floor(Math.random()*GRID_SIZE)
   };
 }
 
 function initCitizens() {
-  for (let i = 0; i < 12; i++) citizens.push(createCitizen());
+  for (let i = 0; i < 15; i++) citizens.push(createCitizen());
 }
 
 function renderGrid() {
   const gridEl = document.getElementById("grid");
   gridEl.innerHTML = "";
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
     const cell = document.createElement("div");
     cell.className = "cell" + (grid[i] ? " " + grid[i] : "");
     cell.textContent = grid[i] === "house" ? "🏠" : grid[i] === "farm" ? "🌾" : grid[i] === "factory" ? "🏭" : grid[i] === "park" ? "🌳" : "";
@@ -286,28 +270,31 @@ function placeBuilding(index) {
 function renderCitizenDots() {
   const layer = document.getElementById("citizens-layer");
   layer.innerHTML = "";
-  const container = document.getElementById("grid-container");
-  const cellSize = container.offsetWidth / 10;
-
   citizens.forEach(c => {
     const dot = document.createElement("div");
     dot.className = "citizen-dot";
     dot.textContent = "👤";
-    dot.style.left = (c.x * cellSize + cellSize/2 - 9) + "px";
-    dot.style.top = (c.y * cellSize + cellSize/2 - 9) + "px";
-    dot.onclick = (e) => { e.stopPropagation(); openChat(c); };
+    dot.style.left = (c.x * (CELL_SIZE + 2) + 6) + "px";
+    dot.style.top = (c.y * (CELL_SIZE + 2) + 6) + "px";
+    dot.onclick = (e) => { e.stopPropagation(); openChat(c); centerOnCitizen(c); };
     layer.appendChild(dot);
   });
 }
 
+function centerOnCitizen(citizen) {
+  const map = document.getElementById("map-area");
+  const cell = CELL_SIZE + 2;
+  const targetX = citizen.x * cell - map.clientWidth / 2 + 40;
+  const targetY = citizen.y * cell - map.clientHeight / 2 + 40;
+  map.scrollTo({ left: Math.max(0, targetX), top: Math.max(0, targetY), behavior: "smooth" });
+}
+
 function moveCitizens() {
   citizens.forEach(c => {
-    const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+    const dirs = [[0,1],[0,-1],[1,0],[-1,0],[1,1],[-1,1],[1,-1],[-1,-1]];
     const [dx, dy] = dirs[Math.floor(Math.random()*dirs.length)];
-    const nx = Math.max(0, Math.min(9, c.x + dx));
-    const ny = Math.max(0, Math.min(9, c.y + dy));
-    c.x = nx;
-    c.y = ny;
+    c.x = Math.max(0, Math.min(GRID_SIZE-1, c.x + dx));
+    c.y = Math.max(0, Math.min(GRID_SIZE-1, c.y + dy));
   });
   renderCitizenDots();
 }
@@ -319,7 +306,10 @@ function renderCitizens(filter = "") {
     const div = document.createElement("div");
     div.className = "citizen" + (selectedCitizen?.id === c.id ? " selected" : "");
     div.innerHTML = `<div>${c.name}</div><div style="font-size:0.75rem;color:#8e96a3">${c.happiness}%</div>`;
-    div.onclick = () => openChat(c);
+    div.onclick = () => {
+      openChat(c);
+      centerOnCitizen(c);
+    };
     list.appendChild(div);
   });
 }
@@ -378,7 +368,7 @@ function gameTick() {
   money += factories * 12;
   food -= citizens.length * 1.2;
   happiness = Math.min(100, Math.max(10, happiness + parks * 0.8 - (food < 30 ? 3 : 0)));
-  if (happiness > 70 && food > 50 && Math.random() < 0.12) citizens.push(createCitizen());
+  if (happiness > 70 && food > 50 && Math.random() < 0.1) citizens.push(createCitizen());
   food = Math.max(0, food);
   money = Math.max(0, money);
   updateUI();
@@ -397,15 +387,13 @@ document.getElementById("search").oninput = e => renderCitizens(e.target.value);
 document.getElementById("send-chat").onclick = sendMessage;
 document.getElementById("chat-input").onkeydown = e => { if (e.key === "Enter") sendMessage(); };
 
-window.addEventListener("resize", renderCitizenDots);
-
 initCitizens();
 renderGrid();
 renderCitizens();
 updateUI();
-setTimeout(renderCitizenDots, 100);
+setTimeout(renderCitizenDots, 150);
 setInterval(gameTick, 2000);
-setInterval(moveCitizens, 1200);
+setInterval(moveCitizens, 1100);
 </script>
 </body>
 </html>
