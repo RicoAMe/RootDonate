@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>RootDonate</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
   :root {
     --bg: #0a0b0f;
@@ -36,6 +39,17 @@
   }
   .resources { display: flex; gap: 14px; font-size: 0.85rem; }
   .res span { font-weight: 600; }
+  .auth-area { display: flex; gap: 8px; align-items: center; }
+  .auth-btn, .logout-btn {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  .logout-btn { background: #7f1d1d; }
   .main { flex: 1; display: flex; overflow: hidden; }
   .map-area {
     flex: 1;
@@ -43,11 +57,7 @@
     position: relative;
     background: #0e1016;
   }
-  .grid-container {
-    position: relative;
-    min-width: 1200px;
-    min-height: 1200px;
-  }
+  .grid-container { position: relative; min-width: 1200px; min-height: 1200px; }
   .grid {
     display: grid;
     grid-template-columns: repeat(30, 40px);
@@ -55,8 +65,7 @@
     padding: 40px;
   }
   .cell {
-    width: 40px;
-    height: 40px;
+    width: 40px; height: 40px;
     background: #1c1f28;
     border-radius: 4px;
     border: 1px solid var(--border);
@@ -70,74 +79,45 @@
   .cell.factory { background: #3a2a1e; }
   .cell.park { background: #1e3a3a; }
   .citizens-layer {
-    position: absolute;
-    top: 40px;
-    left: 40px;
-    width: 1200px;
-    height: 1200px;
+    position: absolute; top: 40px; left: 40px;
+    width: 1200px; height: 1200px;
     pointer-events: none;
   }
   .citizen-dot {
-    position: absolute;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    background: #5b8cff;
-    border: 2px solid white;
-    display: grid;
-    place-items: center;
-    font-size: 12px;
-    pointer-events: auto;
-    cursor: pointer;
+    position: absolute; width: 22px; height: 22px;
+    border-radius: 50%; background: #5b8cff;
+    border: 2px solid white; display: grid; place-items: center;
+    font-size: 12px; pointer-events: auto; cursor: pointer;
     transition: left 0.7s ease, top 0.7s ease;
-    z-index: 2;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+    z-index: 2; box-shadow: 0 2px 8px rgba(0,0,0,0.5);
   }
   .sidebar {
-    width: 340px;
-    background: var(--surface);
+    width: 360px; background: var(--surface);
     border-left: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
+    display: flex; flex-direction: column;
   }
-  .build-menu {
-    padding: 10px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
+  .build-menu { padding: 10px; border-bottom: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 6px; }
   .build-btn {
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 8px 10px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 0.8rem;
+    background: var(--surface-2); border: 1px solid var(--border);
+    color: var(--text); padding: 8px 10px; border-radius: 10px;
+    cursor: pointer; font-size: 0.8rem;
   }
   .build-btn.active { background: var(--accent); }
   .citizen-list { flex: 1; overflow-y: auto; padding: 8px; }
   .citizen {
-    padding: 10px 12px;
-    border-radius: 10px;
-    cursor: pointer;
-    margin-bottom: 4px;
-    display: flex;
-    justify-content: space-between;
+    padding: 10px 12px; border-radius: 10px; cursor: pointer;
+    margin-bottom: 4px; display: flex; justify-content: space-between;
   }
   .citizen:hover, .citizen.selected { background: var(--surface-2); }
   .chat-panel {
-    height: 260px;
-    border-top: 1px solid var(--border);
-    display: none;
-    flex-direction: column;
-    background: #0e1016;
+    height: 280px; border-top: 1px solid var(--border);
+    display: none; flex-direction: column; background: #0e1016;
   }
   .chat-header { padding: 10px 14px; font-weight: 600; font-size: 0.9rem; }
   .messages { flex: 1; overflow-y: auto; padding: 10px 14px; font-size: 0.85rem; }
-  .msg { margin-bottom: 8px; }
+  .msg { margin-bottom: 8px; line-height: 1.4; }
   .msg.me { color: #93c5fd; text-align: right; }
+  .msg.system { color: #a78bfa; font-size: 0.8rem; }
   .chat-input { display: flex; padding: 8px; gap: 6px; }
   .chat-input input {
     flex: 1; background: var(--surface-2); border: 1px solid var(--border);
@@ -150,17 +130,24 @@
     width: 100%; background: var(--surface-2); border: 1px solid var(--border);
     color: var(--text); padding: 8px 12px; border-radius: 10px; margin-bottom: 8px;
   }
-
+  .auth-modal {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    display: none; align-items: center; justify-content: center; z-index: 100;
+  }
+  .auth-modal.visible { display: flex; }
+  .auth-box {
+    background: var(--surface); padding: 24px; border-radius: 16px;
+    width: 90%; max-width: 360px; border: 1px solid var(--border);
+  }
+  .auth-box h3 { margin-bottom: 12px; }
+  .auth-box input {
+    width: 100%; padding: 10px; margin: 8px 0; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+  }
+  .auth-box button { width: 100%; padding: 10px; margin-top: 8px; border-radius: 8px; border: none; background: var(--accent); color: white; cursor: pointer; }
   @media (max-width: 768px) {
     .main { flex-direction: column; }
-    .sidebar {
-      width: 100%;
-      height: 38%;
-      border-left: none;
-      border-top: 1px solid var(--border);
-    }
-    .grid { grid-template-columns: repeat(30, 36px); padding: 20px; }
-    .citizens-layer { top: 20px; left: 20px; }
+    .sidebar { width: 100%; height: 40%; border-left: none; border-top: 1px solid var(--border); }
   }
 </style>
 </head>
@@ -173,6 +160,10 @@
       <div class="res">Food: <span id="food">80</span></div>
       <div class="res">Money: <span id="money">200</span></div>
       <div class="res">Happy: <span id="happy">72%</span></div>
+    </div>
+    <div class="auth-area">
+      <span id="user-status" style="font-size:0.8rem;color:#8e96a3;">Guest</span>
+      <button class="auth-btn" id="auth-btn">Sign In</button>
     </div>
   </header>
 
@@ -200,7 +191,7 @@
         <div class="chat-header" id="chat-header">Chat</div>
         <div class="messages" id="messages"></div>
         <div class="chat-input">
-          <input id="chat-input" placeholder="Type a message..." />
+          <input id="chat-input" placeholder="Type message or /help..." />
           <button id="send-chat">Send</button>
         </div>
       </div>
@@ -208,7 +199,37 @@
   </div>
 </div>
 
+<!-- Auth Modal -->
+<div class="auth-modal" id="auth-modal">
+  <div class="auth-box">
+    <h3 id="auth-title">Sign In</h3>
+    <input type="email" id="auth-email" placeholder="Email" />
+    <input type="password" id="auth-password" placeholder="Password" />
+    <button id="auth-submit">Sign In</button>
+    <button id="auth-switch" style="background:transparent;color:#8e96a3;margin-top:10px;">Need an account? Sign Up</button>
+    <button id="auth-close" style="background:#333;margin-top:6px;">Close</button>
+  </div>
+</div>
+
 <script>
+// ==================== FIREBASE CONFIG ====================
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
+  authDomain: "rootdonate-61e61.firebaseapp.com",
+  databaseURL: "https://rootdonate-61e61-default-rtdb.firebaseio.com",
+  projectId: "rootdonate-61e61",
+  storageBucket: "rootdonate-61e61.firebasestorage.app",
+  messagingSenderId: "754240963907",
+  appId: "1:754240963907:web:5417c2763d8f02108bdbf6",
+  measurementId: "G-0SC5R5ELT1"
+};
+// =======================================================
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
 const GRID_SIZE = 30;
 const CELL_SIZE = 40;
 const firstNames = ["Emma","Liam","Olivia","Noah","Ava","Ethan","Sophia","Mason","Isabella","William","Mia","James","Charlotte","Benjamin","Amelia","Lucas","Harper","Henry","Evelyn","Alexander","Abigail","Michael","Emily","Daniel","Elizabeth","Matthew","Sofia","Jackson","Avery","David","Ella","Joseph","Scarlett","Samuel","Grace","Carter","Chloe","Wyatt","Victoria","John","Riley","Jack","Aria","Luke","Lily","Owen","Aurora","Gabriel","Zoey","Anthony"];
@@ -221,6 +242,19 @@ let happiness = 72;
 let selectedBuild = null;
 let selectedCitizen = null;
 let grid = Array(GRID_SIZE * GRID_SIZE).fill(null);
+let currentUser = null;
+let isSignUp = false;
+
+const HELP_TEXT = `Commands:
+/help — Show this list
+/status — How are you?
+/work — Go work (money)
+/farm — Farm (food)
+/rest — Rest (happiness)
+/park — Visit park
+/home — Go home
+/patrol — Walk around
+/auto — Let me decide myself`;
 
 function randomName() {
   return firstNames[Math.floor(Math.random()*firstNames.length)] + " " + lastNames[Math.floor(Math.random()*lastNames.length)];
@@ -233,12 +267,26 @@ function createCitizen() {
     happiness: 60 + Math.floor(Math.random()*30),
     messages: [],
     x: Math.floor(Math.random()*GRID_SIZE),
-    y: Math.floor(Math.random()*GRID_SIZE)
+    y: Math.floor(Math.random()*GRID_SIZE),
+    task: "idle"
   };
 }
 
 function initCitizens() {
+  citizens = [];
   for (let i = 0; i < 15; i++) citizens.push(createCitizen());
+}
+
+function autoAssignTasks() {
+  citizens.forEach(c => {
+    if (c.task !== "idle" && Math.random() > 0.3) return; // keep current task sometimes
+
+    if (food < 40 && Math.random() < 0.6) c.task = "farm";
+    else if (money < 80 && Math.random() < 0.5) c.task = "work";
+    else if (c.happiness < 50 && Math.random() < 0.7) c.task = Math.random() < 0.5 ? "rest" : "park";
+    else if (Math.random() < 0.3) c.task = "patrol";
+    else c.task = "idle";
+  });
 }
 
 function renderGrid() {
@@ -265,6 +313,7 @@ function placeBuilding(index) {
   renderGrid();
   renderCitizens();
   renderCitizenDots();
+  saveGame();
 }
 
 function renderCitizenDots() {
@@ -291,6 +340,7 @@ function centerOnCitizen(citizen) {
 
 function moveCitizens() {
   citizens.forEach(c => {
+    if (c.task === "rest" || c.task === "home") return;
     const dirs = [[0,1],[0,-1],[1,0],[-1,0],[1,1],[-1,1],[1,-1],[-1,-1]];
     const [dx, dy] = dirs[Math.floor(Math.random()*dirs.length)];
     c.x = Math.max(0, Math.min(GRID_SIZE-1, c.x + dx));
@@ -305,11 +355,9 @@ function renderCitizens(filter = "") {
   citizens.filter(c => c.name.toLowerCase().includes(filter.toLowerCase())).forEach(c => {
     const div = document.createElement("div");
     div.className = "citizen" + (selectedCitizen?.id === c.id ? " selected" : "");
-    div.innerHTML = `<div>${c.name}</div><div style="font-size:0.75rem;color:#8e96a3">${c.happiness}%</div>`;
-    div.onclick = () => {
-      openChat(c);
-      centerOnCitizen(c);
-    };
+    const task = c.task !== "idle" ? ` (${c.task})` : "";
+    div.innerHTML = `<div>${c.name}${task}</div><div style="font-size:0.75rem;color:#8e96a3">${Math.floor(c.happiness)}%</div>`;
+    div.onclick = () => { openChat(c); centerOnCitizen(c); };
     list.appendChild(div);
   });
 }
@@ -328,19 +376,28 @@ function renderMessages() {
   if (!selectedCitizen) return;
   selectedCitizen.messages.forEach(m => {
     const div = document.createElement("div");
-    div.className = "msg " + (m.from === "me" ? "me" : "them");
+    div.className = "msg " + (m.from === "me" ? "me" : m.from === "system" ? "system" : "them");
     div.textContent = m.text;
     box.appendChild(div);
   });
   box.scrollTop = box.scrollHeight;
 }
 
-function getCitizenReply() {
-  if (food < 40) return "Mayor, we're running low on food!";
-  if (happiness < 50) return "People are unhappy. We need more parks.";
-  if (money < 50) return "The city needs more income.";
-  const replies = ["Thanks for checking in!", "Everything's fine.", "Appreciate you asking.", "City is looking better!", "Keep it up!"];
-  return replies[Math.floor(Math.random() * replies.length)];
+function processCommand(citizen, text) {
+  const cmd = text.toLowerCase().trim();
+  if (cmd === "/help") return { reply: HELP_TEXT, system: true };
+  if (cmd === "/status") return { reply: `Happiness: ${Math.floor(citizen.happiness)}%. Task: ${citizen.task}` };
+  if (cmd === "/work") { citizen.task = "work"; return { reply: "Heading to work!" }; }
+  if (cmd === "/farm") { citizen.task = "farm"; return { reply: "Going to farm!" }; }
+  if (cmd === "/rest") { citizen.task = "rest"; citizen.happiness = Math.min(100, citizen.happiness + 15); return { reply: "Taking a rest." }; }
+  if (cmd === "/park") { citizen.task = "park"; citizen.happiness = Math.min(100, citizen.happiness + 10); return { reply: "Going to the park." }; }
+  if (cmd === "/home") { citizen.task = "home"; return { reply: "Going home." }; }
+  if (cmd === "/patrol") { citizen.task = "patrol"; return { reply: "Patrolling the city!" }; }
+  if (cmd === "/auto") { citizen.task = "idle"; return { reply: "I'll decide what to do myself." }; }
+
+  if (food < 40) return { reply: "We're low on food!" };
+  if (happiness < 50) return { reply: "People are unhappy..." };
+  return { reply: ["Got it!", "On it!", "Understood."][Math.floor(Math.random()*3)] };
 }
 
 function sendMessage() {
@@ -348,9 +405,12 @@ function sendMessage() {
   const text = input.value.trim();
   if (!text || !selectedCitizen) return;
   selectedCitizen.messages.push({ from: "me", text });
-  selectedCitizen.messages.push({ from: "them", text: getCitizenReply() });
+  const result = processCommand(selectedCitizen, text);
+  selectedCitizen.messages.push({ from: result.system ? "system" : "them", text: result.reply });
   input.value = "";
   renderMessages();
+  renderCitizens(document.getElementById("search").value);
+  saveGame();
 }
 
 function updateUI() {
@@ -361,20 +421,134 @@ function updateUI() {
 }
 
 function gameTick() {
+  autoAssignTasks();
+
+  let workBonus = 0, farmBonus = 0;
+  citizens.forEach(c => {
+    if (c.task === "work") workBonus += 3;
+    if (c.task === "farm") farmBonus += 4;
+    if (c.task === "rest") c.happiness = Math.min(100, c.happiness + 2);
+    if (c.task === "park") c.happiness = Math.min(100, c.happiness + 1);
+  });
+
   const farms = grid.filter(x => x === "farm").length;
   const factories = grid.filter(x => x === "factory").length;
   const parks = grid.filter(x => x === "park").length;
-  food += farms * 8;
-  money += factories * 12;
+
+  food += farms * 8 + farmBonus;
+  money += factories * 12 + workBonus;
   food -= citizens.length * 1.2;
-  happiness = Math.min(100, Math.max(10, happiness + parks * 0.8 - (food < 30 ? 3 : 0)));
+  happiness = Math.min(100, Math.max(10, happiness + parks * 0.6 - (food < 30 ? 3 : 0)));
+
   if (happiness > 70 && food > 50 && Math.random() < 0.1) citizens.push(createCitizen());
+
   food = Math.max(0, food);
   money = Math.max(0, money);
   updateUI();
   renderCitizens(document.getElementById("search").value);
+  saveGame();
 }
 
+// ========== FIREBASE ==========
+async function saveGame() {
+  if (!currentUser) return;
+  try {
+    await db.collection("cities").doc(currentUser.uid).set({
+      money, food, happiness, grid, citizens,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch (e) { console.warn("Save failed", e); }
+}
+
+async function loadGame() {
+  if (!currentUser) return;
+  try {
+    const doc = await db.collection("cities").doc(currentUser.uid).get();
+    if (doc.exists) {
+      const data = doc.data();
+      money = data.money ?? 200;
+      food = data.food ?? 80;
+      happiness = data.happiness ?? 72;
+      grid = data.grid ?? Array(GRID_SIZE * GRID_SIZE).fill(null);
+      citizens = data.citizens ?? [];
+    } else {
+      initCitizens();
+    }
+  } catch (e) {
+    console.warn("Load failed", e);
+    initCitizens();
+  }
+  updateUI();
+  renderGrid();
+  renderCitizens();
+  setTimeout(renderCitizenDots, 100);
+}
+
+function updateAuthUI() {
+  const status = document.getElementById("user-status");
+  const btn = document.getElementById("auth-btn");
+  if (currentUser) {
+    status.textContent = currentUser.email.split("@")[0];
+    btn.textContent = "Logout";
+    btn.className = "logout-btn";
+  } else {
+    status.textContent = "Guest";
+    btn.textContent = "Sign In";
+    btn.className = "auth-btn";
+  }
+}
+
+document.getElementById("auth-btn").onclick = () => {
+  if (currentUser) {
+    auth.signOut();
+  } else {
+    document.getElementById("auth-modal").classList.add("visible");
+  }
+};
+
+document.getElementById("auth-close").onclick = () => {
+  document.getElementById("auth-modal").classList.remove("visible");
+};
+
+document.getElementById("auth-switch").onclick = () => {
+  isSignUp = !isSignUp;
+  document.getElementById("auth-title").textContent = isSignUp ? "Sign Up" : "Sign In";
+  document.getElementById("auth-submit").textContent = isSignUp ? "Create Account" : "Sign In";
+  document.getElementById("auth-switch").textContent = isSignUp ? "Already have an account? Sign In" : "Need an account? Sign Up";
+};
+
+document.getElementById("auth-submit").onclick = async () => {
+  const email = document.getElementById("auth-email").value;
+  const password = document.getElementById("auth-password").value;
+  try {
+    if (isSignUp) {
+      await auth.createUserWithEmailAndPassword(email, password);
+    } else {
+      await auth.signInWithEmailAndPassword(email, password);
+    }
+    document.getElementById("auth-modal").classList.remove("visible");
+  } catch (e) {
+    alert(e.message);
+  }
+};
+
+auth.onAuthStateChanged(async user => {
+  currentUser = user;
+  updateAuthUI();
+  if (user) {
+    await loadGame();
+  } else {
+    initCitizens();
+    money = 200; food = 80; happiness = 72;
+    grid = Array(GRID_SIZE * GRID_SIZE).fill(null);
+    updateUI();
+    renderGrid();
+    renderCitizens();
+    setTimeout(renderCitizenDots, 100);
+  }
+});
+
+// Event listeners
 document.querySelectorAll(".build-btn").forEach(btn => {
   btn.onclick = () => {
     document.querySelectorAll(".build-btn").forEach(b => b.classList.remove("active"));
@@ -387,12 +561,8 @@ document.getElementById("search").oninput = e => renderCitizens(e.target.value);
 document.getElementById("send-chat").onclick = sendMessage;
 document.getElementById("chat-input").onkeydown = e => { if (e.key === "Enter") sendMessage(); };
 
-initCitizens();
-renderGrid();
-renderCitizens();
-updateUI();
-setTimeout(renderCitizenDots, 150);
-setInterval(gameTick, 2000);
+// Start
+setInterval(gameTick, 2500);
 setInterval(moveCitizens, 1100);
 </script>
 </body>
