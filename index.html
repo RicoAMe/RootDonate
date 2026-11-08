@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>RootDonate</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
@@ -14,93 +14,121 @@
     --text: #f4f5f7;
     --muted: #8e96a3;
     --accent: #5b8cff;
-    --green: #22c55e;
-    --red: #ef4444;
-    --yellow: #eab308;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background: var(--bg);
     color: var(--text);
     font-family: Inter, system-ui, sans-serif;
-    height: 100vh;
+    height: 100dvh;
     overflow: hidden;
   }
   .app {
-    display: grid;
-    grid-template-columns: 1fr 380px;
-    grid-template-rows: auto 1fr;
-    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
   }
   header {
-    grid-column: 1 / -1;
     background: var(--surface);
     border-bottom: 1px solid var(--border);
-    padding: 12px 20px;
+    padding: 12px 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
   }
   .resources {
     display: flex;
-    gap: 20px;
-    font-size: 0.92rem;
+    gap: 14px;
+    font-size: 0.85rem;
   }
-  .res { display: flex; align-items: center; gap: 6px; }
   .res span { font-weight: 600; }
+  .main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+    position: relative;
+  }
   .map-area {
-    padding: 16px;
+    flex: 1;
+    padding: 12px;
     overflow: auto;
     display: flex;
-    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .grid-container {
+    position: relative;
+    width: 100%;
+    max-width: 520px;
+    aspect-ratio: 1;
   }
   .grid {
     display: grid;
     grid-template-columns: repeat(10, 1fr);
-    gap: 4px;
-    max-width: 700px;
-    margin: 0 auto;
+    gap: 3px;
+    width: 100%;
+    height: 100%;
   }
   .cell {
-    aspect-ratio: 1;
     background: #1c1f28;
-    border-radius: 6px;
+    border-radius: 5px;
     border: 1px solid var(--border);
     display: grid;
     place-items: center;
-    font-size: 1.4rem;
+    font-size: 1.2rem;
     cursor: pointer;
-    transition: 0.15s;
   }
-  .cell:hover { background: #252936; }
   .cell.house { background: #3b2f5e; }
   .cell.farm { background: #1e3a2f; }
   .cell.factory { background: #3a2a1e; }
   .cell.park { background: #1e3a3a; }
+  .citizens-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+  .citizen-dot {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #5b8cff;
+    border: 2px solid white;
+    display: grid;
+    place-items: center;
+    font-size: 10px;
+    pointer-events: auto;
+    cursor: pointer;
+    transition: left 0.8s ease, top 0.8s ease;
+    z-index: 2;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
   .sidebar {
+    width: 340px;
     background: var(--surface);
     border-left: 1px solid var(--border);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    flex-shrink: 0;
   }
   .build-menu {
-    padding: 12px;
+    padding: 10px;
     border-bottom: 1px solid var(--border);
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
   }
   .build-btn {
     background: var(--surface-2);
     border: 1px solid var(--border);
     color: var(--text);
-    padding: 8px 12px;
+    padding: 8px 10px;
     border-radius: 10px;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
-  .build-btn.active { background: var(--accent); border-color: var(--accent); }
+  .build-btn.active { background: var(--accent); }
   .citizen-list {
     flex: 1;
     overflow-y: auto;
@@ -113,101 +141,86 @@
     margin-bottom: 4px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
   }
-  .citizen:hover { background: var(--surface-2); }
-  .citizen.selected { background: #1e293b; }
+  .citizen:hover, .citizen.selected { background: var(--surface-2); }
   .chat-panel {
-    height: 320px;
+    height: 280px;
     border-top: 1px solid var(--border);
-    display: flex;
+    display: none;
     flex-direction: column;
     background: #0e1016;
   }
-  .chat-header {
-    padding: 10px 14px;
-    font-weight: 600;
-    border-bottom: 1px solid var(--border);
-    font-size: 0.9rem;
-  }
-  .messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 10px 14px;
-    font-size: 0.88rem;
-  }
-  .msg { margin-bottom: 8px; line-height: 1.4; }
+  .chat-header { padding: 10px 14px; font-weight: 600; font-size: 0.9rem; }
+  .messages { flex: 1; overflow-y: auto; padding: 10px 14px; font-size: 0.85rem; }
+  .msg { margin-bottom: 8px; }
   .msg.me { color: #93c5fd; text-align: right; }
-  .msg.them { color: #d1d5db; }
-  .chat-input {
-    display: flex;
-    padding: 8px;
-    gap: 6px;
-  }
+  .chat-input { display: flex; padding: 8px; gap: 6px; }
   .chat-input input {
-    flex: 1;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: 10px;
-    padding: 8px 12px;
-    outline: none;
+    flex: 1; background: var(--surface-2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 10px; padding: 8px 12px; outline: none;
   }
   .chat-input button {
-    background: var(--accent);
-    border: none;
-    color: white;
-    border-radius: 10px;
-    padding: 0 14px;
-    cursor: pointer;
+    background: var(--accent); border: none; color: white; border-radius: 10px; padding: 0 14px;
   }
   .search {
-    width: 100%;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 8px 12px;
-    border-radius: 10px;
-    margin-bottom: 8px;
+    width: 100%; background: var(--surface-2); border: 1px solid var(--border);
+    color: var(--text); padding: 8px 12px; border-radius: 10px; margin-bottom: 8px;
+  }
+
+  @media (max-width: 768px) {
+    .main { flex-direction: column; }
+    .sidebar {
+      width: 100%;
+      height: 42%;
+      border-left: none;
+      border-top: 1px solid var(--border);
+    }
+    .map-area { padding: 8px; }
+    .grid-container { max-width: 100%; }
+    header { padding: 10px 12px; }
+    .resources { gap: 10px; font-size: 0.8rem; }
   }
 </style>
 </head>
 <body>
 <div class="app">
   <header>
-    <div style="font-weight:700;font-size:1.1rem;">Chatty City</div>
+    <div style="font-weight:700;">RootDonate</div>
     <div class="resources">
       <div class="res">Pop: <span id="pop">12</span></div>
       <div class="res">Food: <span id="food">80</span></div>
       <div class="res">Money: <span id="money">200</span></div>
-      <div class="res">Happiness: <span id="happy">72%</span></div>
+      <div class="res">Happy: <span id="happy">72%</span></div>
     </div>
   </header>
 
-  <div class="map-area">
-    <div class="grid" id="grid"></div>
-  </div>
-
-  <div class="sidebar">
-    <div class="build-menu">
-      <button class="build-btn" data-type="house">🏠 House (40$)</button>
-      <button class="build-btn" data-type="farm">🌾 Farm (60$)</button>
-      <button class="build-btn" data-type="factory">🏭 Factory (100$)</button>
-      <button class="build-btn" data-type="park">🌳 Park (50$)</button>
-      <button class="build-btn" data-type="none">❌ Cancel</button>
+  <div class="main">
+    <div class="map-area">
+      <div class="grid-container" id="grid-container">
+        <div class="grid" id="grid"></div>
+        <div class="citizens-layer" id="citizens-layer"></div>
+      </div>
     </div>
 
-    <div style="padding:12px 12px 0;">
-      <input class="search" id="search" placeholder="Search citizen by name..." />
-    </div>
-    <div class="citizen-list" id="citizen-list"></div>
-
-    <div class="chat-panel" id="chat-panel" style="display:none;">
-      <div class="chat-header" id="chat-header">Chat with Citizen</div>
-      <div class="messages" id="messages"></div>
-      <div class="chat-input">
-        <input id="chat-input" placeholder="Type a message..." />
-        <button id="send-chat">Send</button>
+    <div class="sidebar">
+      <div class="build-menu">
+        <button class="build-btn" data-type="house">🏠 House (40$)</button>
+        <button class="build-btn" data-type="farm">🌾 Farm (60$)</button>
+        <button class="build-btn" data-type="factory">🏭 Factory (100$)</button>
+        <button class="build-btn" data-type="park">🌳 Park (50$)</button>
+        <button class="build-btn" data-type="none">❌ Cancel</button>
+      </div>
+      <div style="padding:10px 10px 0;">
+        <input class="search" id="search" placeholder="Search citizen by name..." />
+      </div>
+      <div class="citizen-list" id="citizen-list"></div>
+      <div class="chat-panel" id="chat-panel">
+        <div class="chat-header" id="chat-header">Chat</div>
+        <div class="messages" id="messages"></div>
+        <div class="chat-input">
+          <input id="chat-input" placeholder="Type a message..." />
+          <button id="send-chat">Send</button>
+        </div>
       </div>
     </div>
   </div>
@@ -223,7 +236,7 @@ let food = 80;
 let happiness = 72;
 let selectedBuild = null;
 let selectedCitizen = null;
-let grid = Array(100).fill(null); // 10x10
+let grid = Array(100).fill(null);
 
 function randomName() {
   return firstNames[Math.floor(Math.random()*firstNames.length)] + " " + lastNames[Math.floor(Math.random()*lastNames.length)];
@@ -234,7 +247,9 @@ function createCitizen() {
     id: Date.now() + Math.random(),
     name: randomName(),
     happiness: 60 + Math.floor(Math.random()*30),
-    messages: []
+    messages: [],
+    x: Math.floor(Math.random()*10),
+    y: Math.floor(Math.random()*10)
   };
 }
 
@@ -257,41 +272,62 @@ function renderGrid() {
 function placeBuilding(index) {
   if (!selectedBuild || selectedBuild === "none") return;
   if (grid[index]) return;
-
   const costs = { house: 40, farm: 60, factory: 100, park: 50 };
-  if (money < costs[selectedBuild]) {
-    alert("Not enough money!");
-    return;
-  }
-
+  if (money < costs[selectedBuild]) return alert("Not enough money!");
   money -= costs[selectedBuild];
   grid[index] = selectedBuild;
-  if (selectedBuild === "house") {
-    citizens.push(createCitizen());
-  }
+  if (selectedBuild === "house") citizens.push(createCitizen());
   updateUI();
   renderGrid();
   renderCitizens();
+  renderCitizenDots();
+}
+
+function renderCitizenDots() {
+  const layer = document.getElementById("citizens-layer");
+  layer.innerHTML = "";
+  const container = document.getElementById("grid-container");
+  const cellSize = container.offsetWidth / 10;
+
+  citizens.forEach(c => {
+    const dot = document.createElement("div");
+    dot.className = "citizen-dot";
+    dot.textContent = "👤";
+    dot.style.left = (c.x * cellSize + cellSize/2 - 9) + "px";
+    dot.style.top = (c.y * cellSize + cellSize/2 - 9) + "px";
+    dot.onclick = (e) => { e.stopPropagation(); openChat(c); };
+    layer.appendChild(dot);
+  });
+}
+
+function moveCitizens() {
+  citizens.forEach(c => {
+    const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+    const [dx, dy] = dirs[Math.floor(Math.random()*dirs.length)];
+    const nx = Math.max(0, Math.min(9, c.x + dx));
+    const ny = Math.max(0, Math.min(9, c.y + dy));
+    c.x = nx;
+    c.y = ny;
+  });
+  renderCitizenDots();
 }
 
 function renderCitizens(filter = "") {
   const list = document.getElementById("citizen-list");
   list.innerHTML = "";
-  citizens
-    .filter(c => c.name.toLowerCase().includes(filter.toLowerCase()))
-    .forEach(c => {
-      const div = document.createElement("div");
-      div.className = "citizen" + (selectedCitizen?.id === c.id ? " selected" : "");
-      div.innerHTML = `<div>${c.name}</div><div style="font-size:0.75rem;color:#8e96a3">${c.happiness}%</div>`;
-      div.onclick = () => openChat(c);
-      list.appendChild(div);
-    });
+  citizens.filter(c => c.name.toLowerCase().includes(filter.toLowerCase())).forEach(c => {
+    const div = document.createElement("div");
+    div.className = "citizen" + (selectedCitizen?.id === c.id ? " selected" : "");
+    div.innerHTML = `<div>${c.name}</div><div style="font-size:0.75rem;color:#8e96a3">${c.happiness}%</div>`;
+    div.onclick = () => openChat(c);
+    list.appendChild(div);
+  });
 }
 
 function openChat(citizen) {
   selectedCitizen = citizen;
   document.getElementById("chat-panel").style.display = "flex";
-  document.getElementById("chat-header").textContent = `Chat with ${citizen.name}`;
+  document.getElementById("chat-header").textContent = citizen.name;
   renderMessages();
   renderCitizens(document.getElementById("search").value);
 }
@@ -309,17 +345,11 @@ function renderMessages() {
   box.scrollTop = box.scrollHeight;
 }
 
-function getCitizenReply(citizen) {
-  if (food < 40) return "Mayor, we're running low on food! Please build more farms.";
-  if (happiness < 50) return "People are unhappy. We need more parks and better living conditions.";
-  if (money < 50) return "The city is low on funds. Maybe build some factories?";
-  const replies = [
-    "Thanks for checking in, Mayor!",
-    "Everything's fine on my end.",
-    "I appreciate you asking.",
-    "The city is looking better every day.",
-    "Keep up the good work!"
-  ];
+function getCitizenReply() {
+  if (food < 40) return "Mayor, we're running low on food!";
+  if (happiness < 50) return "People are unhappy. We need more parks.";
+  if (money < 50) return "The city needs more income.";
+  const replies = ["Thanks for checking in!", "Everything's fine.", "Appreciate you asking.", "City is looking better!", "Keep it up!"];
   return replies[Math.floor(Math.random() * replies.length)];
 }
 
@@ -327,11 +357,8 @@ function sendMessage() {
   const input = document.getElementById("chat-input");
   const text = input.value.trim();
   if (!text || !selectedCitizen) return;
-
   selectedCitizen.messages.push({ from: "me", text });
-  const reply = getCitizenReply(selectedCitizen);
-  selectedCitizen.messages.push({ from: "them", text: reply });
-
+  selectedCitizen.messages.push({ from: "them", text: getCitizenReply() });
   input.value = "";
   renderMessages();
 }
@@ -344,30 +371,20 @@ function updateUI() {
 }
 
 function gameTick() {
-  // Production & consumption
   const farms = grid.filter(x => x === "farm").length;
   const factories = grid.filter(x => x === "factory").length;
   const parks = grid.filter(x => x === "park").length;
-
   food += farms * 8;
   money += factories * 12;
   food -= citizens.length * 1.2;
   happiness = Math.min(100, Math.max(10, happiness + parks * 0.8 - (food < 30 ? 3 : 0)));
-
-  // Growth
-  if (happiness > 70 && food > 50 && Math.random() < 0.15) {
-    citizens.push(createCitizen());
-  }
-
-  // Cap resources
+  if (happiness > 70 && food > 50 && Math.random() < 0.12) citizens.push(createCitizen());
   food = Math.max(0, food);
   money = Math.max(0, money);
-
   updateUI();
   renderCitizens(document.getElementById("search").value);
 }
 
-// Event listeners
 document.querySelectorAll(".build-btn").forEach(btn => {
   btn.onclick = () => {
     document.querySelectorAll(".build-btn").forEach(b => b.classList.remove("active"));
@@ -378,16 +395,17 @@ document.querySelectorAll(".build-btn").forEach(btn => {
 
 document.getElementById("search").oninput = e => renderCitizens(e.target.value);
 document.getElementById("send-chat").onclick = sendMessage;
-document.getElementById("chat-input").onkeydown = e => {
-  if (e.key === "Enter") sendMessage();
-};
+document.getElementById("chat-input").onkeydown = e => { if (e.key === "Enter") sendMessage(); };
 
-// Init
+window.addEventListener("resize", renderCitizenDots);
+
 initCitizens();
 renderGrid();
 renderCitizens();
 updateUI();
+setTimeout(renderCitizenDots, 100);
 setInterval(gameTick, 2000);
+setInterval(moveCitizens, 1200);
 </script>
 </body>
 </html>
