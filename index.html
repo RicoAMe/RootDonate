@@ -473,7 +473,6 @@ function centerOnCitizen(citizen) {
 }
 
 function moveEntities() {
-  // Move citizens
   citizens.forEach(c => {
     if (c.task === "rest" || c.task === "home") return;
     const dirs = [[0,1],[0,-1],[1,0],[-1,0],[1,1],[-1,1],[1,-1],[-1,-1]];
@@ -482,7 +481,6 @@ function moveEntities() {
     c.y = Math.max(0, Math.min(GRID_SIZE - 1, c.y + dy));
   });
 
-  // Move myself (smooth walking)
   if (currentUser) {
     const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
     const [dx, dy] = dirs[Math.floor(Math.random() * dirs.length)];
@@ -737,7 +735,7 @@ document.querySelectorAll(".build-btn").forEach(btn => {
 
 document.getElementById("search").oninput = e => renderCitizens(e.target.value);
 
-setInterval(gameTick, Date.now());
+setInterval(gameTick, 3000);
 setInterval(moveEntities, 1000);
 </script>
 </body>
