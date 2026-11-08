@@ -737,7 +737,7 @@ document.querySelectorAll(".build-btn").forEach(btn => {
 
 document.getElementById("search").oninput = e => renderCitizens(e.target.value);
 
-setInterval(gameTick, 3000);
+setInterval(gameTick, Date.now());
 setInterval(moveEntities, 1000);
 </script>
 </body>
