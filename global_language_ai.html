@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<title>Global Language AI · Puter</title>
+<script src="https://js.puter.com/v2/"></script>
+<style>
+  :root {
+    --bg: #0b1220;
+    --surface: #111827;
+    --surface-elevated: #1e293b;
+    --surface-hover: #334155;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --accent-soft: rgba(59, 130, 246, 0.15);
+    --text: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --user-bubble: #1d4ed8;
+    --bot-bubble: #1e293b;
+    --border: #1e293b;
+    --shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0.75rem 1rem;
+    padding-top: calc(0.75rem + env(safe-area-inset-top));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+  }
+
+  .logo {
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  header h1 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .controls {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  button {
+    background: var(--accent);
+    border: 1px solid var(--accent);
+    color: white;
+    padding: 0.4rem 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    font-size: 0.85rem;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button:active { transform: scale(0.97); }
+  button.secondary {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--text-secondary);
+  }
+  button.secondary:active { background: var(--surface-elevated); }
+
+  #chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .msg {
+    max-width: min(85%, 480px);
+    padding: 0.7rem 0.95rem;
+    border-radius: 18px;
+    line-height: 1.45;
+    word-wrap: break-word;
+    animation: msgIn 0.2s ease-out;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  }
+
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg.user {
+    align-self: flex-end;
+    background: var(--user-bubble);
+    color: white;
+    border-bottom-right-radius: 6px;
+  }
+
+  .msg.bot {
+    align-self: flex-start;
+    background: var(--bot-bubble);
+    border-bottom-left-radius: 6px;
+  }
+
+  .msg .meta {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    margin-top: 0.35rem;
+    opacity: 0.8;
+  }
+
+  .msg.user .meta { color: rgba(255,255,255,0.7); }
+
+  .input-area {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 0.75rem 1rem;
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+    flex-shrink: 0;
+  }
+
+  #input {
+    flex: 1;
+    resize: none;
+    min-height: 44px;
+    max-height: 140px;
+    padding: 0.65rem 0.85rem;
+    font-family: inherit;
+    line-height: 1.4;
+    background: var(--surface-elevated);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: var(--radius-sm);
+  }
+
+  #input:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+
+  #send {
+    height: 44px;
+    min-width: 72px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+  }
+
+  .empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem 1.5rem;
+    color: var(--text-secondary);
+  }
+
+  .empty-inner {
+    max-width: 340px;
+  }
+
+  .empty h2 {
+    color: var(--text);
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .empty p {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .status {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    padding: 0.25rem 1rem;
+    text-align: center;
+  }
+
+  footer {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    header { padding: 1rem 1.5rem; }
+    header h1 { font-size: 1.15rem; }
+    #chat { padding: 1.25rem 1.5rem; }
+    .input-area { padding: 1rem 1.5rem; }
+    footer {
+      display: block;
+      text-align: center;
+      padding: 0.6rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+    }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo">AI</div>
+    <h1>Global Language AI</h1>
+  </div>
+  <div class="controls">
+    <button class="secondary" id="clear" aria-label="Clear chat">Clear</button>
+  </div>
+</header>
+
+<div id="status" class="status"></div>
+
+<div id="chat">
+  <div class="empty" id="empty">
+    <div class="empty-inner">
+      <h2>Chat in any language</h2>
+      <p>Powered by Puter.js · Grok AI.<br>
+      Start typing to sign in and chat (user-pays). No selections needed.</p>
+    </div>
+  </div>
+</div>
+
+<div class="input-area">
+  <textarea id="input" placeholder="Message…" rows="1" aria-label="Message input"></textarea>
+  <button id="send">Send</button>
+</div>
+
+<footer>
+  Global Language AI · Puter-powered · Auto language · Grok
+</footer>
+
+<script>
+const chat = document.getElementById('chat');
+const input = document.getElementById('input');
+const sendBtn = document.getElementById('send');
+const clearBtn = document.getElementById('clear');
+const statusEl = document.getElementById('status');
+let empty = document.getElementById('empty');
+
+const MODEL = 'x-ai/grok-4.7';
+let signedIn = false;
+let prompting = false;
+
+let messages = [
+  {
+    role: "system",
+    content: "You are Global Language AI, a helpful, concise multilingual assistant. Always respond in the language of the user's message. Be natural, accurate, and friendly. Do not mention that you are an AI unless asked."
+  }
+];
+
+function setStatus(text) {
+  statusEl.textContent = text;
+}
+
+function addMessage(text, role) {
+  if (empty) {
+    empty.remove();
+    empty = null;
+  }
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  div.innerHTML = `
+    <div class="content">${escapeHtml(text)}</div>
+    <div class="meta">${role === 'user' ? 'You' : 'AI'}</div>
+  `;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+  return div;
+}
+
+function escapeHtml(str) {
+  return str.replace(/[&<>"']/g, m => ({
+    '&': '&', '<': '<', '>': '>', '"': '"', "'": '&#39;'
+  }[m]));
+}
+
+function updateBubble(div, text) {
+  const content = div.querySelector('.content');
+  content.textContent = text;
+  chat.scrollTop = chat.scrollHeight;
+}
+
+async function checkAuth() {
+  try {
+    const user = await puter.auth.getUser();
+    if (user) {
+      signedIn = true;
+      setStatus('Ready · ' + (user.username || 'Puter'));
+      return true;
+    }
+  } catch (e) {}
+  signedIn = false;
+  setStatus('Start typing to sign in');
+  return false;
+}
+
+async function promptSignIn() {
+  if (signedIn || prompting) return signedIn;
+  prompting = true;
+  try {
+    setStatus('Signing in…');
+    await puter.auth.signIn();
+    await checkAuth();
+  } catch (err) {
+    setStatus('Sign-in cancelled — type again to retry');
+  } finally {
+    prompting = false;
+  }
+  return signedIn;
+}
+
+async function send() {
+  const text = input.value.trim();
+  if (!text) return;
+
+  if (!(await checkAuth())) {
+    await promptSignIn();
+    if (!signedIn) return;
+  }
+
+  addMessage(text, 'user');
+  messages.push({ role: "user", content: text });
+
+  input.value = '';
+  input.style.height = 'auto';
+  sendBtn.disabled = true;
+  setStatus('Thinking…');
+
+  const botDiv = addMessage('…', 'bot');
+
+  try {
+    const response = await puter.ai.chat(messages, {
+      model: MODEL,
+      stream: true,
+      normalize: true
+    });
+
+    let fullReply = '';
+    for await (const chunk of response) {
+      if (chunk.type === 'text' && chunk.text) {
+        fullReply += chunk.text;
+        updateBubble(botDiv, fullReply);
+      } else if (chunk.type === 'error') {
+        throw new Error(chunk.text || 'Stream error');
+      }
+    }
+
+    if (!fullReply) {
+      const nonStream = await puter.ai.chat(messages, { model: MODEL, normalize: true });
+      fullReply = nonStream?.message?.content || 'No response received.';
+      updateBubble(botDiv, fullReply);
+    }
+
+    messages.push({ role: "assistant", content: fullReply });
+    setStatus('Ready');
+  } catch (err) {
+    console.error(err);
+    const errMsg = err.message || String(err);
+    updateBubble(botDiv, `Error: ${errMsg}`);
+    setStatus('Error — try again');
+  } finally {
+    sendBtn.disabled = false;
+  }
+}
+
+sendBtn.addEventListener('click', send);
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    send();
+  }
+});
+input.addEventListener('input', async () => {
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 140) + 'px';
+  if (!signedIn && input.value.trim().length > 0) {
+    await promptSignIn();
+  }
+});
+input.addEventListener('focus', async () => {
+  if (!signedIn) {
+    await promptSignIn();
+  }
+});
+clearBtn.addEventListener('click', () => {
+  messages = [messages[0]];
+  chat.innerHTML = '';
+  const emptyDiv = document.createElement('div');
+  emptyDiv.className = 'empty';
+  emptyDiv.id = 'empty';
+  emptyDiv.innerHTML = `
+    <div class="empty-inner">
+      <h2>Chat in any language</h2>
+      <p>Powered by Puter.js · Grok AI.<br>
+      Start typing to sign in and chat (user-pays). No selections needed.</p>
+    </div>`;
+  chat.appendChild(emptyDiv);
+  empty = emptyDiv;
+  checkAuth();
+});
+
+// Init
+checkAuth();
+</script>
+</body>
+</html>
