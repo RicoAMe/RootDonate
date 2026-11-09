@@ -261,6 +261,7 @@
     <h1>Global Language AI</h1>
   </div>
   <div class="controls">
+    <button class="secondary" id="micBtn" aria-label="Toggle background microphone">🎤 Listen</button>
     <button class="secondary" id="clear" aria-label="Clear chat">Clear</button>
   </div>
 </header>
@@ -291,6 +292,7 @@ const chat = document.getElementById('chat');
 const input = document.getElementById('input');
 const sendBtn = document.getElementById('send');
 const clearBtn = document.getElementById('clear');
+const micBtn = document.getElementById('micBtn');
 const statusEl = document.getElementById('status');
 let empty = document.getElementById('empty');
 
@@ -303,9 +305,90 @@ const BASE_SYSTEM = "You are Global Language AI, a helpful, concise multilingual
 let messages = [
   {
     role: "system",
-    content: BASE_SYSTEM + new Date(Date.now()).toLocaleString()
+    content: BASE_SYSTEM + new Date(Date.now()).toLocaleString() + " | Timestamp: " + Date.now()
   }
 ];
+
+// Background mic
+let recognition = null;
+let isListening = false;
+
+function initRecognition() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    setStatus('Speech recognition not supported');
+    return false;
+  }
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = navigator.language || 'en-US';
+
+  recognition.onresult = (event) => {
+    let interim = '';
+    let finalTranscript = '';
+    for (let i = event.resultIndex; i < event.results.length; ++i) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        finalTranscript += transcript;
+      } else {
+        interim += transcript;
+      }
+    }
+    if (interim) {
+      setStatus('Listening… ' + interim + ' · ' + Date.now());
+    }
+    if (finalTranscript.trim()) {
+      const text = finalTranscript.trim();
+      const captureTs = Date.now();
+      input.value = text;
+      // Auto-send finalized speech (timestamped with Date.now())
+      send(captureTs);
+    }
+  };
+
+  recognition.onerror = (event) => {
+    console.error('Speech error:', event.error);
+    setStatus('Mic error: ' + event.error + ' · ' + Date.now());
+    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+      isListening = false;
+      micBtn.textContent = '🎤 Listen';
+    }
+  };
+
+  recognition.onend = () => {
+    if (isListening) {
+      // Keep listening in background
+      try { recognition.start(); } catch (e) {}
+    } else {
+      micBtn.textContent = '🎤 Listen';
+      setStatus('Ready · ' + Date.now());
+    }
+  };
+
+  return true;
+}
+
+function toggleMic() {
+  if (!recognition && !initRecognition()) return;
+  if (isListening) {
+    isListening = false;
+    recognition.stop();
+    micBtn.textContent = '🎤 Listen';
+    setStatus('Mic stopped · ' + Date.now());
+  } else {
+    isListening = true;
+    micBtn.textContent = '🔴 Listening';
+    setStatus('Background mic on · ' + Date.now());
+    try {
+      recognition.start();
+    } catch (e) {
+      setStatus('Could not start mic · ' + Date.now());
+      isListening = false;
+      micBtn.textContent = '🎤 Listen';
+    }
+  }
+}
 
 function setStatus(text) {
   statusEl.textContent = text;
@@ -324,7 +407,7 @@ function addMessage(text, role, timestamp = Date.now()) {
   div.className = `msg ${role}`;
   div.innerHTML = `
     <div class="content">${escapeHtml(text)}</div>
-    <div class="meta">${role === 'user' ? 'You' : 'AI'} · ${formatTime(timestamp)}</div>
+    <div class="meta">${role === 'user' ? 'You' : 'AI'} · ${formatTime(timestamp)} · ${timestamp}</div>
   `;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
@@ -344,7 +427,8 @@ function updateBubble(div, text) {
 }
 
 function updateSystemTime() {
-  messages[0].content = BASE_SYSTEM + new Date(Date.now()).toLocaleString();
+  const now = Date.now();
+  messages[0].content = BASE_SYSTEM + new Date(now).toLocaleString() + " | Timestamp: " + now;
 }
 
 async function checkAuth() {
@@ -352,12 +436,12 @@ async function checkAuth() {
     const user = await puter.auth.getUser();
     if (user) {
       signedIn = true;
-      setStatus('Ready · ' + (user.username || 'Puter'));
+      setStatus('Ready · ' + (user.username || 'Puter') + ' · ' + Date.now());
       return true;
     }
   } catch (e) {}
   signedIn = false;
-  setStatus('Start typing to sign in');
+  setStatus('Start typing to sign in · ' + Date.now());
   return false;
 }
 
@@ -365,18 +449,18 @@ async function promptSignIn() {
   if (signedIn || prompting) return signedIn;
   prompting = true;
   try {
-    setStatus('Signing in…');
+    setStatus('Signing in… · ' + Date.now());
     await puter.auth.signIn();
     await checkAuth();
   } catch (err) {
-    setStatus('Sign-in cancelled — type again to retry');
+    setStatus('Sign-in cancelled — type again to retry · ' + Date.now());
   } finally {
     prompting = false;
   }
   return signedIn;
 }
 
-async function send() {
+async function send(timestamp = Date.now()) {
   const text = input.value.trim();
   if (!text) return;
 
@@ -385,16 +469,16 @@ async function send() {
     if (!signedIn) return;
   }
 
-  updateSystemTime(); // keep AI aware of current time
+  updateSystemTime(); // keep AI aware of current time + Date.now()
 
-  const now = Date.now();
+  const now = timestamp || Date.now();
   addMessage(text, 'user', now);
   messages.push({ role: "user", content: text });
 
   input.value = '';
   input.style.height = 'auto';
   sendBtn.disabled = true;
-  setStatus('Thinking…');
+  setStatus('Thinking… · ' + Date.now());
 
   const botDiv = addMessage('…', 'bot', Date.now());
 
@@ -422,18 +506,19 @@ async function send() {
     }
 
     messages.push({ role: "assistant", content: fullReply });
-    setStatus('Ready');
+    setStatus(isListening ? 'Listening… · ' + Date.now() : 'Ready · ' + Date.now());
   } catch (err) {
     console.error(err);
     const errMsg = err.message || String(err);
     updateBubble(botDiv, `Error: ${errMsg}`);
-    setStatus('Error — try again');
+    setStatus('Error — try again · ' + Date.now());
   } finally {
     sendBtn.disabled = false;
   }
 }
 
-sendBtn.addEventListener('click', send);
+sendBtn.addEventListener('click', () => send());
+micBtn.addEventListener('click', toggleMic);
 input.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
@@ -455,7 +540,7 @@ input.addEventListener('focus', async () => {
 clearBtn.addEventListener('click', () => {
   messages = [{
     role: "system",
-    content: BASE_SYSTEM + new Date(Date.now()).toLocaleString()
+    content: BASE_SYSTEM + new Date(Date.now()).toLocaleString() + " | Timestamp: " + Date.now()
   }];
   chat.innerHTML = '';
   const emptyDiv = document.createElement('div');
@@ -469,6 +554,11 @@ clearBtn.addEventListener('click', () => {
     </div>`;
   chat.appendChild(emptyDiv);
   empty = emptyDiv;
+  if (isListening) {
+    isListening = false;
+    if (recognition) recognition.stop();
+    micBtn.textContent = '🎤 Listen';
+  }
   checkAuth();
 });
 
