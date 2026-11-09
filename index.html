@@ -298,10 +298,12 @@ const MODEL = 'x-ai/grok-4.7';
 let signedIn = false;
 let prompting = false;
 
+const BASE_SYSTEM = "You are Global Language AI, a helpful, concise multilingual assistant. Always respond in the language of the user's message. Be natural, accurate, and friendly. Do not mention that you are an AI unless asked. Current date and time: ";
+
 let messages = [
   {
     role: "system",
-    content: "You are Global Language AI, a helpful, concise multilingual assistant. Always respond in the language of the user's message. Be natural, accurate, and friendly. Do not mention that you are an AI unless asked."
+    content: BASE_SYSTEM + new Date(Date.now()).toLocaleString()
   }
 ];
 
@@ -309,7 +311,11 @@ function setStatus(text) {
   statusEl.textContent = text;
 }
 
-function addMessage(text, role) {
+function formatTime(ts = Date.now()) {
+  return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function addMessage(text, role, timestamp = Date.now()) {
   if (empty) {
     empty.remove();
     empty = null;
@@ -318,7 +324,7 @@ function addMessage(text, role) {
   div.className = `msg ${role}`;
   div.innerHTML = `
     <div class="content">${escapeHtml(text)}</div>
-    <div class="meta">${role === 'user' ? 'You' : 'AI'}</div>
+    <div class="meta">${role === 'user' ? 'You' : 'AI'} · ${formatTime(timestamp)}</div>
   `;
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
@@ -327,7 +333,7 @@ function addMessage(text, role) {
 
 function escapeHtml(str) {
   return str.replace(/[&<>"']/g, m => ({
-    '&': '&', '<': '<', '>': '>', '"': '"', "'": '&#39;'
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[m]));
 }
 
@@ -335,6 +341,10 @@ function updateBubble(div, text) {
   const content = div.querySelector('.content');
   content.textContent = text;
   chat.scrollTop = chat.scrollHeight;
+}
+
+function updateSystemTime() {
+  messages[0].content = BASE_SYSTEM + new Date(Date.now()).toLocaleString();
 }
 
 async function checkAuth() {
@@ -375,7 +385,10 @@ async function send() {
     if (!signedIn) return;
   }
 
-  addMessage(text, 'user');
+  updateSystemTime(); // keep AI aware of current time
+
+  const now = Date.now();
+  addMessage(text, 'user', now);
   messages.push({ role: "user", content: text });
 
   input.value = '';
@@ -383,7 +396,7 @@ async function send() {
   sendBtn.disabled = true;
   setStatus('Thinking…');
 
-  const botDiv = addMessage('…', 'bot');
+  const botDiv = addMessage('…', 'bot', Date.now());
 
   try {
     const response = await puter.ai.chat(messages, {
@@ -440,7 +453,10 @@ input.addEventListener('focus', async () => {
   }
 });
 clearBtn.addEventListener('click', () => {
-  messages = [messages[0]];
+  messages = [{
+    role: "system",
+    content: BASE_SYSTEM + new Date(Date.now()).toLocaleString()
+  }];
   chat.innerHTML = '';
   const emptyDiv = document.createElement('div');
   emptyDiv.className = 'empty';
