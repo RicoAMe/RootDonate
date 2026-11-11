@@ -92,6 +92,8 @@
     gap: 0.4rem;
     align-items: center;
     flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
 
   button {
@@ -261,6 +263,8 @@
     <h1>Global Language AI</h1>
   </div>
   <div class="controls">
+    <button class="secondary" id="cryptoBtn" aria-label="Crypto prices">₿ Crypto</button>
+    <button class="secondary" id="speakBtn" aria-label="Toggle voice responses">🔊 Speak</button>
     <button class="secondary" id="micBtn" aria-label="Toggle background microphone">🎤 Listen</button>
     <button class="secondary" id="clear" aria-label="Clear chat">Clear</button>
   </div>
@@ -273,7 +277,7 @@
     <div class="empty-inner">
       <h2>Chat in any language</h2>
       <p>Powered by Puter.js · Grok AI.<br>
-      Start typing to sign in and chat (user-pays). No selections needed.</p>
+      Voice responses · Live crypto prices · Start typing to sign in.</p>
     </div>
   </div>
 </div>
@@ -284,7 +288,7 @@
 </div>
 
 <footer>
-  Global Language AI · Puter-powered · Auto language · Grok
+  Global Language AI · Puter-powered · Auto language · Grok · Apple Intelligence style + Crypto
 </footer>
 
 <script>
@@ -293,14 +297,17 @@ const input = document.getElementById('input');
 const sendBtn = document.getElementById('send');
 const clearBtn = document.getElementById('clear');
 const micBtn = document.getElementById('micBtn');
+const speakBtn = document.getElementById('speakBtn');
+const cryptoBtn = document.getElementById('cryptoBtn');
 const statusEl = document.getElementById('status');
 let empty = document.getElementById('empty');
 
 const MODEL = 'x-ai/grok-4.7';
 let signedIn = false;
 let prompting = false;
+let autoSpeak = true; // Apple Intelligence–style voice responses
 
-const BASE_SYSTEM = "You are Global Language AI, a helpful, concise multilingual assistant. Always respond in the language of the user's message. Be natural, accurate, and friendly. Do not mention that you are an AI unless asked. Current date and time: ";
+const BASE_SYSTEM = "You are Global Language AI, a helpful, concise multilingual assistant with Apple Intelligence–style privacy and naturalness. Always respond in the language of the user's message. Be natural, accurate, and friendly. You can discuss cryptocurrency, prices, markets, and related topics helpfully. Do not mention that you are an AI unless asked. Current date and time: ";
 
 let messages = [
   {
@@ -342,7 +349,6 @@ function initRecognition() {
       const text = finalTranscript.trim();
       const captureTs = Date.now();
       input.value = text;
-      // Auto-send finalized speech (timestamped with Date.now())
       send(captureTs);
     }
   };
@@ -358,7 +364,6 @@ function initRecognition() {
 
   recognition.onend = () => {
     if (isListening) {
-      // Keep listening in background
       try { recognition.start(); } catch (e) {}
     } else {
       micBtn.textContent = '🎤 Listen';
@@ -431,6 +436,24 @@ function updateSystemTime() {
   messages[0].content = BASE_SYSTEM + new Date(now).toLocaleString() + " | Timestamp: " + now;
 }
 
+async function speakText(text) {
+  if (!autoSpeak || !text || text.length > 2500) return;
+  try {
+    const audio = await puter.ai.txt2speech(text, {
+      provider: "xai",
+      voice: "eve",   // energetic xAI voice
+      language: "en"
+    });
+    audio.play();
+  } catch (e) {
+    console.warn('TTS failed', e);
+    // Fallback to browser speech synthesis
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = navigator.language || 'en-US';
+    speechSynthesis.speak(utter);
+  }
+}
+
 async function checkAuth() {
   try {
     const user = await puter.auth.getUser();
@@ -469,7 +492,7 @@ async function send(timestamp = Date.now()) {
     if (!signedIn) return;
   }
 
-  updateSystemTime(); // keep AI aware of current time + Date.now()
+  updateSystemTime();
 
   const now = timestamp || Date.now();
   addMessage(text, 'user', now);
@@ -507,6 +530,11 @@ async function send(timestamp = Date.now()) {
 
     messages.push({ role: "assistant", content: fullReply });
     setStatus(isListening ? 'Listening… · ' + Date.now() : 'Ready · ' + Date.now());
+
+    // Apple Intelligence–style spoken response
+    if (autoSpeak && fullReply) {
+      speakText(fullReply);
+    }
   } catch (err) {
     console.error(err);
     const errMsg = err.message || String(err);
@@ -517,8 +545,39 @@ async function send(timestamp = Date.now()) {
   }
 }
 
+// Crypto prices using Puter’s CORS-free networking
+async function fetchCryptoPrices() {
+  setStatus('Fetching crypto prices… · ' + Date.now());
+  try {
+    const res = await puter.net.fetch(
+      'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,dogecoin,cardano&vs_currencies=usd&include_24hr_change=true'
+    );
+    const data = await res.json();
+    const lines = Object.entries(data).map(([id, info]) => {
+      const change = info.usd_24h_change?.toFixed(2) || 'n/a';
+      const sign = change > 0 ? '+' : '';
+      return `${id.charAt(0).toUpperCase() + id.slice(1)}: $${info.usd.toLocaleString()} (${sign}${change}%)`;
+    }).join('\n');
+
+    const msg = `Live crypto prices:\n${lines}\n\n(Source: CoinGecko)`;
+    addMessage(msg, 'bot', Date.now());
+    if (autoSpeak) speakText(msg);
+    setStatus('Crypto updated · ' + Date.now());
+  } catch (e) {
+    addMessage('Could not fetch crypto prices right now.', 'bot');
+    setStatus('Crypto fetch failed · ' + Date.now());
+  }
+}
+
 sendBtn.addEventListener('click', () => send());
 micBtn.addEventListener('click', toggleMic);
+speakBtn.addEventListener('click', () => {
+  autoSpeak = !autoSpeak;
+  speakBtn.textContent = autoSpeak ? '🔊 Speak' : '🔇 Mute';
+  setStatus((autoSpeak ? 'Voice responses on' : 'Voice responses off') + ' · ' + Date.now());
+});
+cryptoBtn.addEventListener('click', fetchCryptoPrices);
+
 input.addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
@@ -550,7 +609,7 @@ clearBtn.addEventListener('click', () => {
     <div class="empty-inner">
       <h2>Chat in any language</h2>
       <p>Powered by Puter.js · Grok AI.<br>
-      Start typing to sign in and chat (user-pays). No selections needed.</p>
+      Voice responses · Live crypto prices · Start typing to sign in.</p>
     </div>`;
   chat.appendChild(emptyDiv);
   empty = emptyDiv;
