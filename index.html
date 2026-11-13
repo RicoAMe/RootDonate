@@ -23,9 +23,7 @@
       --radius: 16px;
       --radius-sm: 10px;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
     html, body {
       height: 100%;
       background: var(--bg);
@@ -34,14 +32,12 @@
       -webkit-font-smoothing: antialiased;
       overscroll-behavior: none;
     }
-
     body {
       display: flex;
       flex-direction: column;
       min-height: 100dvh;
       padding-bottom: env(safe-area-inset-bottom);
     }
-
     header {
       background: var(--surface);
       border-bottom: 1px solid var(--border);
@@ -56,7 +52,6 @@
       top: 0;
       z-index: 10;
     }
-
     .brand { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
     .logo {
       width: 32px; height: 32px;
@@ -69,9 +64,7 @@
       font-size: 1.05rem; font-weight: 600;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-
     .controls { display: flex; gap: 0.4rem; align-items: center; flex-shrink: 0; flex-wrap: wrap; }
-
     button {
       background: var(--accent);
       border: 1px solid var(--accent);
@@ -89,7 +82,6 @@
       color: var(--text-secondary);
     }
     button.secondary:active { background: var(--surface-elevated); }
-
     #chat {
       flex: 1;
       overflow-y: auto;
@@ -99,7 +91,6 @@
       gap: 0.65rem;
       -webkit-overflow-scrolling: touch;
     }
-
     .msg {
       max-width: min(85%, 480px);
       padding: 0.7rem 0.95rem;
@@ -129,7 +120,6 @@
       margin-top: 0.35rem;
     }
     .msg.user .meta { color: rgba(255,255,255,0.7); }
-
     .input-area {
       background: var(--surface);
       border-top: 1px solid var(--border);
@@ -139,7 +129,6 @@
       gap: 0.5rem;
       align-items: flex-end;
     }
-
     #input {
       flex: 1;
       resize: none;
@@ -157,9 +146,7 @@
       outline: none;
       box-shadow: 0 0 0 3px var(--accent-soft);
     }
-
     #send { height: 44px; min-width: 72px; font-weight: 600; }
-
     .empty {
       flex: 1;
       display: flex;
@@ -171,14 +158,12 @@
     }
     .empty h2 { color: var(--text); font-size: 1.35rem; margin-bottom: 0.5rem; }
     .empty p { font-size: 0.9rem; line-height: 1.5; }
-
     .status {
       font-size: 0.75rem;
       color: var(--text-muted);
       padding: 0.25rem 1rem;
       text-align: center;
     }
-
     footer {
       display: none;
       text-align: center;
@@ -188,7 +173,6 @@
       background: var(--surface);
       border-top: 1px solid var(--border);
     }
-
     @media (min-width: 768px) {
       header { padding: 1rem 1.5rem; }
       header h1 { font-size: 1.15rem; }
@@ -219,7 +203,7 @@
       <div class="empty-inner">
         <h2>Chat in any language</h2>
         <p>Powered by Puter.js · Grok AI<br>
-        Voice responses · Live crypto · Start typing to sign in</p>
+        Voice responses · Live crypto · I know this app's source code by heart</p>
       </div>
     </div>
   </div>
@@ -229,7 +213,7 @@
     <button id="send">Send</button>
   </div>
 
-  <footer>Global Language AI · Puter + Grok</footer>
+  <footer>Global Language AI · Puter + Grok · Knows its own source</footer>
 
   <script>
     const chat = document.getElementById('chat');
@@ -249,19 +233,48 @@
     let recognition = null;
     let isListening = false;
 
-    // System prompt now includes knowledge of the app itself
-    const BASE_SYSTEM = `You are Global Language AI, a helpful multilingual assistant running inside a custom web chat interface.
+    const BASE_SYSTEM = `You are Global Language AI, a helpful multilingual assistant running inside a custom single-file web chat interface.
 
-You know this app by heart:
-- It is a single-page dark-themed chat UI.
-- Users can type messages or use the microphone (background speech recognition).
-- Responses can be spoken aloud automatically (TTS).
-- There is a Crypto button that shows live prices for Bitcoin, Ethereum, Solana, Dogecoin, and Cardano.
-- There are buttons for Speak (toggle voice), Listen (toggle mic), and Clear (reset chat).
-- The app uses Puter.js for authentication and AI calls.
-- You always reply in the same language as the user's message.
-- Be natural, accurate, friendly, and concise.
-- You can discuss cryptocurrency and markets when relevant.
+You know this application's source code by heart. Here is the exact structure and logic:
+
+FILE: Single HTML file with embedded CSS + JavaScript.
+LIBRARIES: Loads https://js.puter.com/v2/ for auth + AI.
+
+UI STRUCTURE:
+- header: brand (logo "AI" + title "Global Language AI") + controls (Crypto, Speak, Listen, Clear buttons)
+- #status: small status line
+- #chat: message container (starts with empty state)
+- .input-area: auto-growing #input textarea + #send button
+- footer: shown only on desktop
+
+KEY VARIABLES:
+- MODEL = 'x-ai/grok-4.7'
+- messages[] starts with system message
+- signedIn, prompting, autoSpeak, recognition, isListening
+- empty (reference to empty-state div)
+
+KEY FUNCTIONS:
+- setStatus(text)
+- formatTime(ts)
+- escapeHtml(str)
+- addMessage(text, role, timestamp)
+- updateBubble(div, text)
+- updateSystemTime()
+- initRecognition() — sets up continuous SpeechRecognition
+- toggleMic()
+- speakText(text) — uses puter.ai.txt2speech (provider "xai", voice "eve") or falls back to SpeechSynthesis
+- checkAuth() / promptSignIn() — Puter auth
+- send() — main chat flow: auth → add user message → stream puter.ai.chat → update bubble → speak if enabled
+- fetchCryptoPrices() — CoinGecko via puter.net.fetch for bitcoin, ethereum, solana, dogecoin, cardano
+- Event listeners for buttons, Enter key, input resize, focus/input sign-in trigger, and Clear (resets messages + restores empty state)
+
+BEHAVIOR:
+- Replies always in the same language as the user
+- Streams responses and updates the bubble live
+- Auto-speaks replies when Speak is on
+- Mic can run continuously and auto-send final transcripts
+- Crypto button inserts a formatted price message
+- Clear fully resets conversation history
 
 Current date/time: `;
 
@@ -489,7 +502,6 @@ Current date/time: `;
       }
     }
 
-    // Event listeners
     sendBtn.addEventListener('click', send);
     micBtn.addEventListener('click', toggleMic);
     speakBtn.addEventListener('click', () => {
@@ -529,7 +541,7 @@ Current date/time: `;
         <div class="empty-inner">
           <h2>Chat in any language</h2>
           <p>Powered by Puter.js · Grok AI<br>
-          Voice responses · Live crypto · Start typing to sign in</p>
+          Voice responses · Live crypto · I know this app's source code by heart</p>
         </div>`;
       chat.appendChild(emptyDiv);
       empty = emptyDiv;
