@@ -189,7 +189,6 @@
       <h1>Global Language AI</h1>
     </div>
     <div class="controls">
-      <button class="secondary" id="cryptoBtn">₿ Crypto</button>
       <button class="secondary" id="speakBtn">🔊 Speak</button>
       <button class="secondary" id="micBtn">🎤 Listen</button>
       <button class="secondary" id="clear">Clear</button>
@@ -203,7 +202,7 @@
       <div class="empty-inner">
         <h2>Chat in any language</h2>
         <p>Powered by Puter.js · Grok AI<br>
-        Voice responses · Live crypto · History saved to your Puter account</p>
+        Voice responses · Guest mode enabled · History saved when signed in</p>
       </div>
     </div>
   </div>
@@ -222,7 +221,6 @@
     const clearBtn = document.getElementById('clear');
     const micBtn = document.getElementById('micBtn');
     const speakBtn = document.getElementById('speakBtn');
-    const cryptoBtn = document.getElementById('cryptoBtn');
     const statusEl = document.getElementById('status');
     let empty = document.getElementById('empty');
 
@@ -243,7 +241,7 @@ FILE: Single HTML file with embedded CSS + JavaScript.
 LIBRARIES: Loads https://js.puter.com/v2/ for auth + AI + cloud KV storage.
 
 UI STRUCTURE:
-- header: brand (logo "AI" + title "Global Language AI") + controls (Crypto, Speak, Listen, Clear buttons)
+- header: brand (logo "AI" + title "Global Language AI") + controls (Speak, Listen, Clear buttons)
 - #status: small status line
 - #chat: message container (starts with empty state)
 - .input-area: auto-growing #input textarea + #send button
@@ -264,23 +262,22 @@ KEY FUNCTIONS:
 - addMessage(text, role, timestamp)
 - updateBubble(div, text)
 - updateSystemTime()
-- saveHistory() / loadHistory() — persist & resume via puter.kv (survives browser history clear)
+- saveHistory() / loadHistory() — persist & resume via puter.kv (survives browser history clear; only when signed in)
 - initRecognition() — sets up continuous SpeechRecognition
 - toggleMic()
 - speakText(text) — uses puter.ai.txt2speech (provider "xai", voice "eve") or falls back to SpeechSynthesis
-- checkAuth() / promptSignIn() — Puter auth
-- send() — main chat flow: auth → add user message → stream puter.ai.chat → update bubble → speak if enabled → saveHistory
-- fetchCryptoPrices() — CoinGecko via puter.net.fetch for bitcoin, ethereum, solana, dogecoin, cardano
-- Event listeners for buttons, Enter key, input resize, focus/input sign-in trigger, and Clear (resets messages + restores empty state + saveHistory)
+- checkAuth() — Puter auth check (guest mode allowed)
+- send() — main chat flow: add user message → stream puter.ai.chat → update bubble → speak if enabled → saveHistory if signed in
+- Event listeners for buttons, Enter key, input resize, and Clear (resets messages + restores empty state + saveHistory)
 
 BEHAVIOR:
 - Replies always in the same language as the user
 - Streams responses and updates the bubble live
 - Auto-speaks replies when Speak is on
 - Mic can run continuously and auto-send final transcripts
-- Crypto button inserts a formatted price message
+- Guest mode is enabled — no sign-in required to chat
 - Chat history is saved to the signed-in user's Puter account (KV) and resumes after browser history is deleted (once signed in again)
-- Clear fully resets conversation history (local + cloud)
+- Clear fully resets conversation history (local + cloud if signed in)
 
 Current date/time: `;
 
@@ -312,7 +309,7 @@ Current date/time: `;
         <div class="empty-inner">
           <h2>Chat in any language</h2>
           <p>Powered by Puter.js · Grok AI<br>
-          Voice responses · Live crypto · History saved to your Puter account</p>
+          Voice responses · Guest mode enabled · History saved when signed in</p>
         </div>`;
       chat.appendChild(emptyDiv);
       empty = emptyDiv;
@@ -461,7 +458,7 @@ Current date/time: `;
         }
       } catch {}
       signedIn = false;
-      setStatus('Start typing to sign in');
+      setStatus('Guest mode · Sign in for history');
       return false;
     }
 
@@ -484,10 +481,8 @@ Current date/time: `;
       const text = input.value.trim();
       if (!text) return;
 
-      if (!(await checkAuth())) {
-        await promptSignIn();
-        if (!signedIn) return;
-      }
+      // Guest mode: no forced sign-in
+      await checkAuth();
 
       updateSystemTime();
       addMessage(text, 'user');
@@ -525,7 +520,7 @@ Current date/time: `;
 
         messages.push({ role: "assistant", content: fullReply });
         await saveHistory();
-        setStatus(isListening ? 'Listening…' : 'Ready');
+        setStatus(isListening ? 'Listening…' : (signedIn ? 'Ready' : 'Guest mode'));
 
         if (autoSpeak) speakText(fullReply);
       } catch (err) {
@@ -536,29 +531,6 @@ Current date/time: `;
       }
     }
 
-    async function fetchCryptoPrices() {
-      setStatus('Fetching crypto…');
-      try {
-        const res = await puter.net.fetch(
-          'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,solana,dogecoin,cardano&vs_currencies=usd&include_24hr_change=true'
-        );
-        const data = await res.json();
-        const lines = Object.entries(data).map(([id, info]) => {
-          const change = info.usd_24h_change?.toFixed(2) ?? 'n/a';
-          const sign = Number(change) > 0 ? '+' : '';
-          return `${id[0].toUpperCase() + id.slice(1)}: $${info.usd.toLocaleString()} (${sign}${change}%)`;
-        }).join('\n');
-
-        const msg = `Live crypto prices:\n${lines}\n\nSource: CoinGecko`;
-        addMessage(msg, 'bot');
-        if (autoSpeak) speakText(msg);
-        setStatus('Crypto updated');
-      } catch {
-        addMessage('Could not fetch crypto prices.', 'bot');
-        setStatus('Crypto fetch failed');
-      }
-    }
-
     sendBtn.addEventListener('click', send);
     micBtn.addEventListener('click', toggleMic);
     speakBtn.addEventListener('click', () => {
@@ -566,7 +538,6 @@ Current date/time: `;
       speakBtn.textContent = autoSpeak ? '🔊 Speak' : '🔇 Mute';
       setStatus(autoSpeak ? 'Voice on' : 'Voice off');
     });
-    cryptoBtn.addEventListener('click', fetchCryptoPrices);
 
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -575,14 +546,9 @@ Current date/time: `;
       }
     });
 
-    input.addEventListener('input', async () => {
+    input.addEventListener('input', () => {
       input.style.height = 'auto';
       input.style.height = Math.min(input.scrollHeight, 140) + 'px';
-      if (!signedIn && input.value.trim()) await promptSignIn();
-    });
-
-    input.addEventListener('focus', async () => {
-      if (!signedIn) await promptSignIn();
     });
 
     clearBtn.addEventListener('click', async () => {
@@ -597,7 +563,7 @@ Current date/time: `;
         micBtn.textContent = '🎤 Listen';
       }
       await saveHistory();
-      checkAuth();
+      await checkAuth();
       setStatus('Chat cleared');
     });
 
