@@ -203,7 +203,7 @@
       <div class="empty-inner">
         <h2>Chat in any language</h2>
         <p>Powered by Puter.js · Grok AI<br>
-        Voice responses · Live crypto · I know this app's source code by heart</p>
+        Voice responses · Live crypto · History saved to your Puter account</p>
       </div>
     </div>
   </div>
@@ -213,7 +213,7 @@
     <button id="send">Send</button>
   </div>
 
-  <footer>Global Language AI · Puter + Grok · Knows its own source</footer>
+  <footer>Global Language AI · Puter + Grok · History persists in your Puter account</footer>
 
   <script>
     const chat = document.getElementById('chat');
@@ -227,18 +227,20 @@
     let empty = document.getElementById('empty');
 
     const MODEL = 'x-ai/grok-4.7';
+    const HISTORY_KEY = 'gla_chat_history';
     let signedIn = false;
     let prompting = false;
     let autoSpeak = true;
     let recognition = null;
     let isListening = false;
+    let historyLoaded = false;
 
     const BASE_SYSTEM = `You are Global Language AI, a helpful multilingual assistant running inside a custom single-file web chat interface.
 
 You know this application's source code by heart. Here is the exact structure and logic:
 
 FILE: Single HTML file with embedded CSS + JavaScript.
-LIBRARIES: Loads https://js.puter.com/v2/ for auth + AI.
+LIBRARIES: Loads https://js.puter.com/v2/ for auth + AI + cloud KV storage.
 
 UI STRUCTURE:
 - header: brand (logo "AI" + title "Global Language AI") + controls (Crypto, Speak, Listen, Clear buttons)
@@ -249,24 +251,27 @@ UI STRUCTURE:
 
 KEY VARIABLES:
 - MODEL = 'x-ai/grok-4.7'
+- HISTORY_KEY = 'gla_chat_history' (Puter KV)
 - messages[] starts with system message
-- signedIn, prompting, autoSpeak, recognition, isListening
+- signedIn, prompting, autoSpeak, recognition, isListening, historyLoaded
 - empty (reference to empty-state div)
 
 KEY FUNCTIONS:
 - setStatus(text)
 - formatTime(ts)
 - escapeHtml(str)
+- showEmpty()
 - addMessage(text, role, timestamp)
 - updateBubble(div, text)
 - updateSystemTime()
+- saveHistory() / loadHistory() — persist & resume via puter.kv (survives browser history clear)
 - initRecognition() — sets up continuous SpeechRecognition
 - toggleMic()
 - speakText(text) — uses puter.ai.txt2speech (provider "xai", voice "eve") or falls back to SpeechSynthesis
 - checkAuth() / promptSignIn() — Puter auth
-- send() — main chat flow: auth → add user message → stream puter.ai.chat → update bubble → speak if enabled
+- send() — main chat flow: auth → add user message → stream puter.ai.chat → update bubble → speak if enabled → saveHistory
 - fetchCryptoPrices() — CoinGecko via puter.net.fetch for bitcoin, ethereum, solana, dogecoin, cardano
-- Event listeners for buttons, Enter key, input resize, focus/input sign-in trigger, and Clear (resets messages + restores empty state)
+- Event listeners for buttons, Enter key, input resize, focus/input sign-in trigger, and Clear (resets messages + restores empty state + saveHistory)
 
 BEHAVIOR:
 - Replies always in the same language as the user
@@ -274,7 +279,8 @@ BEHAVIOR:
 - Auto-speaks replies when Speak is on
 - Mic can run continuously and auto-send final transcripts
 - Crypto button inserts a formatted price message
-- Clear fully resets conversation history
+- Chat history is saved to the signed-in user's Puter account (KV) and resumes after browser history is deleted (once signed in again)
+- Clear fully resets conversation history (local + cloud)
 
 Current date/time: `;
 
@@ -292,9 +298,24 @@ Current date/time: `;
     }
 
     function escapeHtml(str) {
-      return str.replace(/[&<>"']/g, m => ({
+      return String(str).replace(/[&<>"']/g, m => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
       }[m]));
+    }
+
+    function showEmpty() {
+      chat.innerHTML = '';
+      const emptyDiv = document.createElement('div');
+      emptyDiv.className = 'empty';
+      emptyDiv.id = 'empty';
+      emptyDiv.innerHTML = `
+        <div class="empty-inner">
+          <h2>Chat in any language</h2>
+          <p>Powered by Puter.js · Grok AI<br>
+          Voice responses · Live crypto · History saved to your Puter account</p>
+        </div>`;
+      chat.appendChild(emptyDiv);
+      empty = emptyDiv;
     }
 
     function addMessage(text, role, timestamp = Date.now()) {
@@ -320,6 +341,40 @@ Current date/time: `;
 
     function updateSystemTime() {
       messages[0].content = BASE_SYSTEM + new Date().toLocaleString();
+    }
+
+    async function saveHistory() {
+      if (!signedIn) return;
+      try {
+        await puter.kv.set(HISTORY_KEY, messages);
+      } catch (e) {
+        console.warn('History save failed', e);
+      }
+    }
+
+    async function loadHistory() {
+      if (!signedIn || historyLoaded) return;
+      historyLoaded = true;
+      try {
+        const saved = await puter.kv.get(HISTORY_KEY);
+        if (saved && Array.isArray(saved) && saved.length > 1) {
+          messages = saved;
+          updateSystemTime();
+          chat.innerHTML = '';
+          empty = null;
+          for (const msg of messages) {
+            if (msg.role === 'user' || msg.role === 'assistant') {
+              addMessage(msg.content, msg.role === 'assistant' ? 'bot' : 'user');
+            }
+          }
+          setStatus('History restored');
+        } else {
+          showEmpty();
+        }
+      } catch (e) {
+        console.warn('History load failed', e);
+        showEmpty();
+      }
     }
 
     function initRecognition() {
@@ -401,6 +456,7 @@ Current date/time: `;
         if (user) {
           signedIn = true;
           setStatus('Ready · ' + (user.username || 'Puter'));
+          await loadHistory();
           return true;
         }
       } catch {}
@@ -468,6 +524,7 @@ Current date/time: `;
         }
 
         messages.push({ role: "assistant", content: fullReply });
+        await saveHistory();
         setStatus(isListening ? 'Listening…' : 'Ready');
 
         if (autoSpeak) speakText(fullReply);
@@ -528,29 +585,20 @@ Current date/time: `;
       if (!signedIn) await promptSignIn();
     });
 
-    clearBtn.addEventListener('click', () => {
+    clearBtn.addEventListener('click', async () => {
       messages = [{
         role: "system",
         content: BASE_SYSTEM + new Date().toLocaleString()
       }];
-      chat.innerHTML = '';
-      const emptyDiv = document.createElement('div');
-      emptyDiv.className = 'empty';
-      emptyDiv.id = 'empty';
-      emptyDiv.innerHTML = `
-        <div class="empty-inner">
-          <h2>Chat in any language</h2>
-          <p>Powered by Puter.js · Grok AI<br>
-          Voice responses · Live crypto · I know this app's source code by heart</p>
-        </div>`;
-      chat.appendChild(emptyDiv);
-      empty = emptyDiv;
+      showEmpty();
       if (isListening) {
         isListening = false;
         recognition?.stop();
         micBtn.textContent = '🎤 Listen';
       }
+      await saveHistory();
       checkAuth();
+      setStatus('Chat cleared');
     });
 
     checkAuth();
