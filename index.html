@@ -232,7 +232,6 @@
   <footer>Global Language AI · Puter + Grok</footer>
 
   <script>
-    // === DOM Elements ===
     const chat = document.getElementById('chat');
     const input = document.getElementById('input');
     const sendBtn = document.getElementById('send');
@@ -243,7 +242,6 @@
     const statusEl = document.getElementById('status');
     let empty = document.getElementById('empty');
 
-    // === Config ===
     const MODEL = 'x-ai/grok-4.7';
     let signedIn = false;
     let prompting = false;
@@ -251,10 +249,20 @@
     let recognition = null;
     let isListening = false;
 
-    const BASE_SYSTEM = `You are Global Language AI, a helpful multilingual assistant.
-Always reply in the same language as the user's message.
-Be natural, accurate, and friendly.
-You can discuss cryptocurrency and markets.
+    // System prompt now includes knowledge of the app itself
+    const BASE_SYSTEM = `You are Global Language AI, a helpful multilingual assistant running inside a custom web chat interface.
+
+You know this app by heart:
+- It is a single-page dark-themed chat UI.
+- Users can type messages or use the microphone (background speech recognition).
+- Responses can be spoken aloud automatically (TTS).
+- There is a Crypto button that shows live prices for Bitcoin, Ethereum, Solana, Dogecoin, and Cardano.
+- There are buttons for Speak (toggle voice), Listen (toggle mic), and Clear (reset chat).
+- The app uses Puter.js for authentication and AI calls.
+- You always reply in the same language as the user's message.
+- Be natural, accurate, friendly, and concise.
+- You can discuss cryptocurrency and markets when relevant.
+
 Current date/time: `;
 
     let messages = [{
@@ -262,7 +270,6 @@ Current date/time: `;
       content: BASE_SYSTEM + new Date().toLocaleString()
     }];
 
-    // === Utilities ===
     function setStatus(text) {
       statusEl.textContent = text;
     }
@@ -302,7 +309,6 @@ Current date/time: `;
       messages[0].content = BASE_SYSTEM + new Date().toLocaleString();
     }
 
-    // === Speech Recognition ===
     function initRecognition() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
@@ -361,7 +367,6 @@ Current date/time: `;
       }
     }
 
-    // === Text-to-Speech ===
     async function speakText(text) {
       if (!autoSpeak || !text || text.length > 2500) return;
       try {
@@ -377,7 +382,6 @@ Current date/time: `;
       }
     }
 
-    // === Auth ===
     async function checkAuth() {
       try {
         const user = await puter.auth.getUser();
@@ -407,7 +411,6 @@ Current date/time: `;
       return signedIn;
     }
 
-    // === Send Message ===
     async function send() {
       const text = input.value.trim();
       if (!text) return;
@@ -463,7 +466,6 @@ Current date/time: `;
       }
     }
 
-    // === Crypto Prices ===
     async function fetchCryptoPrices() {
       setStatus('Fetching crypto…');
       try {
@@ -487,7 +489,7 @@ Current date/time: `;
       }
     }
 
-    // === Event Listeners ===
+    // Event listeners
     sendBtn.addEventListener('click', send);
     micBtn.addEventListener('click', toggleMic);
     speakBtn.addEventListener('click', () => {
@@ -539,7 +541,6 @@ Current date/time: `;
       checkAuth();
     });
 
-    // === Init ===
     checkAuth();
   </script>
 </body>
