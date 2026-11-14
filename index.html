@@ -157,13 +157,13 @@
     </div>
   </header>
 
-  <div id="status">Connecting…</div>
+  <div id="status">Loading…</div>
 
   <div id="chat">
     <div class="empty" id="empty">
       <div>
         <h2>Internet AI Chat</h2>
-        <p>History saved in Firestore<br>Uses OpenAI web search for up-to-date answers</p>
+        <p>Powered by Puter.js<br>Web search + history saved to your account</p>
       </div>
     </div>
   </div>
@@ -173,30 +173,10 @@
     <button id="send" title="Send">↑</button>
   </div>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-    // ===== CONFIG =====
-    const OPENAI_MODEL = "gpt-4o";
-    const WORKER_URL = "https://rootdonate-ai.2ys5jjm6c7.workers.dev/"; // ← replace with your Worker URL
-    // ==================
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
-      authDomain: "rootdonate-61e61.firebaseapp.com",
-      databaseURL: "https://rootdonate-61e61-default-rtdb.firebaseio.com",
-      projectId: "rootdonate-61e61",
-      storageBucket: "rootdonate-61e61.firebasestorage.app",
-      messagingSenderId: "754240963907",
-      appId: "1:754240963907:web:5417c2763d8f02108bdbf6",
-      measurementId: "G-0SC5R5ELT1"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+  <script src="https://js.puter.com/v2/"></script>
+  <script>
+    const MODEL = "openai/gpt-5.2-chat"; // supports web_search
+    const HISTORY_KEY = "chat_history";
 
     const chat = document.getElementById("chat");
     const input = document.getElementById("input");
@@ -206,8 +186,8 @@
     const statusEl = document.getElementById("status");
     let empty = document.getElementById("empty");
 
-    let currentUser = null;
-    let unsubscribe = null;
+    let messages = [];
+    let signedIn = false;
 
     const setStatus = (text) => { statusEl.textContent = text; };
 
@@ -221,94 +201,85 @@
       return div;
     }
 
-    function clearChat() {
+    function renderMessages() {
       chat.innerHTML = "";
-      const d = document.createElement("div");
-      d.className = "empty";
-      d.id = "empty";
-      d.innerHTML = `<div><h2>Internet AI Chat</h2><p>History saved in Firestore<br>Uses OpenAI web search for up-to-date answers</p></div>`;
-      chat.appendChild(d);
-      empty = d;
+      empty = null;
+      if (!messages.length) {
+        const d = document.createElement("div");
+        d.className = "empty";
+        d.id = "empty";
+        d.innerHTML = `<div><h2>Internet AI Chat</h2><p>Powered by Puter.js<br>Web search + history saved to your account</p></div>`;
+        chat.appendChild(d);
+        empty = d;
+        return;
+      }
+      messages.forEach(m => addMessage(m.content, m.role === "user" ? "user" : "bot"));
     }
 
-    function listenToMessages(uid) {
-      if (unsubscribe) unsubscribe();
-      const q = query(collection(db, "chats", uid, "messages"), orderBy("createdAt"));
-      unsubscribe = onSnapshot(q, (snap) => {
-        chat.innerHTML = "";
-        empty = null;
-        if (snap.empty) {
-          clearChat();
-          return;
+    async function loadHistory() {
+      try {
+        const data = await puter.kv.get(HISTORY_KEY);
+        messages = Array.isArray(data) ? data : [];
+        renderMessages();
+      } catch (e) {
+        console.error(e);
+        messages = [];
+        renderMessages();
+      }
+    }
+
+    async function saveHistory() {
+      try {
+        await puter.kv.set(HISTORY_KEY, messages);
+      } catch (e) {
+        console.error("Save failed", e);
+      }
+    }
+
+    async function updateAuthUI() {
+      signedIn = puter.auth.isSignedIn();
+      if (signedIn) {
+        try {
+          const user = await puter.auth.getUser();
+          authBtn.textContent = user.username || "Signed in";
+        } catch {
+          authBtn.textContent = "Signed in";
         }
-        snap.forEach((doc) => {
-          const data = doc.data();
-          addMessage(data.text, data.role);
-        });
-      });
-    }
-
-    onAuthStateChanged(auth, (user) => {
-      currentUser = user;
-      if (user) {
-        authBtn.textContent = "Signed in";
         setStatus("Ready");
-        listenToMessages(user.uid);
+        await loadHistory();
       } else {
         authBtn.textContent = "Sign in";
-        setStatus("Sign in to save history");
-        clearChat();
+        setStatus("Sign in with Puter to chat & save history");
+        messages = [];
+        renderMessages();
       }
-    });
+    }
 
     authBtn.addEventListener("click", async () => {
-      if (!currentUser) {
+      if (!signedIn) {
         try {
-          await signInAnonymously(auth);
+          setStatus("Signing in…");
+          await puter.auth.signIn();
+          await updateAuthUI();
         } catch (err) {
-          setStatus("Auth error: " + err.message);
+          setStatus("Auth cancelled or failed");
         }
       }
     });
 
-    clearBtn.addEventListener("click", () => {
-      if (confirm("Clear all messages for this session?")) {
-        clearChat();
-        // Optional: also delete from Firestore if you want permanent clear
+    clearBtn.addEventListener("click", async () => {
+      if (!signedIn) return;
+      if (confirm("Clear all messages?")) {
+        messages = [];
+        await saveHistory();
+        renderMessages();
+        setStatus("Cleared");
       }
     });
 
-    async function callOpenAIWithWebSearch(userMessage) {
-      const response = await fetch(WORKER_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: OPENAI_MODEL,
-          tools: [{ type: "web_search" }],
-          input: userMessage
-        })
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`OpenAI error ${response.status}: ${errText}`);
-      }
-
-      const data = await response.json();
-
-      if (data.output_text) return data.output_text;
-
-      const messageItem = data.output?.find(item => item.type === "message");
-      if (messageItem?.content?.[0]?.text) {
-        return messageItem.content[0].text;
-      }
-
-      return "(no response)";
-    }
-
     async function send() {
-      if (!currentUser) {
-        setStatus("Sign in first");
+      if (!signedIn) {
+        setStatus("Please sign in first");
         return;
       }
       const text = input.value.trim();
@@ -319,32 +290,42 @@
       input.style.height = "auto";
       setStatus("Searching the web…");
 
+      // Add user message
+      messages.push({ role: "user", content: text });
+      addMessage(text, "user");
+      await saveHistory();
+
+      const botDiv = addMessage("", "bot");
+      botDiv.textContent = "…";
+
       try {
-        await addDoc(collection(db, "chats", currentUser.uid, "messages"), {
-          text,
-          role: "user",
-          createdAt: serverTimestamp()
+        const response = await puter.ai.chat(messages, {
+          model: MODEL,
+          tools: [{ type: "web_search" }],
+          normalize: true,
+          stream: true
         });
 
-        const reply = await callOpenAIWithWebSearch(text);
+        let full = "";
+        for await (const part of response) {
+          if (part?.text) {
+            full += part.text;
+            botDiv.textContent = full;
+            chat.scrollTop = chat.scrollHeight;
+          }
+        }
 
-        await addDoc(collection(db, "chats", currentUser.uid, "messages"), {
-          text: reply,
-          role: "bot",
-          createdAt: serverTimestamp()
-        });
+        if (!full) full = "(no response)";
+        botDiv.textContent = full;
+
+        messages.push({ role: "assistant", content: full });
+        await saveHistory();
         setStatus("Ready");
       } catch (err) {
         console.error(err);
         const msg = err.message || String(err);
+        botDiv.textContent = "Error: " + msg;
         setStatus("Error: " + msg);
-        try {
-          await addDoc(collection(db, "chats", currentUser.uid, "messages"), {
-            text: "Error: " + msg,
-            role: "bot",
-            createdAt: serverTimestamp()
-          });
-        } catch (e) {}
       } finally {
         sendBtn.disabled = false;
         input.focus();
@@ -364,6 +345,9 @@
       input.style.height = "auto";
       input.style.height = Math.min(input.scrollHeight, 140) + "px";
     });
+
+    // Init
+    updateAuthUI();
   </script>
 </body>
 </html>
