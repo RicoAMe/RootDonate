@@ -233,7 +233,7 @@
       progressBar.style.display = "block";
       progressFill.style.width = percent + "%";
       if (percent >= 100) {
-        setTimeout(() => { progressBar.style.display = "none"; }, 500);
+        setTimeout(() => { progressBar.style.display = "none"; }, 400);
       }
     }
 
@@ -258,17 +258,28 @@
     async function scanCache() {
       modelSelect.innerHTML = "";
       setStatus("Scanning cache…");
-      let cachedCount = 0;
 
-      for (const model of MODELS) {
-        let cached = false;
-        try {
-          cached = await hasModelInCache(model.id, prebuiltAppConfig);
-        } catch {}
-        if (cached) cachedCount++;
+      // Parallel cache checks for speed
+      const results = await Promise.all(
+        MODELS.map(async (model) => {
+          try {
+            const cached = await hasModelInCache(model.id, prebuiltAppConfig);
+            return { ...model, cached };
+          } catch {
+            return { ...model, cached: false };
+          }
+        })
+      );
+
+      // Sort cached models first
+      results.sort((a, b) => (b.cached - a.cached));
+
+      let cachedCount = 0;
+      for (const model of results) {
+        if (model.cached) cachedCount++;
         const option = document.createElement("option");
         option.value = model.id;
-        option.textContent = (cached ? "✅ " : "⬇️ ") + model.name;
+        option.textContent = (model.cached ? "✅ " : "⬇️ ") + model.name;
         modelSelect.appendChild(option);
       }
 
@@ -289,7 +300,7 @@
       input.disabled = true;
       sendBtn.disabled = true;
       setStatus(isCached ? "Loading from cache…" : "Downloading…");
-      setProgress(isCached ? 40 : 0);
+      setProgress(isCached ? 50 : 0);
 
       try {
         engine = await CreateMLCEngine(modelId, {
@@ -304,7 +315,7 @@
         input.disabled = false;
         sendBtn.disabled = false;
         input.focus();
-        setTimeout(scanCache, 400);
+        setTimeout(scanCache, 300);
       } catch (err) {
         setStatus("Load failed: " + (err.message || String(err)));
         setProgress(0);
