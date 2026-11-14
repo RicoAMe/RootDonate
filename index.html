@@ -2,76 +2,220 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0b1220">
-  <title>RootDonate · Local AI · Cached Models</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Local AI</title>
   <style>
     :root {
-      --bg: #0b1220; --surface: #111827; --surface-elevated: #1e293b;
-      --accent: #10b981; --accent-soft: rgba(16,185,129,.15);
-      --text: #f1f5f9; --text-secondary: #94a3b8; --text-muted: #64748b;
-      --user-bubble: #065f46; --bot-bubble: #1e293b; --border: #1e293b;
-      --radius-sm: 10px;
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-2: #334155;
+      --accent: #22c55e;
+      --accent-soft: rgba(34, 197, 94, 0.15);
+      --text: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --user: #166534;
+      --bot: #1e293b;
+      --border: #334155;
+      --radius: 20px;
+      --radius-sm: 12px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif; }
-    body { display: flex; flex-direction: column; min-height: 100dvh; }
-    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
-    .brand { display: flex; align-items: center; gap: 0.6rem; }
-    .logo { width: 32px; height: 32px; background: linear-gradient(135deg, #10b981, #3b82f6); border-radius: 10px; display: grid; place-items: center; font-weight: 700; font-size: 0.85rem; }
-    header h1 { font-size: 1.05rem; font-weight: 600; }
-    .controls { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
-    select, button { background: var(--surface-elevated); border: 1px solid var(--border); color: var(--text); padding: 0.4rem 0.75rem; border-radius: var(--radius-sm); font-size: 0.85rem; cursor: pointer; }
-    button { background: var(--accent); border-color: var(--accent); color: white; font-weight: 500; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-    button.secondary { background: transparent; border-color: var(--border); color: var(--text-secondary); }
-    #modelSelect { max-width: 280px; }
-    #progress { height: 4px; background: var(--surface-elevated); display: none; }
-    #progress > div { height: 100%; background: var(--accent); width: 0%; transition: width 0.2s; }
-    #chat { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.65rem; }
-    .msg { max-width: min(85%, 520px); padding: 0.7rem 0.95rem; border-radius: 18px; line-height: 1.45; word-wrap: break-word; }
-    .msg.user { align-self: flex-end; background: var(--user-bubble); color: white; border-bottom-right-radius: 6px; }
-    .msg.bot { align-self: flex-start; background: var(--bot-bubble); border-bottom-left-radius: 6px; }
-    .msg .meta { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.3rem; }
-    .input-area { background: var(--surface); border-top: 1px solid var(--border); padding: 0.75rem 1rem; display: flex; gap: 0.5rem; align-items: flex-end; }
-    #input { flex: 1; resize: none; min-height: 44px; max-height: 140px; padding: 0.65rem 0.85rem; font-family: inherit; background: var(--surface-elevated); border: 1px solid var(--border); color: var(--text); border-radius: var(--radius-sm); }
-    #input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-    #send { height: 44px; min-width: 72px; font-weight: 600; }
-    .empty { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; padding: 2rem; color: var(--text-secondary); }
-    .empty h2 { color: var(--text); font-size: 1.35rem; margin-bottom: 0.5rem; }
-    .status { font-size: 0.75rem; color: var(--text-muted); padding: 0.25rem 1rem; text-align: center; }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior: none;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+      padding-top: env(safe-area-inset-top);
+    }
+    header {
+      background: rgba(30, 41, 59, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    .logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #22c55e, #3b82f6);
+      border-radius: 10px;
+      display: grid; place-items: center;
+      font-weight: 700; font-size: 1rem;
+      flex-shrink: 0;
+    }
+    header h1 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .header-actions { display: flex; gap: 0.5rem; }
+    button, select {
+      background: var(--surface-2);
+      border: none;
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    button {
+      padding: 0.55rem 0.9rem;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    button:active { opacity: 0.7; }
+    button.primary { background: var(--accent); color: #052e16; }
+    button:disabled { opacity: 0.45; }
+    #modelSelect {
+      padding: 0.55rem 0.75rem;
+      max-width: 160px;
+      font-size: 0.85rem;
+    }
+    #progress {
+      height: 3px;
+      background: var(--surface-2);
+      display: none;
+    }
+    #progress > div {
+      height: 100%;
+      background: var(--accent);
+      width: 0%;
+      transition: width 0.25s ease;
+    }
+    #status {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 0.4rem 1rem;
+      background: var(--surface);
+    }
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem 1rem 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      -webkit-overflow-scrolling: touch;
+    }
+    .msg {
+      max-width: 85%;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius);
+      line-height: 1.45;
+      font-size: 0.95rem;
+      word-wrap: break-word;
+    }
+    .msg.user {
+      align-self: flex-end;
+      background: var(--user);
+      color: white;
+      border-bottom-right-radius: 6px;
+    }
+    .msg.bot {
+      align-self: flex-start;
+      background: var(--bot);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 6px;
+    }
+    .empty {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem 1.5rem;
+      color: var(--text-secondary);
+    }
+    .empty h2 {
+      color: var(--text);
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+    .empty p { font-size: 0.9rem; line-height: 1.5; }
+    .input-bar {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-end;
+    }
+    #input {
+      flex: 1;
+      resize: none;
+      min-height: 48px;
+      max-height: 140px;
+      padding: 0.75rem 1rem;
+      font-family: inherit;
+      font-size: 1rem;
+      background: var(--surface-2);
+      border: 1px solid transparent;
+      color: var(--text);
+      border-radius: var(--radius);
+      line-height: 1.4;
+    }
+    #input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-soft);
+    }
+    #send {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      font-size: 1.2rem;
+    }
   </style>
 </head>
 <body>
   <header>
-    <div class="brand">
+    <div style="display:flex;align-items:center;gap:0.6rem">
       <div class="logo">∞</div>
-      <h1>RootDonate Local AI (Cached)</h1>
+      <h1>Local AI</h1>
     </div>
-    <div class="controls">
+    <div class="header-actions">
       <select id="modelSelect"></select>
-      <button id="loadBtn">Load</button>
-      <button class="secondary" id="refreshBtn">Refresh Cache</button>
-      <button class="secondary" id="clear">Clear Chat</button>
+      <button id="loadBtn" class="primary">Load</button>
     </div>
   </header>
 
   <div id="progress"><div></div></div>
-  <div id="status" class="status">Checking cached models…</div>
+  <div id="status">Checking models…</div>
 
   <div id="chat">
     <div class="empty" id="empty">
       <div>
-        <h2>Use already-downloaded models</h2>
-        <p>Models marked ✅ are already cached and load instantly.<br>
-        Unlimited local inference · No rate limits · Private</p>
+        <h2>Private local chat</h2>
+        <p>Models marked ✅ load instantly from cache.<br>Unlimited · Offline · No rate limits</p>
       </div>
     </div>
   </div>
 
-  <div class="input-area">
-    <textarea id="input" placeholder="Message… (load a model first)" rows="1" disabled></textarea>
-    <button id="send" disabled>Send</button>
+  <div class="input-bar">
+    <textarea id="input" placeholder="Message" rows="1" disabled></textarea>
+    <button id="send" class="primary" disabled>↑</button>
   </div>
 
   <script type="module">
@@ -82,17 +226,15 @@
       { id: "Llama-3.2-3B-Instruct-q4f32_1-MLC", name: "Llama 3.2 3B" },
       { id: "Phi-3.5-mini-instruct-q4f16_1-MLC", name: "Phi-3.5 Mini" },
       { id: "gemma-2-2b-it-q4f16_1-MLC", name: "Gemma 2 2B" },
-      { id: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC", name: "Qwen2.5 1.5B" },
-      { id: "Qwen2.5-3B-Instruct-q4f16_1-MLC", name: "Qwen2.5 3B" },
+      { id: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC", name: "Qwen 1.5B" },
+      { id: "Qwen2.5-3B-Instruct-q4f16_1-MLC", name: "Qwen 3B" },
       { id: "SmolLM2-360M-Instruct-q4f16_1-MLC", name: "SmolLM2 360M" }
     ];
 
     const chat = document.getElementById('chat');
     const input = document.getElementById('input');
     const sendBtn = document.getElementById('send');
-    const clearBtn = document.getElementById('clear');
     const loadBtn = document.getElementById('loadBtn');
-    const refreshBtn = document.getElementById('refreshBtn');
     const modelSelect = document.getElementById('modelSelect');
     const statusEl = document.getElementById('status');
     const progressBar = document.getElementById('progress');
@@ -103,97 +245,83 @@
     let messages = [];
     let isGenerating = false;
 
-    function setStatus(text) { statusEl.textContent = text; }
-    function setProgress(percent) {
+    const setStatus = t => statusEl.textContent = t;
+    const setProgress = p => {
       progressBar.style.display = 'block';
-      progressFill.style.width = percent + '%';
-      if (percent >= 100) setTimeout(() => progressBar.style.display = 'none', 600);
-    }
+      progressFill.style.width = p + '%';
+      if (p >= 100) setTimeout(() => progressBar.style.display = 'none', 500);
+    };
 
-    function escapeHtml(str) {
-      return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
     }
 
     function addMessage(text, role) {
       if (empty) { empty.remove(); empty = null; }
       const div = document.createElement('div');
       div.className = `msg ${role}`;
-      div.innerHTML = `<div class="content">${escapeHtml(text)}</div><div class="meta">${role === 'user' ? 'You' : 'AI'}</div>`;
+      div.innerHTML = escapeHtml(text);
       chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
       return div;
     }
 
     function updateBubble(div, text) {
-      div.querySelector('.content').textContent = text;
+      div.textContent = text;
       chat.scrollTop = chat.scrollHeight;
     }
 
     function showEmpty() {
       chat.innerHTML = '';
       const d = document.createElement('div');
-      d.className = 'empty'; d.id = 'empty';
-      d.innerHTML = `<div><h2>Use already-downloaded models</h2><p>Models marked ✅ are already cached and load instantly.<br>Unlimited local inference · No rate limits · Private</p></div>`;
+      d.className = 'empty';
+      d.id = 'empty';
+      d.innerHTML = `<div><h2>Private local chat</h2><p>Models marked ✅ load instantly from cache.<br>Unlimited · Offline · No rate limits</p></div>`;
       chat.appendChild(d);
       empty = d;
     }
 
-    async function refreshModelList() {
+    async function refreshModels() {
       modelSelect.innerHTML = '';
       setStatus('Checking cache…');
-      const appConfig = prebuiltAppConfig;
-
       for (const m of MODELS) {
         let cached = false;
-        try {
-          cached = await hasModelInCache(m.id, appConfig);
-        } catch (e) {
-          console.warn('Cache check failed for', m.id, e);
-        }
+        try { cached = await hasModelInCache(m.id, prebuiltAppConfig); } catch {}
         const opt = document.createElement('option');
         opt.value = m.id;
-        opt.textContent = (cached ? '✅ ' : '⬇️ ') + m.name + (cached ? ' (cached)' : '');
+        opt.textContent = (cached ? '✅ ' : '⬇️ ') + m.name;
         modelSelect.appendChild(opt);
       }
-
-      const anyCached = Array.from(modelSelect.options).some(o => o.textContent.startsWith('✅'));
-      setStatus(anyCached 
-        ? 'Cached models ready — select one and click Load' 
-        : 'No cached models found — first load will download');
+      setStatus(modelSelect.options.length ? 'Ready' : 'No models');
     }
 
     async function loadModel() {
-      if (engine) {
-        try { await engine.unload(); } catch {}
-        engine = null;
-      }
+      if (engine) { try { await engine.unload(); } catch {} engine = null; }
       const modelId = modelSelect.value;
-      const isCached = modelSelect.selectedOptions[0]?.textContent.startsWith('✅');
+      const cached = modelSelect.selectedOptions[0]?.textContent.startsWith('✅');
 
       loadBtn.disabled = true;
       input.disabled = true;
       sendBtn.disabled = true;
-      setStatus(isCached ? 'Loading from cache…' : 'Downloading model…');
-      setProgress(isCached ? 50 : 0);
+      setStatus(cached ? 'Loading from cache…' : 'Downloading…');
+      setProgress(cached ? 40 : 0);
 
       try {
         engine = await CreateMLCEngine(modelId, {
-          initProgressCallback: (info) => {
-            const pct = Math.round((info.progress || 0) * 100);
-            setProgress(pct);
-            setStatus(info.text || (isCached ? 'Loading…' : `Downloading… ${pct}%`));
+          initProgressCallback: info => {
+            const p = Math.round((info.progress || 0) * 100);
+            setProgress(p);
+            setStatus(info.text || (cached ? 'Loading…' : `Downloading ${p}%`));
           }
         });
-        setStatus('Ready · ' + modelId + (isCached ? ' (from cache)' : ' (downloaded & cached)'));
+        setStatus('Ready · ' + (cached ? 'cached' : 'downloaded'));
         setProgress(100);
         input.disabled = false;
         sendBtn.disabled = false;
         input.focus();
-        // Refresh list so newly downloaded model shows as cached
-        setTimeout(refreshModelList, 500);
+        setTimeout(refreshModels, 400);
       } catch (err) {
-        console.error(err);
-        setStatus('Load failed: ' + (err.message || err));
+        setStatus('Failed: ' + (err.message || err));
         setProgress(0);
       } finally {
         loadBtn.disabled = false;
@@ -215,31 +343,29 @@
       input.style.height = 'auto';
 
       const botDiv = addMessage('…', 'bot');
-      let fullReply = '';
+      let full = '';
 
       try {
-        const completion = await engine.chat.completions.create({
+        const stream = await engine.chat.completions.create({
           messages,
           stream: true,
           temperature: 0.7,
           max_tokens: 2048
         });
-
-        for await (const chunk of completion) {
+        for await (const chunk of stream) {
           const delta = chunk.choices?.[0]?.delta?.content || '';
           if (delta) {
-            fullReply += delta;
-            updateBubble(botDiv, fullReply);
+            full += delta;
+            updateBubble(botDiv, full);
           }
         }
-
-        if (!fullReply) fullReply = '(empty response)';
-        messages.push({ role: 'assistant', content: fullReply });
-        updateBubble(botDiv, fullReply);
-        setStatus('Ready · local unlimited');
+        if (!full) full = '(no response)';
+        messages.push({ role: 'assistant', content: full });
+        updateBubble(botDiv, full);
+        setStatus('Ready');
       } catch (err) {
         updateBubble(botDiv, 'Error: ' + (err.message || err));
-        setStatus('Generation error');
+        setStatus('Error');
       } finally {
         isGenerating = false;
         sendBtn.disabled = false;
@@ -249,13 +375,7 @@
     }
 
     loadBtn.addEventListener('click', loadModel);
-    refreshBtn.addEventListener('click', refreshModelList);
     sendBtn.addEventListener('click', send);
-    clearBtn.addEventListener('click', () => {
-      messages = [];
-      showEmpty();
-      setStatus(engine ? 'Ready · chat cleared' : 'Select a model and click Load');
-    });
 
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -270,10 +390,10 @@
     });
 
     if (!navigator.gpu) {
-      setStatus('WebGPU not available — use Chrome/Edge');
+      setStatus('WebGPU required (use Chrome or Edge)');
       loadBtn.disabled = true;
     } else {
-      refreshModelList();
+      refreshModels();
     }
   </script>
 </body>
