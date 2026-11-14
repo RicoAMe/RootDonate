@@ -48,10 +48,12 @@
       gap: 0.75rem;
     }
     .logo {
-      width: 32px; height: 32px;
+      width: 32px;
+      height: 32px;
       background: linear-gradient(135deg, #3b82f6, #8b5cf6);
       border-radius: 8px;
-      display: grid; place-items: center;
+      display: grid;
+      place-items: center;
       font-weight: 700;
       flex-shrink: 0;
     }
@@ -140,12 +142,14 @@
     }
     #input:focus { outline: none; border-color: var(--accent); }
     #send {
-      width: 48px; height: 48px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       background: var(--accent);
       color: white;
       font-size: 1.3rem;
-      display: grid; place-items: center;
+      display: grid;
+      place-items: center;
       flex-shrink: 0;
     }
   </style>
@@ -189,6 +193,7 @@
   <script>
     const HISTORY_KEY = "chat_history";
     const DEFAULT_MODEL = "x-ai/grok-4.7";
+    const MAX_HISTORY = 30; // keep context manageable
 
     const chat = document.getElementById("chat");
     const input = document.getElementById("input");
@@ -205,7 +210,10 @@
     const setStatus = (text) => { statusEl.textContent = text; };
 
     function addMessage(text, role) {
-      if (empty) { empty.remove(); empty = null; }
+      if (empty) {
+        empty.remove();
+        empty = null;
+      }
       const div = document.createElement("div");
       div.className = `msg ${role}`;
       div.textContent = text;
@@ -243,6 +251,10 @@
 
     async function saveHistory() {
       try {
+        // Keep only the most recent messages
+        if (messages.length > MAX_HISTORY) {
+          messages = messages.slice(-MAX_HISTORY);
+        }
         await puter.kv.set(HISTORY_KEY, messages);
       } catch (e) {
         console.error("Save failed", e);
@@ -301,6 +313,20 @@
       }
     });
 
+    // Auto-resize textarea
+    input.addEventListener("input", () => {
+      input.style.height = "auto";
+      input.style.height = Math.min(input.scrollHeight, 140) + "px";
+    });
+
+    // Enter to send, Shift+Enter for newline
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        send();
+      }
+    });
+
     async function send() {
       if (!signedIn) {
         setStatus("Please sign in first");
@@ -321,12 +347,56 @@
       addMessage(text, "user");
       await saveHistory();
 
-      const botDiv = addMessage("", "bot");
-      botDiv.textContent = "…";
+      const botDiv = addMessage("…", "bot");
 
       try {
         const options = {
           model,
-          normalize: true,
-          stream: true
+          stream: true,
+          normalize: true
         };
+
+        // Enable built-in web search for OpenAI models
+        if (isOpenAI) {
+          options.tools = [{ type: "web_search" }];
+        }
+
+        // Send recent history only
+        const historyToSend = messages.slice(-MAX_HISTORY);
+        const response = await puter.ai.chat(historyToSend, options);
+
+        let full = "";
+        for await (const part of response) {
+          const chunk = part?.text ?? (part?.type === "text" ? part.text : "");
+          if (chunk) {
+            full += chunk;
+            botDiv.textContent = full;
+            chat.scrollTop = chat.scrollHeight;
+          }
+        }
+
+        if (!full) {
+          botDiv.textContent = "(No response)";
+          full = "(No response)";
+        }
+
+        messages.push({ role: "assistant", content: full });
+        await saveHistory();
+        setStatus("Ready");
+      } catch (err) {
+        console.error(err);
+        botDiv.textContent = "Error: " + (err.message || "Something went wrong");
+        setStatus("Error – try again");
+      } finally {
+        sendBtn.disabled = false;
+        input.focus();
+      }
+    }
+
+    sendBtn.addEventListener("click", send);
+
+    // Init
+    updateAuthUI();
+  </script>
+</body>
+</html>
