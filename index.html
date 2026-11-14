@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
   <meta name="theme-color" content="#0f172a">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Internet AI</title>
+  <title>AI Chat · Firebase</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -54,7 +54,7 @@
       font-weight: 700;
     }
     h1 { font-size: 1.1rem; font-weight: 600; }
-    button, select, input[type="text"], input[type="password"] {
+    button {
       background: var(--surface-2);
       border: none;
       color: var(--text);
@@ -71,15 +71,6 @@
       padding: 0.3rem;
       background: var(--surface);
     }
-    #settings {
-      background: var(--surface);
-      padding: 0.75rem 1rem;
-      border-bottom: 1px solid var(--border);
-      display: none;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    #settings input { width: 100%; padding: 0.6rem; }
     #chat {
       flex: 1;
       overflow-y: auto;
@@ -158,25 +149,18 @@
   <header>
     <div style="display:flex;align-items:center;gap:0.6rem">
       <div class="logo">AI</div>
-      <h1>Internet AI</h1>
+      <h1>AI Chat</h1>
     </div>
-    <button id="settingsBtn">Settings</button>
+    <button id="authBtn">Sign in</button>
   </header>
 
-  <div id="settings">
-    <input id="baseUrl" type="text" placeholder="Base URL (e.g. https://api.openai.com/v1)">
-    <input id="apiKey" type="password" placeholder="API Key">
-    <input id="model" type="text" placeholder="Model (e.g. gpt-4o-mini)">
-    <button id="saveSettings" class="primary">Save</button>
-  </div>
-
-  <div id="status">Set Base URL + API Key in Settings</div>
+  <div id="status">Connecting…</div>
 
   <div id="chat">
     <div class="empty" id="empty">
       <div>
-        <h2>Internet AI</h2>
-        <p>OpenAI-compatible API<br>No Puter · Configure in Settings</p>
+        <h2>Firebase AI Chat</h2>
+        <p>History saved in Firestore<br>AI calls go through Cloud Functions</p>
       </div>
     </div>
   </div>
@@ -186,42 +170,41 @@
     <button id="send">↑</button>
   </div>
 
-  <script>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
+
+    // Replace with your Firebase config
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
+  authDomain: "rootdonate-61e61.firebaseapp.com",
+  databaseURL: "https://rootdonate-61e61-default-rtdb.firebaseio.com",
+  projectId: "rootdonate-61e61",
+  storageBucket: "rootdonate-61e61.firebasestorage.app",
+  messagingSenderId: "754240963907",
+  appId: "1:754240963907:web:5417c2763d8f02108bdbf6",
+  measurementId: "G-0SC5R5ELT1"
+};
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const functions = getFunctions(app);
+
     const chat = document.getElementById("chat");
     const input = document.getElementById("input");
     const sendBtn = document.getElementById("send");
-    const settingsBtn = document.getElementById("settingsBtn");
-    const settingsPanel = document.getElementById("settings");
-    const baseUrlInput = document.getElementById("baseUrl");
-    const apiKeyInput = document.getElementById("apiKey");
-    const modelInput = document.getElementById("model");
+    const authBtn = document.getElementById("authBtn");
     const statusEl = document.getElementById("status");
     let empty = document.getElementById("empty");
 
-    let messages = [];
-    let isGenerating = false;
+    let currentUser = null;
+    let unsubscribe = null;
 
-    function setStatus(t) { statusEl.textContent = t; }
-
-    function loadSettings() {
-      baseUrlInput.value = localStorage.getItem("ai_base") || "";
-      apiKeyInput.value = localStorage.getItem("ai_key") || "";
-      modelInput.value = localStorage.getItem("ai_model") || "gpt-4o-mini";
-    }
-
-    function saveSettings() {
-      localStorage.setItem("ai_base", baseUrlInput.value.trim());
-      localStorage.setItem("ai_key", apiKeyInput.value.trim());
-      localStorage.setItem("ai_model", modelInput.value.trim());
-      settingsPanel.style.display = "none";
-      setStatus("Settings saved");
-    }
-
-    settingsBtn.addEventListener("click", () => {
-      settingsPanel.style.display = settingsPanel.style.display === "flex" ? "none" : "flex";
-    });
-    document.getElementById("saveSettings").addEventListener("click", saveSettings);
-    loadSettings();
+    const setStatus = t => statusEl.textContent = t;
 
     function addMessage(text, role) {
       if (empty) { empty.remove(); empty = null; }
@@ -233,88 +216,96 @@
       return div;
     }
 
-    function updateBubble(div, text) {
-      div.textContent = text;
-      chat.scrollTop = chat.scrollHeight;
+    function clearChat() {
+      chat.innerHTML = "";
+      const d = document.createElement("div");
+      d.className = "empty";
+      d.id = "empty";
+      d.innerHTML = `<div><h2>Firebase AI Chat</h2><p>History saved in Firestore<br>AI calls go through Cloud Functions</p></div>`;
+      chat.appendChild(d);
+      empty = d;
     }
 
-    async function send() {
-      if (isGenerating) return;
-      const base = localStorage.getItem("ai_base") || "";
-      const key = localStorage.getItem("ai_key") || "";
-      const model = localStorage.getItem("ai_model") || "gpt-4o-mini";
+    function listenToMessages(uid) {
+      if (unsubscribe) unsubscribe();
+      const q = query(collection(db, "chats", uid, "messages"), orderBy("createdAt"));
+      unsubscribe = onSnapshot(q, snap => {
+        chat.innerHTML = "";
+        empty = null;
+        if (snap.empty) {
+          clearChat();
+          return;
+        }
+        snap.forEach(doc => {
+          const data = doc.data();
+          addMessage(data.text, data.role);
+        });
+      });
+    }
 
-      if (!base || !key) {
-        setStatus("Set Base URL and API Key in Settings");
+    onAuthStateChanged(auth, user => {
+      currentUser = user;
+      if (user) {
+        authBtn.textContent = "Signed in";
+        setStatus("Ready");
+        listenToMessages(user.uid);
+      } else {
+        authBtn.textContent = "Sign in";
+        setStatus("Sign in to save history");
+        clearChat();
+      }
+    });
+
+    authBtn.addEventListener("click", async () => {
+      if (!currentUser) {
+        try {
+          await signInAnonymously(auth);
+        } catch (err) {
+          setStatus("Auth error: " + err.message);
+        }
+      }
+    });
+
+    async function send() {
+      if (!currentUser) {
+        setStatus("Sign in first");
         return;
       }
-
       const text = input.value.trim();
       if (!text) return;
 
-      isGenerating = true;
       sendBtn.disabled = true;
-
-      addMessage(text, "user");
-      messages.push({ role: "user", content: text });
       input.value = "";
       input.style.height = "auto";
 
-      const botDiv = addMessage("…", "bot");
-      let full = "";
+      // Save user message
+      await addDoc(collection(db, "chats", currentUser.uid, "messages"), {
+        text,
+        role: "user",
+        createdAt: serverTimestamp()
+      });
 
       try {
-        const res = await fetch(base.replace(/\/$/, "") + "/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer " + key
-          },
-          body: JSON.stringify({
-            model,
-            messages,
-            stream: true,
-            temperature: 0.7
-          })
+        // Call your Cloud Function (example name: chat)
+        const chatFn = httpsCallable(functions, "chat");
+        const result = await chatFn({ message: text });
+        const reply = result.data?.reply || "(no response)";
+
+        // Save assistant message
+        await addDoc(collection(db, "chats", currentUser.uid, "messages"), {
+          text: reply,
+          role: "bot",
+          createdAt: serverTimestamp()
         });
-
-        if (!res.ok) throw new Error(await res.text());
-
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = "";
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop();
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const data = line.slice(6);
-              if (data === "[DONE]") continue;
-              try {
-                const json = JSON.parse(data);
-                const delta = json.choices?.[0]?.delta?.content || "";
-                if (delta) {
-                  full += delta;
-                  updateBubble(botDiv, full);
-                }
-              } catch {}
-            }
-          }
-        }
-
-        if (!full) full = "(no response)";
-        messages.push({ role: "assistant", content: full });
-        updateBubble(botDiv, full);
         setStatus("Ready");
       } catch (err) {
-        updateBubble(botDiv, "Error: " + (err.message || err));
-        setStatus("Error (check CORS / key)");
+        setStatus("Error: " + (err.message || err));
+        await addDoc(collection(db, "chats", currentUser.uid, "messages"), {
+          text: "Error: " + (err.message || err),
+          role: "bot",
+          createdAt: serverTimestamp()
+        });
       } finally {
-        isGenerating = false;
         sendBtn.disabled = false;
         input.focus();
       }
