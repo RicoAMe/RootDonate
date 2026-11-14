@@ -2,378 +2,71 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
-  <meta name="theme-color" content="#0f172a">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Local + Internet AI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Chat</title>
   <script src="https://js.puter.com/v2/"></script>
   <style>
-    :root {
-      --bg: #0f172a;
-      --surface: #1e293b;
-      --surface-2: #334155;
-      --accent: #22c55e;
-      --accent-blue: #3b82f6;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --user: #14532d;
-      --bot: #1e293b;
-      --border: #334155;
-      --radius: 18px;
-      --radius-sm: 12px;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      overscroll-behavior: none;
-    }
-    body {
-      display: flex;
-      flex-direction: column;
-      min-height: 100dvh;
-      padding-top: env(safe-area-inset-top);
-    }
-    header {
-      background: rgba(30, 41, 59, 0.92);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
-      padding: 0.7rem 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      flex-wrap: wrap;
-    }
-    .brand { display: flex; align-items: center; gap: 0.65rem; }
-    .logo {
-      width: 34px; height: 34px;
-      background: linear-gradient(135deg, #22c55e, #3b82f6);
-      border-radius: 9px;
-      display: grid; place-items: center;
-      font-weight: 700; font-size: 0.95rem;
-    }
-    header h1 { font-size: 1.12rem; font-weight: 600; letter-spacing: -0.02em; }
-    .controls { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-    select, button {
-      background: var(--surface-2);
-      border: none;
-      color: var(--text);
-      border-radius: var(--radius-sm);
-      font-size: 0.88rem;
-      font-weight: 500;
-      padding: 0.5rem 0.75rem;
-    }
-    button.primary { background: var(--accent); color: #052e16; }
-    button.blue { background: var(--accent-blue); color: white; }
-    button:disabled { opacity: 0.4; }
-    #modeSelect { max-width: 130px; }
-    #modelSelect { max-width: 160px; }
-    #progress { height: 3px; background: var(--surface-2); display: none; }
-    #progress > div { height: 100%; background: var(--accent); width: 0%; transition: width 0.15s; }
-    #status {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      text-align: center;
-      padding: 0.35rem 1rem;
-      background: var(--surface);
-    }
-    #chat {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1rem 1rem 0.5rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.7rem;
-      -webkit-overflow-scrolling: touch;
-    }
-    .msg {
-      max-width: 86%;
-      padding: 0.72rem 0.95rem;
-      border-radius: var(--radius);
-      line-height: 1.45;
-      font-size: 0.96rem;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-    }
-    .msg.user { align-self: flex-end; background: var(--user); color: white; border-bottom-right-radius: 6px; }
-    .msg.bot { align-self: flex-start; background: var(--bot); border: 1px solid var(--border); border-bottom-left-radius: 6px; }
-    .empty {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 2rem 1.25rem;
-      color: var(--text-secondary);
-    }
-    .empty h2 { color: var(--text); font-size: 1.45rem; margin-bottom: 0.45rem; }
-    .input-bar {
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      padding: 0.7rem 1rem;
-      padding-bottom: calc(0.7rem + env(safe-area-inset-bottom));
-      display: flex;
-      gap: 0.5rem;
-      align-items: flex-end;
-    }
-    #input {
-      flex: 1;
-      resize: none;
-      min-height: 48px;
-      max-height: 140px;
-      padding: 0.72rem 0.95rem;
-      font-family: inherit;
-      font-size: 1rem;
-      background: var(--surface-2);
-      border: 1px solid transparent;
-      color: var(--text);
-      border-radius: var(--radius);
-    }
-    #input:focus { outline: none; border-color: var(--accent); }
-    #send {
-      width: 48px; height: 48px;
-      border-radius: 50%;
-      display: grid; place-items: center;
-      font-size: 1.25rem; font-weight: 600;
-    }
+    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 1rem; }
+    #chat { border: 1px solid #ccc; height: 400px; overflow-y: auto; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; }
+    .msg { margin: 0.5rem 0; padding: 0.5rem 0.8rem; border-radius: 8px; }
+    .user { background: #e3f2fd; text-align: right; }
+    .bot { background: #f5f5f5; }
+    input { width: 70%; padding: 0.6rem; }
+    button { padding: 0.6rem 1rem; }
   </style>
 </head>
 <body>
-  <header>
-    <div class="brand">
-      <div class="logo">∞</div>
-      <h1>Local + Internet</h1>
-    </div>
-    <div class="controls">
-      <select id="modeSelect">
-        <option value="local">Local Unlimited</option>
-        <option value="internet">Internet AI</option>
-      </select>
-      <select id="modelSelect"></select>
-      <button id="loadBtn" class="primary">Load</button>
-    </div>
-  </header>
+  <h2>AI Chat</h2>
+  <div id="chat"></div>
+  <input id="input" placeholder="Message…">
+  <button onclick="send()">Send</button>
 
-  <div id="progress"><div></div></div>
-  <div id="status">Choose mode</div>
-
-  <div id="chat">
-    <div class="empty" id="empty">
-      <div>
-        <h2>Local unlimited + Internet</h2>
-        <p>Local = unlimited, uses cache<br>Internet = cloud models via Puter</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="input-bar">
-    <textarea id="input" placeholder="Message" rows="1" disabled></textarea>
-    <button id="send" class="primary">↑</button>
-  </div>
-
-  <script type="module">
-    import { CreateMLCEngine, hasModelInCache, prebuiltAppConfig } from "https://esm.run/@mlc-ai/web-llm";
-
-    const LOCAL_MODELS = [
-      { id: "Llama-3.2-1B-Instruct-q4f32_1-MLC", name: "Llama 3.2 1B" },
-      { id: "Llama-3.2-3B-Instruct-q4f32_1-MLC", name: "Llama 3.2 3B" },
-      { id: "Phi-3.5-mini-instruct-q4f16_1-MLC", name: "Phi-3.5 Mini" },
-      { id: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC", name: "Qwen 1.5B" },
-      { id: "SmolLM2-360M-Instruct-q4f16_1-MLC", name: "SmolLM2 360M" }
-    ];
-
+  <script>
     const chat = document.getElementById("chat");
     const input = document.getElementById("input");
-    const sendBtn = document.getElementById("send");
-    const loadBtn = document.getElementById("loadBtn");
-    const modeSelect = document.getElementById("modeSelect");
-    const modelSelect = document.getElementById("modelSelect");
-    const statusEl = document.getElementById("status");
-    const progressBar = document.getElementById("progress");
-    const progressFill = progressBar.querySelector("div");
-    let empty = document.getElementById("empty");
-
-    let engine = null;
     let messages = [];
-    let isGenerating = false;
-    let mode = "local";
 
-    function setStatus(text) { statusEl.textContent = text; }
-    function setProgress(p) {
-      progressBar.style.display = "block";
-      progressFill.style.width = p + "%";
-      if (p >= 100) setTimeout(() => progressBar.style.display = "none", 300);
-    }
-
-    function addMessage(text, role) {
-      if (empty) { empty.remove(); empty = null; }
+    function add(text, role) {
       const div = document.createElement("div");
-      div.className = `msg ${role}`;
+      div.className = "msg " + role;
       div.textContent = text;
       chat.appendChild(div);
       chat.scrollTop = chat.scrollHeight;
-      return div;
     }
-
-    function updateBubble(div, text) {
-      div.textContent = text;
-      chat.scrollTop = chat.scrollHeight;
-    }
-
-    async function refreshModels() {
-      modelSelect.innerHTML = "";
-      if (mode === "local") {
-        setStatus("Scanning local cache…");
-        const results = await Promise.all(
-          LOCAL_MODELS.map(async m => {
-            try { return { ...m, cached: await hasModelInCache(m.id, prebuiltAppConfig) }; }
-            catch { return { ...m, cached: false }; }
-          })
-        );
-        results.sort((a, b) => Number(b.cached) - Number(a.cached));
-        results.forEach(m => {
-          const opt = document.createElement("option");
-          opt.value = m.id;
-          opt.textContent = (m.cached ? "✅ " : "⬇️ ") + m.name;
-          modelSelect.appendChild(opt);
-        });
-        setStatus("Local mode · unlimited");
-        loadBtn.style.display = "";
-      } else {
-        setStatus("Loading internet models…");
-        try {
-          const models = await puter.ai.listModels();
-          models.slice(0, 30).forEach(m => {
-            const opt = document.createElement("option");
-            opt.value = m.id;
-            opt.textContent = m.name || m.id.split("/").pop();
-            modelSelect.appendChild(opt);
-          });
-          setStatus("Internet mode · has rate limits");
-        } catch {
-          modelSelect.innerHTML = '<option value="x-ai/grok-4.7">Grok</option>';
-          setStatus("Internet mode");
-        }
-        loadBtn.style.display = "none";
-        input.disabled = false;
-        sendBtn.disabled = false;
-      }
-    }
-
-    modeSelect.addEventListener("change", () => {
-      mode = modeSelect.value;
-      if (engine) { engine.unload?.(); engine = null; }
-      messages = [];
-      input.disabled = true;
-      sendBtn.disabled = true;
-      refreshModels();
-    });
-
-    async function loadLocal() {
-      if (engine) { try { await engine.unload(); } catch {} engine = null; }
-      const modelId = modelSelect.value;
-      const isCached = modelSelect.selectedOptions[0]?.textContent.startsWith("✅");
-      loadBtn.disabled = true;
-      input.disabled = true;
-      sendBtn.disabled = true;
-      setStatus(isCached ? "Loading from cache…" : "Downloading…");
-      setProgress(isCached ? 50 : 0);
-      try {
-        engine = await CreateMLCEngine(modelId, {
-          initProgressCallback: info => {
-            const p = Math.round((info.progress || 0) * 100);
-            setProgress(p);
-            setStatus(info.text || (isCached ? "Loading…" : p + "%"));
-          }
-        });
-        setStatus("Ready · unlimited local");
-        setProgress(100);
-        input.disabled = false;
-        sendBtn.disabled = false;
-        input.focus();
-      } catch (err) {
-        setStatus("Load failed");
-        setProgress(0);
-      } finally {
-        loadBtn.disabled = false;
-      }
-    }
-
-    loadBtn.addEventListener("click", () => {
-      if (mode === "local") loadLocal();
-    });
 
     async function send() {
-      if (isGenerating) return;
       const text = input.value.trim();
       if (!text) return;
-
-      isGenerating = true;
-      sendBtn.disabled = true;
-      input.disabled = true;
-
-      addMessage(text, "user");
+      add(text, "user");
       messages.push({ role: "user", content: text });
       input.value = "";
-      input.style.height = "auto";
 
-      const botDiv = addMessage("…", "bot");
-      let full = "";
+      const botDiv = document.createElement("div");
+      botDiv.className = "msg bot";
+      botDiv.textContent = "…";
+      chat.appendChild(botDiv);
 
       try {
-        if (mode === "local") {
-          if (!engine) throw new Error("Load a local model first");
-          const stream = await engine.chat.completions.create({
-            messages, stream: true, temperature: 0.7, max_tokens: 2048
-          });
-          for await (const chunk of stream) {
-            const delta = chunk.choices?.[0]?.delta?.content || "";
-            if (delta) { full += delta; updateBubble(botDiv, full); }
-          }
-        } else {
-          const model = modelSelect.value || "x-ai/grok-4.7";
-          const response = await puter.ai.chat(messages, { model, stream: true, normalize: true });
-          for await (const chunk of response) {
-            if (chunk.type === "text" && chunk.text) {
-              full += chunk.text;
-              updateBubble(botDiv, full);
-            }
+        const response = await puter.ai.chat(messages, {
+          model: "x-ai/grok-4.7",
+          stream: true
+        });
+        let full = "";
+        for await (const chunk of response) {
+          if (chunk.type === "text" && chunk.text) {
+            full += chunk.text;
+            botDiv.textContent = full;
           }
         }
-        if (!full) full = "(no response)";
         messages.push({ role: "assistant", content: full });
-        updateBubble(botDiv, full);
-        setStatus(mode === "local" ? "Ready · unlimited" : "Ready · internet");
       } catch (err) {
-        updateBubble(botDiv, "Error: " + (err.message || err));
-        setStatus("Error");
-      } finally {
-        isGenerating = false;
-        sendBtn.disabled = false;
-        input.disabled = false;
-        input.focus();
+        botDiv.textContent = "Error: " + err.message;
       }
     }
 
-    sendBtn.addEventListener("click", send);
     input.addEventListener("keydown", e => {
-      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+      if (e.key === "Enter") send();
     });
-    input.addEventListener("input", () => {
-      input.style.height = "auto";
-      input.style.height = Math.min(input.scrollHeight, 140) + "px";
-    });
-
-    if (!navigator.gpu) setStatus("WebGPU needed for local mode");
-    refreshModels();
   </script>
 </body>
 </html>
