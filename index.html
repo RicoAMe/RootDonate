@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
   <meta name="theme-color" content="#0f172a">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Local AI</title>
+  <title>Internet AI</title>
   <style>
     :root {
       --bg: #0f172a;
       --surface: #1e293b;
       --surface-2: #334155;
-      --accent: #22c55e;
+      --accent: #3b82f6;
       --text: #f8fafc;
       --muted: #94a3b8;
-      --user: #14532d;
+      --user: #1d4ed8;
       --bot: #1e293b;
       --border: #334155;
       --radius: 20px;
@@ -48,13 +48,13 @@
     }
     .logo {
       width: 32px; height: 32px;
-      background: linear-gradient(135deg, #22c55e, #3b82f6);
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
       border-radius: 8px;
       display: grid; place-items: center;
       font-weight: 700;
     }
     h1 { font-size: 1.1rem; font-weight: 600; }
-    select, button {
+    button, select, input[type="text"], input[type="password"] {
       background: var(--surface-2);
       border: none;
       color: var(--text);
@@ -62,7 +62,7 @@
       padding: 0.45rem 0.75rem;
       font-size: 0.85rem;
     }
-    button.primary { background: var(--accent); color: #052e16; }
+    button.primary { background: var(--accent); color: white; }
     button:disabled { opacity: 0.4; }
     #status {
       font-size: 0.75rem;
@@ -71,6 +71,15 @@
       padding: 0.3rem;
       background: var(--surface);
     }
+    #settings {
+      background: var(--surface);
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      display: none;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    #settings input { width: 100%; padding: 0.6rem; }
     #chat {
       flex: 1;
       overflow-y: auto;
@@ -138,7 +147,7 @@
       height: 48px;
       border-radius: 50%;
       background: var(--accent);
-      color: #052e16;
+      color: white;
       font-size: 1.3rem;
       display: grid;
       place-items: center;
@@ -148,24 +157,26 @@
 <body>
   <header>
     <div style="display:flex;align-items:center;gap:0.6rem">
-      <div class="logo">∞</div>
-      <h1>Local AI</h1>
+      <div class="logo">AI</div>
+      <h1>Internet AI</h1>
     </div>
-    <select id="model">
-      <option value="Llama-3.2-1B-Instruct-q4f32_1-MLC">Llama 1B</option>
-      <option value="Llama-3.2-3B-Instruct-q4f32_1-MLC" selected>Llama 3B</option>
-      <option value="Phi-3.5-mini-instruct-q4f16_1-MLC">Phi-3.5</option>
-      <option value="Qwen2.5-1.5B-Instruct-q4f16_1-MLC">Qwen 1.5B</option>
-    </select>
+    <button id="settingsBtn">Settings</button>
   </header>
 
-  <div id="status">Select model and send a message</div>
+  <div id="settings">
+    <input id="baseUrl" type="text" placeholder="Base URL (e.g. https://api.openai.com/v1)">
+    <input id="apiKey" type="password" placeholder="API Key">
+    <input id="model" type="text" placeholder="Model (e.g. gpt-4o-mini)">
+    <button id="saveSettings" class="primary">Save</button>
+  </div>
+
+  <div id="status">Set Base URL + API Key in Settings</div>
 
   <div id="chat">
     <div class="empty" id="empty">
       <div>
-        <h2>Local AI</h2>
-        <p>Runs in your browser<br>No Puter · No rate limits after download</p>
+        <h2>Internet AI</h2>
+        <p>OpenAI-compatible API<br>No Puter · Configure in Settings</p>
       </div>
     </div>
   </div>
@@ -175,21 +186,42 @@
     <button id="send">↑</button>
   </div>
 
-  <script type="module">
-    import { CreateMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
-
+  <script>
     const chat = document.getElementById("chat");
     const input = document.getElementById("input");
     const sendBtn = document.getElementById("send");
-    const modelSelect = document.getElementById("model");
+    const settingsBtn = document.getElementById("settingsBtn");
+    const settingsPanel = document.getElementById("settings");
+    const baseUrlInput = document.getElementById("baseUrl");
+    const apiKeyInput = document.getElementById("apiKey");
+    const modelInput = document.getElementById("model");
     const statusEl = document.getElementById("status");
     let empty = document.getElementById("empty");
 
-    let engine = null;
     let messages = [];
     let isGenerating = false;
 
-    const setStatus = t => statusEl.textContent = t;
+    function setStatus(t) { statusEl.textContent = t; }
+
+    function loadSettings() {
+      baseUrlInput.value = localStorage.getItem("ai_base") || "";
+      apiKeyInput.value = localStorage.getItem("ai_key") || "";
+      modelInput.value = localStorage.getItem("ai_model") || "gpt-4o-mini";
+    }
+
+    function saveSettings() {
+      localStorage.setItem("ai_base", baseUrlInput.value.trim());
+      localStorage.setItem("ai_key", apiKeyInput.value.trim());
+      localStorage.setItem("ai_model", modelInput.value.trim());
+      settingsPanel.style.display = "none";
+      setStatus("Settings saved");
+    }
+
+    settingsBtn.addEventListener("click", () => {
+      settingsPanel.style.display = settingsPanel.style.display === "flex" ? "none" : "flex";
+    });
+    document.getElementById("saveSettings").addEventListener("click", saveSettings);
+    loadSettings();
 
     function addMessage(text, role) {
       if (empty) { empty.remove(); empty = null; }
@@ -206,21 +238,17 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
-    async function ensureEngine() {
-      if (engine) return;
-      const modelId = modelSelect.value;
-      setStatus("Loading model… (first time downloads)");
-      engine = await CreateMLCEngine(modelId, {
-        initProgressCallback: info => {
-          const p = Math.round((info.progress || 0) * 100);
-          setStatus(info.text || `Loading ${p}%`);
-        }
-      });
-      setStatus("Ready");
-    }
-
     async function send() {
       if (isGenerating) return;
+      const base = localStorage.getItem("ai_base") || "";
+      const key = localStorage.getItem("ai_key") || "";
+      const model = localStorage.getItem("ai_model") || "gpt-4o-mini";
+
+      if (!base || !key) {
+        setStatus("Set Base URL and API Key in Settings");
+        return;
+      }
+
       const text = input.value.trim();
       if (!text) return;
 
@@ -236,27 +264,55 @@
       let full = "";
 
       try {
-        await ensureEngine();
-        const stream = await engine.chat.completions.create({
-          messages,
-          stream: true,
-          temperature: 0.7,
-          max_tokens: 2048
+        const res = await fetch(base.replace(/\/$/, "") + "/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + key
+          },
+          body: JSON.stringify({
+            model,
+            messages,
+            stream: true,
+            temperature: 0.7
+          })
         });
-        for await (const chunk of stream) {
-          const delta = chunk.choices?.[0]?.delta?.content || "";
-          if (delta) {
-            full += delta;
-            updateBubble(botDiv, full);
+
+        if (!res.ok) throw new Error(await res.text());
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop();
+          for (const line of lines) {
+            if (line.startsWith("data: ")) {
+              const data = line.slice(6);
+              if (data === "[DONE]") continue;
+              try {
+                const json = JSON.parse(data);
+                const delta = json.choices?.[0]?.delta?.content || "";
+                if (delta) {
+                  full += delta;
+                  updateBubble(botDiv, full);
+                }
+              } catch {}
+            }
           }
         }
+
         if (!full) full = "(no response)";
         messages.push({ role: "assistant", content: full });
         updateBubble(botDiv, full);
         setStatus("Ready");
       } catch (err) {
         updateBubble(botDiv, "Error: " + (err.message || err));
-        setStatus("Error");
+        setStatus("Error (check CORS / key)");
       } finally {
         isGenerating = false;
         sendBtn.disabled = false;
@@ -275,16 +331,6 @@
       input.style.height = "auto";
       input.style.height = Math.min(input.scrollHeight, 120) + "px";
     });
-
-    modelSelect.addEventListener("change", () => {
-      if (engine) {
-        engine.unload?.();
-        engine = null;
-        setStatus("Model changed — send a message to load");
-      }
-    });
-
-    if (!navigator.gpu) setStatus("WebGPU required (use Chrome/Edge)");
   </script>
 </body>
 </html>
