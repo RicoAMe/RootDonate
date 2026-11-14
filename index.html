@@ -2,311 +2,378 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0b1220">
-  <title>Global Language AI · Any Model</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Local + Internet AI</title>
   <script src="https://js.puter.com/v2/"></script>
   <style>
     :root {
-      --bg: #0b1220; --surface: #111827; --surface-elevated: #1e293b;
-      --accent: #3b82f6; --accent-hover: #2563eb; --accent-soft: rgba(59,130,246,.15);
-      --text: #f1f5f9; --text-secondary: #94a3b8; --text-muted: #64748b;
-      --user-bubble: #1d4ed8; --bot-bubble: #1e293b; --border: #1e293b;
-      --radius: 16px; --radius-sm: 10px;
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-2: #334155;
+      --accent: #22c55e;
+      --accent-blue: #3b82f6;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --user: #14532d;
+      --bot: #1e293b;
+      --border: #334155;
+      --radius: 18px;
+      --radius-sm: 12px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif; -webkit-font-smoothing: antialiased; overscroll-behavior: none; }
-    body { display: flex; flex-direction: column; min-height: 100dvh; padding-bottom: env(safe-area-inset-bottom); }
-    header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0.75rem 1rem; padding-top: calc(0.75rem + env(safe-area-inset-top)); display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-shrink: 0; position: sticky; top: 0; z-index: 10; flex-wrap: wrap; }
-    .brand { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
-    .logo { width: 32px; height: 32px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); border-radius: 10px; display: grid; place-items: center; font-weight: 700; font-size: 0.9rem; flex-shrink: 0; }
-    header h1 { font-size: 1.05rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .controls { display: flex; gap: 0.4rem; align-items: center; flex-shrink: 0; flex-wrap: wrap; }
-    select, button { background: var(--surface-elevated); border: 1px solid var(--border); color: var(--text); padding: 0.4rem 0.75rem; font-weight: 500; cursor: pointer; border-radius: var(--radius-sm); font-size: 0.85rem; }
-    button { background: var(--accent); border-color: var(--accent); color: white; }
-    button:active { transform: scale(0.97); }
-    button.secondary { background: transparent; border-color: var(--border); color: var(--text-secondary); }
-    button.secondary:active { background: var(--surface-elevated); }
-    #modelSelect { max-width: 220px; }
-    #chat { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.65rem; -webkit-overflow-scrolling: touch; }
-    .msg { max-width: min(85%, 480px); padding: 0.7rem 0.95rem; border-radius: 18px; line-height: 1.45; word-wrap: break-word; animation: msgIn 0.2s ease-out; }
-    @keyframes msgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-    .msg.user { align-self: flex-end; background: var(--user-bubble); color: white; border-bottom-right-radius: 6px; }
-    .msg.bot { align-self: flex-start; background: var(--bot-bubble); border-bottom-left-radius: 6px; }
-    .msg .meta { font-size: 0.65rem; color: var(--text-muted); margin-top: 0.35rem; }
-    .msg.user .meta { color: rgba(255,255,255,0.7); }
-    .input-area { background: var(--surface); border-top: 1px solid var(--border); padding: 0.75rem 1rem; padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)); display: flex; gap: 0.5rem; align-items: flex-end; }
-    #input { flex: 1; resize: none; min-height: 44px; max-height: 140px; padding: 0.65rem 0.85rem; font-family: inherit; background: var(--surface-elevated); border: 1px solid var(--border); color: var(--text); border-radius: var(--radius-sm); }
-    #input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 3px var(--accent-soft); }
-    #send { height: 44px; min-width: 72px; font-weight: 600; }
-    .empty { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center; padding: 2rem 1.5rem; color: var(--text-secondary); }
-    .empty h2 { color: var(--text); font-size: 1.35rem; margin-bottom: 0.5rem; }
-    .empty p { font-size: 0.9rem; line-height: 1.5; }
-    .status { font-size: 0.75rem; color: var(--text-muted); padding: 0.25rem 1rem; text-align: center; }
-    footer { display: none; text-align: center; padding: 0.6rem; font-size: 0.75rem; color: var(--text-muted); background: var(--surface); border-top: 1px solid var(--border); }
-    @media (min-width: 768px) { header { padding: 1rem 1.5rem; } header h1 { font-size: 1.15rem; } #chat { padding: 1.25rem 1.5rem; } .input-area { padding: 1rem 1.5rem; } footer { display: block; } }
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior: none;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+      padding-top: env(safe-area-inset-top);
+    }
+    header {
+      background: rgba(30, 41, 59, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.7rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      flex-wrap: wrap;
+    }
+    .brand { display: flex; align-items: center; gap: 0.65rem; }
+    .logo {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, #22c55e, #3b82f6);
+      border-radius: 9px;
+      display: grid; place-items: center;
+      font-weight: 700; font-size: 0.95rem;
+    }
+    header h1 { font-size: 1.12rem; font-weight: 600; letter-spacing: -0.02em; }
+    .controls { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+    select, button {
+      background: var(--surface-2);
+      border: none;
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      font-weight: 500;
+      padding: 0.5rem 0.75rem;
+    }
+    button.primary { background: var(--accent); color: #052e16; }
+    button.blue { background: var(--accent-blue); color: white; }
+    button:disabled { opacity: 0.4; }
+    #modeSelect { max-width: 130px; }
+    #modelSelect { max-width: 160px; }
+    #progress { height: 3px; background: var(--surface-2); display: none; }
+    #progress > div { height: 100%; background: var(--accent); width: 0%; transition: width 0.15s; }
+    #status {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 0.35rem 1rem;
+      background: var(--surface);
+    }
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem 1rem 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      -webkit-overflow-scrolling: touch;
+    }
+    .msg {
+      max-width: 86%;
+      padding: 0.72rem 0.95rem;
+      border-radius: var(--radius);
+      line-height: 1.45;
+      font-size: 0.96rem;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .msg.user { align-self: flex-end; background: var(--user); color: white; border-bottom-right-radius: 6px; }
+    .msg.bot { align-self: flex-start; background: var(--bot); border: 1px solid var(--border); border-bottom-left-radius: 6px; }
+    .empty {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem 1.25rem;
+      color: var(--text-secondary);
+    }
+    .empty h2 { color: var(--text); font-size: 1.45rem; margin-bottom: 0.45rem; }
+    .input-bar {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 0.7rem 1rem;
+      padding-bottom: calc(0.7rem + env(safe-area-inset-bottom));
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-end;
+    }
+    #input {
+      flex: 1;
+      resize: none;
+      min-height: 48px;
+      max-height: 140px;
+      padding: 0.72rem 0.95rem;
+      font-family: inherit;
+      font-size: 1rem;
+      background: var(--surface-2);
+      border: 1px solid transparent;
+      color: var(--text);
+      border-radius: var(--radius);
+    }
+    #input:focus { outline: none; border-color: var(--accent); }
+    #send {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 1.25rem; font-weight: 600;
+    }
   </style>
 </head>
 <body>
   <header>
     <div class="brand">
-      <div class="logo">AI</div>
-      <h1>Global Language AI</h1>
+      <div class="logo">∞</div>
+      <h1>Local + Internet</h1>
     </div>
     <div class="controls">
-      <select id="modelSelect"><option>Loading models…</option></select>
-      <button class="secondary" id="speakBtn">🔊 Speak</button>
-      <button class="secondary" id="micBtn">🎤 Listen</button>
-      <button class="secondary" id="clear">Clear</button>
+      <select id="modeSelect">
+        <option value="local">Local Unlimited</option>
+        <option value="internet">Internet AI</option>
+      </select>
+      <select id="modelSelect"></select>
+      <button id="loadBtn" class="primary">Load</button>
     </div>
   </header>
 
-  <div id="status" class="status"></div>
+  <div id="progress"><div></div></div>
+  <div id="status">Choose mode</div>
+
   <div id="chat">
     <div class="empty" id="empty">
-      <div class="empty-inner">
-        <h2>Chat with any model</h2>
-        <p>Powered by Puter.js · 500+ models<br>
-        Guest mode · Voice · History when signed in</p>
+      <div>
+        <h2>Local unlimited + Internet</h2>
+        <p>Local = unlimited, uses cache<br>Internet = cloud models via Puter</p>
       </div>
     </div>
   </div>
 
-  <div class="input-area">
-    <textarea id="input" placeholder="Message…" rows="1"></textarea>
-    <button id="send">Send</button>
+  <div class="input-bar">
+    <textarea id="input" placeholder="Message" rows="1" disabled></textarea>
+    <button id="send" class="primary">↑</button>
   </div>
-  <footer>Global Language AI · Puter + Any Model · History persists when signed in</footer>
 
-  <script>
-    const chat = document.getElementById('chat');
-    const input = document.getElementById('input');
-    const sendBtn = document.getElementById('send');
-    const clearBtn = document.getElementById('clear');
-    const micBtn = document.getElementById('micBtn');
-    const speakBtn = document.getElementById('speakBtn');
-    const statusEl = document.getElementById('status');
-    const modelSelect = document.getElementById('modelSelect');
-    let empty = document.getElementById('empty');
+  <script type="module">
+    import { CreateMLCEngine, hasModelInCache, prebuiltAppConfig } from "https://esm.run/@mlc-ai/web-llm";
 
-    let currentModel = 'x-ai/grok-4.7';
-    const HISTORY_KEY = 'gla_chat_history';
-    let signedIn = false;
-    let prompting = false;
-    let autoSpeak = true;
-    let recognition = null;
-    let isListening = false;
-    let historyLoaded = false;
+    const LOCAL_MODELS = [
+      { id: "Llama-3.2-1B-Instruct-q4f32_1-MLC", name: "Llama 3.2 1B" },
+      { id: "Llama-3.2-3B-Instruct-q4f32_1-MLC", name: "Llama 3.2 3B" },
+      { id: "Phi-3.5-mini-instruct-q4f16_1-MLC", name: "Phi-3.5 Mini" },
+      { id: "Qwen2.5-1.5B-Instruct-q4f16_1-MLC", name: "Qwen 1.5B" },
+      { id: "SmolLM2-360M-Instruct-q4f16_1-MLC", name: "SmolLM2 360M" }
+    ];
 
-    const BASE_SYSTEM = `You are Global Language AI, a helpful multilingual assistant. Always reply in the same language as the user. Current date/time: `;
+    const chat = document.getElementById("chat");
+    const input = document.getElementById("input");
+    const sendBtn = document.getElementById("send");
+    const loadBtn = document.getElementById("loadBtn");
+    const modeSelect = document.getElementById("modeSelect");
+    const modelSelect = document.getElementById("modelSelect");
+    const statusEl = document.getElementById("status");
+    const progressBar = document.getElementById("progress");
+    const progressFill = progressBar.querySelector("div");
+    let empty = document.getElementById("empty");
 
-    let messages = [{ role: "system", content: BASE_SYSTEM + new Date().toLocaleString() }];
+    let engine = null;
+    let messages = [];
+    let isGenerating = false;
+    let mode = "local";
 
     function setStatus(text) { statusEl.textContent = text; }
-    function formatTime(ts = Date.now()) { return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
-    function escapeHtml(str) { return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-
-    function showEmpty() {
-      chat.innerHTML = '';
-      const emptyDiv = document.createElement('div');
-      emptyDiv.className = 'empty'; emptyDiv.id = 'empty';
-      emptyDiv.innerHTML = `<div class="empty-inner"><h2>Chat with any model</h2><p>Powered by Puter.js · 500+ models<br>Guest mode · Voice · History when signed in</p></div>`;
-      chat.appendChild(emptyDiv); empty = emptyDiv;
+    function setProgress(p) {
+      progressBar.style.display = "block";
+      progressFill.style.width = p + "%";
+      if (p >= 100) setTimeout(() => progressBar.style.display = "none", 300);
     }
 
-    function addMessage(text, role, timestamp = Date.now()) {
+    function addMessage(text, role) {
       if (empty) { empty.remove(); empty = null; }
-      const div = document.createElement('div');
+      const div = document.createElement("div");
       div.className = `msg ${role}`;
-      div.innerHTML = `<div class="content">${escapeHtml(text)}</div><div class="meta">${role === 'user' ? 'You' : 'AI'} · ${formatTime(timestamp)}</div>`;
-      chat.appendChild(div); chat.scrollTop = chat.scrollHeight; return div;
+      div.textContent = text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+      return div;
     }
-    function updateBubble(div, text) { div.querySelector('.content').textContent = text; chat.scrollTop = chat.scrollHeight; }
-    function updateSystemTime() { messages[0].content = BASE_SYSTEM + new Date().toLocaleString(); }
 
-    async function loadModels() {
-      try {
-        const models = await puter.ai.listModels();
-        modelSelect.innerHTML = '';
-        // Prefer some popular ones near the top
-        const preferred = ['x-ai/grok-4.7', 'anthropic/claude-opus-4', 'google/gemini-2.5-pro', 'openai/gpt-4o', 'meta-llama/llama-4-maverick'];
-        const sorted = [...models].sort((a, b) => {
-          const ia = preferred.indexOf(a.id);
-          const ib = preferred.indexOf(b.id);
-          if (ia !== -1 && ib !== -1) return ia - ib;
-          if (ia !== -1) return -1;
-          if (ib !== -1) return 1;
-          return a.id.localeCompare(b.id);
-        });
-        sorted.forEach(m => {
-          const opt = document.createElement('option');
+    function updateBubble(div, text) {
+      div.textContent = text;
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function refreshModels() {
+      modelSelect.innerHTML = "";
+      if (mode === "local") {
+        setStatus("Scanning local cache…");
+        const results = await Promise.all(
+          LOCAL_MODELS.map(async m => {
+            try { return { ...m, cached: await hasModelInCache(m.id, prebuiltAppConfig) }; }
+            catch { return { ...m, cached: false }; }
+          })
+        );
+        results.sort((a, b) => Number(b.cached) - Number(a.cached));
+        results.forEach(m => {
+          const opt = document.createElement("option");
           opt.value = m.id;
-          opt.textContent = m.name || m.id;
+          opt.textContent = (m.cached ? "✅ " : "⬇️ ") + m.name;
           modelSelect.appendChild(opt);
         });
-        if (sorted.length) {
-          currentModel = modelSelect.value;
-          setStatus(`Model: ${currentModel.split('/').pop()}`);
-        }
-      } catch (e) {
-        modelSelect.innerHTML = '<option value="x-ai/grok-4.7">x-ai/grok-4.7 (fallback)</option>';
-        console.warn('listModels failed', e);
-      }
-    }
-
-    modelSelect.addEventListener('change', () => {
-      currentModel = modelSelect.value;
-      setStatus(`Model: ${currentModel.split('/').pop()}`);
-    });
-
-    async function saveHistory() {
-      if (!signedIn) return;
-      try { await puter.kv.set(HISTORY_KEY, messages); } catch (e) { console.warn(e); }
-    }
-
-    async function loadHistory() {
-      if (!signedIn || historyLoaded) return;
-      historyLoaded = true;
-      try {
-        const saved = await puter.kv.get(HISTORY_KEY);
-        if (saved && Array.isArray(saved) && saved.length > 1) {
-          messages = saved; updateSystemTime(); chat.innerHTML = ''; empty = null;
-          for (const msg of messages) {
-            if (msg.role === 'user' || msg.role === 'assistant') {
-              addMessage(msg.content, msg.role === 'assistant' ? 'bot' : 'user');
-            }
-          }
-          setStatus('History restored');
-        } else showEmpty();
-      } catch { showEmpty(); }
-    }
-
-    function initRecognition() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) { setStatus('Speech recognition not supported'); return false; }
-      recognition = new SpeechRecognition();
-      recognition.continuous = true; recognition.interimResults = true;
-      recognition.lang = navigator.language || 'en-US';
-      recognition.onresult = (e) => {
-        let finalTranscript = '';
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-          if (e.results[i].isFinal) finalTranscript += e.results[i][0].transcript;
-        }
-        if (finalTranscript.trim()) { input.value = finalTranscript.trim(); send(); }
-      };
-      recognition.onerror = (e) => {
-        setStatus('Mic error: ' + e.error);
-        if (['not-allowed', 'service-not-allowed'].includes(e.error)) {
-          isListening = false; micBtn.textContent = '🎤 Listen';
-        }
-      };
-      recognition.onend = () => {
-        if (isListening) { try { recognition.start(); } catch {} }
-        else micBtn.textContent = '🎤 Listen';
-      };
-      return true;
-    }
-
-    function toggleMic() {
-      if (!recognition && !initRecognition()) return;
-      if (isListening) {
-        isListening = false; recognition.stop(); micBtn.textContent = '🎤 Listen'; setStatus('Mic stopped');
+        setStatus("Local mode · unlimited");
+        loadBtn.style.display = "";
       } else {
-        isListening = true; micBtn.textContent = '🔴 Listening'; setStatus('Listening…');
-        try { recognition.start(); } catch { isListening = false; micBtn.textContent = '🎤 Listen'; }
-      }
-    }
-
-    async function speakText(text) {
-      if (!autoSpeak || !text || text.length > 2500) return;
-      try {
-        const audio = await puter.ai.txt2speech(text, { provider: "xai", voice: "eve" });
-        audio.play();
-      } catch {
-        const utter = new SpeechSynthesisUtterance(text);
-        utter.lang = navigator.language || 'en-US';
-        speechSynthesis.speak(utter);
-      }
-    }
-
-    async function checkAuth() {
-      try {
-        const user = await puter.auth.getUser();
-        if (user) {
-          signedIn = true;
-          setStatus('Ready · ' + (user.username || 'Puter'));
-          await loadHistory();
-          return true;
+        setStatus("Loading internet models…");
+        try {
+          const models = await puter.ai.listModels();
+          models.slice(0, 30).forEach(m => {
+            const opt = document.createElement("option");
+            opt.value = m.id;
+            opt.textContent = m.name || m.id.split("/").pop();
+            modelSelect.appendChild(opt);
+          });
+          setStatus("Internet mode · has rate limits");
+        } catch {
+          modelSelect.innerHTML = '<option value="x-ai/grok-4.7">Grok</option>';
+          setStatus("Internet mode");
         }
-      } catch {}
-      signedIn = false;
-      setStatus('Guest mode · Sign in for history & higher limits');
-      return false;
-    }
-
-    async function send() {
-      const text = input.value.trim();
-      if (!text) return;
-      await checkAuth();
-      updateSystemTime();
-      addMessage(text, 'user');
-      messages.push({ role: "user", content: text });
-      input.value = ''; input.style.height = 'auto';
-      sendBtn.disabled = true;
-      setStatus('Thinking… (' + currentModel.split('/').pop() + ')');
-
-      const botDiv = addMessage('…', 'bot');
-      try {
-        const response = await puter.ai.chat(messages, {
-          model: currentModel,
-          stream: true,
-          normalize: true
-        });
-        let fullReply = '';
-        for await (const chunk of response) {
-          if (chunk.type === 'text' && chunk.text) {
-            fullReply += chunk.text;
-            updateBubble(botDiv, fullReply);
-          } else if (chunk.type === 'error') throw new Error(chunk.text || 'Stream error');
-        }
-        if (!fullReply) {
-          const nonStream = await puter.ai.chat(messages, { model: currentModel, normalize: true });
-          fullReply = nonStream?.message?.content || 'No response.';
-          updateBubble(botDiv, fullReply);
-        }
-        messages.push({ role: "assistant", content: fullReply });
-        await saveHistory();
-        setStatus(isListening ? 'Listening…' : (signedIn ? 'Ready' : 'Guest mode'));
-        if (autoSpeak) speakText(fullReply);
-      } catch (err) {
-        updateBubble(botDiv, `Error: ${err.message || err}`);
-        setStatus('Error — try another model or sign in');
-      } finally {
+        loadBtn.style.display = "none";
+        input.disabled = false;
         sendBtn.disabled = false;
       }
     }
 
-    sendBtn.addEventListener('click', send);
-    micBtn.addEventListener('click', toggleMic);
-    speakBtn.addEventListener('click', () => {
-      autoSpeak = !autoSpeak;
-      speakBtn.textContent = autoSpeak ? '🔊 Speak' : '🔇 Mute';
-      setStatus(autoSpeak ? 'Voice on' : 'Voice off');
-    });
-    input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
-    input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 140) + 'px'; });
-    clearBtn.addEventListener('click', async () => {
-      messages = [{ role: "system", content: BASE_SYSTEM + new Date().toLocaleString() }];
-      showEmpty();
-      if (isListening) { isListening = false; recognition?.stop(); micBtn.textContent = '🎤 Listen'; }
-      await saveHistory();
-      await checkAuth();
-      setStatus('Chat cleared');
+    modeSelect.addEventListener("change", () => {
+      mode = modeSelect.value;
+      if (engine) { engine.unload?.(); engine = null; }
+      messages = [];
+      input.disabled = true;
+      sendBtn.disabled = true;
+      refreshModels();
     });
 
-    // Init
-    loadModels();
-    checkAuth();
+    async function loadLocal() {
+      if (engine) { try { await engine.unload(); } catch {} engine = null; }
+      const modelId = modelSelect.value;
+      const isCached = modelSelect.selectedOptions[0]?.textContent.startsWith("✅");
+      loadBtn.disabled = true;
+      input.disabled = true;
+      sendBtn.disabled = true;
+      setStatus(isCached ? "Loading from cache…" : "Downloading…");
+      setProgress(isCached ? 50 : 0);
+      try {
+        engine = await CreateMLCEngine(modelId, {
+          initProgressCallback: info => {
+            const p = Math.round((info.progress || 0) * 100);
+            setProgress(p);
+            setStatus(info.text || (isCached ? "Loading…" : p + "%"));
+          }
+        });
+        setStatus("Ready · unlimited local");
+        setProgress(100);
+        input.disabled = false;
+        sendBtn.disabled = false;
+        input.focus();
+      } catch (err) {
+        setStatus("Load failed");
+        setProgress(0);
+      } finally {
+        loadBtn.disabled = false;
+      }
+    }
+
+    loadBtn.addEventListener("click", () => {
+      if (mode === "local") loadLocal();
+    });
+
+    async function send() {
+      if (isGenerating) return;
+      const text = input.value.trim();
+      if (!text) return;
+
+      isGenerating = true;
+      sendBtn.disabled = true;
+      input.disabled = true;
+
+      addMessage(text, "user");
+      messages.push({ role: "user", content: text });
+      input.value = "";
+      input.style.height = "auto";
+
+      const botDiv = addMessage("…", "bot");
+      let full = "";
+
+      try {
+        if (mode === "local") {
+          if (!engine) throw new Error("Load a local model first");
+          const stream = await engine.chat.completions.create({
+            messages, stream: true, temperature: 0.7, max_tokens: 2048
+          });
+          for await (const chunk of stream) {
+            const delta = chunk.choices?.[0]?.delta?.content || "";
+            if (delta) { full += delta; updateBubble(botDiv, full); }
+          }
+        } else {
+          const model = modelSelect.value || "x-ai/grok-4.7";
+          const response = await puter.ai.chat(messages, { model, stream: true, normalize: true });
+          for await (const chunk of response) {
+            if (chunk.type === "text" && chunk.text) {
+              full += chunk.text;
+              updateBubble(botDiv, full);
+            }
+          }
+        }
+        if (!full) full = "(no response)";
+        messages.push({ role: "assistant", content: full });
+        updateBubble(botDiv, full);
+        setStatus(mode === "local" ? "Ready · unlimited" : "Ready · internet");
+      } catch (err) {
+        updateBubble(botDiv, "Error: " + (err.message || err));
+        setStatus("Error");
+      } finally {
+        isGenerating = false;
+        sendBtn.disabled = false;
+        input.disabled = false;
+        input.focus();
+      }
+    }
+
+    sendBtn.addEventListener("click", send);
+    input.addEventListener("keydown", e => {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+    });
+    input.addEventListener("input", () => {
+      input.style.height = "auto";
+      input.style.height = Math.min(input.scrollHeight, 140) + "px";
+    });
+
+    if (!navigator.gpu) setStatus("WebGPU needed for local mode");
+    refreshModels();
   </script>
 </body>
 </html>
