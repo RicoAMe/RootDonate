@@ -45,6 +45,7 @@
       position: sticky;
       top: 0;
       z-index: 10;
+      gap: 0.75rem;
     }
     .logo {
       width: 32px; height: 32px;
@@ -52,9 +53,11 @@
       border-radius: 8px;
       display: grid; place-items: center;
       font-weight: 700;
+      flex-shrink: 0;
     }
-    h1 { font-size: 1.1rem; font-weight: 600; }
-    button {
+    h1 { font-size: 1.1rem; font-weight: 600; white-space: nowrap; }
+    .controls { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+    button, select {
       background: var(--surface-2);
       border: none;
       color: var(--text);
@@ -62,9 +65,11 @@
       padding: 0.45rem 0.75rem;
       font-size: 0.85rem;
       cursor: pointer;
+      font-family: inherit;
     }
     button.primary { background: var(--accent); color: white; }
     button:disabled { opacity: 0.45; cursor: not-allowed; }
+    select { appearance: none; padding-right: 1.5rem; }
     #status {
       font-size: 0.75rem;
       color: var(--muted);
@@ -151,7 +156,14 @@
       <div class="logo">AI</div>
       <h1>Internet AI Chat</h1>
     </div>
-    <div style="display:flex;gap:0.5rem">
+    <div class="controls">
+      <select id="modelSelect" title="Model">
+        <option value="x-ai/grok-4.7">Grok 4.7</option>
+        <option value="x-ai/grok-4.6">Grok 4.6</option>
+        <option value="x-ai/grok-4.5">Grok 4.5</option>
+        <option value="x-ai/grok-4.3">Grok 4.3</option>
+        <option value="openai/gpt-5.2-chat">GPT-5.2 Chat</option>
+      </select>
       <button id="clearBtn">Clear</button>
       <button id="authBtn">Sign in</button>
     </div>
@@ -175,14 +187,15 @@
 
   <script src="https://js.puter.com/v2/"></script>
   <script>
-    const MODEL = "openai/gpt-5.2-chat"; // supports web_search
     const HISTORY_KEY = "chat_history";
+    const DEFAULT_MODEL = "x-ai/grok-4.7";
 
     const chat = document.getElementById("chat");
     const input = document.getElementById("input");
     const sendBtn = document.getElementById("send");
     const authBtn = document.getElementById("authBtn");
     const clearBtn = document.getElementById("clearBtn");
+    const modelSelect = document.getElementById("modelSelect");
     const statusEl = document.getElementById("status");
     let empty = document.getElementById("empty");
 
@@ -242,6 +255,7 @@
         try {
           const user = await puter.auth.getUser();
           authBtn.textContent = user.username || "Signed in";
+          authBtn.title = "Click to sign out";
         } catch {
           authBtn.textContent = "Signed in";
         }
@@ -249,6 +263,7 @@
         await loadHistory();
       } else {
         authBtn.textContent = "Sign in";
+        authBtn.title = "";
         setStatus("Sign in with Puter to chat & save history");
         messages = [];
         renderMessages();
@@ -263,6 +278,15 @@
           await updateAuthUI();
         } catch (err) {
           setStatus("Auth cancelled or failed");
+        }
+      } else {
+        if (confirm("Sign out?")) {
+          try {
+            await puter.auth.signOut();
+            await updateAuthUI();
+          } catch (e) {
+            console.error(e);
+          }
         }
       }
     });
@@ -285,12 +309,14 @@
       const text = input.value.trim();
       if (!text) return;
 
+      const model = modelSelect.value || DEFAULT_MODEL;
+      const isOpenAI = model.startsWith("openai/");
+
       sendBtn.disabled = true;
       input.value = "";
       input.style.height = "auto";
-      setStatus("Searching the web…");
+      setStatus(isOpenAI ? "Searching the web…" : "Thinking…");
 
-      // Add user message
       messages.push({ role: "user", content: text });
       addMessage(text, "user");
       await saveHistory();
@@ -299,55 +325,8 @@
       botDiv.textContent = "…";
 
       try {
-        const response = await puter.ai.chat(messages, {
-          model: MODEL,
-          tools: [{ type: "web_search" }],
+        const options = {
+          model,
           normalize: true,
           stream: true
-        });
-
-        let full = "";
-        for await (const part of response) {
-          if (part?.text) {
-            full += part.text;
-            botDiv.textContent = full;
-            chat.scrollTop = chat.scrollHeight;
-          }
-        }
-
-        if (!full) full = "(no response)";
-        botDiv.textContent = full;
-
-        messages.push({ role: "assistant", content: full });
-        await saveHistory();
-        setStatus("Ready");
-      } catch (err) {
-        console.error(err);
-        const msg = err.message || String(err);
-        botDiv.textContent = "Error: " + msg;
-        setStatus("Error: " + msg);
-      } finally {
-        sendBtn.disabled = false;
-        input.focus();
-      }
-    }
-
-    sendBtn.addEventListener("click", send);
-
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        send();
-      }
-    });
-
-    input.addEventListener("input", () => {
-      input.style.height = "auto";
-      input.style.height = Math.min(input.scrollHeight, 140) + "px";
-    });
-
-    // Init
-    updateAuthUI();
-  </script>
-</body>
-</html>
+        };
