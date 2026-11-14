@@ -271,36 +271,35 @@
       }
     });
 
-    async function callOpenAIWithWebSearch(userMessage) {
-      const response = await fetch("https://api.openai.com/v1/responses", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: OPENAI_MODEL,
-          tools: [{ type: "web_search" }],
-          input: userMessage
-        })
-      });
+ async function callOpenAIWithWebSearch(userMessage) {
+  const response = await fetch("https://openai-proxy.YOUR-SUBDOMAIN.workers.dev", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: OPENAI_MODEL,
+      tools: [{ type: "web_search" }],
+      input: userMessage
+    })
+  });
 
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`OpenAI error ${response.status}: ${errText}`);
-      }
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`OpenAI error ${response.status}: ${errText}`);
+  }
 
-      const data = await response.json();
+  const data = await response.json();
 
-      if (data.output_text) return data.output_text;
+  if (data.output_text) return data.output_text;
 
-      const messageItem = data.output?.find(item => item.type === "message");
-      if (messageItem?.content?.[0]?.text) {
-        return messageItem.content[0].text;
-      }
+  const messageItem = data.output?.find(item => item.type === "message");
+  if (messageItem?.content?.[0]?.text) {
+    return messageItem.content[0].text;
+  }
 
-      return "(no response)";
-    }
+  return "(no response)";
+}
 
     async function send() {
       if (!currentUser) {
