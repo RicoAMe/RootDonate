@@ -51,32 +51,16 @@
       top: 0;
       z-index: 20;
     }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 0.65rem;
-    }
+    .brand { display: flex; align-items: center; gap: 0.65rem; }
     .logo {
-      width: 34px;
-      height: 34px;
+      width: 34px; height: 34px;
       background: linear-gradient(135deg, #22c55e, #3b82f6);
       border-radius: 9px;
-      display: grid;
-      place-items: center;
-      font-weight: 700;
-      font-size: 0.95rem;
-      flex-shrink: 0;
+      display: grid; place-items: center;
+      font-weight: 700; font-size: 0.95rem; flex-shrink: 0;
     }
-    header h1 {
-      font-size: 1.12rem;
-      font-weight: 600;
-      letter-spacing: -0.02em;
-    }
-    .header-actions {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-    }
+    header h1 { font-size: 1.12rem; font-weight: 600; letter-spacing: -0.02em; }
+    .header-actions { display: flex; gap: 0.5rem; align-items: center; }
     select, button {
       background: var(--surface-2);
       border: none;
@@ -85,33 +69,12 @@
       font-size: 0.88rem;
       font-weight: 500;
     }
-    select {
-      padding: 0.5rem 0.7rem;
-      max-width: 155px;
-    }
-    button {
-      padding: 0.52rem 0.85rem;
-      cursor: pointer;
-    }
-    button.primary {
-      background: var(--accent);
-      color: #052e16;
-    }
-    button:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-    #progress {
-      height: 3px;
-      background: var(--surface-2);
-      display: none;
-    }
-    #progress > div {
-      height: 100%;
-      background: var(--accent);
-      width: 0%;
-      transition: width 0.2s ease;
-    }
+    select { padding: 0.5rem 0.7rem; max-width: 160px; }
+    button { padding: 0.52rem 0.85rem; cursor: pointer; }
+    button.primary { background: var(--accent); color: #052e16; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    #progress { height: 3px; background: var(--surface-2); display: none; }
+    #progress > div { height: 100%; background: var(--accent); width: 0%; transition: width 0.2s ease; }
     #status {
       font-size: 0.78rem;
       color: var(--text-muted);
@@ -165,10 +128,7 @@
       margin-bottom: 0.45rem;
       letter-spacing: -0.02em;
     }
-    .empty p {
-      font-size: 0.88rem;
-      line-height: 1.5;
-    }
+    .empty p { font-size: 0.88rem; line-height: 1.5; }
     .input-bar {
       background: var(--surface);
       border-top: 1px solid var(--border);
@@ -222,13 +182,13 @@
   </header>
 
   <div id="progress"><div></div></div>
-  <div id="status">Checking models…</div>
+  <div id="status">Scanning cache…</div>
 
   <div id="chat">
     <div class="empty" id="empty">
       <div>
-        <h2>Private local chat</h2>
-        <p>Models marked ✅ load instantly from cache.<br>Unlimited · Offline · No rate limits</p>
+        <h2>Use cached models</h2>
+        <p>Models marked ✅ are already downloaded<br>and load instantly with no network.</p>
       </div>
     </div>
   </div>
@@ -265,17 +225,16 @@
     let messages = [];
     let isGenerating = false;
 
-    const setStatus = (text) => { statusEl.textContent = text; };
-    const setProgress = (percent) => {
+    function setStatus(text) {
+      statusEl.textContent = text;
+    }
+
+    function setProgress(percent) {
       progressBar.style.display = "block";
       progressFill.style.width = percent + "%";
-      if (percent >= 100) setTimeout(() => { progressBar.style.display = "none"; }, 500);
-    };
-
-    function escapeHtml(str) {
-      return String(str).replace(/[&<>"']/g, m => ({
-        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-      }[m]));
+      if (percent >= 100) {
+        setTimeout(() => { progressBar.style.display = "none"; }, 500);
+      }
     }
 
     function addMessage(text, role) {
@@ -296,30 +255,26 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
-    function showEmpty() {
-      chat.innerHTML = "";
-      const div = document.createElement("div");
-      div.className = "empty";
-      div.id = "empty";
-      div.innerHTML = `<div><h2>Private local chat</h2><p>Models marked ✅ load instantly from cache.<br>Unlimited · Offline · No rate limits</p></div>`;
-      chat.appendChild(div);
-      empty = div;
-    }
-
-    async function refreshModels() {
+    async function scanCache() {
       modelSelect.innerHTML = "";
-      setStatus("Checking cache…");
+      setStatus("Scanning cache…");
+      let cachedCount = 0;
+
       for (const model of MODELS) {
         let cached = false;
         try {
           cached = await hasModelInCache(model.id, prebuiltAppConfig);
         } catch {}
+        if (cached) cachedCount++;
         const option = document.createElement("option");
         option.value = model.id;
         option.textContent = (cached ? "✅ " : "⬇️ ") + model.name;
         modelSelect.appendChild(option);
       }
-      setStatus("Select a model and load");
+
+      setStatus(cachedCount
+        ? `${cachedCount} model${cachedCount > 1 ? "s" : ""} ready in cache`
+        : "No cached models — first load will download");
     }
 
     async function loadModel() {
@@ -333,8 +288,8 @@
       loadBtn.disabled = true;
       input.disabled = true;
       sendBtn.disabled = true;
-      setStatus(isCached ? "Loading from cache…" : "Downloading model…");
-      setProgress(isCached ? 30 : 0);
+      setStatus(isCached ? "Loading from cache…" : "Downloading…");
+      setProgress(isCached ? 40 : 0);
 
       try {
         engine = await CreateMLCEngine(modelId, {
@@ -344,12 +299,12 @@
             setStatus(info.text || (isCached ? "Loading…" : `Downloading ${percent}%`));
           }
         });
-        setStatus("Ready");
+        setStatus("Ready · " + (isCached ? "from cache" : "downloaded"));
         setProgress(100);
         input.disabled = false;
         sendBtn.disabled = false;
         input.focus();
-        setTimeout(refreshModels, 400);
+        setTimeout(scanCache, 400);
       } catch (err) {
         setStatus("Load failed: " + (err.message || String(err)));
         setProgress(0);
@@ -425,7 +380,7 @@
       setStatus("WebGPU required — open in Chrome or Edge");
       loadBtn.disabled = true;
     } else {
-      refreshModels();
+      scanCache();
     }
   </script>
 </body>
