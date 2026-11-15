@@ -35,38 +35,10 @@ let unsubShared = null;
 let isReplying = false;
 
 const baseDictionary = [
-  { input: "who are you", response: "I am a shared-memory Internet AI. I answer from everything everyone has taught me, and I auto-learn Wikipedia answers with sources." },
-  { input: "how do you learn", response: "Every answer I give (including Wikipedia ones) is automatically saved into shared memory. Next time anyone asks something similar, I reply from the saved memory." },
-  { input: "hello", response: "Hi! Ask me anything. I check shared memory first, then Wikipedia if needed, and always auto-save the result." }
+  { input: "who are you", response: "I am a shared-memory Internet AI. I answer from shared memory first, then Wikipedia + Oxford Dictionary, and I auto-save everything." },
+  { input: "how do you learn", response: "Every answer I give is automatically saved into shared memory. Next time anyone asks the exact same thing, I reply from the saved memory." },
+  { input: "hello", response: "Hi! Ask me anything. I check shared memory first, then Wikipedia + Oxford, and always auto-save the result." }
 ];
-
-function similarity(a, b) {
-  a = (a || "").toLowerCase().trim();
-  b = (b || "").toLowerCase().trim();
-  if (a === b) return 1;
-  if (!a || !b) return 0;
-  const setA = new Set(a.split(/\s+/).filter(w => w.length > 2));
-  const setB = new Set(b.split(/\s+/).filter(w => w.length > 2));
-  let intersect = 0;
-  for (const w of setA) if (setB.has(w)) intersect++;
-  const union = setA.size + setB.size - intersect;
-  const jaccard = union ? intersect / union : 0;
-  const lenDiff = Math.abs(a.length - b.length) / Math.max(a.length, b.length, 1);
-  return jaccard * 0.75 + (1 - lenDiff) * 0.25;
-}
-
-function findBestResponse(input) {
-  let best = null;
-  let bestScore = 0.33;
-  for (const pair of memory) {
-    const score = similarity(input, pair.input);
-    if (score > bestScore) {
-      bestScore = score;
-      best = pair.response;
-    }
-  }
-  return best;
-}
 
 function buildOxfordDictionaryLink(queryText) {
   const cleaned = (queryText || "").trim().toLowerCase()
@@ -96,6 +68,16 @@ async function fetchWikipediaSummary(queryText) {
     }
   } catch (e) {
     console.error(e);
+  }
+  return null;
+}
+
+function findExactResponse(input) {
+  const clean = (input || "").trim().toLowerCase();
+  for (const pair of memory) {
+    if ((pair.input || "").trim().toLowerCase() === clean) {
+      return pair.response;
+    }
   }
   return null;
 }
@@ -179,10 +161,10 @@ async function reply(userText) {
   showTyping(true);
   await new Promise(r => setTimeout(r, 450 + Math.random() * 500));
 
-  // 1. Try shared memory first (auto-learned answers)
-  let response = findBestResponse(userText);
+  // 1. Exact match from shared memory
+  let response = findExactResponse(userText);
 
-  // 2. If nothing good, use Internet AI (Wikipedia) and auto-save
+  // 2. If no exact match → Wikipedia + Oxford, then auto-save
   if (!response) {
     response = await fetchWikipediaSummary(userText);
   }
@@ -197,7 +179,7 @@ async function reply(userText) {
   addMessageToUI(response, false, Date.now());
   await saveMessage("assistant", response);
 
-  // Always auto-learn: save into shared memory
+  // Always auto-learn into shared memory (includes Oxford)
   await saveSharedPair(userText, response);
 
   isReplying = false;
