@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
   <meta name="theme-color" content="#0f172a">
-  <title>Firebase + Time-Aware Internet AI</title>
+  <title>Free Time-Aware Internet AI</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -53,7 +53,7 @@
       display: flex; gap: .5rem; align-items: flex-end;
     }
     #input { flex: 1; resize: none; min-height: 48px; max-height: 140px; padding: .7rem; background: var(--surface-2); border: none; color: var(--text); border-radius: var(--radius); font-family: inherit; }
-    #send, #stop { width: 48px; height: 48px; border-radius: 50%; background: var(--accent); color: white; border: none; font-size: 1.3rem; }
+    #send, #stop { width: 48px; height: 48px; border-radius: 50%; background: var(--accent); color: white; border: none; font-size: 1.3rem; display: grid; place-items: center; }
     #stop { display: none; background: #ef4444; }
   </style>
 </head>
@@ -61,21 +61,22 @@
   <header>
     <div style="display:flex;align-items:center;gap:.5rem">
       <div class="logo">AI</div>
-      <strong>Firebase + Time AI</strong>
+      <strong>Free Time AI</strong>
     </div>
     <div style="display:flex;gap:.4rem;flex-wrap:wrap">
       <select id="model">
+        <option value="openrouter/free">OpenRouter Free (auto)</option>
+        <option value="kilo-auto/free">Kilo Auto Free</option>
         <option value="nvidia/nemotron-3-ultra-550b-a55b:free">Nemotron 3 Ultra (free)</option>
-        <option value="google/gemma-4-31b-it:free">Gemma 4 31B (free)</option>
         <option value="nvidia/nemotron-3.5-lightning:free">Nemotron Lightning (free)</option>
-        <option value="openrouter/free">OpenRouter Free Router</option>
+        <option value="cohere/north-mini-code:free">North Mini Code (free)</option>
       </select>
       <button id="authBtn">Sign in</button>
       <button id="clearBtn">Clear</button>
     </div>
   </header>
 
-  <div id="status">Ready · Firebase + time-aware internet AI</div>
+  <div id="status">Ready · Free time-aware AI (no API key)</div>
   <div id="chat"></div>
 
   <div class="input-bar">
@@ -85,25 +86,22 @@
   </div>
 
   <script type="module">
-    // ========== CONFIG ==========
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
-  authDomain: "rootdonate-61e61.firebaseapp.com",
-  databaseURL: "https://rootdonate-61e61-default-rtdb.firebaseio.com",
-  projectId: "rootdonate-61e61",
-  storageBucket: "rootdonate-61e61.firebasestorage.app",
-  messagingSenderId: "754240963907",
-  appId: "1:754240963907:web:5417c2763d8f02108bdbf6",
-  measurementId: "G-0SC5R5ELT1"
-};
+    // Firebase config (public by design for client SDK)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
+      authDomain: "rootdonate-61e61.firebaseapp.com",
+      databaseURL: "https://rootdonate-61e61-default-rtdb.firebaseio.com",
+      projectId: "rootdonate-61e61",
+      storageBucket: "rootdonate-61e61.firebasestorage.app",
+      messagingSenderId: "754240963907",
+      appId: "1:754240963907:web:5417c2763d8f02108bdbf6",
+      measurementId: "G-0SC5R5ELT1"
+    };
 
-    const API_URL = "https://openrouter.ai/api/v1/chat/completions";
-    const API_KEY = "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";
-    // ============================
+    const API_URL = "https://api.kilo.ai/api/gateway/chat/completions";
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-    import { getAuth, signInAnonymously, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
 
     const app = initializeApp(firebaseConfig);
@@ -136,7 +134,13 @@ const firebaseConfig = {
     function addMessage(content, role, time = new Date()) {
       const div = document.createElement("div");
       div.className = `msg ${role}`;
-      div.innerHTML = `<div>${content}</div><div class="time">${time.toLocaleTimeString()}</div>`;
+      const contentDiv = document.createElement("div");
+      contentDiv.textContent = content;
+      const timeDiv = document.createElement("div");
+      timeDiv.className = "time";
+      timeDiv.textContent = time.toLocaleTimeString();
+      div.appendChild(contentDiv);
+      div.appendChild(timeDiv);
 
       const actions = document.createElement("div");
       actions.className = "msg-actions";
@@ -198,10 +202,8 @@ const firebaseConfig = {
         const res = await fetch(API_URL, {
           method: "POST",
           headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${API_KEY}`,
-            "HTTP-Referer": window.location.origin,
-            "X-Title": "Firebase Time-Aware AI"
+            "Content-Type": "application/json"
+            // No Authorization header needed for free models
           },
           body: JSON.stringify({
             model: modelSelect.value,
@@ -220,7 +222,7 @@ const firebaseConfig = {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          const chunk = decoder.decode(value);
+          const chunk = decoder.decode(value, { stream: true });
           const lines = chunk.split("\n").filter(l => l.startsWith("data: "));
           for (const line of lines) {
             if (line === "data: [DONE]") continue;
@@ -240,14 +242,17 @@ const firebaseConfig = {
         setStatus("Ready");
       } catch (err) {
         if (err.name !== "AbortError") {
-          contentEl.textContent = "Error: " + err.message;
+          contentEl.textContent = "Error: " + (err.message || "Request failed");
           setStatus("Error");
+        } else {
+          setStatus("Stopped");
         }
       } finally {
         controller = null;
         sendBtn.style.display = "grid";
         stopBtn.style.display = "none";
-        render();
+        // Avoid full re-render that can flicker; only re-render if needed
+        if (full) render();
       }
     }
 
@@ -300,7 +305,6 @@ const firebaseConfig = {
       } else {
         try {
           await signInAnonymously(auth);
-          // Or use Google: await signInWithPopup(auth, new GoogleAuthProvider());
         } catch (e) {
           alert("Auth error: " + e.message);
         }
