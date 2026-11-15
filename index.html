@@ -4,426 +4,330 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
   <meta name="theme-color" content="#0f172a">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Internet AI</title>
+  <title>Firebase + Time-Aware Internet AI</title>
   <style>
     :root {
       --bg: #0f172a;
       --surface: #1e293b;
       --surface-2: #334155;
       --accent: #3b82f6;
-      --accent-hover: #2563eb;
       --text: #f8fafc;
       --muted: #94a3b8;
       --user: #1d4ed8;
       --bot: #1e293b;
       --border: #334155;
-      --radius: 18px;
-      --shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+      --radius: 16px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body {
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      overscroll-behavior: none;
-    }
-    body {
-      display: flex;
-      flex-direction: column;
-      min-height: 100dvh;
-      padding-top: env(safe-area-inset-top);
-    }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; }
+    body { display: flex; flex-direction: column; min-height: 100dvh; }
     header {
-      background: rgba(30, 41, 59, 0.92);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      background: rgba(30,41,59,.92);
+      backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
-      padding: 0.65rem 1rem;
+      padding: .6rem 1rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      gap: 0.5rem;
+      gap: .5rem;
+      flex-wrap: wrap;
     }
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 0.55rem;
-      min-width: 0;
+    .logo { width: 32px; height: 32px; background: linear-gradient(135deg,#3b82f6,#8b5cf6); border-radius: 8px; display: grid; place-items: center; font-weight: 700; }
+    select, button {
+      background: var(--surface-2); border: none; color: var(--text); border-radius: 8px;
+      padding: .4rem .7rem; font-size: .8rem; cursor: pointer;
     }
-    .logo {
-      width: 34px;
-      height: 34px;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      border-radius: 9px;
-      display: grid;
-      place-items: center;
-      font-weight: 700;
-      font-size: 0.9rem;
-      flex-shrink: 0;
-      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.35);
-    }
-    h1 {
-      font-size: 1.05rem;
-      font-weight: 600;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .controls {
-      display: flex;
-      gap: 0.4rem;
-      align-items: center;
-      flex-shrink: 0;
-    }
-    button {
-      background: var(--surface-2);
-      border: none;
-      color: var(--text);
-      border-radius: 10px;
-      padding: 0.45rem 0.7rem;
-      font-size: 0.8rem;
-      cursor: pointer;
-      font-family: inherit;
-      min-height: 36px;
-      transition: background 0.15s ease, transform 0.1s ease;
-    }
-    button:active { transform: scale(0.97); }
-    button.primary { background: var(--accent); color: white; }
-    button.primary:hover { background: var(--accent-hover); }
-    button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-    #status {
-      font-size: 0.72rem;
-      color: var(--muted);
-      text-align: center;
-      padding: 0.3rem 0.5rem;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-    }
-    #chat {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1rem 0.9rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.55rem;
-      -webkit-overflow-scrolling: touch;
-      scroll-behavior: smooth;
-    }
-    .msg {
-      max-width: 82%;
-      padding: 0.65rem 0.85rem;
-      border-radius: var(--radius);
-      line-height: 1.45;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      animation: fadeIn 0.2s ease-out;
-      box-shadow: var(--shadow);
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .user {
-      align-self: flex-end;
-      background: var(--user);
-      color: white;
-      border-bottom-right-radius: 6px;
-    }
-    .bot {
-      align-self: flex-start;
-      background: var(--bot);
-      border: 1px solid var(--border);
-      border-bottom-left-radius: 6px;
-    }
-    .empty {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      color: var(--muted);
-      padding: 2rem 1.5rem;
-    }
-    .empty h2 { color: var(--text); font-size: 1.35rem; margin-bottom: 0.35rem; font-weight: 600; }
-    .empty p { font-size: 0.9rem; line-height: 1.5; }
+    button.primary { background: var(--accent); }
+    #status { font-size: .75rem; color: var(--muted); text-align: center; padding: .3rem; background: var(--surface); }
+    #chat { flex: 1; overflow-y: auto; padding: 1rem .9rem; display: flex; flex-direction: column; gap: .6rem; }
+    .msg { max-width: 84%; padding: .7rem .9rem; border-radius: var(--radius); line-height: 1.45; white-space: pre-wrap; word-break: break-word; position: relative; }
+    .user { align-self: flex-end; background: var(--user); color: white; border-bottom-right-radius: 4px; }
+    .bot { align-self: flex-start; background: var(--bot); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+    .time { font-size: .65rem; color: var(--muted); margin-top: .25rem; opacity: .8; }
+    .msg-actions { position: absolute; top: 4px; right: 4px; display: none; gap: 4px; }
+    .msg:hover .msg-actions { display: flex; }
+    .msg-actions button { background: rgba(0,0,0,.4); color: white; padding: 2px 6px; font-size: .7rem; border-radius: 6px; }
     .input-bar {
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      padding: 0.6rem 0.9rem;
-      padding-bottom: calc(0.6rem + env(safe-area-inset-bottom));
-      display: flex;
-      gap: 0.45rem;
-      align-items: flex-end;
+      background: var(--surface); border-top: 1px solid var(--border);
+      padding: .6rem .9rem; padding-bottom: calc(.6rem + env(safe-area-inset-bottom));
+      display: flex; gap: .5rem; align-items: flex-end;
     }
-    #input {
-      flex: 1;
-      resize: none;
-      min-height: 48px;
-      max-height: 120px;
-      padding: 0.7rem 0.85rem;
-      font-family: inherit;
-      font-size: 1rem;
-      background: var(--surface-2);
-      border: 1px solid transparent;
-      color: var(--text);
-      border-radius: var(--radius);
-      transition: border-color 0.15s ease;
-    }
-    #input:focus { outline: none; border-color: var(--accent); }
-    #send {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: var(--accent);
-      color: white;
-      font-size: 1.35rem;
-      display: grid;
-      place-items: center;
-      flex-shrink: 0;
-      border: none;
-      cursor: pointer;
-      transition: background 0.15s ease, transform 0.1s ease;
-    }
-    #send:active { transform: scale(0.94); }
-    #send:disabled { opacity: 0.55; }
+    #input { flex: 1; resize: none; min-height: 48px; max-height: 140px; padding: .7rem; background: var(--surface-2); border: none; color: var(--text); border-radius: var(--radius); font-family: inherit; }
+    #send, #stop { width: 48px; height: 48px; border-radius: 50%; background: var(--accent); color: white; border: none; font-size: 1.3rem; }
+    #stop { display: none; background: #ef4444; }
   </style>
 </head>
 <body>
   <header>
-    <div class="brand">
+    <div style="display:flex;align-items:center;gap:.5rem">
       <div class="logo">AI</div>
-      <h1>Internet AI</h1>
+      <strong>Firebase + Time AI</strong>
     </div>
-    <div class="controls">
-      <button id="clearBtn">Clear</button>
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+      <select id="model">
+        <option value="nvidia/nemotron-3-ultra-550b-a55b:free">Nemotron 3 Ultra (free)</option>
+        <option value="google/gemma-4-31b-it:free">Gemma 4 31B (free)</option>
+        <option value="nvidia/nemotron-3.5-lightning:free">Nemotron Lightning (free)</option>
+        <option value="openrouter/free">OpenRouter Free Router</option>
+      </select>
       <button id="authBtn">Sign in</button>
+      <button id="clearBtn">Clear</button>
     </div>
   </header>
 
-  <div id="status">Loading…</div>
-
-  <div id="chat">
-    <div class="empty" id="empty">
-      <div>
-        <h2>Internet AI Chat</h2>
-        <p>Powered by Puter.js<br>Web search + history saved to your account</p>
-      </div>
-    </div>
-  </div>
+  <div id="status">Ready · Firebase + time-aware internet AI</div>
+  <div id="chat"></div>
 
   <div class="input-bar">
-    <textarea id="input" placeholder="Ask anything (including current events)…" rows="1"></textarea>
-    <button id="send" title="Send">↑</button>
+    <textarea id="input" placeholder="Ask anything… (I know the current time)" rows="1"></textarea>
+    <button id="send">↑</button>
+    <button id="stop">■</button>
   </div>
 
-  <script src="https://js.puter.com/v2/"></script>
-  <script>
-    const HISTORY_KEY = "chat_history";
-    const DEFAULT_MODEL = "x-ai/grok-4.7";
-    const MAX_HISTORY = 30;
+  <script type="module">
+    // ========== CONFIG ==========
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
 
-    const chat = document.getElementById("chat");
+    const API_URL = "https://openrouter.ai/api/v1/chat/completions";
+    const API_KEY = "";
+    // ============================
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const chatEl = document.getElementById("chat");
     const input = document.getElementById("input");
     const sendBtn = document.getElementById("send");
-    const authBtn = document.getElementById("authBtn");
+    const stopBtn = document.getElementById("stop");
     const clearBtn = document.getElementById("clearBtn");
+    const authBtn = document.getElementById("authBtn");
+    const modelSelect = document.getElementById("model");
     const statusEl = document.getElementById("status");
-    let empty = document.getElementById("empty");
 
     let messages = [];
-    let signedIn = false;
+    let currentUser = null;
+    let controller = null;
+    let unsubscribe = null;
 
-    const setStatus = (text) => { statusEl.textContent = text; };
+    function getTimeString() {
+      return new Date().toLocaleString(undefined, {
+        weekday: "long", year: "numeric", month: "long", day: "numeric",
+        hour: "2-digit", minute: "2-digit", second: "2-digit", timeZoneName: "short"
+      });
+    }
 
-    function addMessage(text, role) {
-      if (empty) {
-        empty.remove();
-        empty = null;
-      }
+    function setStatus(text) { statusEl.textContent = text; }
+
+    function addMessage(content, role, time = new Date()) {
       const div = document.createElement("div");
       div.className = `msg ${role}`;
-      div.textContent = text;
-      chat.appendChild(div);
-      chat.scrollTop = chat.scrollHeight;
+      div.innerHTML = `<div>${content}</div><div class="time">${time.toLocaleTimeString()}</div>`;
+
+      const actions = document.createElement("div");
+      actions.className = "msg-actions";
+      const copy = document.createElement("button");
+      copy.textContent = "Copy";
+      copy.onclick = () => navigator.clipboard.writeText(content);
+      actions.appendChild(copy);
+      if (role === "bot") {
+        const regen = document.createElement("button");
+        regen.textContent = "Regen";
+        regen.onclick = regenerate;
+        actions.appendChild(regen);
+      }
+      div.appendChild(actions);
+
+      chatEl.appendChild(div);
+      chatEl.scrollTop = chatEl.scrollHeight;
       return div;
     }
 
-    function renderMessages() {
-      chat.innerHTML = "";
-      empty = null;
-      if (!messages.length) {
-        const d = document.createElement("div");
-        d.className = "empty";
-        d.id = "empty";
-        d.innerHTML = `<div><h2>Internet AI Chat</h2><p>Powered by Puter.js<br>Web search + history saved to your account</p></div>`;
-        chat.appendChild(d);
-        empty = d;
-        return;
-      }
-      messages.forEach(m => addMessage(m.content, m.role === "user" ? "user" : "bot"));
+    function render() {
+      chatEl.innerHTML = "";
+      messages.forEach(m => addMessage(m.content, m.role === "user" ? "user" : "bot", m.time ? new Date(m.time) : new Date()));
     }
 
-    async function loadHistory() {
-      try {
-        const data = await puter.kv.get(HISTORY_KEY);
-        messages = Array.isArray(data) ? data : [];
-        renderMessages();
-      } catch (e) {
-        console.error(e);
-        messages = [];
-        renderMessages();
-      }
-    }
+    async function saveMessage(role, content) {
+      const msg = { role, content, time: Date.now() };
+      messages.push(msg);
+      localStorage.setItem("fb_time_chat", JSON.stringify(messages.slice(-40)));
 
-    async function saveHistory() {
-      try {
-        if (messages.length > MAX_HISTORY) {
-          messages = messages.slice(-MAX_HISTORY);
-        }
-        await puter.kv.set(HISTORY_KEY, messages);
-      } catch (e) {
-        console.error("Save failed", e);
-      }
-    }
-
-    async function updateAuthUI() {
-      signedIn = puter.auth.isSignedIn();
-      if (signedIn) {
+      if (currentUser) {
         try {
-          const user = await puter.auth.getUser();
-          authBtn.textContent = user.username || "Signed in";
-          authBtn.title = "Click to sign out";
-        } catch {
-          authBtn.textContent = "Signed in";
-        }
-        setStatus("Ready");
-        await loadHistory();
-      } else {
-        authBtn.textContent = "Sign in";
-        authBtn.title = "";
-        setStatus("Sign in with Puter to chat & save history");
-        messages = [];
-        renderMessages();
+          await addDoc(collection(db, "chats", currentUser.uid, "messages"), {
+            role,
+            content,
+            time: Date.now(),
+            createdAt: serverTimestamp()
+          });
+        } catch (e) { console.warn("Firebase save failed", e); }
       }
     }
 
-    authBtn.addEventListener("click", async () => {
-      if (!signedIn) {
-        try {
-          setStatus("Signing in…");
-          await puter.auth.signIn();
-          await updateAuthUI();
-        } catch (err) {
-          setStatus("Auth cancelled or failed");
-        }
-      } else {
-        if (confirm("Sign out?")) {
-          try {
-            await puter.auth.signOut();
-            await updateAuthUI();
-          } catch (e) {
-            console.error(e);
+    async function streamResponse(history) {
+      controller = new AbortController();
+      sendBtn.style.display = "none";
+      stopBtn.style.display = "grid";
+      setStatus("Thinking…");
+
+      const botDiv = addMessage("", "bot");
+      const contentEl = botDiv.querySelector("div");
+      let full = "";
+
+      const system = {
+        role: "system",
+        content: `You are a helpful AI assistant. Current date and time is: ${getTimeString()}. Always be aware of the current time when answering questions about dates, schedules, news, or "today".`
+      };
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${API_KEY}`,
+            "HTTP-Referer": window.location.origin,
+            "X-Title": "Firebase Time-Aware AI"
+          },
+          body: JSON.stringify({
+            model: modelSelect.value,
+            messages: [system, ...history],
+            stream: true,
+            temperature: 0.7
+          }),
+          signal: controller.signal
+        });
+
+        if (!res.ok) throw new Error(await res.text());
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value);
+          const lines = chunk.split("\n").filter(l => l.startsWith("data: "));
+          for (const line of lines) {
+            if (line === "data: [DONE]") continue;
+            try {
+              const json = JSON.parse(line.slice(6));
+              const token = json.choices?.[0]?.delta?.content || "";
+              if (token) {
+                full += token;
+                contentEl.textContent = full;
+                chatEl.scrollTop = chatEl.scrollHeight;
+              }
+            } catch {}
           }
         }
-      }
-    });
 
-    clearBtn.addEventListener("click", async () => {
-      if (!signedIn) return;
-      if (confirm("Clear all messages?")) {
-        messages = [];
-        await saveHistory();
-        renderMessages();
-        setStatus("Cleared");
+        if (full) await saveMessage("assistant", full);
+        setStatus("Ready");
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          contentEl.textContent = "Error: " + err.message;
+          setStatus("Error");
+        }
+      } finally {
+        controller = null;
+        sendBtn.style.display = "grid";
+        stopBtn.style.display = "none";
+        render();
       }
-    });
+    }
 
-    input.addEventListener("input", () => {
+    async function send() {
+      const text = input.value.trim();
+      if (!text || controller) return;
+
+      await saveMessage("user", text);
+      addMessage(text, "user");
+      input.value = "";
       input.style.height = "auto";
-      input.style.height = Math.min(input.scrollHeight, 120) + "px";
+
+      await streamResponse(messages.slice(-12).map(m => ({ role: m.role, content: m.content })));
+    }
+
+    function regenerate() {
+      if (messages.length < 2 || controller) return;
+      if (messages.at(-1).role === "assistant") {
+        messages.pop();
+        localStorage.setItem("fb_time_chat", JSON.stringify(messages));
+        render();
+        streamResponse(messages.slice(-12).map(m => ({ role: m.role, content: m.content })));
+      }
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      currentUser = user;
+      if (user) {
+        authBtn.textContent = user.isAnonymous ? "Guest" : (user.displayName || "Signed in");
+        if (unsubscribe) unsubscribe();
+        const q = query(collection(db, "chats", user.uid, "messages"), orderBy("createdAt"));
+        unsubscribe = onSnapshot(q, (snap) => {
+          messages = snap.docs.map(d => ({
+            role: d.data().role,
+            content: d.data().content,
+            time: d.data().time || Date.now()
+          }));
+          render();
+        });
+      } else {
+        authBtn.textContent = "Sign in";
+        messages = JSON.parse(localStorage.getItem("fb_time_chat") || "[]");
+        render();
+      }
     });
 
-    input.addEventListener("keydown", (e) => {
+    authBtn.onclick = async () => {
+      if (currentUser) {
+        if (confirm("Sign out?")) await signOut(auth);
+      } else {
+        try {
+          await signInAnonymously(auth);
+          // Or use Google: await signInWithPopup(auth, new GoogleAuthProvider());
+        } catch (e) {
+          alert("Auth error: " + e.message);
+        }
+      }
+    };
+
+    sendBtn.onclick = send;
+    stopBtn.onclick = () => controller?.abort();
+    clearBtn.onclick = () => {
+      if (confirm("Clear chat?")) {
+        messages = [];
+        localStorage.removeItem("fb_time_chat");
+        render();
+      }
+    };
+
+    input.onkeydown = (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         send();
       }
-    });
-
-    async function send() {
-      if (!signedIn) {
-        setStatus("Please sign in first");
-        return;
-      }
-      const text = input.value.trim();
-      if (!text) return;
-
-      const model = DEFAULT_MODEL;
-      const isOpenAI = model.startsWith("openai/");
-
-      sendBtn.disabled = true;
-      input.value = "";
+    };
+    input.oninput = () => {
       input.style.height = "auto";
-      setStatus(isOpenAI ? "Searching the web…" : "Thinking…");
+      input.style.height = Math.min(input.scrollHeight, 140) + "px";
+    };
 
-      messages.push({ role: "user", content: text });
-      addMessage(text, "user");
-      await saveHistory();
-
-      const botDiv = addMessage("…", "bot");
-
-      try {
-        const options = {
-          model,
-          stream: true,
-          normalize: true
-        };
-
-        if (isOpenAI) {
-          options.tools = [{ type: "web_search" }];
-        }
-
-        const historyToSend = messages.slice(-MAX_HISTORY);
-        const response = await puter.ai.chat(historyToSend, options);
-
-        let full = "";
-        for await (const part of response) {
-          const chunk = part?.text ?? (part?.type === "text" ? part.text : "");
-          if (chunk) {
-            full += chunk;
-            botDiv.textContent = full;
-            chat.scrollTop = chat.scrollHeight;
-          }
-        }
-
-        if (!full) {
-          botDiv.textContent = "(No response)";
-          full = "(No response)";
-        }
-
-        messages.push({ role: "assistant", content: full });
-        await saveHistory();
-        setStatus("Ready");
-      } catch (err) {
-        console.error(err);
-        botDiv.textContent = "Error: " + (err.message || "Something went wrong");
-        setStatus("Error – try again");
-      } finally {
-        sendBtn.disabled = false;
-        input.focus();
-      }
-    }
-
-    sendBtn.addEventListener("click", send);
-
-    updateAuthUI();
+    messages = JSON.parse(localStorage.getItem("fb_time_chat") || "[]");
+    render();
+    setStatus(`Ready · Current time: ${getTimeString()}`);
   </script>
 </body>
 </html>
