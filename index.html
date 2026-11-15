@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
 <meta name="theme-color" content="#0f172a">
-<title>Shared RootDonate</title>
+<title>Shared RootDonate · Auto-Learn Wikipedia + Oxford</title>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -34,21 +34,13 @@ let unsubMessages = null;
 let unsubShared = null;
 let isReplying = false;
 
-// ========== HARDCODED DICTIONARY (self + internet AI knowledge) ==========
 const baseDictionary = [
-  { input: "who are you", response: "I am RootDonate AI — a shared learning chatbot. I learn from everyone and use Wikipedia (internet) when I don't know something yet." },
-  { input: "what are you", response: "I am a single HTML file chatbot using Firebase Auth + Firestore shared memory, plus Wikipedia as the internet AI fallback." },
-  { input: "how do you learn", response: "Every conversation is saved to shared_memory. I also automatically hardcode Wikipedia answers into shared memory so the internet knowledge stays forever." },
-  { input: "how does shared memory work", response: "Shared memory lives in Firestore. I load the latest pairs and match with Jaccard similarity. Hardcoded dictionary + user pairs + Wikipedia results all live together." },
-  { input: "what is your source code", response: "One HTML file. Vanilla JS + CSS. Firebase for auth and data. Jaccard similarity for matching. Wikipedia for internet knowledge. Base dictionary is hardcoded in the source." },
-  { input: "do you use wikipedia", response: "Yes. When nothing in the dictionary or shared memory matches well, I fetch a Wikipedia summary and then hardcode that answer into shared memory for everyone." },
-  { input: "internet ai", response: "Wikipedia is my internet AI. Answers from it get automatically saved into shared learning so they become permanent knowledge." },
-  { input: "how do i delete my data", response: "Use Clear data or Sign out. Both delete your personal messages and your shared contributions. The base hardcoded dictionary stays." },
-  { input: "what is jaccard", response: "Jaccard similarity measures word overlap. I use it on the hardcoded dictionary + shared memory to find the best reply." },
-  { input: "hello", response: "Hi! I'm RootDonate AI. I know a base dictionary by heart and I learn from Wikipedia + everyone else." },
-  { input: "hi", response: "Hello! Ask me anything. I use hardcoded knowledge, shared learning, and Wikipedia." },
-  { input: "what can you do", response: "Chat, remember via shared memory, use hardcoded dictionary, and fetch + hardcode Wikipedia answers when needed." },
-  { input: "privacy", response: "Anonymous auth only. You can delete all your data anytime. Shared pairs (including Wikipedia ones you trigger) help everyone." }
+  { input: "who are you", response: "I am RootDonate AI — a shared learning chatbot. I learn from everyone and use Wikipedia (internet) when I don't know something yet. Every Wikipedia answer is auto-saved with its sources." },
+  { input: "how do you learn", response: "Every conversation is saved to shared_memory. Wikipedia answers (with Wikipedia URL + Oxford Dictionary URL) are automatically hardcoded so the knowledge stays forever." },
+  { input: "do you use wikipedia", response: "Yes. When nothing matches, I fetch a Wikipedia summary, append the Wikipedia URL and Oxford University Dictionary URL, then auto-save it into shared memory." },
+  { input: "internet ai", response: "Wikipedia is my internet AI. Answers from it get automatically saved into shared learning with both sources so they become permanent knowledge." },
+  { input: "hello", response: "Hi! I'm RootDonate AI. I know a base dictionary by heart and I auto-learn from Wikipedia + everyone else (always with sources)." },
+  { input: "hi", response: "Hello! Ask me anything. I use hardcoded knowledge, shared learning, and Wikipedia (with Oxford Dictionary source)." }
 ];
 
 const SEED_MARKER = "__ROOTDONATE_SEED_V1__";
@@ -89,11 +81,7 @@ function buildOxfordDictionaryLink(queryText) {
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-");
-
-  if (!cleaned) {
-    return "https://www.oxfordlearnersdictionaries.com/";
-  }
-
+  if (!cleaned) return "https://www.oxfordlearnersdictionaries.com/";
   return `https://www.oxfordlearnersdictionaries.com/definition/english/${encodeURIComponent(cleaned)}`;
 }
 
@@ -111,7 +99,7 @@ async function fetchWikipediaSummary(queryText) {
     if (summaryData.extract) {
       const wikipediaUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, "_"))}`;
       const oxfordUrl = buildOxfordDictionaryLink(queryText);
-      return `${summaryData.extract}\n\nSources: Wikipedia — ${wikipediaUrl} | Oxford University Dictionary — ${oxfordUrl}`;
+      return `${summaryData.extract}\n\nSources:\nWikipedia — ${wikipediaUrl}\nOxford University Dictionary — ${oxfordUrl}`;
     }
   } catch (err) {
     console.error("Wikipedia fetch failed:", err);
@@ -127,7 +115,6 @@ async function seedSharedMemoryIfNeeded() {
 
     console.log("Seeding base dictionary...");
     const batch = writeBatch(db);
-
     const markerRef = doc(collection(db, "shared_memory"));
     batch.set(markerRef, {
       input: SEED_MARKER,
@@ -147,9 +134,7 @@ async function seedSharedMemoryIfNeeded() {
         createdAt: Date.now()
       });
     }
-
     await batch.commit();
-    console.log("Dictionary seeded.");
   } catch (err) {
     console.error("Seed failed:", err);
   }
@@ -239,7 +224,7 @@ async function reply(userText) {
   if (isReplying) return;
   isReplying = true;
   showTyping(true);
-  await new Promise(r => setTimeout(r, 500 + Math.random() * 700));
+  await new Promise(r => setTimeout(r, 400 + Math.random() * 600));
 
   let response = findBestResponse(userText);
   let fromInternet = false;
@@ -252,22 +237,15 @@ async function reply(userText) {
   showTyping(false);
 
   if (!response) {
-    const defaults = [
-      "I'm still learning from everyone and Wikipedia. Tell me more.",
-      "Interesting! What do you think about that?",
-      "I don't have a good answer yet. Can you explain?",
-      "That's new. Why do you say that?",
-      "Keep talking — I learn from all of us and the internet.",
-      "Hmm, not sure. Tell me more details."
-    ];
-    response = defaults[Math.floor(Math.random() * defaults.length)];
+    const oxfordUrl = buildOxfordDictionaryLink(userText);
+    response = `I don't have a good match yet.\n\nSources:\nOxford University Dictionary — ${oxfordUrl}`;
   }
 
   const now = Date.now();
   addMessageToUI(response, false, now);
   await saveMessage("assistant", response);
 
-  // Always hardcode into shared (including Wikipedia / internet AI answers)
+  // Auto-learn: always save (including Wikipedia + both sources)
   await saveSharedPair(userText, response);
 
   isReplying = false;
@@ -302,7 +280,7 @@ async function deleteAllUserData() {
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
-    document.getElementById("status").textContent = "Signed in";
+    document.getElementById("status").textContent = "Signed in · Auto-learning on";
     document.getElementById("signBtn").textContent = "Sign out";
     document.getElementById("input").disabled = false;
     document.getElementById("send").disabled = false;
@@ -381,12 +359,11 @@ document.getElementById("clearBtn").onclick = async () => {
 
 document.getElementById("privacyBtn").onclick = () => {
   alert(
-    "Privacy notice (GDPR)\n\n" +
-    "• Messages stored under anonymous UID.\n" +
-    "• Pairs (including Wikipedia/internet answers) go into shared memory.\n" +
+    "Privacy notice\n\n" +
+    "• Anonymous auth only.\n" +
+    "• Wikipedia answers + sources are auto-saved into shared memory.\n" +
     "• You can delete all your data anytime.\n" +
-    "• No real name or email collected.\n" +
-    "• Wikipedia is only queried for public knowledge."
+    "• No real name or email collected."
   );
 };
 </script>
@@ -396,7 +373,6 @@ document.getElementById("privacyBtn").onclick = () => {
   --surface: #1e293b;
   --surface2: #334155;
   --accent: #22c55e;
-  --accent-dark: #16a34a;
   --text: #f1f5f9;
   --muted: #94a3b8;
   --radius: 18px;
@@ -428,6 +404,7 @@ header {
   border-radius: var(--radius);
   line-height: 1.45;
   word-wrap: break-word;
+  white-space: pre-wrap;
 }
 .user .msg { background: var(--accent); color: #000; border-bottom-right-radius: 6px; }
 .bot .msg { background: var(--surface); border: 1px solid #334155; border-bottom-left-radius: 6px; }
@@ -498,17 +475,18 @@ footer {
     <div id="status">Not signed in</div>
   </div>
   <div style="display:flex;gap:0.4rem;align-items:center">
+    <button id="privacyBtn">Privacy</button>
     <button id="clearBtn">Clear data</button>
     <button id="signBtn">Sign in</button>
   </div>
 </header>
 <div id="chat"></div>
 <div class="input-bar">
-  <textarea id="input" placeholder="Talk... learns from dictionary + Wikipedia!" rows="1" disabled></textarea>
+  <textarea id="input" placeholder="Talk... auto-learns Wikipedia + Oxford sources!" rows="1" disabled></textarea>
   <button id="send" disabled>↑</button>
 </div>
 <footer>
-  By chatting you agree messages are stored and may be used for shared learning (including Wikipedia answers). You can delete all your data anytime.
+  By chatting you agree messages are stored and may be used for shared learning (including Wikipedia answers with sources). You can delete all your data anytime.
 </footer>
 </body>
 </html>
