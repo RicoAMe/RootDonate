@@ -1,340 +1,305 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
-  <meta name="theme-color" content="#0f172a">
-  <title>Free Time-Aware Internet AI</title>
-  <style>
-    :root {
-      --bg: #0f172a;
-      --surface: #1e293b;
-      --surface-2: #334155;
-      --accent: #3b82f6;
-      --text: #f8fafc;
-      --muted: #94a3b8;
-      --user: #1d4ed8;
-      --bot: #1e293b;
-      --border: #334155;
-      --radius: 16px;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; }
-    body { display: flex; flex-direction: column; min-height: 100dvh; }
-    header {
-      background: rgba(30,41,59,.92);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-      padding: .6rem 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: .5rem;
-      flex-wrap: wrap;
-    }
-    .logo { width: 32px; height: 32px; background: linear-gradient(135deg,#3b82f6,#8b5cf6); border-radius: 8px; display: grid; place-items: center; font-weight: 700; }
-    select, button {
-      background: var(--surface-2); border: none; color: var(--text); border-radius: 8px;
-      padding: .4rem .7rem; font-size: .8rem; cursor: pointer;
-    }
-    button.primary { background: var(--accent); }
-    #status { font-size: .75rem; color: var(--muted); text-align: center; padding: .3rem; background: var(--surface); }
-    #chat { flex: 1; overflow-y: auto; padding: 1rem .9rem; display: flex; flex-direction: column; gap: .6rem; }
-    .msg { max-width: 84%; padding: .7rem .9rem; border-radius: var(--radius); line-height: 1.45; white-space: pre-wrap; word-break: break-word; position: relative; }
-    .user { align-self: flex-end; background: var(--user); color: white; border-bottom-right-radius: 4px; }
-    .bot { align-self: flex-start; background: var(--bot); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
-    .time { font-size: .65rem; color: var(--muted); margin-top: .25rem; opacity: .8; }
-    .msg-actions { position: absolute; top: 4px; right: 4px; display: none; gap: 4px; }
-    .msg:hover .msg-actions { display: flex; }
-    .msg-actions button { background: rgba(0,0,0,.4); color: white; padding: 2px 6px; font-size: .7rem; border-radius: 6px; }
-    .input-bar {
-      background: var(--surface); border-top: 1px solid var(--border);
-      padding: .6rem .9rem; padding-bottom: calc(.6rem + env(safe-area-inset-bottom));
-      display: flex; gap: .5rem; align-items: flex-end;
-    }
-    #input { flex: 1; resize: none; min-height: 48px; max-height: 140px; padding: .7rem; background: var(--surface-2); border: none; color: var(--text); border-radius: var(--radius); font-family: inherit; }
-    #send, #stop { width: 48px; height: 48px; border-radius: 50%; background: var(--accent); color: white; border: none; font-size: 1.3rem; display: grid; place-items: center; }
-    #stop { display: none; background: #ef4444; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free Time-Aware AI (Advanced)</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+:root { --bg:#0f172a; --surface:#1e293b; --surface2:#334155; --accent:#3b82f6; --text:#f8fafc; --muted:#94a3b8; --user:#1d4ed8; --border:#334155; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--bg); color:var(--text); font-family:system-ui,sans-serif; height:100dvh; display:flex; flex-direction:column; }
+header { background:rgba(30,41,59,.95); backdrop-filter:blur(10px); padding:.6rem 1rem; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:.5rem; }
+.logo { width:32px; height:32px; background:linear-gradient(135deg,#3b82f6,#8b5cf6); border-radius:8px; display:grid; place-items:center; font-weight:700; }
+#status { font-size:.75rem; color:var(--muted); padding:.3rem 1rem; background:var(--surface); }
+#chat { flex:1; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:.7rem; }
+.msg { max-width:85%; padding:.75rem 1rem; border-radius:16px; line-height:1.45; position:relative; word-break:break-word; }
+.user { align-self:flex-end; background:var(--user); color:white; border-bottom-right-radius:4px; }
+.bot { align-self:flex-start; background:var(--surface); border:1px solid var(--border); border-bottom-left-radius:4px; }
+.msg pre { background:#0f172a; padding:.6rem; border-radius:8px; overflow-x:auto; margin:.5rem 0; }
+.msg code { background:#334155; padding:2px 4px; border-radius:4px; }
+.time { font-size:.65rem; color:var(--muted); margin-top:.3rem; }
+.actions { position:absolute; top:4px; right:4px; display:none; gap:4px; }
+.msg:hover .actions { display:flex; }
+.actions button { background:rgba(0,0,0,.5); color:white; border:none; padding:2px 6px; border-radius:6px; font-size:.7rem; cursor:pointer; }
+.input-bar { background:var(--surface); border-top:1px solid var(--border); padding:.6rem; display:flex; gap:.5rem; }
+#input { flex:1; resize:none; min-height:48px; max-height:140px; padding:.7rem; background:var(--surface2); border:none; color:var(--text); border-radius:16px; font-family:inherit; }
+button { background:var(--surface2); border:none; color:var(--text); border-radius:8px; padding:.4rem .7rem; cursor:pointer; }
+button.primary { background:var(--accent); }
+#send, #stop { width:48px; height:48px; border-radius:50%; background:var(--accent); color:white; font-size:1.3rem; display:grid; place-items:center; }
+#stop { display:none; background:#ef4444; }
+.settings { position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:100; }
+.settings-inner { background:var(--surface); padding:1.5rem; border-radius:16px; width:90%; max-width:480px; max-height:90vh; overflow-y:auto; }
+label { display:block; margin:.6rem 0 .2rem; font-size:.85rem; color:var(--muted); }
+input, select, textarea { width:100%; padding:.5rem; background:var(--surface2); border:1px solid var(--border); color:var(--text); border-radius:8px; }
+</style>
 </head>
 <body>
-  <header>
-    <div style="display:flex;align-items:center;gap:.5rem">
-      <div class="logo">AI</div>
-      <strong>Free Time AI</strong>
-    </div>
-    <div style="display:flex;gap:.4rem;flex-wrap:wrap">
-      <select id="model">
-        <option value="openrouter/free">OpenRouter Free (auto)</option>
-        <option value="kilo-auto/free">Kilo Auto Free</option>
-        <option value="nvidia/nemotron-3-ultra-550b-a55b:free">Nemotron 3 Ultra (free)</option>
-        <option value="nvidia/nemotron-3.5-lightning:free">Nemotron Lightning (free)</option>
-        <option value="cohere/north-mini-code:free">North Mini Code (free)</option>
-      </select>
-      <button id="authBtn">Sign in</button>
-      <button id="clearBtn">Clear</button>
-    </div>
-  </header>
-
-  <div id="status">Ready · Free time-aware AI (no API key)</div>
-  <div id="chat"></div>
-
-  <div class="input-bar">
-    <textarea id="input" placeholder="Ask anything… (I know the current time)" rows="1"></textarea>
-    <button id="send">↑</button>
-    <button id="stop">■</button>
+<header>
+  <div style="display:flex;align-items:center;gap:.5rem">
+    <div class="logo">AI</div>
+    <strong>Free Time AI</strong>
   </div>
+  <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+    <select id="model"></select>
+    <button id="settingsBtn">Settings</button>
+    <button id="clearBtn">Clear</button>
+    <button id="exportBtn">Export</button>
+  </div>
+</header>
+<div id="status">Ready · Free models via Kilo Gateway</div>
+<div id="chat"></div>
+<div class="input-bar">
+  <textarea id="input" placeholder="Ask anything… (I know the current time)" rows="1"></textarea>
+  <button id="send">↑</button>
+  <button id="stop">■</button>
+</div>
 
-  <script type="module">
-    // Firebase config (public by design for client SDK)
-    const firebaseConfig = {
-      apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
-      authDomain: "rootdonate-61e61.firebaseapp.com",
-      databaseURL: "https://rootdonate-61e61-default-rtdb.firebaseio.com",
-      projectId: "rootdonate-61e61",
-      storageBucket: "rootdonate-61e61.firebasestorage.app",
-      messagingSenderId: "754240963907",
-      appId: "1:754240963907:web:5417c2763d8f02108bdbf6",
-      measurementId: "G-0SC5R5ELT1"
-    };
+<div class="settings" id="settings">
+  <div class="settings-inner">
+    <h3>Settings</h3>
+    <label>Proxy URL (leave empty for direct — usually fails due to CORS)</label>
+    <input id="proxy" placeholder="http://localhost:8000 or https://corsproxy.io/?url=">
+    <label>System Prompt</label>
+    <textarea id="system" rows="4"></textarea>
+    <label>Temperature: <span id="tempVal">0.7</span></label>
+    <input type="range" id="temp" min="0" max="1.5" step="0.1" value="0.7">
+    <label>Max Tokens</label>
+    <input type="number" id="maxTokens" value="2048" min="128" max="8192">
+    <div style="margin-top:1rem;display:flex;gap:.5rem">
+      <button class="primary" id="saveSettings">Save</button>
+      <button id="closeSettings">Close</button>
+      <button id="refreshModels">Refresh Models</button>
+    </div>
+  </div>
+</div>
 
-    const API_URL = "https://api.kilo.ai/api/gateway/chat/completions";
+<script>
+const DEFAULT_MODELS = [
+  "kilo-auto/free",
+  "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "nvidia/nemotron-3.5-lightning:free",
+  "cohere/north-mini-code:free",
+  "openrouter/free"
+];
 
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-firestore.js";
+let messages = JSON.parse(localStorage.getItem("free_ai_chat") || "[]");
+let controller = null;
+let settings = JSON.parse(localStorage.getItem("free_ai_settings") || JSON.stringify({
+  proxy: "",
+  system: "You are a helpful AI assistant. Current date and time is: {{TIME}}. Always be aware of the current time when answering questions about dates, schedules, news, or \"today\".",
+  temp: 0.7,
+  maxTokens: 2048
+}));
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+const chatEl = document.getElementById("chat");
+const input = document.getElementById("input");
+const sendBtn = document.getElementById("send");
+const stopBtn = document.getElementById("stop");
+const statusEl = document.getElementById("status");
+const modelSelect = document.getElementById("model");
+const settingsEl = document.getElementById("settings");
 
-    const chatEl = document.getElementById("chat");
-    const input = document.getElementById("input");
-    const sendBtn = document.getElementById("send");
-    const stopBtn = document.getElementById("stop");
-    const clearBtn = document.getElementById("clearBtn");
-    const authBtn = document.getElementById("authBtn");
-    const modelSelect = document.getElementById("model");
-    const statusEl = document.getElementById("status");
+function getTimeString() {
+  return new Date().toLocaleString(undefined, { weekday:"long", year:"numeric", month:"long", day:"numeric", hour:"2-digit", minute:"2-digit", second:"2-digit", timeZoneName:"short" });
+}
 
-    let messages = [];
-    let currentUser = null;
-    let controller = null;
-    let unsubscribe = null;
+function setStatus(t) { statusEl.textContent = t; }
 
-    function getTimeString() {
-      return new Date().toLocaleString(undefined, {
-        weekday: "long", year: "numeric", month: "long", day: "numeric",
-        hour: "2-digit", minute: "2-digit", second: "2-digit", timeZoneName: "short"
+function render() {
+  chatEl.innerHTML = "";
+  messages.forEach((m, i) => {
+    const div = document.createElement("div");
+    div.className = `msg ${m.role === "user" ? "user" : "bot"}`;
+    const content = document.createElement("div");
+    content.innerHTML = m.role === "assistant" ? marked.parse(m.content || "") : m.content;
+    div.appendChild(content);
+    const time = document.createElement("div");
+    time.className = "time";
+    time.textContent = new Date(m.time).toLocaleTimeString();
+    div.appendChild(time);
+
+    const actions = document.createElement("div");
+    actions.className = "actions";
+    const copy = document.createElement("button");
+    copy.textContent = "Copy";
+    copy.onclick = () => navigator.clipboard.writeText(m.content);
+    actions.appendChild(copy);
+    if (m.role === "assistant") {
+      const regen = document.createElement("button");
+      regen.textContent = "Regen";
+      regen.onclick = () => regenerate(i);
+      actions.appendChild(regen);
+    }
+    const del = document.createElement("button");
+    del.textContent = "Del";
+    del.onclick = () => { messages.splice(i, 1); save(); render(); };
+    actions.appendChild(del);
+    div.appendChild(actions);
+    chatEl.appendChild(div);
+  });
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+function save() { localStorage.setItem("free_ai_chat", JSON.stringify(messages.slice(-50))); }
+
+function getApiUrl() {
+  const base = "https://api.kilo.ai/api/gateway/chat/completions";
+  return settings.proxy ? settings.proxy.replace(/\/$/, "") + (settings.proxy.includes("?") ? "" : "/") + (settings.proxy.endsWith("/") || settings.proxy.includes("url=") ? "" : "?url=") + encodeURIComponent(base) : base;
+}
+
+async function streamResponse(history) {
+  controller = new AbortController();
+  sendBtn.style.display = "none";
+  stopBtn.style.display = "grid";
+  setStatus("Thinking…");
+
+  const botDiv = document.createElement("div");
+  botDiv.className = "msg bot";
+  const contentEl = document.createElement("div");
+  botDiv.appendChild(contentEl);
+  chatEl.appendChild(botDiv);
+  chatEl.scrollTop = chatEl.scrollHeight;
+
+  const systemContent = settings.system.replace("{{TIME}}", getTimeString());
+  const body = {
+    model: modelSelect.value || "kilo-auto/free",
+    messages: [{ role: "system", content: systemContent }, ...history],
+    stream: true,
+    temperature: parseFloat(settings.temp),
+    max_tokens: parseInt(settings.maxTokens) || 2048
+  };
+
+  try {
+    const res = await fetch(getApiUrl(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: controller.signal
+    });
+    if (!res.ok) throw new Error(await res.text());
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let full = "";
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
+      for (const line of chunk.split("\n").filter(l => l.startsWith("data: "))) {
+        if (line === "data: [DONE]") continue;
+        try {
+          const json = JSON.parse(line.slice(6));
+          const token = json.choices?.[0]?.delta?.content || "";
+          if (token) {
+            full += token;
+            contentEl.innerHTML = marked.parse(full);
+            chatEl.scrollTop = chatEl.scrollHeight;
+          }
+        } catch {}
+      }
+    }
+    if (full) {
+      messages.push({ role: "assistant", content: full, time: Date.now() });
+      save();
+    }
+    setStatus("Ready");
+  } catch (err) {
+    if (err.name !== "AbortError") {
+      contentEl.textContent = "Error: " + (err.message || "Request failed. Check proxy / CORS / rate limit.");
+      setStatus("Error");
+    } else setStatus("Stopped");
+  } finally {
+    controller = null;
+    sendBtn.style.display = "grid";
+    stopBtn.style.display = "none";
+    render();
+  }
+}
+
+async function send() {
+  const text = input.value.trim();
+  if (!text || controller) return;
+  messages.push({ role: "user", content: text, time: Date.now() });
+  save();
+  render();
+  input.value = "";
+  input.style.height = "auto";
+  await streamResponse(messages.slice(-12).map(m => ({ role: m.role, content: m.content })));
+}
+
+function regenerate(index) {
+  if (controller) return;
+  messages = messages.slice(0, index);
+  save();
+  render();
+  streamResponse(messages.slice(-12).map(m => ({ role: m.role, content: m.content })));
+}
+
+async function loadModels() {
+  modelSelect.innerHTML = "";
+  DEFAULT_MODELS.forEach(id => {
+    const opt = document.createElement("option");
+    opt.value = id;
+    opt.textContent = id;
+    modelSelect.appendChild(opt);
+  });
+  if (!settings.proxy) return;
+  try {
+    const modelsUrl = settings.proxy.replace(/\/$/, "") + (settings.proxy.includes("url=") ? "" : "?url=") + encodeURIComponent("https://api.kilo.ai/api/gateway/models");
+    const res = await fetch(modelsUrl);
+    const data = await res.json();
+    const free = (data.data || []).filter(m => m.isFree || m.id.includes(":free") || m.id.includes("/free"));
+    if (free.length) {
+      modelSelect.innerHTML = "";
+      free.forEach(m => {
+        const opt = document.createElement("option");
+        opt.value = m.id;
+        opt.textContent = m.id + (m.name ? ` (${m.name})` : "");
+        modelSelect.appendChild(opt);
       });
     }
+  } catch (e) { console.warn("Models fetch failed", e); }
+}
 
-    function setStatus(text) { statusEl.textContent = text; }
+// UI wiring
+sendBtn.onclick = send;
+stopBtn.onclick = () => controller?.abort();
+document.getElementById("clearBtn").onclick = () => { if (confirm("Clear chat?")) { messages = []; save(); render(); } };
+document.getElementById("exportBtn").onclick = () => {
+  const blob = new Blob([JSON.stringify(messages, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "chat.json";
+  a.click();
+};
+document.getElementById("settingsBtn").onclick = () => {
+  document.getElementById("proxy").value = settings.proxy;
+  document.getElementById("system").value = settings.system;
+  document.getElementById("temp").value = settings.temp;
+  document.getElementById("tempVal").textContent = settings.temp;
+  document.getElementById("maxTokens").value = settings.maxTokens;
+  settingsEl.style.display = "flex";
+};
+document.getElementById("closeSettings").onclick = () => settingsEl.style.display = "none";
+document.getElementById("saveSettings").onclick = () => {
+  settings.proxy = document.getElementById("proxy").value.trim();
+  settings.system = document.getElementById("system").value;
+  settings.temp = parseFloat(document.getElementById("temp").value);
+  settings.maxTokens = parseInt(document.getElementById("maxTokens").value) || 2048;
+  localStorage.setItem("free_ai_settings", JSON.stringify(settings));
+  settingsEl.style.display = "none";
+  loadModels();
+};
+document.getElementById("refreshModels").onclick = loadModels;
+document.getElementById("temp").oninput = e => document.getElementById("tempVal").textContent = e.target.value;
 
-    function addMessage(content, role, time = new Date()) {
-      const div = document.createElement("div");
-      div.className = `msg ${role}`;
-      const contentDiv = document.createElement("div");
-      contentDiv.textContent = content;
-      const timeDiv = document.createElement("div");
-      timeDiv.className = "time";
-      timeDiv.textContent = time.toLocaleTimeString();
-      div.appendChild(contentDiv);
-      div.appendChild(timeDiv);
+input.onkeydown = e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } };
+input.oninput = () => { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 140) + "px"; };
 
-      const actions = document.createElement("div");
-      actions.className = "msg-actions";
-      const copy = document.createElement("button");
-      copy.textContent = "Copy";
-      copy.onclick = () => navigator.clipboard.writeText(content);
-      actions.appendChild(copy);
-      if (role === "bot") {
-        const regen = document.createElement("button");
-        regen.textContent = "Regen";
-        regen.onclick = regenerate;
-        actions.appendChild(regen);
-      }
-      div.appendChild(actions);
-
-      chatEl.appendChild(div);
-      chatEl.scrollTop = chatEl.scrollHeight;
-      return div;
-    }
-
-    function render() {
-      chatEl.innerHTML = "";
-      messages.forEach(m => addMessage(m.content, m.role === "user" ? "user" : "bot", m.time ? new Date(m.time) : new Date()));
-    }
-
-    async function saveMessage(role, content) {
-      const msg = { role, content, time: Date.now() };
-      messages.push(msg);
-      localStorage.setItem("fb_time_chat", JSON.stringify(messages.slice(-40)));
-
-      if (currentUser) {
-        try {
-          await addDoc(collection(db, "chats", currentUser.uid, "messages"), {
-            role,
-            content,
-            time: Date.now(),
-            createdAt: serverTimestamp()
-          });
-        } catch (e) { console.warn("Firebase save failed", e); }
-      }
-    }
-
-    async function streamResponse(history) {
-      controller = new AbortController();
-      sendBtn.style.display = "none";
-      stopBtn.style.display = "grid";
-      setStatus("Thinking…");
-
-      const botDiv = addMessage("", "bot");
-      const contentEl = botDiv.querySelector("div");
-      let full = "";
-
-      const system = {
-        role: "system",
-        content: `You are a helpful AI assistant. Current date and time is: ${getTimeString()}. Always be aware of the current time when answering questions about dates, schedules, news, or "today".`
-      };
-
-      try {
-        const res = await fetch(API_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-            // No Authorization header needed for free models
-          },
-          body: JSON.stringify({
-            model: modelSelect.value,
-            messages: [system, ...history],
-            stream: true,
-            temperature: 0.7
-          }),
-          signal: controller.signal
-        });
-
-        if (!res.ok) throw new Error(await res.text());
-
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          const chunk = decoder.decode(value, { stream: true });
-          const lines = chunk.split("\n").filter(l => l.startsWith("data: "));
-          for (const line of lines) {
-            if (line === "data: [DONE]") continue;
-            try {
-              const json = JSON.parse(line.slice(6));
-              const token = json.choices?.[0]?.delta?.content || "";
-              if (token) {
-                full += token;
-                contentEl.textContent = full;
-                chatEl.scrollTop = chatEl.scrollHeight;
-              }
-            } catch {}
-          }
-        }
-
-        if (full) await saveMessage("assistant", full);
-        setStatus("Ready");
-      } catch (err) {
-        if (err.name !== "AbortError") {
-          contentEl.textContent = "Error: " + (err.message || "Request failed");
-          setStatus("Error");
-        } else {
-          setStatus("Stopped");
-        }
-      } finally {
-        controller = null;
-        sendBtn.style.display = "grid";
-        stopBtn.style.display = "none";
-        // Avoid full re-render that can flicker; only re-render if needed
-        if (full) render();
-      }
-    }
-
-    async function send() {
-      const text = input.value.trim();
-      if (!text || controller) return;
-
-      await saveMessage("user", text);
-      addMessage(text, "user");
-      input.value = "";
-      input.style.height = "auto";
-
-      await streamResponse(messages.slice(-12).map(m => ({ role: m.role, content: m.content })));
-    }
-
-    function regenerate() {
-      if (messages.length < 2 || controller) return;
-      if (messages.at(-1).role === "assistant") {
-        messages.pop();
-        localStorage.setItem("fb_time_chat", JSON.stringify(messages));
-        render();
-        streamResponse(messages.slice(-12).map(m => ({ role: m.role, content: m.content })));
-      }
-    }
-
-    onAuthStateChanged(auth, async (user) => {
-      currentUser = user;
-      if (user) {
-        authBtn.textContent = user.isAnonymous ? "Guest" : (user.displayName || "Signed in");
-        if (unsubscribe) unsubscribe();
-        const q = query(collection(db, "chats", user.uid, "messages"), orderBy("createdAt"));
-        unsubscribe = onSnapshot(q, (snap) => {
-          messages = snap.docs.map(d => ({
-            role: d.data().role,
-            content: d.data().content,
-            time: d.data().time || Date.now()
-          }));
-          render();
-        });
-      } else {
-        authBtn.textContent = "Sign in";
-        messages = JSON.parse(localStorage.getItem("fb_time_chat") || "[]");
-        render();
-      }
-    });
-
-    authBtn.onclick = async () => {
-      if (currentUser) {
-        if (confirm("Sign out?")) await signOut(auth);
-      } else {
-        try {
-          await signInAnonymously(auth);
-        } catch (e) {
-          alert("Auth error: " + e.message);
-        }
-      }
-    };
-
-    sendBtn.onclick = send;
-    stopBtn.onclick = () => controller?.abort();
-    clearBtn.onclick = () => {
-      if (confirm("Clear chat?")) {
-        messages = [];
-        localStorage.removeItem("fb_time_chat");
-        render();
-      }
-    };
-
-    input.onkeydown = (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        send();
-      }
-    };
-    input.oninput = () => {
-      input.style.height = "auto";
-      input.style.height = Math.min(input.scrollHeight, 140) + "px";
-    };
-
-    messages = JSON.parse(localStorage.getItem("fb_time_chat") || "[]");
-    render();
-    setStatus(`Ready · Current time: ${getTimeString()}`);
-  </script>
+render();
+loadModels();
+setStatus(`Ready · Current time: ${getTimeString()}`);
+</script>
 </body>
 </html>
