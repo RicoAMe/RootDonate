@@ -179,7 +179,6 @@ async function reply(userText) {
 
   let response = findBestResponse(userText);
 
-  // Auto-learn from the internet if no good shared match
   if (!response) {
     response = await fetchWikipediaSummary(userText);
   }
@@ -272,9 +271,13 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
+// Updated: Sign out now also deletes shared memory contributions
 document.getElementById("signBtn").onclick = async () => {
   if (currentUser) {
-    if (confirm("Sign out?")) await signOut(auth);
+    if (confirm("Sign out and permanently delete your contributions to shared memory?")) {
+      await deleteAllUserData();
+      await signOut(auth);
+    }
   } else {
     await signInAnonymously(auth);
   }
@@ -322,6 +325,7 @@ document.getElementById("privacyBtn").onclick = () => {
     "• Pairs (your message + AI reply) are also stored in shared memory so the AI can learn from everyone.\n" +
     "• Timestamps use Date.now() on your device.\n" +
     "• You can delete all your data at any time with the Clear button.\n" +
+    "• Signing out also deletes your shared memory contributions.\n" +
     "• No email or real name is collected (anonymous auth).\n" +
     "• Data is stored in Google Firebase (EU or US region depending on your project settings).\n" +
     "• When no local answer exists, Wikipedia may be queried (public knowledge only)."
@@ -446,7 +450,7 @@ footer {
   <button id="send" disabled>↑</button>
 </div>
 <footer>
-  By chatting you agree that messages are stored and may be used for shared learning. You can delete all your data anytime.
+  By chatting you agree that messages are stored and may be used for shared learning. You can delete all your data anytime. Signing out also deletes your shared contributions.
 </footer>
 </body>
 </html>
