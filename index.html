@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1">
 <meta name="theme-color" content="#0f172a">
-<title>Shared RootDonate · Auto-Learn Wikipedia + Oxford</title>
+<title>Shared Memory Auto-Learn Internet AI</title>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   getFirestore, collection, addDoc, query, orderBy, onSnapshot,
-  getDocs, limit, where, deleteDoc, doc, writeBatch
+  getDocs, limit, where, doc, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -35,19 +35,14 @@ let unsubShared = null;
 let isReplying = false;
 
 const baseDictionary = [
-  { input: "who are you", response: "I am RootDonate AI — a shared learning chatbot. I learn from everyone and use Wikipedia (internet) when I don't know something yet. Every Wikipedia answer is auto-saved with its sources." },
-  { input: "how do you learn", response: "Every conversation is saved to shared_memory. Wikipedia answers (with Wikipedia URL + Oxford Dictionary URL) are automatically hardcoded so the knowledge stays forever." },
-  { input: "do you use wikipedia", response: "Yes. When nothing matches, I fetch a Wikipedia summary, append the Wikipedia URL and Oxford University Dictionary URL, then auto-save it into shared memory." },
-  { input: "internet ai", response: "Wikipedia is my internet AI. Answers from it get automatically saved into shared learning with both sources so they become permanent knowledge." },
-  { input: "hello", response: "Hi! I'm RootDonate AI. I know a base dictionary by heart and I auto-learn from Wikipedia + everyone else (always with sources)." },
-  { input: "hi", response: "Hello! Ask me anything. I use hardcoded knowledge, shared learning, and Wikipedia (with Oxford Dictionary source)." }
+  { input: "who are you", response: "I am a shared-memory Internet AI. I answer from everything everyone has taught me, and I auto-learn Wikipedia answers with sources." },
+  { input: "how do you learn", response: "Every answer I give (including Wikipedia ones) is automatically saved into shared memory. Next time anyone asks something similar, I reply from the saved memory." },
+  { input: "hello", response: "Hi! Ask me anything. I check shared memory first, then Wikipedia if needed, and always auto-save the result." }
 ];
 
-const SEED_MARKER = "__ROOTDONATE_SEED_V1__";
-
 function similarity(a, b) {
-  a = a.toLowerCase().trim();
-  b = b.toLowerCase().trim();
+  a = (a || "").toLowerCase().trim();
+  b = (b || "").toLowerCase().trim();
   if (a === b) return 1;
   if (!a || !b) return 0;
   const setA = new Set(a.split(/\s+/).filter(w => w.length > 2));
@@ -61,9 +56,8 @@ function similarity(a, b) {
 }
 
 function findBestResponse(input) {
-  if (memory.length === 0) return null;
   let best = null;
-  let bestScore = 0.32;
+  let bestScore = 0.33;
   for (const pair of memory) {
     const score = similarity(input, pair.input);
     if (score > bestScore) {
@@ -75,14 +69,13 @@ function findBestResponse(input) {
 }
 
 function buildOxfordDictionaryLink(queryText) {
-  const cleaned = (queryText || "")
-    .trim()
-    .toLowerCase()
+  const cleaned = (queryText || "").trim().toLowerCase()
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-")
     .replace(/-+/g, "-");
-  if (!cleaned) return "https://www.oxfordlearnersdictionaries.com/";
-  return `https://www.oxfordlearnersdictionaries.com/definition/english/${encodeURIComponent(cleaned)}`;
+  return cleaned
+    ? `https://www.oxfordlearnersdictionaries.com/definition/english/${encodeURIComponent(cleaned)}`
+    : "https://www.oxfordlearnersdictionaries.com/";
 }
 
 async function fetchWikipediaSummary(queryText) {
@@ -95,68 +88,35 @@ async function fetchWikipediaSummary(queryText) {
 
     const summaryUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
     const summaryRes = await fetch(summaryUrl);
-    const summaryData = await summaryRes.json();
-    if (summaryData.extract) {
-      const wikipediaUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, "_"))}`;
+    const data = await summaryRes.json();
+    if (data.extract) {
+      const wikiUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, "_"))}`;
       const oxfordUrl = buildOxfordDictionaryLink(queryText);
-      return `${summaryData.extract}\n\nSources:\nWikipedia — ${wikipediaUrl}\nOxford University Dictionary — ${oxfordUrl}`;
+      return `${data.extract}\n\nSources:\nWikipedia — ${wikiUrl}\nOxford University Dictionary — ${oxfordUrl}`;
     }
-  } catch (err) {
-    console.error("Wikipedia fetch failed:", err);
+  } catch (e) {
+    console.error(e);
   }
   return null;
 }
 
-async function seedSharedMemoryIfNeeded() {
-  try {
-    const markerQuery = query(collection(db, "shared_memory"), where("input", "==", SEED_MARKER), limit(1));
-    const markerSnap = await getDocs(markerQuery);
-    if (!markerSnap.empty) return;
-
-    console.log("Seeding base dictionary...");
-    const batch = writeBatch(db);
-    const markerRef = doc(collection(db, "shared_memory"));
-    batch.set(markerRef, {
-      input: SEED_MARKER,
-      response: "seed",
-      uid: "system",
-      isSeed: true,
-      createdAt: Date.now()
-    });
-
-    for (const pair of baseDictionary) {
-      const ref = doc(collection(db, "shared_memory"));
-      batch.set(ref, {
-        input: pair.input,
-        response: pair.response,
-        uid: "system",
-        isSeed: true,
-        createdAt: Date.now()
-      });
-    }
-    await batch.commit();
-  } catch (err) {
-    console.error("Seed failed:", err);
-  }
-}
-
 async function loadSharedMemory() {
   try {
-    const q = query(collection(db, "shared_memory"), orderBy("createdAt", "desc"), limit(800));
+    const q = query(collection(db, "shared_memory"), orderBy("createdAt", "desc"), limit(1000));
     const snap = await getDocs(q);
-    const shared = snap.docs.map(d => d.data()).reverse().filter(p => p.input !== SEED_MARKER);
+    const shared = snap.docs.map(d => d.data()).reverse();
     memory = [...baseDictionary, ...shared];
-  } catch (err) {
-    console.error("Failed to load shared memory:", err);
+  } catch (e) {
+    console.error(e);
     memory = [...baseDictionary];
   }
 }
 
 function listenSharedMemory() {
   if (unsubShared) unsubShared();
-  const q = query(collection(db, "shared_memory"), orderBy("createdAt", "desc"), limit(800));
-  unsubShared = onSnapshot(q, (snap) => {
-    const shared = snap.docs.map(d => d.data()).reverse().filter(p => p.input !== SEED_MARKER);
+  const q = query(collection(db, "shared_memory"), orderBy("createdAt", "desc"), limit(1000));
+  unsubShared = onSnapshot(q, snap => {
+    const shared = snap.docs.map(d => d.data()).reverse();
     memory = [...baseDictionary, ...shared];
   });
 }
@@ -170,10 +130,8 @@ async function saveSharedPair(input, response) {
       uid: currentUser.uid,
       createdAt: Date.now()
     });
-    memory.push({ input, response, createdAt: Date.now() });
-    if (memory.length > 1500) memory.shift();
-  } catch (err) {
-    console.error("Failed to save shared pair:", err);
+  } catch (e) {
+    console.error("Save shared failed:", e);
   }
 }
 
@@ -183,9 +141,7 @@ async function saveMessage(role, content) {
     await addDoc(collection(db, "users", currentUser.uid, "messages"), {
       role, content, createdAt: Date.now()
     });
-  } catch (err) {
-    console.error("Failed to save message:", err);
-  }
+  } catch (e) {}
 }
 
 function addMessageToUI(text, isUser, time) {
@@ -198,7 +154,7 @@ function addMessageToUI(text, isUser, time) {
   if (time) {
     const t = document.createElement("div");
     t.className = "time";
-    t.textContent = new Date(time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    t.textContent = new Date(time).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
     wrap.appendChild(t);
   }
   const chat = document.getElementById("chat");
@@ -214,38 +170,34 @@ function showTyping(show) {
     el.className = "msg-wrap bot";
     el.innerHTML = '<div class="msg typing"><span></span><span></span><span></span></div>';
     document.getElementById("chat").appendChild(el);
-    document.getElementById("chat").scrollTop = 99999;
-  } else if (!show && el) {
-    el.remove();
-  }
+  } else if (!show && el) el.remove();
 }
 
 async function reply(userText) {
   if (isReplying) return;
   isReplying = true;
   showTyping(true);
-  await new Promise(r => setTimeout(r, 400 + Math.random() * 600));
+  await new Promise(r => setTimeout(r, 450 + Math.random() * 500));
 
+  // 1. Try shared memory first (auto-learned answers)
   let response = findBestResponse(userText);
-  let fromInternet = false;
 
+  // 2. If nothing good, use Internet AI (Wikipedia) and auto-save
   if (!response) {
     response = await fetchWikipediaSummary(userText);
-    fromInternet = !!response;
   }
 
   showTyping(false);
 
   if (!response) {
-    const oxfordUrl = buildOxfordDictionaryLink(userText);
-    response = `I don't have a good match yet.\n\nSources:\nOxford University Dictionary — ${oxfordUrl}`;
+    const oxford = buildOxfordDictionaryLink(userText);
+    response = `I don't know that yet.\n\nOxford University Dictionary — ${oxford}`;
   }
 
-  const now = Date.now();
-  addMessageToUI(response, false, now);
+  addMessageToUI(response, false, Date.now());
   await saveMessage("assistant", response);
 
-  // Auto-learn: always save (including Wikipedia + both sources)
+  // Always auto-learn: save into shared memory
   await saveSharedPair(userText, response);
 
   isReplying = false;
@@ -254,44 +206,35 @@ async function reply(userText) {
 async function deleteAllUserData() {
   if (!currentUser) return;
   const uid = currentUser.uid;
-
   try {
-    const msgQuery = query(collection(db, "users", uid, "messages"));
-    const msgSnap = await getDocs(msgQuery);
+    const msgSnap = await getDocs(query(collection(db, "users", uid, "messages")));
     const batch = writeBatch(db);
     msgSnap.docs.forEach(d => batch.delete(d.ref));
     if (!msgSnap.empty) await batch.commit();
-  } catch (err) {
-    console.error("Failed to delete messages:", err);
-  }
-
+  } catch {}
   try {
-    const sharedQuery = query(collection(db, "shared_memory"), where("uid", "==", uid));
-    const sharedSnap = await getDocs(sharedQuery);
+    const sharedSnap = await getDocs(query(collection(db, "shared_memory"), where("uid", "==", uid)));
     const batch = writeBatch(db);
     sharedSnap.docs.forEach(d => batch.delete(d.ref));
     if (!sharedSnap.empty) await batch.commit();
     await loadSharedMemory();
-  } catch (err) {
-    console.error("Failed to delete shared contributions:", err);
-  }
+  } catch {}
 }
 
-onAuthStateChanged(auth, async (user) => {
+onAuthStateChanged(auth, async user => {
   if (user) {
     currentUser = user;
-    document.getElementById("status").textContent = "Signed in · Auto-learning on";
+    document.getElementById("status").textContent = "Signed in · Shared memory active";
     document.getElementById("signBtn").textContent = "Sign out";
     document.getElementById("input").disabled = false;
     document.getElementById("send").disabled = false;
 
-    await seedSharedMemoryIfNeeded();
     await loadSharedMemory();
     listenSharedMemory();
 
     if (unsubMessages) unsubMessages();
     const q = query(collection(db, "users", user.uid, "messages"), orderBy("createdAt"));
-    unsubMessages = onSnapshot(q, (snap) => {
+    unsubMessages = onSnapshot(q, snap => {
       document.getElementById("chat").innerHTML = "";
       snap.forEach(d => {
         const data = d.data();
@@ -305,15 +248,15 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById("input").disabled = true;
     document.getElementById("send").disabled = true;
     document.getElementById("chat").innerHTML = "";
-    if (unsubMessages) { unsubMessages(); unsubMessages = null; }
-    if (unsubShared) { unsubShared(); unsubShared = null; }
+    if (unsubMessages) unsubMessages();
+    if (unsubShared) unsubShared();
     memory = [...baseDictionary];
   }
 });
 
 document.getElementById("signBtn").onclick = async () => {
   if (currentUser) {
-    if (confirm("Sign out and permanently delete your contributions to shared memory?")) {
+    if (confirm("Sign out and delete your contributions to shared memory?")) {
       await deleteAllUserData();
       await signOut(auth);
     }
@@ -323,13 +266,11 @@ document.getElementById("signBtn").onclick = async () => {
 };
 
 document.getElementById("send").onclick = async () => {
-  const inputEl = document.getElementById("input");
-  const text = inputEl.value.trim();
+  const input = document.getElementById("input");
+  const text = input.value.trim();
   if (!text || !currentUser || isReplying) return;
-  inputEl.value = "";
-  inputEl.style.height = "auto";
-  const now = Date.now();
-  addMessageToUI(text, true, now);
+  input.value = "";
+  addMessageToUI(text, true, Date.now());
   await saveMessage("user", text);
   reply(text);
 };
@@ -341,152 +282,56 @@ document.getElementById("input").onkeydown = e => {
   }
 };
 
-document.getElementById("input").oninput = () => {
-  const el = document.getElementById("input");
-  el.style.height = "auto";
-  el.style.height = Math.min(el.scrollHeight, 120) + "px";
-};
-
 document.getElementById("clearBtn").onclick = async () => {
   if (!currentUser) return;
-  if (confirm("Permanently delete all your personal chat history and your contributions to shared memory?\n\nThis cannot be undone.")) {
-    if (unsubMessages) unsubMessages();
+  if (confirm("Delete all your personal messages and shared memory contributions?")) {
     await deleteAllUserData();
     document.getElementById("chat").innerHTML = "";
-    alert("Your data has been deleted.");
   }
-};
-
-document.getElementById("privacyBtn").onclick = () => {
-  alert(
-    "Privacy notice\n\n" +
-    "• Anonymous auth only.\n" +
-    "• Wikipedia answers + sources are auto-saved into shared memory.\n" +
-    "• You can delete all your data anytime.\n" +
-    "• No real name or email collected."
-  );
 };
 </script>
 <style>
-:root {
-  --bg: #0b1120;
-  --surface: #1e293b;
-  --surface2: #334155;
-  --accent: #22c55e;
-  --text: #f1f5f9;
-  --muted: #94a3b8;
-  --radius: 18px;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; }
-body { display: flex; flex-direction: column; min-height: 100dvh; padding-bottom: env(safe-area-inset-bottom); }
-header {
-  background: rgba(30,41,59,.85);
-  backdrop-filter: blur(12px);
-  padding: 0.7rem 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid #334155;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-.logo { font-weight: 700; font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem; }
-.logo span { background: linear-gradient(135deg, #22c55e, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-#status { font-size: 0.75rem; color: var(--muted); }
-#chat { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.8rem; }
-.msg-wrap { display: flex; flex-direction: column; max-width: 82%; }
-.msg-wrap.user { align-self: flex-end; align-items: flex-end; }
-.msg-wrap.bot { align-self: flex-start; align-items: flex-start; }
-.msg {
-  padding: 0.75rem 1rem;
-  border-radius: var(--radius);
-  line-height: 1.45;
-  word-wrap: break-word;
-  white-space: pre-wrap;
-}
-.user .msg { background: var(--accent); color: #000; border-bottom-right-radius: 6px; }
-.bot .msg { background: var(--surface); border: 1px solid #334155; border-bottom-left-radius: 6px; }
-.time { font-size: 0.65rem; color: var(--muted); margin-top: 0.2rem; padding: 0 0.3rem; }
-.typing span {
-  display: inline-block; width: 6px; height: 6px; background: var(--muted); border-radius: 50%;
-  margin: 0 2px; animation: bounce 1.2s infinite;
-}
-.typing span:nth-child(2) { animation-delay: 0.2s; }
-.typing span:nth-child(3) { animation-delay: 0.4s; }
-@keyframes bounce { 0%, 80%, 100% { transform: scale(0.6); opacity: .5; } 40% { transform: scale(1); opacity: 1; } }
-.input-bar {
-  background: var(--surface);
-  padding: 0.6rem 0.8rem calc(0.6rem + env(safe-area-inset-bottom));
-  display: flex;
-  gap: 0.5rem;
-  align-items: flex-end;
-  border-top: 1px solid #334155;
-}
-#input {
-  flex: 1;
-  min-height: 44px;
-  max-height: 120px;
-  padding: 0.7rem 1rem;
-  background: var(--surface2);
-  border: none;
-  border-radius: 22px;
-  color: var(--text);
-  font-size: 1rem;
-  resize: none;
-  font-family: inherit;
-}
-#send, #signBtn, #clearBtn, #privacyBtn {
-  background: var(--accent);
-  color: #000;
-  border: none;
-  border-radius: 50%;
-  width: 44px;
-  height: 44px;
-  font-size: 1.2rem;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-}
-#signBtn, #clearBtn, #privacyBtn { border-radius: 12px; width: auto; padding: 0 0.9rem; font-size: 0.85rem; font-weight: 600; }
-#signBtn { background: #3b82f6; color: white; }
-#privacyBtn { background: #64748b; color: white; }
-@media (max-width: 480px) {
-  .msg-wrap { max-width: 90%; }
-  header { padding: 0.6rem 0.8rem; }
-}
-footer {
-  background: var(--surface);
-  border-top: 1px solid #334155;
-  padding: 0.6rem 1rem calc(0.6rem + env(safe-area-inset-bottom));
-  text-align: center;
-  font-size: 0.7rem;
-  color: var(--muted);
-  line-height: 1.4;
-}
+:root { --bg:#0b1120; --surface:#1e293b; --accent:#22c55e; --text:#f1f5f9; --muted:#94a3b8; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--bg); color:var(--text); font-family:system-ui,sans-serif; height:100dvh; display:flex; flex-direction:column; }
+header { background:#1e293b; padding:0.8rem 1rem; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; }
+.logo { font-weight:700; }
+#status { font-size:0.75rem; color:var(--muted); }
+#chat { flex:1; overflow-y:auto; padding:1rem; display:flex; flex-direction:column; gap:0.75rem; }
+.msg-wrap { max-width:82%; display:flex; flex-direction:column; }
+.msg-wrap.user { align-self:flex-end; }
+.msg-wrap.bot { align-self:flex-start; }
+.msg { padding:0.75rem 1rem; border-radius:16px; white-space:pre-wrap; line-height:1.45; }
+.user .msg { background:var(--accent); color:#000; }
+.bot .msg { background:var(--surface); border:1px solid #334155; }
+.time { font-size:0.65rem; color:var(--muted); margin-top:0.25rem; }
+.typing span { display:inline-block; width:6px; height:6px; background:var(--muted); border-radius:50%; margin:0 2px; animation:bounce 1.2s infinite; }
+.typing span:nth-child(2){animation-delay:.2s} .typing span:nth-child(3){animation-delay:.4s}
+@keyframes bounce { 0%,80%,100%{transform:scale(.6);opacity:.5} 40%{transform:scale(1);opacity:1} }
+.input-bar { display:flex; gap:0.5rem; padding:0.7rem; background:#1e293b; border-top:1px solid #334155; }
+#input { flex:1; min-height:44px; padding:0.7rem 1rem; border:none; border-radius:22px; background:#334155; color:var(--text); font-size:1rem; resize:none; }
+#send, #signBtn, #clearBtn { border:none; cursor:pointer; font-weight:600; }
+#send { width:44px; height:44px; border-radius:50%; background:var(--accent); color:#000; font-size:1.2rem; }
+#signBtn, #clearBtn { padding:0 0.9rem; height:36px; border-radius:10px; font-size:0.85rem; }
+#signBtn { background:#3b82f6; color:white; }
+#clearBtn { background:#64748b; color:white; }
 </style>
 </head>
 <body>
 <header>
   <div>
-    <div class="logo">RootDonate <span>AI</span></div>
+    <div class="logo">Shared Memory Internet AI</div>
     <div id="status">Not signed in</div>
   </div>
-  <div style="display:flex;gap:0.4rem;align-items:center">
-    <button id="privacyBtn">Privacy</button>
+  <div style="display:flex;gap:0.4rem">
     <button id="clearBtn">Clear data</button>
     <button id="signBtn">Sign in</button>
   </div>
 </header>
 <div id="chat"></div>
 <div class="input-bar">
-  <textarea id="input" placeholder="Talk... auto-learns Wikipedia + Oxford sources!" rows="1" disabled></textarea>
+  <textarea id="input" placeholder="Ask anything… answers auto-save to shared memory" rows="1" disabled></textarea>
   <button id="send" disabled>↑</button>
 </div>
-<footer>
-  By chatting you agree messages are stored and may be used for shared learning (including Wikipedia answers with sources). You can delete all your data anytime.
-</footer>
 </body>
 </html>
