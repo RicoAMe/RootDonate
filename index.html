@@ -82,6 +82,21 @@ function findBestResponse(input) {
   return best;
 }
 
+function buildOxfordDictionaryLink(queryText) {
+  const cleaned = (queryText || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+
+  if (!cleaned) {
+    return "https://www.oxfordlearnersdictionaries.com/";
+  }
+
+  return `https://www.oxfordlearnersdictionaries.com/definition/english/${encodeURIComponent(cleaned)}`;
+}
+
 async function fetchWikipediaSummary(queryText) {
   try {
     const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(queryText)}&format=json&origin=*&srlimit=1`;
@@ -94,7 +109,9 @@ async function fetchWikipediaSummary(queryText) {
     const summaryRes = await fetch(summaryUrl);
     const summaryData = await summaryRes.json();
     if (summaryData.extract) {
-      return `${summaryData.extract}\n\n(Source: Wikipedia – ${title})`;
+      const wikipediaUrl = `https://en.wikipedia.org/wiki/${encodeURIComponent(title.replace(/ /g, "_"))}`;
+      const oxfordUrl = buildOxfordDictionaryLink(queryText);
+      return `${summaryData.extract}\n\nSources: Wikipedia — ${wikipediaUrl} | Oxford University Dictionary — ${oxfordUrl}`;
     }
   } catch (err) {
     console.error("Wikipedia fetch failed:", err);
