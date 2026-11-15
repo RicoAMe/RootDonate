@@ -34,6 +34,25 @@ let unsubMessages = null;
 let unsubShared = null;
 let isReplying = false;
 
+// ========== HARDCODED DICTIONARY (self + internet AI knowledge) ==========
+const baseDictionary = [
+  { input: "who are you", response: "I am RootDonate AI — a shared learning chatbot. I learn from everyone and use Wikipedia (internet) when I don't know something yet." },
+  { input: "what are you", response: "I am a single HTML file chatbot using Firebase Auth + Firestore shared memory, plus Wikipedia as the internet AI fallback." },
+  { input: "how do you learn", response: "Every conversation is saved to shared_memory. I also automatically hardcode Wikipedia answers into shared memory so the internet knowledge stays forever." },
+  { input: "how does shared memory work", response: "Shared memory lives in Firestore. I load the latest pairs and match with Jaccard similarity. Hardcoded dictionary + user pairs + Wikipedia results all live together." },
+  { input: "what is your source code", response: "One HTML file. Vanilla JS + CSS. Firebase for auth and data. Jaccard similarity for matching. Wikipedia for internet knowledge. Base dictionary is hardcoded in the source." },
+  { input: "do you use wikipedia", response: "Yes. When nothing in the dictionary or shared memory matches well, I fetch a Wikipedia summary and then hardcode that answer into shared memory for everyone." },
+  { input: "internet ai", response: "Wikipedia is my internet AI. Answers from it get automatically saved into shared learning so they become permanent knowledge." },
+  { input: "how do i delete my data", response: "Use Clear data or Sign out. Both delete your personal messages and your shared contributions. The base hardcoded dictionary stays." },
+  { input: "what is jaccard", response: "Jaccard similarity measures word overlap. I use it on the hardcoded dictionary + shared memory to find the best reply." },
+  { input: "hello", response: "Hi! I'm RootDonate AI. I know a base dictionary by heart and I learn from Wikipedia + everyone else." },
+  { input: "hi", response: "Hello! Ask me anything. I use hardcoded knowledge, shared learning, and Wikipedia." },
+  { input: "what can you do", response: "Chat, remember via shared memory, use hardcoded dictionary, and fetch + hardcode Wikipedia answers when needed." },
+  { input: "privacy", response: "Anonymous auth only. You can delete all your data anytime. Shared pairs (including Wikipedia ones you trigger) help everyone." }
+];
+
+const SEED_MARKER = "__ROOTDONATE_SEED_V1__";
+
 function similarity(a, b) {
   a = a.toLowerCase().trim();
   b = b.toLowerCase().trim();
@@ -83,30 +102,60 @@ async function fetchWikipediaSummary(queryText) {
   return null;
 }
 
+async function seedSharedMemoryIfNeeded() {
+  try {
+    const markerQuery = query(collection(db, "shared_memory"), where("input", "==", SEED_MARKER), limit(1));
+    const markerSnap = await getDocs(markerQuery);
+    if (!markerSnap.empty) return;
+
+    console.log("Seeding base dictionary...");
+    const batch = writeBatch(db);
+
+    const markerRef = doc(collection(db, "shared_memory"));
+    batch.set(markerRef, {
+      input: SEED_MARKER,
+      response: "seed",
+      uid: "system",
+      isSeed: true,
+      createdAt: Date.now()
+    });
+
+    for (const pair of baseDictionary) {
+      const ref = doc(collection(db, "shared_memory"));
+      batch.set(ref, {
+        input: pair.input,
+        response: pair.response,
+        uid: "system",
+        isSeed: true,
+        createdAt: Date.now()
+      });
+    }
+
+    await batch.commit();
+    console.log("Dictionary seeded.");
+  } catch (err) {
+    console.error("Seed failed:", err);
+  }
+}
+
 async function loadSharedMemory() {
   try {
-    const q = query(
-      collection(db, "shared_memory"),
-      orderBy("createdAt", "desc"),
-      limit(800)
-    );
+    const q = query(collection(db, "shared_memory"), orderBy("createdAt", "desc"), limit(800));
     const snap = await getDocs(q);
-    memory = snap.docs.map(d => d.data()).reverse();
+    const shared = snap.docs.map(d => d.data()).reverse().filter(p => p.input !== SEED_MARKER);
+    memory = [...baseDictionary, ...shared];
   } catch (err) {
     console.error("Failed to load shared memory:", err);
-    memory = [];
+    memory = [...baseDictionary];
   }
 }
 
 function listenSharedMemory() {
   if (unsubShared) unsubShared();
-  const q = query(
-    collection(db, "shared_memory"),
-    orderBy("createdAt", "desc"),
-    limit(800)
-  );
+  const q = query(collection(db, "shared_memory"), orderBy("createdAt", "desc"), limit(800));
   unsubShared = onSnapshot(q, (snap) => {
-    memory = snap.docs.map(d => d.data()).reverse();
+    const shared = snap.docs.map(d => d.data()).reverse().filter(p => p.input !== SEED_MARKER);
+    memory = [...baseDictionary, ...shared];
   });
 }
 
@@ -120,7 +169,7 @@ async function saveSharedPair(input, response) {
       createdAt: Date.now()
     });
     memory.push({ input, response, createdAt: Date.now() });
-    if (memory.length > 800) memory.shift();
+    if (memory.length > 1500) memory.shift();
   } catch (err) {
     console.error("Failed to save shared pair:", err);
   }
@@ -130,9 +179,7 @@ async function saveMessage(role, content) {
   if (!currentUser) return;
   try {
     await addDoc(collection(db, "users", currentUser.uid, "messages"), {
-      role,
-      content,
-      createdAt: Date.now()
+      role, content, createdAt: Date.now()
     });
   } catch (err) {
     console.error("Failed to save message:", err);
@@ -175,23 +222,25 @@ async function reply(userText) {
   if (isReplying) return;
   isReplying = true;
   showTyping(true);
-  await new Promise(r => setTimeout(r, 600 + Math.random() * 900));
+  await new Promise(r => setTimeout(r, 500 + Math.random() * 700));
 
   let response = findBestResponse(userText);
+  let fromInternet = false;
 
   if (!response) {
     response = await fetchWikipediaSummary(userText);
+    fromInternet = !!response;
   }
 
   showTyping(false);
 
   if (!response) {
     const defaults = [
-      "I'm still learning from everyone. Tell me more.",
+      "I'm still learning from everyone and Wikipedia. Tell me more.",
       "Interesting! What do you think about that?",
       "I don't have a good answer yet. Can you explain?",
       "That's new. Why do you say that?",
-      "Keep talking — I learn from all of us.",
+      "Keep talking — I learn from all of us and the internet.",
       "Hmm, not sure. Tell me more details."
     ];
     response = defaults[Math.floor(Math.random() * defaults.length)];
@@ -200,7 +249,10 @@ async function reply(userText) {
   const now = Date.now();
   addMessageToUI(response, false, now);
   await saveMessage("assistant", response);
+
+  // Always hardcode into shared (including Wikipedia / internet AI answers)
   await saveSharedPair(userText, response);
+
   isReplying = false;
 }
 
@@ -238,14 +290,12 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById("input").disabled = false;
     document.getElementById("send").disabled = false;
 
+    await seedSharedMemoryIfNeeded();
     await loadSharedMemory();
     listenSharedMemory();
 
     if (unsubMessages) unsubMessages();
-    const q = query(
-      collection(db, "users", user.uid, "messages"),
-      orderBy("createdAt")
-    );
+    const q = query(collection(db, "users", user.uid, "messages"), orderBy("createdAt"));
     unsubMessages = onSnapshot(q, (snap) => {
       document.getElementById("chat").innerHTML = "";
       snap.forEach(d => {
@@ -260,18 +310,12 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById("input").disabled = true;
     document.getElementById("send").disabled = true;
     document.getElementById("chat").innerHTML = "";
-    if (unsubMessages) {
-      unsubMessages();
-      unsubMessages = null;
-    }
-    if (unsubShared) {
-      unsubShared();
-      unsubShared = null;
-    }
+    if (unsubMessages) { unsubMessages(); unsubMessages = null; }
+    if (unsubShared) { unsubShared(); unsubShared = null; }
+    memory = [...baseDictionary];
   }
 });
 
-// Updated: Sign out now also deletes shared memory contributions
 document.getElementById("signBtn").onclick = async () => {
   if (currentUser) {
     if (confirm("Sign out and permanently delete your contributions to shared memory?")) {
@@ -321,14 +365,11 @@ document.getElementById("clearBtn").onclick = async () => {
 document.getElementById("privacyBtn").onclick = () => {
   alert(
     "Privacy notice (GDPR)\n\n" +
-    "• Messages you send are stored under your anonymous user ID.\n" +
-    "• Pairs (your message + AI reply) are also stored in shared memory so the AI can learn from everyone.\n" +
-    "• Timestamps use Date.now() on your device.\n" +
-    "• You can delete all your data at any time with the Clear button.\n" +
-    "• Signing out also deletes your shared memory contributions.\n" +
-    "• No email or real name is collected (anonymous auth).\n" +
-    "• Data is stored in Google Firebase (EU or US region depending on your project settings).\n" +
-    "• When no local answer exists, Wikipedia may be queried (public knowledge only)."
+    "• Messages stored under anonymous UID.\n" +
+    "• Pairs (including Wikipedia/internet answers) go into shared memory.\n" +
+    "• You can delete all your data anytime.\n" +
+    "• No real name or email collected.\n" +
+    "• Wikipedia is only queried for public knowledge."
   );
 };
 </script>
@@ -446,11 +487,11 @@ footer {
 </header>
 <div id="chat"></div>
 <div class="input-bar">
-  <textarea id="input" placeholder="Talk... all learns from Wikipedia!" rows="1" disabled></textarea>
+  <textarea id="input" placeholder="Talk... learns from dictionary + Wikipedia!" rows="1" disabled></textarea>
   <button id="send" disabled>↑</button>
 </div>
 <footer>
-  By chatting you agree that messages are stored and may be used for shared learning. You can delete all your data anytime. Signing out also deletes your shared contributions.
+  By chatting you agree messages are stored and may be used for shared learning (including Wikipedia answers). You can delete all your data anytime.
 </footer>
 </body>
 </html>
