@@ -31,6 +31,7 @@ const db = getFirestore(app);
 let currentUser = null;
 let memory = [];
 let unsubMessages = null;
+let unsubShared = null;
 let isReplying = false;
 
 function similarity(a, b) {
@@ -62,6 +63,26 @@ function findBestResponse(input) {
   return best;
 }
 
+async function fetchWikipediaSummary(queryText) {
+  try {
+    const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(queryText)}&format=json&origin=*&srlimit=1`;
+    const searchRes = await fetch(searchUrl);
+    const searchData = await searchRes.json();
+    const title = searchData?.query?.search?.[0]?.title;
+    if (!title) return null;
+
+    const summaryUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`;
+    const summaryRes = await fetch(summaryUrl);
+    const summaryData = await summaryRes.json();
+    if (summaryData.extract) {
+      return `${summaryData.extract}\n\n(Source: Wikipedia – ${title})`;
+    }
+  } catch (err) {
+    console.error("Wikipedia fetch failed:", err);
+  }
+  return null;
+}
+
 async function loadSharedMemory() {
   try {
     const q = query(
@@ -75,6 +96,18 @@ async function loadSharedMemory() {
     console.error("Failed to load shared memory:", err);
     memory = [];
   }
+}
+
+function listenSharedMemory() {
+  if (unsubShared) unsubShared();
+  const q = query(
+    collection(db, "shared_memory"),
+    orderBy("createdAt", "desc"),
+    limit(800)
+  );
+  unsubShared = onSnapshot(q, (snap) => {
+    memory = snap.docs.map(d => d.data()).reverse();
+  });
 }
 
 async function saveSharedPair(input, response) {
@@ -143,9 +176,16 @@ async function reply(userText) {
   isReplying = true;
   showTyping(true);
   await new Promise(r => setTimeout(r, 600 + Math.random() * 900));
-  showTyping(false);
 
   let response = findBestResponse(userText);
+
+  // Auto-learn from the internet if no good shared match
+  if (!response) {
+    response = await fetchWikipediaSummary(userText);
+  }
+
+  showTyping(false);
+
   if (!response) {
     const defaults = [
       "I'm still learning from everyone. Tell me more.",
@@ -200,6 +240,7 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById("send").disabled = false;
 
     await loadSharedMemory();
+    listenSharedMemory();
 
     if (unsubMessages) unsubMessages();
     const q = query(
@@ -223,6 +264,10 @@ onAuthStateChanged(auth, async (user) => {
     if (unsubMessages) {
       unsubMessages();
       unsubMessages = null;
+    }
+    if (unsubShared) {
+      unsubShared();
+      unsubShared = null;
     }
   }
 });
@@ -278,7 +323,8 @@ document.getElementById("privacyBtn").onclick = () => {
     "• Timestamps use Date.now() on your device.\n" +
     "• You can delete all your data at any time with the Clear button.\n" +
     "• No email or real name is collected (anonymous auth).\n" +
-    "• Data is stored in Google Firebase (EU or US region depending on your project settings)."
+    "• Data is stored in Google Firebase (EU or US region depending on your project settings).\n" +
+    "• When no local answer exists, Wikipedia may be queried (public knowledge only)."
   );
 };
 </script>
