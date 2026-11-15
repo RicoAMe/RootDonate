@@ -70,7 +70,7 @@ async function loadSharedMemory() {
       limit(800)
     );
     const snap = await getDocs(q);
-    memory = snap.docs.map(d => d.data()).reverse(); // oldest → newest for better learning order
+    memory = snap.docs.map(d => d.data()).reverse();
   } catch (err) {
     console.error("Failed to load shared memory:", err);
     memory = [];
@@ -169,7 +169,6 @@ async function deleteAllUserData() {
   if (!currentUser) return;
   const uid = currentUser.uid;
 
-  // Delete personal messages
   try {
     const msgQuery = query(collection(db, "users", uid, "messages"));
     const msgSnap = await getDocs(msgQuery);
@@ -180,14 +179,12 @@ async function deleteAllUserData() {
     console.error("Failed to delete messages:", err);
   }
 
-  // Delete user's contributions from shared memory
   try {
     const sharedQuery = query(collection(db, "shared_memory"), where("uid", "==", uid));
     const sharedSnap = await getDocs(sharedQuery);
     const batch = writeBatch(db);
     sharedSnap.docs.forEach(d => batch.delete(d.ref));
     if (!sharedSnap.empty) await batch.commit();
-    // Refresh local memory
     await loadSharedMemory();
   } catch (err) {
     console.error("Failed to delete shared contributions:", err);
@@ -375,11 +372,14 @@ header {
   .msg-wrap { max-width: 90%; }
   header { padding: 0.6rem 0.8rem; }
 }
-.privacy-note {
+footer {
+  background: var(--surface);
+  border-top: 1px solid #334155;
+  padding: 0.6rem 1rem calc(0.6rem + env(safe-area-inset-bottom));
+  text-align: center;
   font-size: 0.7rem;
   color: var(--muted);
-  text-align: center;
-  padding: 0.3rem 1rem 0.6rem;
+  line-height: 1.4;
 }
 </style>
 </head>
@@ -396,12 +396,12 @@ header {
   </div>
 </header>
 <div id="chat"></div>
-<div class="privacy-note">
-  By chatting you agree that messages are stored and may be used for shared learning. You can delete all your data anytime.
-</div>
 <div class="input-bar">
   <textarea id="input" placeholder="Talk… everyone learns from you" rows="1" disabled></textarea>
   <button id="send" disabled>↑</button>
 </div>
+<footer>
+  By chatting you agree that messages are stored and may be used for shared learning. You can delete all your data anytime.
+</footer>
 </body>
 </html>
