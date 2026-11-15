@@ -8,7 +8,10 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, getDocs, limit, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import {
+  getFirestore, collection, addDoc, query, orderBy, onSnapshot,
+  getDocs, limit, where, deleteDoc, doc, writeBatch
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
@@ -28,6 +31,7 @@ const db = getFirestore(app);
 let currentUser = null;
 let memory = [];
 let unsubMessages = null;
+let isReplying = false;
 
 function similarity(a, b) {
   a = a.toLowerCase().trim();
@@ -59,28 +63,47 @@ function findBestResponse(input) {
 }
 
 async function loadSharedMemory() {
-  const q = query(collection(db, "shared_memory"), limit(800));
-  const snap = await getDocs(q);
-  memory = snap.docs.map(d => d.data());
+  try {
+    const q = query(
+      collection(db, "shared_memory"),
+      orderBy("createdAt", "desc"),
+      limit(800)
+    );
+    const snap = await getDocs(q);
+    memory = snap.docs.map(d => d.data()).reverse(); // oldest → newest for better learning order
+  } catch (err) {
+    console.error("Failed to load shared memory:", err);
+    memory = [];
+  }
 }
 
 async function saveSharedPair(input, response) {
   if (!currentUser) return;
-  await addDoc(collection(db, "shared_memory"), {
-    input: input.trim(),
-    response: response.trim(),
-    uid: currentUser.uid,
-    createdAt: Date.now()
-  });
-  memory.push({ input, response });
-  if (memory.length > 800) memory.shift();
+  try {
+    await addDoc(collection(db, "shared_memory"), {
+      input: input.trim(),
+      response: response.trim(),
+      uid: currentUser.uid,
+      createdAt: Date.now()
+    });
+    memory.push({ input, response, createdAt: Date.now() });
+    if (memory.length > 800) memory.shift();
+  } catch (err) {
+    console.error("Failed to save shared pair:", err);
+  }
 }
 
 async function saveMessage(role, content) {
   if (!currentUser) return;
-  await addDoc(collection(db, "users", currentUser.uid, "messages"), {
-    role, content, createdAt: Date.now()
-  });
+  try {
+    await addDoc(collection(db, "users", currentUser.uid, "messages"), {
+      role,
+      content,
+      createdAt: Date.now()
+    });
+  } catch (err) {
+    console.error("Failed to save message:", err);
+  }
 }
 
 function addMessageToUI(text, isUser, time) {
@@ -93,11 +116,12 @@ function addMessageToUI(text, isUser, time) {
   if (time) {
     const t = document.createElement("div");
     t.className = "time";
-    t.textContent = new Date(time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    t.textContent = new Date(time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     wrap.appendChild(t);
   }
-  document.getElementById("chat").appendChild(wrap);
-  document.getElementById("chat").scrollTop = 99999;
+  const chat = document.getElementById("chat");
+  chat.appendChild(wrap);
+  chat.scrollTop = chat.scrollHeight;
 }
 
 function showTyping(show) {
@@ -109,10 +133,14 @@ function showTyping(show) {
     el.innerHTML = '<div class="msg typing"><span></span><span></span><span></span></div>';
     document.getElementById("chat").appendChild(el);
     document.getElementById("chat").scrollTop = 99999;
-  } else if (!show && el) el.remove();
+  } else if (!show && el) {
+    el.remove();
+  }
 }
 
 async function reply(userText) {
+  if (isReplying) return;
+  isReplying = true;
   showTyping(true);
   await new Promise(r => setTimeout(r, 600 + Math.random() * 900));
   showTyping(false);
@@ -130,9 +158,40 @@ async function reply(userText) {
     response = defaults[Math.floor(Math.random() * defaults.length)];
   }
 
-  addMessageToUI(response, false, Date.now());
+  const now = Date.now();
+  addMessageToUI(response, false, now);
   await saveMessage("assistant", response);
   await saveSharedPair(userText, response);
+  isReplying = false;
+}
+
+async function deleteAllUserData() {
+  if (!currentUser) return;
+  const uid = currentUser.uid;
+
+  // Delete personal messages
+  try {
+    const msgQuery = query(collection(db, "users", uid, "messages"));
+    const msgSnap = await getDocs(msgQuery);
+    const batch = writeBatch(db);
+    msgSnap.docs.forEach(d => batch.delete(d.ref));
+    if (!msgSnap.empty) await batch.commit();
+  } catch (err) {
+    console.error("Failed to delete messages:", err);
+  }
+
+  // Delete user's contributions from shared memory
+  try {
+    const sharedQuery = query(collection(db, "shared_memory"), where("uid", "==", uid));
+    const sharedSnap = await getDocs(sharedQuery);
+    const batch = writeBatch(db);
+    sharedSnap.docs.forEach(d => batch.delete(d.ref));
+    if (!sharedSnap.empty) await batch.commit();
+    // Refresh local memory
+    await loadSharedMemory();
+  } catch (err) {
+    console.error("Failed to delete shared contributions:", err);
+  }
 }
 
 onAuthStateChanged(auth, async (user) => {
@@ -146,7 +205,10 @@ onAuthStateChanged(auth, async (user) => {
     await loadSharedMemory();
 
     if (unsubMessages) unsubMessages();
-    const q = query(collection(db, "users", user.uid, "messages"), orderBy("createdAt"));
+    const q = query(
+      collection(db, "users", user.uid, "messages"),
+      orderBy("createdAt")
+    );
     unsubMessages = onSnapshot(q, (snap) => {
       document.getElementById("chat").innerHTML = "";
       snap.forEach(d => {
@@ -161,6 +223,10 @@ onAuthStateChanged(auth, async (user) => {
     document.getElementById("input").disabled = true;
     document.getElementById("send").disabled = true;
     document.getElementById("chat").innerHTML = "";
+    if (unsubMessages) {
+      unsubMessages();
+      unsubMessages = null;
+    }
   }
 });
 
@@ -173,11 +239,13 @@ document.getElementById("signBtn").onclick = async () => {
 };
 
 document.getElementById("send").onclick = async () => {
-  const text = document.getElementById("input").value.trim();
-  if (!text || !currentUser) return;
-  document.getElementById("input").value = "";
-  document.getElementById("input").style.height = "auto";
-  addMessageToUI(text, true, Date.now());
+  const inputEl = document.getElementById("input");
+  const text = inputEl.value.trim();
+  if (!text || !currentUser || isReplying) return;
+  inputEl.value = "";
+  inputEl.style.height = "auto";
+  const now = Date.now();
+  addMessageToUI(text, true, now);
   await saveMessage("user", text);
   reply(text);
 };
@@ -188,17 +256,33 @@ document.getElementById("input").onkeydown = e => {
     document.getElementById("send").click();
   }
 };
+
 document.getElementById("input").oninput = () => {
   const el = document.getElementById("input");
   el.style.height = "auto";
   el.style.height = Math.min(el.scrollHeight, 120) + "px";
 };
 
-document.getElementById("clearBtn").onclick = () => {
-  if (confirm("Clear your personal chat history? (Shared memory stays)")) {
-    // Optional: you can add delete logic here if needed
+document.getElementById("clearBtn").onclick = async () => {
+  if (!currentUser) return;
+  if (confirm("Permanently delete all your personal chat history and your contributions to shared memory?\n\nThis cannot be undone.")) {
+    if (unsubMessages) unsubMessages();
+    await deleteAllUserData();
     document.getElementById("chat").innerHTML = "";
+    alert("Your data has been deleted.");
   }
+};
+
+document.getElementById("privacyBtn").onclick = () => {
+  alert(
+    "Privacy notice (GDPR)\n\n" +
+    "• Messages you send are stored under your anonymous user ID.\n" +
+    "• Pairs (your message + AI reply) are also stored in shared memory so the AI can learn from everyone.\n" +
+    "• Timestamps use Date.now() on your device.\n" +
+    "• You can delete all your data at any time with the Clear button.\n" +
+    "• No email or real name is collected (anonymous auth).\n" +
+    "• Data is stored in Google Firebase (EU or US region depending on your project settings)."
+  );
 };
 </script>
 <style>
@@ -271,7 +355,7 @@ header {
   resize: none;
   font-family: inherit;
 }
-#send, #signBtn, #clearBtn {
+#send, #signBtn, #clearBtn, #privacyBtn {
   background: var(--accent);
   color: #000;
   border: none;
@@ -284,11 +368,18 @@ header {
   place-items: center;
   flex-shrink: 0;
 }
-#signBtn, #clearBtn { border-radius: 12px; width: auto; padding: 0 0.9rem; font-size: 0.85rem; font-weight: 600; }
+#signBtn, #clearBtn, #privacyBtn { border-radius: 12px; width: auto; padding: 0 0.9rem; font-size: 0.85rem; font-weight: 600; }
 #signBtn { background: #3b82f6; color: white; }
+#privacyBtn { background: #64748b; color: white; }
 @media (max-width: 480px) {
   .msg-wrap { max-width: 90%; }
   header { padding: 0.6rem 0.8rem; }
+}
+.privacy-note {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-align: center;
+  padding: 0.3rem 1rem 0.6rem;
 }
 </style>
 </head>
@@ -298,14 +389,18 @@ header {
     <div class="logo">RootDonate <span>AI</span></div>
     <div id="status">Not signed in</div>
   </div>
-  <div style="display:flex;gap:0.4rem">
-    <button id="clearBtn">Clear</button>
+  <div style="display:flex;gap:0.4rem;align-items:center">
+    <button id="privacyBtn">Privacy</button>
+    <button id="clearBtn">Clear data</button>
     <button id="signBtn">Sign in</button>
   </div>
 </header>
 <div id="chat"></div>
+<div class="privacy-note">
+  By chatting you agree that messages are stored and may be used for shared learning. You can delete all your data anytime.
+</div>
 <div class="input-bar">
-  <textarea id="input" placeholder="Talk... everyone learns from you" rows="1" disabled></textarea>
+  <textarea id="input" placeholder="Talk… everyone learns from you" rows="1" disabled></textarea>
   <button id="send" disabled>↑</button>
 </div>
 </body>
