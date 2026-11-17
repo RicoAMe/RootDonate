@@ -121,6 +121,17 @@
     let chatId = null;
 
     const CHAT_KEY = "rootdonate_chat_history";
+    const BASE42 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEF"; // 42 chars
+
+    function toBase42(num) {
+      if (num === 0) return BASE42[0];
+      let str = "";
+      while (num > 0) {
+        str = BASE42[num % 42] + str;
+        num = Math.floor(num / 42);
+      }
+      return str;
+    }
 
     function getChatIdFromUrl() {
       const params = new URLSearchParams(window.location.search);
@@ -134,7 +145,9 @@
     }
 
     function generateChatId() {
-      return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+      const rand = Math.floor(Math.random() * 1e15);
+      const time = Date.now();
+      return toBase42(rand).slice(0, 8) + toBase42(time).slice(-5);
     }
 
     function normalize(text) {
@@ -156,6 +169,20 @@
         isUser: wrap.classList.contains("user")
       }));
       localStorage.setItem(CHAT_KEY + "_" + (chatId || "local"), JSON.stringify(messages));
+    }
+
+    function loadLocalChat() {
+      const key = CHAT_KEY + "_" + (chatId || "local");
+      const saved = localStorage.getItem(key);
+      if (saved) {
+        try {
+          const messages = JSON.parse(saved);
+          document.getElementById("chat").innerHTML = "";
+          messages.forEach(m => addMessage(m.text, m.isUser, false));
+        } catch (e) {
+          console.warn("Local load failed", e);
+        }
+      }
     }
 
     function clearLocalView() {
@@ -240,7 +267,7 @@
         const unknown = "I don't know this yet. Teach me the answer next, and I'll remember it for everyone.";
         addMessage(unknown, false);
         awaitingTeach = true;
-        pendingInput = userText || response;
+        pendingInput = userText;
       }
 
       isReplying = false;
@@ -260,6 +287,9 @@
         setChatIdInUrl(chatId);
       }
 
+      // Immediately resume from local for this URL
+      loadLocalChat();
+
       onAuthStateChanged(auth, async user => {
         if (user) {
           currentUser = user;
@@ -268,7 +298,7 @@
           sendBtn.disabled = false;
           signBtn.textContent = "Sign out";
           listenSharedMemory();
-          await loadChatFromCloud();          // resume from URL even after local clear
+          await loadChatFromCloud();   // cloud overrides local
         } else {
           currentUser = null;
           status.textContent = "Not signed in";
