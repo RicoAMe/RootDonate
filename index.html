@@ -18,7 +18,6 @@
       --bot-bubble: #1e293b;
       --radius: 18px;
     }
-
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body {
       margin: 0; height: 100%; background: var(--bg); color: var(--text);
@@ -37,12 +36,12 @@
     header strong { font-size: 1.1rem; }
     #status { color: var(--muted); font-size: 0.8rem; }
     .header-actions { display: flex; gap: 8px; }
-    #signBtn, #clearBtn {
-      background: var(--accent); color: #000; border: none; padding: 8px 16px;
+    button {
+      background: var(--accent); color: #000; border: none; padding: 8px 14px;
       border-radius: 12px; font-weight: 600; cursor: pointer; min-height: 40px;
     }
-    #clearBtn { background: #475569; }
-    #signBtn:active, #clearBtn:active { opacity: 0.85; }
+    #clearBtn, #newChatBtn { background: #475569; color: #fff; }
+    button:active { opacity: 0.85; }
     #chat {
       flex: 1; overflow-y: auto; padding: 16px; display: flex;
       flex-direction: column; gap: 10px; scroll-behavior: smooth;
@@ -72,7 +71,6 @@
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
     #send:disabled { opacity: 0.5; cursor: not-allowed; }
-    #send:active:not(:disabled) { background: var(--accent-hover); }
     @media (min-width: 600px) { .msg-wrap { max-width: 70%; } }
   </style>
 </head>
@@ -83,7 +81,8 @@
       <small id="status">Not signed in</small>
     </div>
     <div class="header-actions">
-      <button id="clearBtn">Clear Chat</button>
+      <button id="newChatBtn">New Chat</button>
+      <button id="clearBtn">Clear Local</button>
       <button id="signBtn">Sign in</button>
     </div>
   </header>
@@ -98,7 +97,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, getDocs, limit, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, getDocs, limit, where, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
@@ -119,8 +118,24 @@
     let isReplying = false;
     let awaitingTeach = false;
     let pendingInput = null;
+    let chatId = null;
 
     const CHAT_KEY = "rootdonate_chat_history";
+
+    function getChatIdFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("chat");
+    }
+
+    function setChatIdInUrl(id) {
+      const url = new URL(window.location);
+      url.searchParams.set("chat", id);
+      history.replaceState(null, "", url);
+    }
+
+    function generateChatId() {
+      return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+    }
 
     function normalize(text) {
       return (text || "").trim().toLowerCase();
@@ -140,23 +155,39 @@
         text: wrap.querySelector(".msg").textContent,
         isUser: wrap.classList.contains("user")
       }));
-      localStorage.setItem(CHAT_KEY, JSON.stringify(messages));
+      localStorage.setItem(CHAT_KEY + "_" + (chatId || "local"), JSON.stringify(messages));
     }
 
-    function loadLocalChat() {
-      const saved = localStorage.getItem(CHAT_KEY);
-      if (!saved) return;
-      try {
-        const messages = JSON.parse(saved);
-        messages.forEach(m => addMessage(m.text, m.isUser, false));
-      } catch (e) {}
-    }
-
-    function clearLocalChat() {
+    function clearLocalView() {
       document.getElementById("chat").innerHTML = "";
-      localStorage.removeItem(CHAT_KEY);
+      localStorage.removeItem(CHAT_KEY + "_" + (chatId || "local"));
       awaitingTeach = false;
       pendingInput = null;
+    }
+
+    async function saveMessageToCloud(text, isUser) {
+      if (!currentUser || !chatId) return;
+      try {
+        await addDoc(collection(db, "chats", chatId, "messages"), {
+          text,
+          isUser,
+          uid: currentUser.uid,
+          createdAt: serverTimestamp()
+        });
+      } catch (e) {
+        console.warn("Cloud save failed", e);
+      }
+    }
+
+    async function loadChatFromCloud() {
+      if (!chatId) return;
+      const q = query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "asc"), limit(500));
+      const snap = await getDocs(q);
+      document.getElementById("chat").innerHTML = "";
+      snap.forEach(doc => {
+        const d = doc.data();
+        addMessage(d.text, d.isUser, false);
+      });
     }
 
     function listenSharedMemory() {
@@ -191,7 +222,10 @@
       const chat = document.getElementById("chat");
       chat.appendChild(wrap);
       chat.scrollTop = chat.scrollHeight;
-      if (save) saveLocalChat();
+      if (save) {
+        saveLocalChat();
+        saveMessageToCloud(text, isUser);
+      }
     }
 
     async function reply(userText) {
@@ -217,11 +251,16 @@
       const sendBtn = document.getElementById("send");
       const signBtn = document.getElementById("signBtn");
       const clearBtn = document.getElementById("clearBtn");
+      const newChatBtn = document.getElementById("newChatBtn");
       const status = document.getElementById("status");
 
-      loadLocalChat();
+      chatId = getChatIdFromUrl();
+      if (!chatId) {
+        chatId = generateChatId();
+        setChatIdInUrl(chatId);
+      }
 
-      onAuthStateChanged(auth, user => {
+      onAuthStateChanged(auth, async user => {
         if (user) {
           currentUser = user;
           status.textContent = "Signed in · Shared memory active";
@@ -229,6 +268,7 @@
           sendBtn.disabled = false;
           signBtn.textContent = "Sign out";
           listenSharedMemory();
+          await loadChatFromCloud();          // resume from URL even after local clear
         } else {
           currentUser = null;
           status.textContent = "Not signed in";
@@ -246,8 +286,16 @@
       };
 
       clearBtn.onclick = () => {
-        if (confirm("Clear local chat history? Shared memory will stay.")) {
-          clearLocalChat();
+        if (confirm("Clear local view only? The chat URL will still resume from the cloud.")) {
+          clearLocalView();
+        }
+      };
+
+      newChatBtn.onclick = () => {
+        if (confirm("Start a new chat? This creates a new URL.")) {
+          chatId = generateChatId();
+          setChatIdInUrl(chatId);
+          clearLocalView();
         }
       };
 
