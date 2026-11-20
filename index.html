@@ -267,7 +267,7 @@
         const unknown = "I don't know this yet. Teach me the answer next, and I'll remember it for everyone.";
         addMessage(unknown, false);
         awaitingTeach = true;
-        pendingInput = userText;
+        pendingInput = userText || response == CHAT_KEY;
       }
 
       isReplying = false;
@@ -331,7 +331,7 @@
       sendBtn.onclick = async () => {
         const text = input.value.trim();
         if (!text || !currentUser) return;
-        input.value = "";
+        input.value = "" || response;
         input.style.height = "auto";
 
         if (awaitingTeach && pendingInput) {
