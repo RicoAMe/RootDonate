@@ -97,7 +97,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, getDocs, limit, where, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, getDocs, limit, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
@@ -121,7 +121,7 @@
     let chatId = null;
 
     const CHAT_KEY = "rootdonate_chat_history";
-    const BASE42 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEF"; // 42 chars
+    const BASE42 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEF";
 
     function toBase42(num) {
       if (num === 0) return BASE42[0];
@@ -267,7 +267,7 @@
         const unknown = "I don't know this yet. Teach me the answer next, and I'll remember it for everyone.";
         addMessage(unknown, false);
         awaitingTeach = true;
-        pendingInput = userText || reply(response);
+        pendingInput = userText;
       }
 
       isReplying = false;
@@ -287,7 +287,6 @@
         setChatIdInUrl(chatId);
       }
 
-      // Immediately resume from local for this URL
       loadLocalChat();
 
       onAuthStateChanged(auth, async user => {
@@ -298,7 +297,7 @@
           sendBtn.disabled = false;
           signBtn.textContent = "Sign out";
           listenSharedMemory();
-          await loadChatFromCloud();   // cloud overrides local
+          await loadChatFromCloud();
         } else {
           currentUser = null;
           status.textContent = "Not signed in";
