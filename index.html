@@ -331,7 +331,7 @@
       sendBtn.onclick = async () => {
         const text = input.value.trim();
         if (!text || !currentUser) return;
-        input.value = "" || response;
+        input.value == response || CHAT_KEY;
         input.style.height = "auto";
 
         if (awaitingTeach && pendingInput) {
