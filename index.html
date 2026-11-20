@@ -10,6 +10,7 @@
       --bg: #0b1220;
       --surface: #151e2e;
       --surface-2: #1e293b;
+      --surface-3: #253044;
       --accent: #22c55e;
       --accent-hover: #16a34a;
       --eth: #627eea;
@@ -18,6 +19,7 @@
       --user: #22c55e;
       --bot: #1e293b;
       --radius: 18px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.25);
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body {
@@ -26,42 +28,108 @@
       font-size: 16px; line-height: 1.45;
     }
     body { display: flex; flex-direction: column; height: 100dvh; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
-    header { background: var(--surface); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; flex-shrink: 0; }
-    header strong { font-size: 1.15rem; color: var(--accent); }
-    header small { color: var(--muted); }
-    .header-actions { display: flex; gap: 8px; }
-    button { background: var(--accent); color: #000; border: none; padding: 8px 14px; border-radius: 12px; font-weight: 600; cursor: pointer; min-height: 40px; }
+    header {
+      background: var(--surface); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 1px solid #334155; flex-shrink: 0; backdrop-filter: blur(12px);
+    }
+    header strong { font-size: 1.15rem; color: var(--accent); letter-spacing: -0.02em; }
+    header small { color: var(--muted); font-size: 0.8rem; }
+    .header-actions { display: flex; gap: 6px; }
+    button {
+      background: var(--accent); color: #000; border: none; padding: 8px 14px; border-radius: 12px;
+      font-weight: 600; cursor: pointer; min-height: 40px; font-size: 0.9rem; transition: all 0.15s;
+    }
+    button:hover { background: var(--accent-hover); transform: translateY(-1px); }
     #clearBtn, #newChatBtn { background: #475569; color: #fff; }
-    button:active { opacity: 0.85; }
-    #chat { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; scroll-behavior: smooth; }
-    .msg-wrap { max-width: 85%; display: flex; }
+    #clearBtn:hover, #newChatBtn:hover { background: #64748b; }
+    button:active { transform: scale(0.98); }
+    #chat {
+      flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+      scroll-behavior: smooth; background: linear-gradient(180deg, transparent, rgba(15,23,42,0.4));
+    }
+    .msg-wrap { max-width: 85%; display: flex; animation: fadeIn 0.25s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
     .user { align-self: flex-end; }
     .bot { align-self: flex-start; }
-    .msg { padding: 12px 16px; border-radius: var(--radius); white-space: pre-wrap; word-break: break-word; line-height: 1.4; }
+    .msg {
+      padding: 12px 16px; border-radius: var(--radius); white-space: pre-wrap; word-break: break-word;
+      line-height: 1.45; position: relative; box-shadow: var(--shadow);
+    }
     .user .msg { background: var(--user); color: #000; border-bottom-right-radius: 6px; }
     .bot .msg { background: var(--bot); border-bottom-left-radius: 6px; border: 1px solid #334155; }
-    .input-bar { display: flex; gap: 8px; padding: 12px; background: var(--surface); border-top: 1px solid #334155; flex-shrink: 0; }
-    #input { flex: 1; padding: 12px 16px; border: none; border-radius: 22px; background: var(--surface-2); color: var(--text); font: inherit; resize: none; min-height: 48px; max-height: 120px; outline: none; }
-    #send { background: var(--accent); color: #000; border: none; width: 48px; height: 48px; border-radius: 50%; font-size: 1.2rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .msg-actions {
+      position: absolute; top: 6px; right: 8px; opacity: 0; transition: opacity 0.15s;
+    }
+    .msg-wrap:hover .msg-actions { opacity: 1; }
+    .msg-actions button {
+      background: rgba(0,0,0,0.3); color: #fff; padding: 4px 8px; font-size: 0.75rem; min-height: 0;
+      border-radius: 8px;
+    }
+    .typing {
+      align-self: flex-start; display: flex; gap: 4px; padding: 12px 16px; background: var(--bot);
+      border-radius: var(--radius); border: 1px solid #334155; width: fit-content;
+    }
+    .typing span {
+      width: 8px; height: 8px; background: var(--muted); border-radius: 50%; animation: bounce 1.4s infinite;
+    }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+    .suggestions {
+      display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 16px 0; flex-shrink: 0;
+    }
+    .suggestions button {
+      background: var(--surface-2); color: var(--text); border: 1px solid #334155;
+      padding: 6px 12px; font-size: 0.85rem; border-radius: 20px;
+    }
+    .suggestions button:hover { background: var(--surface-3); border-color: var(--accent); }
+    .input-bar {
+      display: flex; gap: 8px; padding: 12px; background: var(--surface); border-top: 1px solid #334155;
+      flex-shrink: 0; align-items: flex-end;
+    }
+    #input {
+      flex: 1; padding: 12px 16px; border: none; border-radius: 22px; background: var(--surface-2);
+      color: var(--text); font: inherit; resize: none; min-height: 48px; max-height: 140px;
+      outline: none; transition: background 0.2s;
+    }
+    #input:focus { background: var(--surface-3); }
+    #send {
+      background: var(--accent); color: #000; border: none; width: 48px; height: 48px;
+      border-radius: 50%; font-size: 1.3rem; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
     #send:disabled, #input:disabled { opacity: 0.5; cursor: not-allowed; }
-    .badge { display: inline-block; background: var(--eth); color: white; font-size: 0.7rem; padding: 2px 8px; border-radius: 999px; margin-left: 6px; }
-    @media (min-width: 600px) { .msg-wrap { max-width: 70%; } }
+    .badge { display: inline-block; background: var(--eth); color: white; font-size: 0.7rem; padding: 2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
+    @media (min-width: 600px) { .msg-wrap { max-width: 72%; } }
+    @media (max-width: 480px) {
+      header { padding: 10px 12px; }
+      .header-actions button { padding: 6px 10px; font-size: 0.8rem; }
+    }
   </style>
 </head>
 <body>
   <header>
     <div>
       <strong>RootDonate <span class="badge">ETH</span></strong><br>
-      <small id="status">Not signed in · Shared memory ready</small>
+      <small id="status">Connecting…</small>
     </div>
     <div class="header-actions">
-      <button id="newChatBtn">New Chat</button>
-      <button id="clearBtn">Clear Local</button>
+      <button id="newChatBtn">New</button>
+      <button id="clearBtn">Clear</button>
       <button id="signBtn">Sign in</button>
     </div>
   </header>
 
   <div id="chat"></div>
+
+  <div class="suggestions" id="suggestions" style="display:none;">
+    <button data-q="What is QETH?">What is QETH?</button>
+    <button data-q="Management fee">Management fee</button>
+    <button data-q="Staking yield">Staking yield</button>
+    <button data-q="TFSA eligible?">TFSA eligible?</button>
+    <button data-q="Custody details">Custody</button>
+    <button data-q="Current price">Current price</button>
+  </div>
 
   <div class="input-bar">
     <textarea id="input" placeholder="Ask about QETH-U.TO / The Ether Fund…" rows="1" disabled></textarea>
@@ -93,60 +161,24 @@
     let awaitingTeach = false;
     let pendingInput = null;
     let chatId = null;
+    let typingEl = null;
 
     const CHAT_KEY = "qeth_expert_chat";
     const BASE42 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEF";
 
-    // Fluent built-in knowledge base
     const builtInKnowledge = [
-      {
-        input: "what is qeth",
-        response: "QETH-U.TO (and its CAD version QETH-UN.TO) is The Ether Fund from 3iQ. It’s Canada’s first regulated closed-end fund that gives you roughly 100% exposure to Ethereum. It’s listed on the Toronto Stock Exchange and is eligible for TFSAs and RRSPs."
-      },
-      {
-        input: "what is the ether fund",
-        response: "The Ether Fund is a closed-end fund managed by 3iQ that holds Ethereum. It tracks the price of ETH while also earning staking rewards. The management fee is 1.95% per year."
-      },
-      {
-        input: "management fee",
-        response: "The management fee is 1.95% annually."
-      },
-      {
-        input: "staking yield",
-        response: "As of mid-November 2026, the staking yield was around 2.52% (based on the trailing 30-day gross figure). The fund stakes part of its Ethereum holdings, and those rewards flow into the NAV over time."
-      },
-      {
-        input: "is it eligible for tfsa",
-        response: "Yes — The Ether Fund is fully eligible for TFSAs, RRSPs, RRIFs, RESPs, RDSPs, and DPSPs."
-      },
-      {
-        input: "how much eth per unit",
-        response: "As of November 19, 2026, each unit represented roughly 0.01624 ETH. The exact amount drifts slightly over time as staking rewards come in and the cash balance changes."
-      },
-      {
-        input: "custody",
-        response: "The Ethereum is held in segregated cold storage. Custody is handled by Tetra Trust Company with Coinbase Custody Trust Company as sub-custodian."
-      },
-      {
-        input: "inception date",
-        response: "The USD class (QETH.U) launched on December 10, 2020."
-      },
-      {
-        input: "symbols",
-        response: "You’ll see it listed as QETH.U for the USD version and QETH.UN for the CAD version, both on the TSX."
-      },
-      {
-        input: "risk",
-        response: "Because it tracks Ethereum, the fund is highly volatile. Past performance doesn’t guarantee future results, so it’s worth reading the prospectus carefully before investing."
-      },
-      {
-        input: "price",
-        response: "Prices move with Ethereum. Around November 19, 2026, QETH.U was trading near US$28.23 and QETH.UN near C$39.28, with NAV per unit a bit higher than the market prices."
-      },
-      {
-        input: "who manages it",
-        response: "It’s managed by 3iQ Corp., the Canadian firm that pioneered regulated crypto funds in the country."
-      }
+      { input: "what is qeth", response: "QETH-U.TO (and its CAD version QETH-UN.TO) is The Ether Fund from 3iQ. It’s Canada’s first regulated closed-end fund that gives you roughly 100% exposure to Ethereum. It’s listed on the Toronto Stock Exchange and is eligible for TFSAs and RRSPs." },
+      { input: "what is the ether fund", response: "The Ether Fund is a closed-end fund managed by 3iQ that holds Ethereum. It tracks the price of ETH while also earning staking rewards. The management fee is 1.95% per year." },
+      { input: "management fee", response: "The management fee is 1.95% annually." },
+      { input: "staking yield", response: "As of mid-November 2026, the staking yield was around 2.52% (based on the trailing 30-day gross figure). The fund stakes part of its Ethereum holdings, and those rewards flow into the NAV over time." },
+      { input: "is it eligible for tfsa", response: "Yes — The Ether Fund is fully eligible for TFSAs, RRSPs, RRIFs, RESPs, RDSPs, and DPSPs." },
+      { input: "how much eth per unit", response: "As of November 19, 2026, each unit represented roughly 0.01624 ETH. The exact amount drifts slightly over time as staking rewards come in and the cash balance changes." },
+      { input: "custody", response: "The Ethereum is held in segregated cold storage. Custody is handled by Tetra Trust Company with Coinbase Custody Trust Company as sub-custodian." },
+      { input: "inception date", response: "The USD class (QETH.U) launched on December 10, 2020." },
+      { input: "symbols", response: "You’ll see it listed as QETH.U for the USD version and QETH.UN for the CAD version, both on the TSX." },
+      { input: "risk", response: "Because it tracks Ethereum, the fund is highly volatile. Past performance doesn’t guarantee future results, so it’s worth reading the prospectus carefully before investing." },
+      { input: "price", response: "Prices move with Ethereum. Around November 19, 2026, QETH.U was trading near US$28.23 and QETH.UN near C$39.28, with NAV per unit a bit higher than the market prices." },
+      { input: "who manages it", response: "It’s managed by 3iQ Corp., the Canadian firm that pioneered regulated crypto funds in the country." }
     ];
 
     function toBase42(num) {
@@ -177,23 +209,40 @@
     }
 
     function normalize(text) {
-      return (text || "").trim().toLowerCase().replace(/[^\w\s]/g, "");
+      return (text || "").trim().toLowerCase().replace(/[^\w\s]/g, "").replace(/\s+/g, " ");
     }
 
-    function findExactResponse(input) {
+    // Simple fuzzy / substring + keyword scoring
+    function findBestResponse(input) {
       const clean = normalize(input);
-      for (const pair of memory) {
+      if (!clean) return null;
+
+      // Exact first
+      for (const pair of [...memory, ...builtInKnowledge]) {
         if (normalize(pair.input) === clean) return pair.response;
       }
-      for (const pair of builtInKnowledge) {
-        if (normalize(pair.input) === clean || clean.includes(normalize(pair.input))) return pair.response;
+
+      // Scored matching
+      let best = null;
+      let bestScore = 0;
+      const words = clean.split(" ").filter(w => w.length > 2);
+
+      for (const pair of [...memory, ...builtInKnowledge]) {
+        const target = normalize(pair.input);
+        let score = 0;
+        if (clean.includes(target) || target.includes(clean)) score += 5;
+        words.forEach(w => { if (target.includes(w)) score += 1; });
+        if (score > bestScore && score >= 2) {
+          bestScore = score;
+          best = pair.response;
+        }
       }
-      return null;
+      return best;
     }
 
     function saveLocalChat() {
       const chat = document.getElementById("chat");
-      const messages = Array.from(chat.querySelectorAll(".msg-wrap")).map(wrap => ({
+      const messages = Array.from(chat.querySelectorAll(".msg-wrap:not(.typing)")).map(wrap => ({
         text: wrap.querySelector(".msg").textContent,
         isUser: wrap.classList.contains("user")
       }));
@@ -216,6 +265,7 @@
       localStorage.removeItem(CHAT_KEY + "_" + (chatId || "local"));
       awaitingTeach = false;
       pendingInput = null;
+      hideTyping();
     }
 
     async function saveMessageToCloud(text, isUser) {
@@ -229,13 +279,15 @@
 
     async function loadChatFromCloud() {
       if (!chatId) return;
-      const q = query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "asc"), limit(500));
-      const snap = await getDocs(q);
-      document.getElementById("chat").innerHTML = "";
-      snap.forEach(doc => {
-        const d = doc.data();
-        addMessage(d.text, d.isUser, false);
-      });
+      try {
+        const q = query(collection(db, "chats", chatId, "messages"), orderBy("createdAt", "asc"), limit(500));
+        const snap = await getDocs(q);
+        document.getElementById("chat").innerHTML = "";
+        snap.forEach(doc => {
+          const d = doc.data();
+          addMessage(d.text, d.isUser, false);
+        });
+      } catch (e) { console.warn("Cloud load failed", e); }
     }
 
     function listenSharedMemory() {
@@ -243,21 +295,39 @@
       const q = query(collection(db, "shared_memory"), orderBy("createdAt", "desc"), limit(1000));
       unsubShared = onSnapshot(q, snap => {
         memory = snap.docs.map(d => d.data()).reverse();
-      });
+      }, err => console.warn("Memory listen error", err));
     }
 
     async function saveSharedPair(input, response) {
       if (!currentUser) return;
       const trimmedInput = input.trim();
-      const q = query(collection(db, "shared_memory"), where("input", "==", trimmedInput), limit(1));
-      const snap = await getDocs(q);
-      if (!snap.empty) return;
-      await addDoc(collection(db, "shared_memory"), {
-        input: trimmedInput,
-        response: response.trim(),
-        uid: currentUser.uid,
-        createdAt: serverTimestamp()
-      });
+      try {
+        const q = query(collection(db, "shared_memory"), where("input", "==", trimmedInput), limit(1));
+        const snap = await getDocs(q);
+        if (!snap.empty) return;
+        await addDoc(collection(db, "shared_memory"), {
+          input: trimmedInput,
+          response: response.trim(),
+          uid: currentUser.uid,
+          createdAt: serverTimestamp()
+        });
+      } catch (e) { console.warn("Save pair failed", e); }
+    }
+
+    function showTyping() {
+      hideTyping();
+      typingEl = document.createElement("div");
+      typingEl.className = "msg-wrap bot typing";
+      typingEl.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
+      document.getElementById("chat").appendChild(typingEl);
+      document.getElementById("chat").scrollTop = document.getElementById("chat").scrollHeight;
+    }
+
+    function hideTyping() {
+      if (typingEl) {
+        typingEl.remove();
+        typingEl = null;
+      }
     }
 
     function addMessage(text, isUser, save = true) {
@@ -266,6 +336,19 @@
       const div = document.createElement("div");
       div.className = "msg";
       div.textContent = text;
+
+      const actions = document.createElement("div");
+      actions.className = "msg-actions";
+      const copyBtn = document.createElement("button");
+      copyBtn.textContent = "Copy";
+      copyBtn.onclick = () => {
+        navigator.clipboard.writeText(text);
+        copyBtn.textContent = "Copied";
+        setTimeout(() => copyBtn.textContent = "Copy", 1500);
+      };
+      actions.appendChild(copyBtn);
+      div.appendChild(actions);
+
       wrap.appendChild(div);
       const chat = document.getElementById("chat");
       chat.appendChild(wrap);
@@ -274,16 +357,22 @@
         saveLocalChat();
         saveMessageToCloud(text, isUser);
       }
+      return wrap;
     }
 
     async function reply(userText) {
       if (isReplying) return;
       isReplying = true;
-      const response = findExactResponse(userText);
+      showTyping();
+      await new Promise(r => setTimeout(r, 400 + Math.random() * 600)); // natural feel
+
+      const response = findBestResponse(userText);
+      hideTyping();
+
       if (response) {
         addMessage(response, false);
       } else {
-        addMessage("I don’t have that exact answer stored yet.\nTeach me the best reply next and I’ll remember it for everyone.", false);
+        addMessage("I don’t have a strong match for that yet.\n\nTeach me the best reply and I’ll remember it for everyone going forward.", false);
         awaitingTeach = true;
         pendingInput = userText;
       }
@@ -297,10 +386,18 @@
       const clearBtn = document.getElementById("clearBtn");
       const newChatBtn = document.getElementById("newChatBtn");
       const status = document.getElementById("status");
+      const suggestions = document.getElementById("suggestions");
 
       chatId = getChatIdFromUrl() || generateChatId();
       setChatIdInUrl(chatId);
       loadLocalChat();
+
+      suggestions.querySelectorAll("button").forEach(btn => {
+        btn.onclick = () => {
+          input.value = btn.dataset.q;
+          sendBtn.click();
+        };
+      });
 
       onAuthStateChanged(auth, async user => {
         if (user) {
@@ -309,6 +406,7 @@
           input.disabled = false;
           sendBtn.disabled = false;
           signBtn.textContent = "Sign out";
+          suggestions.style.display = "flex";
           listenSharedMemory();
           await loadChatFromCloud();
         } else {
@@ -317,6 +415,7 @@
           input.disabled = true;
           sendBtn.disabled = true;
           signBtn.textContent = "Sign in";
+          suggestions.style.display = "none";
           if (unsubShared) unsubShared();
           memory = [];
         }
@@ -332,7 +431,7 @@
         }
       };
 
-      sendBtn.onclick = async () => {
+      async function send() {
         const text = input.value.trim();
         if (!text || !currentUser) return;
         input.value = "";
@@ -349,24 +448,26 @@
 
         addMessage(text, true);
         await reply(text);
-      };
+      }
+
+      sendBtn.onclick = send;
 
       input.onkeydown = e => {
         if (e.key === "Enter" && !e.shiftKey) {
           e.preventDefault();
-          sendBtn.click();
+          send();
         }
       };
       input.oninput = () => {
         input.style.height = "auto";
-        input.style.height = Math.min(input.scrollHeight, 120) + "px";
+        input.style.height = Math.min(input.scrollHeight, 140) + "px";
       };
 
       setTimeout(() => {
         if (document.getElementById("chat").children.length === 0) {
-          addMessage("Hello! I’m your QETH Expert.\nAsk me anything about The Ether Fund (QETH-U.TO / QETH-UN.TO) — fees, staking, eligibility, custody, and more.\nI already know the core facts and keep learning from you.", false, false);
+          addMessage("Hello! I’m your QETH Expert.\n\nAsk me anything about The Ether Fund (QETH-U.TO / QETH-UN.TO) — fees, staking, eligibility, custody, and more.\nI already know the core facts and keep learning from the community.", false, false);
         }
-      }, 600);
+      }, 400);
     }
 
     setupUI();
