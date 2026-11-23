@@ -291,18 +291,24 @@
       return best;
     }
 
-    // Internet AI fallback that includes Date.now()
+    // Internet AI that receives Date.now() and returns a message that also includes Date.now()
     async function getInternetAIResponse(userText) {
-      const now = new Date(Date.now()).toLocaleString();
-      const prompt = `You are a helpful expert on The Ether Fund (QETH-U.TO / QETH-UN.TO) from 3iQ. Current date and time is ${now}. Answer the following question clearly and accurately. If you don't know exact latest numbers, say so and suggest checking the TSX or 3iQ website. Not financial advice.\n\nQuestion: ${userText}`;
+      const nowMs = Date.now();
+      const nowStr = new Date(nowMs).toLocaleString();
+      const prompt = `You are a helpful expert on The Ether Fund (QETH-U.TO / QETH-UN.TO) from 3iQ. Current Date.now() is ${nowMs} (${nowStr}). Answer the following question clearly and accurately. If you don't know exact latest numbers, say so and suggest checking the TSX or 3iQ website. Not financial advice.\n\nQuestion: ${userText}`;
+      
       try {
         const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`);
         if (!res.ok) throw new Error("AI request failed");
-        const text = await res.text();
-        return text.trim() || "Sorry, the AI service returned an empty response.";
+        let text = (await res.text()).trim();
+        if (!text) text = "Sorry, the AI service returned an empty response.";
+        
+        // Append Date.now() to the AI message itself
+        text += `\n\n[Internet AI • Date.now(): ${nowMs}]`;
+        return text;
       } catch (e) {
         console.warn("Internet AI failed", e);
-        return "I don’t have a strong match for that yet and the internet AI is unavailable right now.\n\nTeach me the best reply and I’ll remember it for everyone going forward.";
+        return `I don’t have a strong match for that yet and the internet AI is unavailable right now.\n\nTeach me the best reply and I’ll remember it for everyone going forward.\n\n[Date.now(): ${Date.now()}]`;
       }
     }
 
@@ -430,7 +436,7 @@
 
       const timeEl = document.createElement("div");
       timeEl.className = "timestamp";
-      timeEl.textContent = formatTime(ts);
+      timeEl.textContent = formatTime(ts) + " · " + ts;
 
       wrap.appendChild(div);
       wrap.appendChild(timeEl);
@@ -457,12 +463,11 @@
       if (response) {
         addMessage(response, false);
       } else {
-        // Internet AI fallback that includes Date.now()
+        // Internet AI fallback (includes Date.now() in prompt + in the message text)
         showTyping();
         response = await getInternetAIResponse(userText);
         hideTyping();
         addMessage(response, false);
-        // Still offer teach if it was a generic fallback
         if (response.includes("Teach me the best reply")) {
           awaitingTeach = true;
           pendingInput = userText;
@@ -480,7 +485,7 @@
 
     function updateNowTime() {
       const el = document.getElementById("nowTime");
-      if (el) el.textContent = "Now: " + new Date(Date.now()).toLocaleString();
+      if (el) el.textContent = "Now: " + new Date(Date.now()).toLocaleString() + " (" + Date.now() + ")";
     }
 
     function setupUI() {
@@ -605,7 +610,7 @@
 
       setTimeout(() => {
         if (document.getElementById("chat").children.length === 0) {
-          addMessage("Hello! I’m your QETH Expert (with internet AI fallback).\n\nSubscribe to sign in and ask me anything about The Ether Fund (QETH-U.TO / QETH-UN.TO).\n\nNot financial advice. Data as of late November 2026.", false, false);
+          addMessage("Hello! I’m your QETH Expert (with internet AI fallback that includes Date.now()).\n\nSubscribe to sign in and ask me anything about The Ether Fund (QETH-U.TO / QETH-UN.TO).\n\nNot financial advice.", false, false);
         }
       }, 400);
     }
