@@ -447,12 +447,12 @@
         };
       });
 
-      // Subscription plan buttons
+      // Subscription plan buttons → sign in
       document.querySelectorAll(".plan-btn").forEach(btn => {
         btn.onclick = async () => {
           const plan = btn.dataset.plan;
           // DEMO: replace this with real Stripe Payment Link / Checkout
-          const confirmed = confirm(`Subscribe to the ${plan} plan?\n\n(https://buy.stripe.com/6oUfZg3PndyCbEPc4nbV600)`);
+          const confirmed = https://buy.stripe.com/6oUfZg3PndyCbEPc4nbV600;
           if (!confirmed) return;
 
           localStorage.setItem(SUB_KEY, plan);
