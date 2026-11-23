@@ -27,7 +27,10 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       font-size: 16px; line-height: 1.45;
     }
-    body { display: flex; flex-direction: column; height: 100dvh; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+    body {
+      display: flex; flex-direction: column; height: 100dvh;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
     header {
       background: var(--surface); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
       border-bottom: 1px solid #334155; flex-shrink: 0; backdrop-filter: blur(12px);
@@ -99,8 +102,11 @@
       display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
     #send:disabled, #input:disabled { opacity: 0.5; cursor: not-allowed; }
-    .badge { display: inline-block; background: var(--eth); color: white; font-size: 0.7rem; padding: 2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
-    
+    .badge {
+      display: inline-block; background: var(--eth); color: white; font-size: 0.7rem;
+      padding: 2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: middle;
+    }
+
     /* Subscription Modal */
     #subModal {
       position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
@@ -208,6 +214,7 @@
     const CHAT_KEY = "qeth_expert_chat";
     const SUB_KEY = "qeth_subscribed";
     const BASE42 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEF";
+    const STRIPE_LINK = "https://buy.stripe.com/6oUfZg3PndyCbEPc4nbV600";
 
     const builtInKnowledge = [
       { input: "what is qeth", response: "QETH-U.TO (and its CAD version QETH-UN.TO) is The Ether Fund from 3iQ. It’s Canada’s first regulated closed-end fund that gives you roughly 100% exposure to Ethereum. It’s listed on the Toronto Stock Exchange and is eligible for TFSAs and RRSPs." },
@@ -451,9 +458,11 @@
       document.querySelectorAll(".plan-btn").forEach(btn => {
         btn.onclick = async () => {
           const plan = btn.dataset.plan;
-          // DEMO: replace this with real Stripe Payment Link / Checkout
-          const confirmed = https://buy.stripe.com/6oUfZg3PndyCbEPc4nbV600;
+          const confirmed = confirm(`Subscribe to the ${plan} plan?\n\nYou will be redirected to Stripe:\n${STRIPE_LINK}`);
           if (!confirmed) return;
+
+          // Optional: open Stripe link in new tab
+          window.open(STRIPE_LINK, "_blank", "noopener,noreferrer");
 
           localStorage.setItem(SUB_KEY, plan);
           hideSubModal();
