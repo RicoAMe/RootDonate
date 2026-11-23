@@ -100,6 +100,29 @@
     }
     #send:disabled, #input:disabled { opacity: 0.5; cursor: not-allowed; }
     .badge { display: inline-block; background: var(--eth); color: white; font-size: 0.7rem; padding: 2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: middle; }
+    
+    /* Subscription Modal */
+    #subModal {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+      display: none; align-items: center; justify-content: center; z-index: 1000;
+    }
+    #subModal.show { display: flex; }
+    .modal-content {
+      background: var(--surface); border: 1px solid #334155; border-radius: 20px;
+      padding: 28px 24px; max-width: 420px; width: 90%; text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .modal-content h2 { margin: 0 0 8px; color: var(--accent); }
+    .modal-content p { color: var(--muted); margin: 0 0 20px; font-size: 0.95rem; }
+    .plans { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+    .plan-btn {
+      background: var(--surface-2); color: var(--text); border: 1px solid #334155;
+      padding: 14px; border-radius: 14px; font-size: 1rem; font-weight: 600;
+    }
+    .plan-btn:hover { border-color: var(--accent); background: var(--surface-3); }
+    .plan-btn small { display: block; font-weight: 400; color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
+    #closeModal { background: transparent; color: var(--muted); border: none; margin-top: 8px; }
+
     @media (min-width: 600px) { .msg-wrap { max-width: 72%; } }
     @media (max-width: 480px) {
       header { padding: 10px 12px; }
@@ -136,6 +159,25 @@
     <button id="send" disabled>↑</button>
   </div>
 
+  <!-- Subscription Modal -->
+  <div id="subModal">
+    <div class="modal-content">
+      <h2>Subscribe to Sign In</h2>
+      <p>Unlock the QETH Expert, shared community memory, and cloud chat history.</p>
+      <div class="plans">
+        <button class="plan-btn" data-plan="monthly">
+          Monthly
+          <small>$4.99 / month</small>
+        </button>
+        <button class="plan-btn" data-plan="yearly">
+          Yearly
+          <small>$39.99 / year · save 33%</small>
+        </button>
+      </div>
+      <button id="closeModal">Cancel</button>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -164,6 +206,7 @@
     let typingEl = null;
 
     const CHAT_KEY = "qeth_expert_chat";
+    const SUB_KEY = "qeth_subscribed";
     const BASE42 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEF";
 
     const builtInKnowledge = [
@@ -212,17 +255,14 @@
       return (text || "").trim().toLowerCase().replace(/[^\w\s]/g, "").replace(/\s+/g, " ");
     }
 
-    // Simple fuzzy / substring + keyword scoring
     function findBestResponse(input) {
       const clean = normalize(input);
       if (!clean) return null;
 
-      // Exact first
       for (const pair of [...memory, ...builtInKnowledge]) {
         if (normalize(pair.input) === clean) return pair.response;
       }
 
-      // Scored matching
       let best = null;
       let bestScore = 0;
       const words = clean.split(" ").filter(w => w.length > 2);
@@ -364,7 +404,7 @@
       if (isReplying) return;
       isReplying = true;
       showTyping();
-      await new Promise(r => setTimeout(r, 400 + Math.random() * 600)); // natural feel
+      await new Promise(r => setTimeout(r, 400 + Math.random() * 600));
 
       const response = findBestResponse(userText);
       hideTyping();
@@ -379,6 +419,13 @@
       isReplying = false;
     }
 
+    function showSubModal() {
+      document.getElementById("subModal").classList.add("show");
+    }
+    function hideSubModal() {
+      document.getElementById("subModal").classList.remove("show");
+    }
+
     function setupUI() {
       const input = document.getElementById("input");
       const sendBtn = document.getElementById("send");
@@ -387,6 +434,7 @@
       const newChatBtn = document.getElementById("newChatBtn");
       const status = document.getElementById("status");
       const suggestions = document.getElementById("suggestions");
+      const subModal = document.getElementById("subModal");
 
       chatId = getChatIdFromUrl() || generateChatId();
       setChatIdInUrl(chatId);
@@ -398,6 +446,29 @@
           sendBtn.click();
         };
       });
+
+      // Subscription plan buttons
+      document.querySelectorAll(".plan-btn").forEach(btn => {
+        btn.onclick = async () => {
+          const plan = btn.dataset.plan;
+          // DEMO: replace this with real Stripe Payment Link / Checkout
+          const confirmed = confirm(`Subscribe to the ${plan} plan?\n\n(This is a demo — in production this would open Stripe.)`);
+          if (!confirmed) return;
+
+          localStorage.setItem(SUB_KEY, plan);
+          hideSubModal();
+          status.textContent = "Processing subscription…";
+          try {
+            await signInAnonymously(auth);
+          } catch (e) {
+            alert("Sign-in failed. Please try again.");
+            console.error(e);
+          }
+        };
+      });
+
+      document.getElementById("closeModal").onclick = hideSubModal;
+      subModal.onclick = (e) => { if (e.target === subModal) hideSubModal(); };
 
       onAuthStateChanged(auth, async user => {
         if (user) {
@@ -411,7 +482,7 @@
           await loadChatFromCloud();
         } else {
           currentUser = null;
-          status.textContent = "Not signed in";
+          status.textContent = "Subscription required to sign in";
           input.disabled = true;
           sendBtn.disabled = true;
           signBtn.textContent = "Sign in";
@@ -421,7 +492,15 @@
         }
       });
 
-      signBtn.onclick = () => currentUser ? signOut(auth) : signInAnonymously(auth);
+      signBtn.onclick = () => {
+        if (currentUser) {
+          signOut(auth);
+          localStorage.removeItem(SUB_KEY);
+        } else {
+          showSubModal();
+        }
+      };
+
       clearBtn.onclick = () => { if (confirm("Clear local view only?")) clearLocalView(); };
       newChatBtn.onclick = () => {
         if (confirm("Start a new chat?")) {
@@ -465,7 +544,7 @@
 
       setTimeout(() => {
         if (document.getElementById("chat").children.length === 0) {
-          addMessage("Hello! I’m your QETH Expert.\n\nAsk me anything about The Ether Fund (QETH-U.TO / QETH-UN.TO) — fees, staking, eligibility, custody, and more.\nI already know the core facts and keep learning from the community.", false, false);
+          addMessage("Hello! I’m your QETH Expert.\n\nSubscribe to sign in and ask me anything about The Ether Fund (QETH-U.TO / QETH-UN.TO).", false, false);
         }
       }, 400);
     }
