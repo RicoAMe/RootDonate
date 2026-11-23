@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#0b1220">
   <title>RootDonate • The Ether Fund</title>
   <style>
     :root {
@@ -43,6 +43,7 @@
       font-weight: 600; cursor: pointer; min-height: 40px; font-size: 0.9rem; transition: all 0.15s;
     }
     button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     #clearBtn, #newChatBtn { background: #475569; color: #fff; }
     #clearBtn:hover, #newChatBtn:hover { background: #64748b; }
     button:active { transform: scale(0.98); }
@@ -63,9 +64,9 @@
     .msg-actions {
       position: absolute; top: 6px; right: 8px; opacity: 0; transition: opacity 0.15s;
     }
-    .msg-wrap:hover .msg-actions { opacity: 1; }
+    .msg-wrap:hover .msg-actions, .msg-wrap:focus-within .msg-actions { opacity: 1; }
     .msg-actions button {
-      background: rgba(0,0,0,0.3); color: #fff; padding: 4px 8px; font-size: 0.75rem; min-height: 0;
+      background: rgba(0,0,0,0.35); color: #fff; padding: 4px 8px; font-size: 0.75rem; min-height: 0;
       border-radius: 8px;
     }
     .typing {
@@ -107,7 +108,6 @@
       padding: 2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: middle;
     }
 
-    /* Subscription Modal */
     #subModal {
       position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
       display: none; align-items: center; justify-content: center; z-index: 1000;
@@ -143,9 +143,9 @@
       <small id="status">Connecting…</small>
     </div>
     <div class="header-actions">
-      <button id="newChatBtn">New</button>
-      <button id="clearBtn">Clear</button>
-      <button id="signBtn">Sign in</button>
+      <button id="newChatBtn" aria-label="New chat">New</button>
+      <button id="clearBtn" aria-label="Clear local chat">Clear</button>
+      <button id="signBtn" aria-label="Sign in or out">Sign in</button>
     </div>
   </header>
 
@@ -161,11 +161,10 @@
   </div>
 
   <div class="input-bar">
-    <textarea id="input" placeholder="Ask about The Ether Fund…" rows="1" disabled></textarea>
-    <button id="send" disabled>↑</button>
+    <textarea id="input" placeholder="Ask about The Ether Fund…" rows="1" disabled aria-label="Message"></textarea>
+    <button id="send" disabled aria-label="Send">↑</button>
   </div>
 
-  <!-- Subscription Modal -->
   <div id="subModal">
     <div class="modal-content">
       <h2>Subscribe to Sign In</h2>
@@ -217,17 +216,17 @@
     const STRIPE_LINK = "https://buy.stripe.com/6oUfZg3PndyCbEPc4nbV600";
 
     const builtInKnowledge = [
-      { input: "what is qeth", response: "QETH-U.TO (and its CAD version QETH-UN.TO) is The Ether Fund from 3iQ. It’s Canada’s first regulated closed-end fund that gives you roughly 100% exposure to Ethereum. It’s listed on the Toronto Stock Exchange and is eligible for TFSAs and RRSPs." },
-      { input: "what is the ether fund", response: "The Ether Fund is a closed-end fund managed by 3iQ that holds Ethereum. It tracks the price of ETH while also earning staking rewards. The management fee is 1.95% per year." },
+      { input: "what is qeth", response: "QETH-U.TO (and its CAD version QETH-UN.TO) is The Ether Fund from 3iQ. It’s Canada’s first regulated closed-end fund that gives you roughly 100% exposure to Ethereum. It’s listed on the Toronto Stock Exchange and is eligible for TFSAs, RRSPs, RRIFs, RESPs, RDSPs and DPSPs." },
+      { input: "what is the ether fund", response: "The Ether Fund is a closed-end fund managed by 3iQ that holds Ethereum. It tracks the price of ETH while also earning staking rewards. The management fee is 1.95% per year. The manager also takes a 25% staking service fee on the staking rewards earned." },
       { input: "management fee", response: "The management fee is 1.95% annually." },
-      { input: "staking yield", response: "As of mid-November 2026, the staking yield was around 2.52% (based on the trailing 30-day gross figure). The fund stakes part of its Ethereum holdings, and those rewards flow into the NAV over time." },
-      { input: "is it eligible for tfsa", response: "Yes — The Ether Fund is fully eligible for TFSAs, RRSPs, RRIFs, RESPs, RDSPs, and DPSPs." },
-      { input: "how much eth per unit", response: "As of November 19, 2026, each unit represented roughly 0.01624 ETH. The exact amount drifts slightly over time as staking rewards come in and the cash balance changes." },
+      { input: "staking yield", response: "As of 19 November 2026, the trailing 30-day gross staking yield was approximately 3.12%. The fund stakes a portion of its Ethereum holdings and the net rewards (after the manager’s 25% staking service fee) flow into the NAV over time." },
+      { input: "is it eligible for tfsa", response: "Yes — The Ether Fund is fully eligible for TFSAs, RRSPs, RRIFs, RESPs, RDSPs and DPSPs." },
+      { input: "how much eth per unit", response: "As of mid-November 2026, each unit represented roughly 0.01625 ETH. The exact amount drifts slightly over time as staking rewards come in and the cash balance changes." },
       { input: "custody", response: "The Ethereum is held in segregated cold storage. Custody is handled by Tetra Trust Company with Coinbase Custody Trust Company as sub-custodian." },
-      { input: "inception date", response: "The USD class (QETH.U) launched on December 10, 2020." },
+      { input: "inception date", response: "The USD class (QETH.U) launched on 10 December 2020." },
       { input: "symbols", response: "You’ll see it listed as QETH.U for the USD version and QETH.UN for the CAD version, both on the TSX." },
-      { input: "risk", response: "Because it tracks Ethereum, the fund is highly volatile. Past performance doesn’t guarantee future results, so it’s worth reading the prospectus carefully before investing." },
-      { input: "price", response: "Prices move with Ethereum. Around November 19, 2026, QETH.U was trading near US$28.23 and QETH.UN near C$39.28, with NAV per unit a bit higher than the market prices." },
+      { input: "risk", response: "Because it tracks Ethereum, the fund is highly volatile. Past performance doesn’t guarantee future results. Always read the prospectus carefully before investing. This is not financial advice." },
+      { input: "price", response: "Prices move with Ethereum. Around 20 November 2026, QETH.U was trading near US$24.36 and QETH.UN near C$35.11, with NAV per unit a bit higher than the market prices. Check the TSX or 3iQ site for the latest." },
       { input: "who manages it", response: "It’s managed by 3iQ Corp., the Canadian firm that pioneered regulated crypto funds in the country." }
     ];
 
@@ -388,10 +387,12 @@
       actions.className = "msg-actions";
       const copyBtn = document.createElement("button");
       copyBtn.textContent = "Copy";
+      copyBtn.setAttribute("aria-label", "Copy message");
       copyBtn.onclick = () => {
-        navigator.clipboard.writeText(text);
-        copyBtn.textContent = "Copied";
-        setTimeout(() => copyBtn.textContent = "Copy", 1500);
+        navigator.clipboard.writeText(text).then(() => {
+          copyBtn.textContent = "Copied";
+          setTimeout(() => copyBtn.textContent = "Copy", 1500);
+        });
       };
       actions.appendChild(copyBtn);
       div.appendChild(actions);
@@ -454,14 +455,12 @@
         };
       });
 
-      // Subscription plan buttons → sign in
       document.querySelectorAll(".plan-btn").forEach(btn => {
         btn.onclick = async () => {
           const plan = btn.dataset.plan;
-          const confirmed = confirm(`Subscribe to the ${plan} plan?\n\nYou will be redirected to Stripe:\n${https://buy.stripe.com/6oUfZg3PndyCbEPc4nbV600}`);
+          const confirmed = confirm(`Subscribe to the ${plan} plan?\n\nYou will be redirected to Stripe:\n${STRIPE_LINK}`);
           if (!confirmed) return;
 
-          // Optional: open Stripe link in new tab
           window.open(STRIPE_LINK, "_blank", "noopener,noreferrer");
 
           localStorage.setItem(SUB_KEY, plan);
@@ -472,6 +471,7 @@
           } catch (e) {
             alert("Sign-in failed. Please try again.");
             console.error(e);
+            status.textContent = "Sign-in failed";
           }
         };
       });
@@ -553,7 +553,7 @@
 
       setTimeout(() => {
         if (document.getElementById("chat").children.length === 0) {
-          addMessage("Hello! I’m your QETH Expert.\n\nSubscribe to sign in and ask me anything about The Ether Fund (QETH-U.TO / QETH-UN.TO).", false, false);
+          addMessage("Hello! I’m your QETH Expert.\n\nSubscribe to sign in and ask me anything about The Ether Fund (QETH-U.TO / QETH-UN.TO).\n\nNot financial advice. Data as of late November 2026.", false, false);
         }
       }, 400);
     }
