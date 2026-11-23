@@ -51,7 +51,7 @@
       flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px;
       scroll-behavior: smooth; background: linear-gradient(180deg, transparent, rgba(15,23,42,0.4));
     }
-    .msg-wrap { max-width: 85%; display: flex; animation: fadeIn 0.25s ease; }
+    .msg-wrap { max-width: 85%; display: flex; flex-direction: column; animation: fadeIn 0.25s ease; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
     .user { align-self: flex-end; }
     .bot { align-self: flex-start; }
@@ -61,6 +61,10 @@
     }
     .user .msg { background: var(--user); color: #000; border-bottom-right-radius: 6px; }
     .bot .msg { background: var(--bot); border-bottom-left-radius: 6px; border: 1px solid #334155; }
+    .timestamp {
+      font-size: 0.7rem; color: var(--muted); margin-top: 4px; padding: 0 4px; opacity: 0.8;
+    }
+    .user .timestamp { text-align: right; }
     .msg-actions {
       position: absolute; top: 6px; right: 8px; opacity: 0; transition: opacity 0.15s;
     }
@@ -140,7 +144,8 @@
   <header>
     <div>
       <strong>RootDonate <span class="badge">ETH</span></strong><br>
-      <small id="status">Connecting…</small>
+      <small id="status">Connecting…</small><br>
+      <small id="nowTime" style="font-size:0.75rem; opacity:0.7;"></small>
     </div>
     <div class="header-actions">
       <button id="newChatBtn" aria-label="New chat">New</button>
@@ -286,11 +291,27 @@
       return best;
     }
 
+    // Internet AI fallback that includes Date.now()
+    async function getInternetAIResponse(userText) {
+      const now = new Date(Date.now()).toLocaleString();
+      const prompt = `You are a helpful expert on The Ether Fund (QETH-U.TO / QETH-UN.TO) from 3iQ. Current date and time is ${now}. Answer the following question clearly and accurately. If you don't know exact latest numbers, say so and suggest checking the TSX or 3iQ website. Not financial advice.\n\nQuestion: ${userText}`;
+      try {
+        const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`);
+        if (!res.ok) throw new Error("AI request failed");
+        const text = await res.text();
+        return text.trim() || "Sorry, the AI service returned an empty response.";
+      } catch (e) {
+        console.warn("Internet AI failed", e);
+        return "I don’t have a strong match for that yet and the internet AI is unavailable right now.\n\nTeach me the best reply and I’ll remember it for everyone going forward.";
+      }
+    }
+
     function saveLocalChat() {
       const chat = document.getElementById("chat");
       const messages = Array.from(chat.querySelectorAll(".msg-wrap:not(.typing)")).map(wrap => ({
         text: wrap.querySelector(".msg").textContent,
-        isUser: wrap.classList.contains("user")
+        isUser: wrap.classList.contains("user"),
+        ts: wrap.dataset.ts || Date.now()
       }));
       localStorage.setItem(CHAT_KEY + "_" + (chatId || "local"), JSON.stringify(messages));
     }
@@ -302,7 +323,7 @@
       try {
         const messages = JSON.parse(saved);
         document.getElementById("chat").innerHTML = "";
-        messages.forEach(m => addMessage(m.text, m.isUser, false));
+        messages.forEach(m => addMessage(m.text, m.isUser, false, m.ts));
       } catch (e) { console.warn("Local load failed", e); }
     }
 
@@ -331,7 +352,8 @@
         document.getElementById("chat").innerHTML = "";
         snap.forEach(doc => {
           const d = doc.data();
-          addMessage(d.text, d.isUser, false);
+          const ts = d.createdAt?.toMillis ? d.createdAt.toMillis() : Date.now();
+          addMessage(d.text, d.isUser, false, ts);
         });
       } catch (e) { console.warn("Cloud load failed", e); }
     }
@@ -376,9 +398,18 @@
       }
     }
 
-    function addMessage(text, isUser, save = true) {
+    function formatTime(ts) {
+      const d = new Date(ts || Date.now());
+      return d.toLocaleString(undefined, { 
+        month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" 
+      });
+    }
+
+    function addMessage(text, isUser, save = true, ts = Date.now()) {
       const wrap = document.createElement("div");
       wrap.className = "msg-wrap " + (isUser ? "user" : "bot");
+      wrap.dataset.ts = ts;
+
       const div = document.createElement("div");
       div.className = "msg";
       div.textContent = text;
@@ -397,7 +428,13 @@
       actions.appendChild(copyBtn);
       div.appendChild(actions);
 
+      const timeEl = document.createElement("div");
+      timeEl.className = "timestamp";
+      timeEl.textContent = formatTime(ts);
+
       wrap.appendChild(div);
+      wrap.appendChild(timeEl);
+
       const chat = document.getElementById("chat");
       chat.appendChild(wrap);
       chat.scrollTop = chat.scrollHeight;
@@ -414,15 +451,22 @@
       showTyping();
       await new Promise(r => setTimeout(r, 400 + Math.random() * 600));
 
-      const response = findBestResponse(userText);
+      let response = findBestResponse(userText);
       hideTyping();
 
       if (response) {
         addMessage(response, false);
       } else {
-        addMessage("I don’t have a strong match for that yet.\n\nTeach me the best reply and I’ll remember it for everyone going forward.", false);
-        awaitingTeach = true;
-        pendingInput = userText;
+        // Internet AI fallback that includes Date.now()
+        showTyping();
+        response = await getInternetAIResponse(userText);
+        hideTyping();
+        addMessage(response, false);
+        // Still offer teach if it was a generic fallback
+        if (response.includes("Teach me the best reply")) {
+          awaitingTeach = true;
+          pendingInput = userText;
+        }
       }
       isReplying = false;
     }
@@ -432,6 +476,11 @@
     }
     function hideSubModal() {
       document.getElementById("subModal").classList.remove("show");
+    }
+
+    function updateNowTime() {
+      const el = document.getElementById("nowTime");
+      if (el) el.textContent = "Now: " + new Date(Date.now()).toLocaleString();
     }
 
     function setupUI() {
@@ -447,6 +496,9 @@
       chatId = getChatIdFromUrl() || generateChatId();
       setChatIdInUrl(chatId);
       loadLocalChat();
+
+      updateNowTime();
+      setInterval(updateNowTime, 60000);
 
       suggestions.querySelectorAll("button").forEach(btn => {
         btn.onclick = () => {
@@ -553,7 +605,7 @@
 
       setTimeout(() => {
         if (document.getElementById("chat").children.length === 0) {
-          addMessage("Hello! I’m your QETH Expert.\n\nSubscribe to sign in and ask me anything about The Ether Fund (QETH-U.TO / QETH-UN.TO).\n\nNot financial advice. Data as of late November 2026.", false, false);
+          addMessage("Hello! I’m your QETH Expert (with internet AI fallback).\n\nSubscribe to sign in and ask me anything about The Ether Fund (QETH-U.TO / QETH-UN.TO).\n\nNot financial advice. Data as of late November 2026.", false, false);
         }
       }, 400);
     }
