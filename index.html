@@ -403,19 +403,19 @@
   <header>
     <div>
       <strong>RootDonate <span class="badge">ETH</span></strong><br>
-      <small id="status">Subscription required</small><br>
+      <small id="status">Ready • Subscription optional</small><br>
       <small id="nowTime" style="font-size:0.75rem; opacity:0.7;"></small>
     </div>
     <div class="header-actions">
-      <button id="newChatBtn" aria-label="New chat" disabled>New</button>
-      <button id="clearBtn" aria-label="Clear local chat" disabled>Clear</button>
-      <button id="signBtn" aria-label="Sign in">Subscribe & Sign in</button>
+      <button id="newChatBtn" aria-label="New chat">New</button>
+      <button id="clearBtn" aria-label="Clear local chat">Clear</button>
+      <button id="signBtn" aria-label="Sign in">Sign in / Subscribe</button>
     </div>
   </header>
 
   <div id="chat"></div>
 
-  <div class="suggestions" id="suggestions" style="display:none;">
+  <div class="suggestions" id="suggestions">
     <button data-q="What is QETH?">What is QETH?</button>
     <button data-q="Management fee">Management fee</button>
     <button data-q="Staking yield">Staking yield</button>
@@ -425,15 +425,15 @@
   </div>
 
   <div class="input-bar">
-    <textarea id="input" placeholder="Subscribe to unlock the QETH Expert…" rows="1" disabled aria-label="Message"></textarea>
-    <button id="send" disabled aria-label="Send">↑</button>
+    <textarea id="input" placeholder="Ask about The Ether Fund…" rows="1" aria-label="Message"></textarea>
+    <button id="send" aria-label="Send">↑</button>
   </div>
 
   <div id="subModal">
     <div class="modal-content">
-      <h2>Subscribe to Unlock</h2>
-      <p>Unlock the QETH Expert and local chat.<br>
-         Sign-in for shared memory is optional after payment.</p>
+      <h2>Optional Subscription</h2>
+      <p>Support the project and unlock shared memory across devices.<br>
+         Local chat works without a subscription.</p>
       <div class="plans">
         <button class="plan-btn" data-plan="monthly">
           Monthly
@@ -444,6 +444,7 @@
           <small>£120 / year</small>
         </button>
       </div>
+      <button id="closeModal" style="background:#475569; color:#fff; margin-top:8px;">Continue without subscribing</button>
     </div>
   </div>
 
@@ -810,7 +811,7 @@
         cleanUrl.searchParams.delete("session_id");
         history.replaceState(null, "", cleanUrl);
 
-        status.textContent = "Payment successful · Subscription active";
+        status.textContent = "Subscription active · Thank you!";
       }
 
       suggestions.querySelectorAll("button").forEach(btn => {
@@ -825,7 +826,7 @@
           const plan = btn.dataset.plan;
           const confirmed = confirm(
             `Subscribe to the ${plan} plan?\n\n` +
-            `You will be redirected to Stripe. After a successful payment you will be returned here with the subscription active (no automatic sign-in).\n\n` +
+            `You will be redirected to Stripe. After a successful payment you will be returned here.\n\n` +
             `${STRIPE_LINK}`
           );
           if (!confirmed) return;
@@ -836,51 +837,32 @@
         };
       });
 
+      document.getElementById("closeModal").onclick = hideSubModal;
+
       onAuthStateChanged(auth, async user => {
-        const isSubscribed = !!localStorage.getItem(SUB_KEY);
         currentUser = user;
+        const isSubscribed = !!localStorage.getItem(SUB_KEY);
 
-        if (isSubscribed) {
-          status.textContent = user
-            ? "Signed in · Shared memory active"
-            : "Subscription active · Sign in for shared memory";
-          input.disabled = false;
-          sendBtn.disabled = false;
-          clearBtn.disabled = false;
-          newChatBtn.disabled = false;
-          suggestions.style.display = "flex";
-          input.placeholder = "Ask about The Ether Fund…";
-          hideSubModal();
-
-          if (user) {
-            signBtn.textContent = "Sign out";
-            listenSharedMemory();
-            await loadChatFromCloud();
-            loadLocalChat();
-          } else {
-            signBtn.textContent = "Sign in for shared";
-            loadLocalChat();
-          }
+        if (user) {
+          signBtn.textContent = "Sign out";
+          status.textContent = isSubscribed
+            ? "Signed in · Subscription active"
+            : "Signed in · Shared memory active";
+          listenSharedMemory();
+          await loadChatFromCloud();
         } else {
-          currentUser = null;
-          status.textContent = "Subscription required";
-          input.disabled = true;
-          sendBtn.disabled = true;
-          clearBtn.disabled = true;
-          newChatBtn.disabled = true;
-          signBtn.textContent = "Subscribe & Sign in";
-          suggestions.style.display = "none";
-          input.placeholder = "Subscribe to unlock the QETH Expert…";
-          if (unsubShared) unsubShared();
-          memory = [];
-          showSubModal();
+          signBtn.textContent = "Sign in / Subscribe";
+          status.textContent = isSubscribed
+            ? "Subscription active · Sign in for shared memory"
+            : "Ready • Subscription optional";
         }
+
+        loadLocalChat();
       });
 
       signBtn.onclick = () => {
         if (currentUser) {
           signOut(auth);
-          localStorage.removeItem(SUB_KEY);
         } else if (localStorage.getItem(SUB_KEY)) {
           status.textContent = "Signing in…";
           signInAnonymously(auth).catch(err => {
@@ -906,7 +888,7 @@
 
       async function send() {
         const text = input.value.trim();
-        if (!text || !localStorage.getItem(SUB_KEY)) return;
+        if (!text) return;
         input.value = "";
         input.style.height = "auto";
 
@@ -937,13 +919,9 @@
         input.style.height = Math.min(input.scrollHeight, 140) + "px";
       };
 
-      if (!localStorage.getItem(SUB_KEY)) {
-        setTimeout(showSubModal, 300);
-      }
-
       setTimeout(() => {
-        if (document.getElementById("chat").children.length === 0 && !localStorage.getItem(SUB_KEY)) {
-          addMessage("Hello! Subscribe first to unlock the QETH Expert.\n\nNot financial advice.", false, false);
+        if (document.getElementById("chat").children.length === 0) {
+          addMessage("Hello! Ask me anything about The Ether Fund (QETH).\n\nSubscription is optional — local chat works immediately.\nNot financial advice.", false, false);
         }
       }, 500);
     }
