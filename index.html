@@ -21,8 +21,8 @@
     button { background:var(--accent); color:#000; border:none; padding:8px 14px; border-radius:12px; font-weight:600; cursor:pointer; min-height:40px; font-size:.9rem; transition:all .15s; }
     button:hover { background:var(--accent-hover); transform:translateY(-1px); }
     button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
-    #clearBtn, #newChatBtn, #subBtn { background:#475569; color:#fff; }
-    #clearBtn:hover, #newChatBtn:hover, #subBtn:hover { background:#64748b; }
+    #clearBtn, #newChatBtn { background:#475569; color:#fff; }
+    #clearBtn:hover, #newChatBtn:hover { background:#64748b; }
     button:active { transform:scale(.98); }
     #chat { flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:12px; scroll-behavior:smooth; background:linear-gradient(180deg,transparent,rgba(15,23,42,.4)); }
     .msg-wrap { max-width:85%; display:flex; flex-direction:column; animation:fadeIn .25s ease; }
@@ -51,15 +51,6 @@
     #send { background:var(--accent); color:#000; border:none; width:48px; height:48px; border-radius:50%; font-size:1.3rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
     #send:disabled, #input:disabled { opacity:.5; cursor:not-allowed; }
     .badge { display:inline-block; background:var(--eth); color:white; font-size:.7rem; padding:2px 8px; border-radius:999px; margin-left:6px; vertical-align:middle; }
-    #subModal { position:fixed; inset:0; background:rgba(0,0,0,.75); backdrop-filter:blur(6px); display:none; align-items:center; justify-content:center; z-index:1000; }
-    #subModal.show { display:flex; }
-    .modal-content { background:var(--surface); border:1px solid #334155; border-radius:20px; padding:28px 24px; max-width:420px; width:90%; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.5); }
-    .modal-content h2 { margin:0 0 8px; color:var(--accent); }
-    .modal-content p { color:var(--muted); margin:0 0 20px; font-size:.95rem; }
-    .plans { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
-    .plan-btn { background:var(--surface-2); color:var(--text); border:1px solid #334155; padding:14px; border-radius:14px; font-size:1rem; font-weight:600; }
-    .plan-btn:hover { border-color:var(--accent); background:var(--surface-3); }
-    .plan-btn small { display:block; font-weight:400; color:var(--muted); font-size:.8rem; margin-top:2px; }
     @media (min-width:600px){ .msg-wrap{max-width:72%} }
     @media (max-width:480px){ header{padding:10px 12px} .header-actions button{padding:6px 10px;font-size:.8rem} }
   </style>
@@ -74,7 +65,6 @@
     <div class="header-actions">
       <button id="newChatBtn">New</button>
       <button id="clearBtn">Clear</button>
-      <button id="subBtn">Subscribe</button>
       <button id="signBtn">Sign in</button>
     </div>
   </header>
@@ -93,18 +83,6 @@
   <div class="input-bar">
     <textarea id="input" placeholder="Ask about The Ether Fund…" rows="1"></textarea>
     <button id="send">↑</button>
-  </div>
-
-  <div id="subModal">
-    <div class="modal-content">
-      <h2>Optional Subscription</h2>
-      <p>Support the project and unlock shared memory across devices.<br>Local chat works without a subscription.</p>
-      <div class="plans">
-        <button class="plan-btn" data-plan="monthly">Monthly <small>£10 / month</small></button>
-        <button class="plan-btn" data-plan="yearly">Yearly <small>£120 / year</small></button>
-      </div>
-      <button id="closeModal" style="background:#475569;color:#fff;margin-top:8px;">Continue without subscribing</button>
-    </div>
   </div>
 
   <script type="module">
@@ -129,9 +107,9 @@
     let awaitingTeach = false, pendingInput = null, chatId = null, typingEl = null;
 
     const CHAT_KEY = "qeth_expert_chat";
-    const SUB_KEY = "qeth_subscribed";
     const BASE42 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEF";
-    const STRIPE_LINK = "https://buy.stripe.com/6oUfZg3PndyCbEPc4nbV600";
+    const SIGNIN_TIME_KEY = "qeth_signin_time";
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
     const builtInKnowledge = [
       { input: "what is qeth", response: "QETH-U.TO (and its CAD version QETH-UN.TO) is The Ether Fund from 3iQ. It’s Canada’s first regulated closed-end fund that gives you roughly 100% exposure to Ethereum. It’s listed on the Toronto Stock Exchange and is eligible for TFSAs, RRSPs, RRIFs, RESPs, RDSPs and DPSPs." },
@@ -153,6 +131,14 @@
     function setChatIdInUrl(id){const u=new URL(window.location);u.searchParams.set("chat",id);history.replaceState(null,"",u);}
     function generateChatId(){return toBase42(Math.floor(Math.random()*1e15)).slice(0,8)+toBase42(Date.now()).slice(-5);}
     function normalize(t){return(t||"").trim().toLowerCase().replace(/[^\w\s]/g,"").replace(/\s+/g," ");}
+
+    function recordSignInTime() { localStorage.setItem(SIGNIN_TIME_KEY, Date.now().toString()); }
+    function shouldAutoSignOut() {
+      const t = localStorage.getItem(SIGNIN_TIME_KEY);
+      if (!t) return false;
+      return Date.now() - Number(t) > ONE_DAY_MS;
+    }
+    function clearSignInTime() { localStorage.removeItem(SIGNIN_TIME_KEY); }
 
     function findBestResponse(input){
       const clean=normalize(input);if(!clean)return null;
@@ -251,77 +237,44 @@
       isReplying=false;
     }
 
-    function showSubModal(){document.getElementById("subModal").classList.add("show");}
-    function hideSubModal(){document.getElementById("subModal").classList.remove("show");}
     function updateNowTime(){const el=document.getElementById("nowTime");if(el)el.textContent="Now: "+new Date().toLocaleString()+" · "+Date.now();}
 
     function setupUI(){
       const input=document.getElementById("input"),sendBtn=document.getElementById("send"),signBtn=document.getElementById("signBtn");
-      const subBtn=document.getElementById("subBtn"),clearBtn=document.getElementById("clearBtn"),newChatBtn=document.getElementById("newChatBtn");
+      const clearBtn=document.getElementById("clearBtn"),newChatBtn=document.getElementById("newChatBtn");
       const status=document.getElementById("status"),suggestions=document.getElementById("suggestions");
 
       chatId=getChatIdFromUrl()||generateChatId();setChatIdInUrl(chatId);
       updateNowTime();setInterval(updateNowTime,60000);
 
-      // === POST-SUBSCRIPTION HANDLING ===
-      const urlParams=new URLSearchParams(window.location.search);
-      const justSubscribed=urlParams.get("subscribed")==="1"||urlParams.has("session_id");
-
-      if(justSubscribed){
-        const plan=sessionStorage.getItem("pending_plan")||"monthly";
-        localStorage.setItem(SUB_KEY,plan);
-        sessionStorage.removeItem("pending_plan");
-        status.textContent="Subscription active · Signing you in…";
-
-        // Clean URL
-        const clean=new URL(window.location);
-        clean.searchParams.delete("subscribed");
-        clean.searchParams.delete("session_id");
-        history.replaceState(null,"",clean);
-
-        // Auto sign-in after short delay so status is visible
-        setTimeout(()=>{
-          signInAnonymously(auth).catch(err=>{
-            console.error(err);
-            status.textContent="Subscription active · Sign in failed, please click Sign in";
-          });
-        },600);
-      }
-
       suggestions.querySelectorAll("button").forEach(btn=>btn.onclick=()=>{input.value=btn.dataset.q;sendBtn.click();});
-
-      document.querySelectorAll(".plan-btn").forEach(btn=>{
-        btn.onclick=()=>{
-          const plan=btn.dataset.plan;
-          if(!confirm(`Subscribe to the ${plan} plan?\n\nYou will be redirected to Stripe. After payment you will return here and be signed in automatically.`))return;
-          sessionStorage.setItem("pending_plan",plan);
-          status.textContent="Redirecting to Stripe…";
-          window.location.href=STRIPE_LINK;
-        };
-      });
-
-      document.getElementById("closeModal").onclick=hideSubModal;
-      subBtn.onclick=showSubModal;
 
       onAuthStateChanged(auth,async user=>{
         currentUser=user;
-        const isSubscribed=!!localStorage.getItem(SUB_KEY);
         if(user){
+          if(!localStorage.getItem(SIGNIN_TIME_KEY)) recordSignInTime();
+          if(shouldAutoSignOut()){
+            await signOut(auth);
+            clearSignInTime();
+            status.textContent="Signed out automatically after 1 day";
+            return;
+          }
           signBtn.textContent="Sign out";
-          status.textContent=isSubscribed?"Signed in · Subscription active":"Signed in · Shared memory active";
+          status.textContent="Signed in · Shared memory active";
           listenSharedMemory();
           await loadChatFromCloud();
-          if(justSubscribed)addMessage("Welcome! Your subscription is active and you’re now signed in. Shared memory is enabled.",false,false);
         }else{
           signBtn.textContent="Sign in";
-          status.textContent=isSubscribed?"Subscription active · Click Sign in":"Ready • Sign in for shared memory";
+          clearSignInTime();
+          status.textContent="Ready • Sign in for shared memory";
         }
         loadLocalChat();
       });
 
       signBtn.onclick=()=>{
-        if(currentUser)signOut(auth);
-        else{
+        if(currentUser){
+          signOut(auth).then(()=>clearSignInTime());
+        }else{
           status.textContent="Signing in…";
           signInAnonymously(auth).catch(()=>{status.textContent="Sign-in failed – please refresh";});
         }
@@ -348,9 +301,19 @@
       input.onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}};
       input.oninput=()=>{input.style.height="auto";input.style.height=Math.min(input.scrollHeight,140)+"px";};
 
+      // Auto sign-out check while page is open
+      setInterval(()=>{
+        if(currentUser && shouldAutoSignOut()){
+          signOut(auth).then(()=>{
+            clearSignInTime();
+            status.textContent="Signed out automatically after 1 day";
+          });
+        }
+      },60*60*1000);
+
       setTimeout(()=>{
-        if(document.getElementById("chat").children.length===0&&!justSubscribed){
-          addMessage("Hello! Ask me anything about The Ether Fund (QETH).\n\nSign in for shared memory. Subscription is optional.\nNot financial advice.",false,false);
+        if(document.getElementById("chat").children.length===0){
+          addMessage("Hello! Ask me anything about The Ether Fund (QETH).\n\nSign in for shared memory.\nNot financial advice.",false,false);
         }
       },500);
     }
