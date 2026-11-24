@@ -190,9 +190,9 @@
 
   <div id="subModal">
     <div class="modal-content">
-      <h2>Subscribe to Sign In</h2>
-      <p>Unlock the QETH Expert, shared community memory, and cloud chat history.<br>
-         Sign-in happens <strong>only after</strong> a successful Stripe payment.</p>
+      <h2>Subscribe to Unlock</h2>
+      <p>Unlock the QETH Expert and local chat.<br>
+         Sign-in for shared memory is optional after payment.</p>
       <div class="plans">
         <button class="plan-btn" data-plan="monthly">
           Monthly
@@ -542,20 +542,19 @@
       updateNowTime();
       setInterval(updateNowTime, 60000);
 
-      // Success return handling
+      // Success return handling — NO auto sign-in
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get("subscribed") === "1" || urlParams.has("session_id")) {
         const plan = sessionStorage.getItem("pending_plan") || "monthly";
         localStorage.setItem(SUB_KEY, plan);
         sessionStorage.removeItem("pending_plan");
 
-        // Clean the URL so refresh doesn’t re-trigger
         const cleanUrl = new URL(window.location);
         cleanUrl.searchParams.delete("subscribed");
         cleanUrl.searchParams.delete("session_id");
         history.replaceState(null, "", cleanUrl);
 
-        status.textContent = "Payment successful · Signing in…";
+        status.textContent = "Payment successful · Subscription active";
       }
 
       suggestions.querySelectorAll("button").forEach(btn => {
@@ -570,38 +569,45 @@
           const plan = btn.dataset.plan;
           const confirmed = confirm(
             `Subscribe to the ${plan} plan?\n\n` +
-            `You will be redirected to Stripe. After a successful payment you will be returned here and signed in automatically.\n\n` +
+            `You will be redirected to Stripe. After a successful payment you will be returned here with the subscription active (no automatic sign-in).\n\n` +
             `${STRIPE_LINK}`
           );
           if (!confirmed) return;
 
           sessionStorage.setItem("pending_plan", plan);
           status.textContent = "Redirecting to Stripe…";
-          // Redirect in the same tab so the success URL brings the user back
           window.location.href = STRIPE_LINK;
         };
       });
 
       onAuthStateChanged(auth, async user => {
         const isSubscribed = !!localStorage.getItem(SUB_KEY);
+        currentUser = user;
 
-        if (user && isSubscribed) {
-          currentUser = user;
-          status.textContent = "Signed in · Shared memory active";
+        if (isSubscribed) {
+          status.textContent = user
+            ? "Signed in · Shared memory active"
+            : "Subscription active · Sign in for shared memory";
           input.disabled = false;
           sendBtn.disabled = false;
           clearBtn.disabled = false;
           newChatBtn.disabled = false;
-          signBtn.textContent = "Sign out";
           suggestions.style.display = "flex";
           input.placeholder = "Ask about The Ether Fund…";
-          listenSharedMemory();
-          await loadChatFromCloud();
-          loadLocalChat();
           hideSubModal();
+
+          if (user) {
+            signBtn.textContent = "Sign out";
+            listenSharedMemory();
+            await loadChatFromCloud();
+            loadLocalChat();
+          } else {
+            signBtn.textContent = "Sign in for shared";
+            loadLocalChat();
+          }
         } else {
           currentUser = null;
-          status.textContent = isSubscribed ? "Signed out" : "Subscription required to sign in";
+          status.textContent = "Subscription required";
           input.disabled = true;
           sendBtn.disabled = true;
           clearBtn.disabled = true;
@@ -611,9 +617,7 @@
           input.placeholder = "Subscribe to unlock the QETH Expert…";
           if (unsubShared) unsubShared();
           memory = [];
-          if (!isSubscribed) {
-            showSubModal();
-          }
+          showSubModal();
         }
       });
 
@@ -621,6 +625,13 @@
         if (currentUser) {
           signOut(auth);
           localStorage.removeItem(SUB_KEY);
+        } else if (localStorage.getItem(SUB_KEY)) {
+          // Optional sign-in after payment
+          status.textContent = "Signing in…";
+          signInAnonymously(auth).catch(err => {
+            console.error("Sign-in failed", err);
+            status.textContent = "Sign-in failed – please refresh";
+          });
         } else {
           showSubModal();
         }
@@ -637,7 +648,7 @@
 
       async function send() {
         const text = input.value.trim();
-        if (!text || !currentUser) return;
+        if (!text || !localStorage.getItem(SUB_KEY)) return;
         input.value = "";
         input.style.height = "auto";
 
@@ -667,19 +678,14 @@
         input.style.height = Math.min(input.scrollHeight, 140) + "px";
       };
 
-      // Only attempt sign-in if already subscribed (or just returned from success)
-      if (localStorage.getItem(SUB_KEY)) {
-        signInAnonymously(auth).catch(err => {
-          console.error("Sign-in failed", err);
-          status.textContent = "Sign-in failed – please refresh";
-        });
-      } else {
+      // Only show modal if not subscribed
+      if (!localStorage.getItem(SUB_KEY)) {
         setTimeout(showSubModal, 300);
       }
 
       setTimeout(() => {
-        if (document.getElementById("chat").children.length === 0 && !currentUser) {
-          addMessage("Hello! Subscribe first to unlock the QETH Expert and shared memory.\n\nNot financial advice.", false, false);
+        if (document.getElementById("chat").children.length === 0 && !localStorage.getItem(SUB_KEY)) {
+          addMessage("Hello! Subscribe first to unlock the QETH Expert.\n\nNot financial advice.", false, false);
         }
       }, 500);
     }
