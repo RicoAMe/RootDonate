@@ -191,7 +191,8 @@
   <div id="subModal">
     <div class="modal-content">
       <h2>Subscribe to Sign In</h2>
-      <p>Unlock the QETH Expert, shared community memory, and cloud chat history. Sign-in is only available after subscription.</p>
+      <p>Unlock the QETH Expert, shared community memory, and cloud chat history.<br>
+         Sign-in happens <strong>only after</strong> a successful Stripe payment.</p>
       <div class="plans">
         <button class="plan-btn" data-plan="monthly">
           Monthly
@@ -541,6 +542,23 @@
       updateNowTime();
       setInterval(updateNowTime, 60000);
 
+      // ── Success return handling ──────────────────────────────────────────────
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get("subscribed") === "1" || urlParams.has("session_id")) {
+        const plan = sessionStorage.getItem("pending_plan") || "monthly";
+        localStorage.setItem(SUB_KEY, plan);
+        sessionStorage.removeItem("pending_plan");
+
+        // Clean the URL so refresh doesn’t re-trigger
+        const cleanUrl = new URL(window.location);
+        cleanUrl.searchParams.delete("subscribed");
+        cleanUrl.searchParams.delete("session_id");
+        history.replaceState(null, "", cleanUrl);
+
+        status.textContent = "Payment successful · Signing in…";
+      }
+      // ─────────────────────────────────────────────────────────────────────────
+
       suggestions.querySelectorAll("button").forEach(btn => {
         btn.onclick = () => {
           input.value = btn.dataset.q;
@@ -549,24 +567,19 @@
       });
 
       document.querySelectorAll(".plan-btn").forEach(btn => {
-        btn.onclick = async () => {
+        btn.onclick = () => {
           const plan = btn.dataset.plan;
-          const confirmed = confirm(`Subscribe to the ${plan} plan?\n\nYou will be redirected to Stripe:\n${STRIPE_LINK}`);
+          const confirmed = confirm(
+            `Subscribe to the ${plan} plan?\n\n` +
+            `You will be redirected to Stripe. After a successful payment you will be returned here and signed in automatically.\n\n` +
+            `${STRIPE_LINK}`
+          );
           if (!confirmed) return;
 
-          window.open(STRIPE_LINK, "_blank", "noopener,noreferrer");
-
-          localStorage.setItem(SUB_KEY, plan);
-          hideSubModal();
-          status.textContent = "Processing subscription…";
-          try {
-            await signInAnonymously(auth);
-          } catch (e) {
-            alert("Sign-in failed. Please try again.");
-            console.error(e);
-            status.textContent = "Sign-in failed";
-            showSubModal();
-          }
+          sessionStorage.setItem("pending_plan", plan);
+          status.textContent = "Redirecting to Stripe…";
+          // Redirect in the same tab so the success URL brings the user back
+          window.location.href = https://www.rootdonate.co.uk;
         };
       });
 
@@ -586,9 +599,10 @@
           listenSharedMemory();
           await loadChatFromCloud();
           loadLocalChat();
+          hideSubModal();
         } else {
           currentUser = null;
-          status.textContent = "Subscription required to sign in";
+          status.textContent = isSubscribed ? "Signed out" : "Subscription required to sign in";
           input.disabled = true;
           sendBtn.disabled = true;
           clearBtn.disabled = true;
@@ -654,12 +668,14 @@
         input.style.height = Math.min(input.scrollHeight, 140) + "px";
       };
 
-      // Force subscription modal on first load if not subscribed
-      if (!localStorage.getItem(SUB_KEY)) {
-        setTimeout(showSubModal, 300);
+      // Only attempt sign-in if already subscribed (or just returned from success)
+      if (localStorage.getItem(SUB_KEY)) {
+        signInAnonymously(auth).catch(err => {
+          console.error("Sign-in failed", err);
+          status.textContent = "Sign-in failed – please refresh";
+        });
       } else {
-        // Already subscribed previously → try to sign in
-        signInAnonymously(auth).catch(() => {});
+        setTimeout(showSubModal, 300);
       }
 
       setTimeout(() => {
