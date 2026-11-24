@@ -542,7 +542,7 @@
       updateNowTime();
       setInterval(updateNowTime, 60000);
 
-      // ── Success return handling ──────────────────────────────────────────────
+      // Success return handling
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get("subscribed") === "1" || urlParams.has("session_id")) {
         const plan = sessionStorage.getItem("pending_plan") || "monthly";
@@ -557,7 +557,6 @@
 
         status.textContent = "Payment successful · Signing in…";
       }
-      // ─────────────────────────────────────────────────────────────────────────
 
       suggestions.querySelectorAll("button").forEach(btn => {
         btn.onclick = () => {
@@ -579,7 +578,7 @@
           sessionStorage.setItem("pending_plan", plan);
           status.textContent = "Redirecting to Stripe…";
           // Redirect in the same tab so the success URL brings the user back
-          window.location.href = https://www.rootdonate.co.uk;
+          window.location.href = "https://www.rootdonate.co.uk";
         };
       });
 
