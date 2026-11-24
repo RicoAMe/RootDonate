@@ -19,52 +19,154 @@
       --user: #22c55e;
       --bot: #1e293b;
       --radius: 18px;
-      --shadow: 0 4px 24px rgba(0,0,0,0.25);
+      --shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
     }
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     html, body {
-      margin: 0; height: 100%; background: var(--bg); color: var(--text);
+      margin: 0;
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-size: 16px; line-height: 1.45;
+      font-size: 16px;
+      line-height: 1.45;
     }
+
     body {
-      display: flex; flex-direction: column; height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
       padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     }
+
     header {
-      background: var(--surface); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
-      border-bottom: 1px solid #334155; flex-shrink: 0; backdrop-filter: blur(12px);
+      background: var(--surface);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #334155;
+      flex-shrink: 0;
+      backdrop-filter: blur(12px);
     }
-    header strong { font-size: 1.15rem; color: var(--accent); letter-spacing: -0.02em; }
-    header small { color: var(--muted); font-size: 0.8rem; }
-    .header-actions { display: flex; gap: 6px; }
+
+    header strong {
+      font-size: 1.15rem;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+    }
+
+    header small {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 6px;
+    }
+
     button {
-      background: var(--accent); color: #000; border: none; padding: 8px 14px; border-radius: 12px;
-      font-weight: 600; cursor: pointer; min-height: 40px; font-size: 0.9rem; transition: all 0.15s;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 40px;
+      font-size: 0.9rem;
+      transition: all 0.15s;
     }
-    button:hover { background: var(--accent-hover); transform: translateY(-1px); }
-    button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    #clearBtn, #newChatBtn { background: #475569; color: #fff; }
-    #clearBtn:hover, #newChatBtn:hover { background: #64748b; }
-    button:active { transform: scale(0.98); }
+
+    button:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    #clearBtn,
+    #newChatBtn {
+      background: #475569;
+      color: #fff;
+    }
+
+    #clearBtn:hover,
+    #newChatBtn:hover {
+      background: #64748b;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
     #chat {
-      flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px;
-      scroll-behavior: smooth; background: linear-gradient(180deg, transparent, rgba(15,23,42,0.4));
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scroll-behavior: smooth;
+      background: linear-gradient(180deg, transparent, rgba(15, 23, 42, 0.4));
     }
-    .msg-wrap { max-width: 85%; display: flex; flex-direction: column; animation: fadeIn 0.25s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+    .msg-wrap {
+      max-width: 85%;
+      display: flex;
+      flex-direction: column;
+      animation: fadeIn 0.25s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: none; }
+    }
+
     .user { align-self: flex-end; }
     .bot { align-self: flex-start; }
+
     .msg {
-      padding: 12px 16px; border-radius: var(--radius); white-space: pre-wrap; word-break: break-word;
-      line-height: 1.45; position: relative; box-shadow: var(--shadow);
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.45;
+      position: relative;
+      box-shadow: var(--shadow);
     }
-    .user .msg { background: var(--user); color: #000; border-bottom-right-radius: 6px; }
-    .bot .msg { background: var(--bot); border-bottom-left-radius: 6px; border: 1px solid #334155; }
+
+    .user .msg {
+      background: var(--user);
+      color: #000;
+      border-bottom-right-radius: 6px;
+    }
+
+    .bot .msg {
+      background: var(--bot);
+      border-bottom-left-radius: 6px;
+      border: 1px solid #334155;
+    }
+
     .timestamp {
-      font-size: 0.7rem; color: var(--muted); margin-top: 4px; padding: 0 4px; opacity: 0.8;
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 4px;
+      padding: 0 4px;
+      opacity: 0.8;
     }
+
     .user .timestamp { text-align: right; }
+
     .unlocked-now {
       margin-top: 10px;
       padding: 8px 10px;
@@ -74,6 +176,7 @@
       font-size: 0.8rem;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     }
+
     .unlocked-now button {
       margin-left: 8px;
       padding: 2px 8px;
@@ -82,77 +185,217 @@
       background: var(--accent);
       color: #000;
     }
+
     .msg-actions {
-      position: absolute; top: 6px; right: 8px; opacity: 0; transition: opacity 0.15s;
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      opacity: 0;
+      transition: opacity 0.15s;
     }
-    .msg-wrap:hover .msg-actions, .msg-wrap:focus-within .msg-actions { opacity: 1; }
+
+    .msg-wrap:hover .msg-actions,
+    .msg-wrap:focus-within .msg-actions {
+      opacity: 1;
+    }
+
     .msg-actions button {
-      background: rgba(0,0,0,0.35); color: #fff; padding: 4px 8px; font-size: 0.75rem; min-height: 0;
+      background: rgba(0, 0, 0, 0.35);
+      color: #fff;
+      padding: 4px 8px;
+      font-size: 0.75rem;
+      min-height: 0;
       border-radius: 8px;
     }
+
     .typing {
-      align-self: flex-start; display: flex; gap: 4px; padding: 12px 16px; background: var(--bot);
-      border-radius: var(--radius); border: 1px solid #334155; width: fit-content;
+      align-self: flex-start;
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px;
+      background: var(--bot);
+      border-radius: var(--radius);
+      border: 1px solid #334155;
+      width: fit-content;
     }
+
     .typing span {
-      width: 8px; height: 8px; background: var(--muted); border-radius: 50%; animation: bounce 1.4s infinite;
+      width: 8px;
+      height: 8px;
+      background: var(--muted);
+      border-radius: 50%;
+      animation: bounce 1.4s infinite;
     }
+
     .typing span:nth-child(2) { animation-delay: 0.2s; }
     .typing span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
+    }
+
     .suggestions {
-      display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 16px 0; flex-shrink: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 8px 16px 0;
+      flex-shrink: 0;
     }
+
     .suggestions button {
-      background: var(--surface-2); color: var(--text); border: 1px solid #334155;
-      padding: 6px 12px; font-size: 0.85rem; border-radius: 20px;
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid #334155;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      border-radius: 20px;
     }
-    .suggestions button:hover { background: var(--surface-3); border-color: var(--accent); }
+
+    .suggestions button:hover {
+      background: var(--surface-3);
+      border-color: var(--accent);
+    }
+
     .input-bar {
-      display: flex; gap: 8px; padding: 12px; background: var(--surface); border-top: 1px solid #334155;
-      flex-shrink: 0; align-items: flex-end;
+      display: flex;
+      gap: 8px;
+      padding: 12px;
+      background: var(--surface);
+      border-top: 1px solid #334155;
+      flex-shrink: 0;
+      align-items: flex-end;
     }
+
     #input {
-      flex: 1; padding: 12px 16px; border: none; border-radius: 22px; background: var(--surface-2);
-      color: var(--text); font: inherit; resize: none; min-height: 48px; max-height: 140px;
-      outline: none; transition: background 0.2s;
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 22px;
+      background: var(--surface-2);
+      color: var(--text);
+      font: inherit;
+      resize: none;
+      min-height: 48px;
+      max-height: 140px;
+      outline: none;
+      transition: background 0.2s;
     }
-    #input:focus { background: var(--surface-3); }
+
+    #input:focus {
+      background: var(--surface-3);
+    }
+
     #send {
-      background: var(--accent); color: #000; border: none; width: 48px; height: 48px;
-      border-radius: 50%; font-size: 1.3rem; font-weight: 700; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      background: var(--accent);
+      color: #000;
+      border: none;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      font-size: 1.3rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
     }
-    #send:disabled, #input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    #send:disabled,
+    #input:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
     .badge {
-      display: inline-block; background: var(--eth); color: white; font-size: 0.7rem;
-      padding: 2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: middle;
+      display: inline-block;
+      background: var(--eth);
+      color: white;
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 999px;
+      margin-left: 6px;
+      vertical-align: middle;
     }
 
     #subModal {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px);
-      display: none; align-items: center; justify-content: center; z-index: 1000;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
     }
-    #subModal.show { display: flex; }
-    .modal-content {
-      background: var(--surface); border: 1px solid #334155; border-radius: 20px;
-      padding: 28px 24px; max-width: 420px; width: 90%; text-align: center;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-    }
-    .modal-content h2 { margin: 0 0 8px; color: var(--accent); }
-    .modal-content p { color: var(--muted); margin: 0 0 20px; font-size: 0.95rem; }
-    .plans { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
-    .plan-btn {
-      background: var(--surface-2); color: var(--text); border: 1px solid #334155;
-      padding: 14px; border-radius: 14px; font-size: 1rem; font-weight: 600;
-    }
-    .plan-btn:hover { border-color: var(--accent); background: var(--surface-3); }
-    .plan-btn small { display: block; font-weight: 400; color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
 
-    @media (min-width: 600px) { .msg-wrap { max-width: 72%; } }
+    #subModal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--surface);
+      border: 1px solid #334155;
+      border-radius: 20px;
+      padding: 28px 24px;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-content h2 {
+      margin: 0 0 8px;
+      color: var(--accent);
+    }
+
+    .modal-content p {
+      color: var(--muted);
+      margin: 0 0 20px;
+      font-size: 0.95rem;
+    }
+
+    .plans {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .plan-btn {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid #334155;
+      padding: 14px;
+      border-radius: 14px;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .plan-btn:hover {
+      border-color: var(--accent);
+      background: var(--surface-3);
+    }
+
+    .plan-btn small {
+      display: block;
+      font-weight: 400;
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 2px;
+    }
+
+    @media (min-width: 600px) {
+      .msg-wrap { max-width: 72%; }
+    }
+
     @media (max-width: 480px) {
       header { padding: 10px 12px; }
-      .header-actions button { padding: 6px 10px; font-size: 0.8rem; }
+      .header-actions button {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+      }
     }
   </style>
 </head>
@@ -161,9 +404,7 @@
     <div>
       <strong>RootDonate <span class="badge">ETH</span></strong><br>
       <small id="status">Subscription required</small><br>
-      <u>
-        <small id="nowTime" style="font-size:0.75rem; opacity:0.7;"></small>
-      </u>
+      <small id="nowTime" style="font-size:0.75rem; opacity:0.7;"></small>
     </div>
     <div class="header-actions">
       <button id="newChatBtn" aria-label="New chat" disabled>New</button>
@@ -313,7 +554,7 @@
       const unlockedNow = Date.now();
       const nowStr = new Date(unlockedNow).toLocaleString();
       const prompt = `You are a helpful expert on The Ether Fund (QETH-U.TO / QETH-UN.TO) from 3iQ. Current unlocked Date.now() is ${unlockedNow} (${nowStr}). Answer the following question clearly and accurately. If you don't know exact latest numbers, say so and suggest checking the TSX or 3iQ website. Not financial advice.\n\nQuestion: ${userText}`;
-      
+
       try {
         const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`);
         if (!res.ok) throw new Error("AI request failed");
@@ -322,7 +563,7 @@
         return { text, unlockedNow, fromAI: true };
       } catch (e) {
         console.warn("Internet AI failed", e);
-        return { 
+        return {
           text: "I don’t have a strong match for that yet and the internet AI is unavailable right now.\n\nTeach me the best reply and I’ll remember it for everyone going forward.",
           unlockedNow: Date.now(),
           fromAI: false
@@ -349,7 +590,9 @@
         const messages = JSON.parse(saved);
         document.getElementById("chat").innerHTML = "";
         messages.forEach(m => addMessage(m.text, m.isUser, false, m.ts, m.unlocked));
-      } catch (e) { console.warn("Local load failed", e); }
+      } catch (e) {
+        console.warn("Local load failed", e);
+      }
     }
 
     function clearLocalView() {
@@ -364,9 +607,14 @@
       if (!currentUser || !chatId) return;
       try {
         await addDoc(collection(db, "chats", chatId, "messages"), {
-          text, isUser, uid: currentUser.uid, createdAt: serverTimestamp()
+          text,
+          isUser,
+          uid: currentUser.uid,
+          createdAt: serverTimestamp()
         });
-      } catch (e) { console.warn("Cloud save failed", e); }
+      } catch (e) {
+        console.warn("Cloud save failed", e);
+      }
     }
 
     async function loadChatFromCloud() {
@@ -380,7 +628,9 @@
           const ts = d.createdAt?.toMillis ? d.createdAt.toMillis() : Date.now();
           addMessage(d.text, d.isUser, false, ts);
         });
-      } catch (e) { console.warn("Cloud load failed", e); }
+      } catch (e) {
+        console.warn("Cloud load failed", e);
+      }
     }
 
     function listenSharedMemory() {
@@ -404,7 +654,9 @@
           uid: currentUser.uid,
           createdAt: serverTimestamp()
         });
-      } catch (e) { console.warn("Save pair failed", e); }
+      } catch (e) {
+        console.warn("Save pair failed", e);
+      }
     }
 
     function showTyping() {
@@ -425,8 +677,11 @@
 
     function formatTime(ts) {
       const d = new Date(ts || Date.now());
-      return d.toLocaleString(undefined, { 
-        month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" 
+      return d.toLocaleString(undefined, {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
       });
     }
 
@@ -448,7 +703,7 @@
       copyBtn.onclick = () => {
         navigator.clipboard.writeText(text).then(() => {
           copyBtn.textContent = "Copied";
-          setTimeout(() => copyBtn.textContent = "Copy", 1500);
+          setTimeout(() => { copyBtn.textContent = "Copy"; }, 1500);
         });
       };
       actions.appendChild(copyBtn);
@@ -467,7 +722,7 @@
         unlockEl.querySelector("button").onclick = () => {
           navigator.clipboard.writeText(String(unlockedNow)).then(() => {
             unlockEl.querySelector("button").textContent = "Copied!";
-            setTimeout(() => unlockEl.querySelector("button").textContent = "Copy", 1200);
+            setTimeout(() => { unlockEl.querySelector("button").textContent = "Copy"; }, 1200);
           });
         };
         wrap.appendChild(unlockEl);
@@ -478,6 +733,7 @@
       const chat = document.getElementById("chat");
       chat.appendChild(wrap);
       chat.scrollTop = chat.scrollHeight;
+
       if (save) {
         saveLocalChat();
         saveMessageToCloud(text, isUser);
@@ -491,7 +747,7 @@
       showTyping();
       await new Promise(r => setTimeout(r, 400 + Math.random() * 600));
 
-      let response = findBestResponse(userText);
+      const response = findBestResponse(userText);
       hideTyping();
 
       if (response) {
@@ -518,13 +774,14 @@
     function showSubModal() {
       document.getElementById("subModal").classList.add("show");
     }
+
     function hideSubModal() {
       document.getElementById("subModal").classList.remove("show");
     }
 
     function updateNowTime() {
       const el = document.getElementById("nowTime");
-      if (el) el.textContent = "Now: " + new Date(Date.now()).toLocaleString() + " · " + Date.now();
+      if (el) el.textContent = "Now: " + new Date().toLocaleString() + " · " + Date.now();
     }
 
     function setupUI() {
@@ -542,7 +799,6 @@
       updateNowTime();
       setInterval(updateNowTime, 60000);
 
-      // Success return handling — NO auto sign-in
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get("subscribed") === "1" || urlParams.has("session_id")) {
         const plan = sessionStorage.getItem("pending_plan") || "monthly";
@@ -626,7 +882,6 @@
           signOut(auth);
           localStorage.removeItem(SUB_KEY);
         } else if (localStorage.getItem(SUB_KEY)) {
-          // Optional sign-in after payment
           status.textContent = "Signing in…";
           signInAnonymously(auth).catch(err => {
             console.error("Sign-in failed", err);
@@ -637,7 +892,10 @@
         }
       };
 
-      clearBtn.onclick = () => { if (confirm("Clear local view only?")) clearLocalView(); };
+      clearBtn.onclick = () => {
+        if (confirm("Clear local view only?")) clearLocalView();
+      };
+
       newChatBtn.onclick = () => {
         if (confirm("Start a new chat?")) {
           chatId = generateChatId();
@@ -673,12 +931,12 @@
           send();
         }
       };
+
       input.oninput = () => {
         input.style.height = "auto";
         input.style.height = Math.min(input.scrollHeight, 140) + "px";
       };
 
-      // Only show modal if not subscribed
       if (!localStorage.getItem(SUB_KEY)) {
         setTimeout(showSubModal, 300);
       }
