@@ -130,7 +130,7 @@
     }
 
     #subModal {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(6px);
       display: none; align-items: center; justify-content: center; z-index: 1000;
     }
     #subModal.show { display: flex; }
@@ -148,7 +148,6 @@
     }
     .plan-btn:hover { border-color: var(--accent); background: var(--surface-3); }
     .plan-btn small { display: block; font-weight: 400; color: var(--muted); font-size: 0.8rem; margin-top: 2px; }
-    #closeModal { background: transparent; color: var(--muted); border: none; margin-top: 8px; }
 
     @media (min-width: 600px) { .msg-wrap { max-width: 72%; } }
     @media (max-width: 480px) {
@@ -161,15 +160,15 @@
   <header>
     <div>
       <strong>RootDonate <span class="badge">ETH</span></strong><br>
-      <small id="status">Connecting…</small><br>
-        <u>
-      <small id="nowTime" style="font-size:0.75rem; opacity:0.7;"></small>
+      <small id="status">Subscription required</small><br>
+      <u>
+        <small id="nowTime" style="font-size:0.75rem; opacity:0.7;"></small>
       </u>
     </div>
     <div class="header-actions">
-      <button id="newChatBtn" aria-label="New chat">New</button>
-      <button id="clearBtn" aria-label="Clear local chat">Clear</button>
-      <button id="signBtn" aria-label="Sign in or out">Sign in</button>
+      <button id="newChatBtn" aria-label="New chat" disabled>New</button>
+      <button id="clearBtn" aria-label="Clear local chat" disabled>Clear</button>
+      <button id="signBtn" aria-label="Sign in">Subscribe & Sign in</button>
     </div>
   </header>
 
@@ -185,14 +184,14 @@
   </div>
 
   <div class="input-bar">
-    <textarea id="input" placeholder="Ask about The Ether Fund…" rows="1" disabled aria-label="Message"></textarea>
+    <textarea id="input" placeholder="Subscribe to unlock the QETH Expert…" rows="1" disabled aria-label="Message"></textarea>
     <button id="send" disabled aria-label="Send">↑</button>
   </div>
 
   <div id="subModal">
     <div class="modal-content">
       <h2>Subscribe to Sign In</h2>
-      <p>Unlock the QETH Expert, shared community memory, and cloud chat history.</p>
+      <p>Unlock the QETH Expert, shared community memory, and cloud chat history. Sign-in is only available after subscription.</p>
       <div class="plans">
         <button class="plan-btn" data-plan="monthly">
           Monthly
@@ -203,7 +202,6 @@
           <small>£120 / year</small>
         </button>
       </div>
-      <button id="closeModal">Cancel</button>
     </div>
   </div>
 
@@ -310,7 +308,6 @@
       return best;
     }
 
-    // Internet AI that unlocks Date.now() and is known by heart
     async function getInternetAIResponse(userText) {
       const unlockedNow = Date.now();
       const nowStr = new Date(unlockedNow).toLocaleString();
@@ -462,7 +459,6 @@
 
       wrap.appendChild(div);
 
-      // Unlock Date.now() block for internet AI messages
       if (unlockedNow) {
         const unlockEl = document.createElement("div");
         unlockEl.className = "unlocked-now";
@@ -505,7 +501,6 @@
         hideTyping();
         addMessage(ai.text, false, true, Date.now(), ai.unlockedNow);
 
-        // Know by heart: auto-save successful internet AI answers to shared memory
         if (ai.fromAI && currentUser) {
           await saveSharedPair(userText, ai.text);
           addMessage("Known by heart — I’ll remember this for everyone next time.", false);
@@ -539,11 +534,9 @@
       const newChatBtn = document.getElementById("newChatBtn");
       const status = document.getElementById("status");
       const suggestions = document.getElementById("suggestions");
-      const subModal = document.getElementById("subModal");
 
       chatId = getChatIdFromUrl() || generateChatId();
       setChatIdInUrl(chatId);
-      loadLocalChat();
 
       updateNowTime();
       setInterval(updateNowTime, 60000);
@@ -572,32 +565,42 @@
             alert("Sign-in failed. Please try again.");
             console.error(e);
             status.textContent = "Sign-in failed";
+            showSubModal();
           }
         };
       });
 
-      document.getElementById("closeModal").onclick = hideSubModal;
-      subModal.onclick = (e) => { if (e.target === subModal) hideSubModal(); };
-
       onAuthStateChanged(auth, async user => {
-        if (user) {
+        const isSubscribed = !!localStorage.getItem(SUB_KEY);
+
+        if (user && isSubscribed) {
           currentUser = user;
           status.textContent = "Signed in · Shared memory active";
           input.disabled = false;
           sendBtn.disabled = false;
+          clearBtn.disabled = false;
+          newChatBtn.disabled = false;
           signBtn.textContent = "Sign out";
           suggestions.style.display = "flex";
+          input.placeholder = "Ask about The Ether Fund…";
           listenSharedMemory();
           await loadChatFromCloud();
+          loadLocalChat();
         } else {
           currentUser = null;
           status.textContent = "Subscription required to sign in";
           input.disabled = true;
           sendBtn.disabled = true;
-          signBtn.textContent = "Sign in";
+          clearBtn.disabled = true;
+          newChatBtn.disabled = true;
+          signBtn.textContent = "Subscribe & Sign in";
           suggestions.style.display = "none";
+          input.placeholder = "Subscribe to unlock the QETH Expert…";
           if (unsubShared) unsubShared();
           memory = [];
+          if (!isSubscribed) {
+            showSubModal();
+          }
         }
       });
 
@@ -651,11 +654,19 @@
         input.style.height = Math.min(input.scrollHeight, 140) + "px";
       };
 
+      // Force subscription modal on first load if not subscribed
+      if (!localStorage.getItem(SUB_KEY)) {
+        setTimeout(showSubModal, 300);
+      } else {
+        // Already subscribed previously → try to sign in
+        signInAnonymously(auth).catch(() => {});
+      }
+
       setTimeout(() => {
-        if (document.getElementById("chat").children.length === 0) {
-          addMessage("Hello! I’m your QETH Expert.\nInternet AI answers are now known by heart (saved to shared memory).\n\nSubscribe to sign in and ask me anything about The Ether Fund (QETH-U.TO / QETH-UN.TO).\n\nNot financial advice.", false, false);
+        if (document.getElementById("chat").children.length === 0 && !currentUser) {
+          addMessage("Hello! Subscribe first to unlock the QETH Expert and shared memory.\n\nNot financial advice.", false, false);
         }
-      }, 400);
+      }, 500);
     }
 
     setupUI();
