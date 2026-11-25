@@ -18,6 +18,7 @@
       --muted: #94a3b8;
       --user: #22c55e;
       --bot: #1e293b;
+      --border: #334155;
       --radius: 18px;
       --shadow: 0 4px 24px rgba(0,0,0,.28);
     }
@@ -43,7 +44,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid #334155;
+      border-bottom: 1px solid var(--border);
       flex-shrink: 0;
       backdrop-filter: blur(12px);
     }
@@ -94,7 +95,7 @@
       box-shadow: var(--shadow);
     }
     .user .msg { background: var(--user); color: #000; border-bottom-right-radius: 6px; }
-    .bot .msg { background: var(--bot); border-bottom-left-radius: 6px; border: 1px solid #334155; }
+    .bot .msg { background: var(--bot); border-bottom-left-radius: 6px; border: 1px solid var(--border); }
     .timestamp { font-size: 0.7rem; color: var(--muted); margin-top: 4px; padding: 0 4px; opacity: 0.8; }
     .user .timestamp { text-align: right; }
     .unlocked-now {
@@ -132,7 +133,7 @@
       padding: 12px 16px;
       background: var(--bot);
       border-radius: var(--radius);
-      border: 1px solid #334155;
+      border: 1px solid var(--border);
       width: fit-content;
     }
     .typing span {
@@ -150,7 +151,7 @@
       gap: 8px;
       padding: 12px;
       background: var(--surface);
-      border-top: 1px solid #334155;
+      border-top: 1px solid var(--border);
       flex-shrink: 0;
       align-items: flex-end;
     }
@@ -196,10 +197,23 @@
       margin-left: 6px;
       vertical-align: middle;
     }
+    .teach-banner {
+      background: rgba(98,126,234,.15);
+      border: 1px solid var(--eth);
+      color: #c7d2fe;
+      padding: 8px 12px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      margin: 0 16px 8px;
+      text-align: center;
+    }
     @media (min-width: 600px) { .msg-wrap { max-width: 72%; } }
     @media (max-width: 480px) {
       header { padding: 10px 12px; }
       .header-actions button { padding: 6px 10px; font-size: 0.8rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
   </style>
 </head>
@@ -211,16 +225,18 @@
       <small id="nowTime"></small>
     </div>
     <div class="header-actions">
+      <button id="shareBtn" title="Copy chat link">Share</button>
       <button id="newChatBtn">New</button>
       <button id="clearBtn">Clear</button>
     </div>
   </header>
 
-  <div id="chat"></div>
+  <div id="teachBanner" class="teach-banner" hidden></div>
+  <div id="chat" role="log" aria-live="polite"></div>
 
   <div class="input-bar">
-    <textarea id="input" placeholder="Ask about The Ether Fund…" rows="1"></textarea>
-    <button id="send">↑</button>
+    <textarea id="input" placeholder="Ask about The Ether Fund…" rows="1" aria-label="Message"></textarea>
+    <button id="send" aria-label="Send">↑</button>
   </div>
 
   <script type="module">
@@ -250,10 +266,11 @@
     let chatId = null;
     let typingEl = null;
     let lastAiCall = 0;
+    let nowInterval = null;
 
     const CHAT_KEY = "qeth_expert_chat";
     const BASE42 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEF";
-    const AI_COOLDOWN_MS = 48000; // Respect free tier ~45s limit
+    const AI_COOLDOWN_MS = 48000;
 
     function toBase42(num) {
       if (num === 0) return BASE42[0];
@@ -312,15 +329,17 @@
       const unlockedNow = Date.now();
       const nowStr = new Date(unlockedNow).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 
-      const system = `You are a precise, helpful expert on The Ether Fund (tickers QETH-U.TO / QETH-UN.TO) managed by 3iQ Corp. 
-Always reference the most recent publicly available information from official sources (3iQ website, TSX filings, fund profiles, Yahoo Finance, Apple Stocks, or equivalent). 
+      const system = `You are a precise expert on The Ether Fund (TSX: QETH.UN / QETH.U), a closed-end fund managed by 3iQ Corp. 
+It is Canada’s first regulated Ether fund, provides ~100% ETH exposure (with small cash balance possible), holds ETH in cold storage, and stakes for yield. 
+Eligible for TFSA/RRSP etc. Management fee ~1.95%. Benchmark is CME CF Ether-Dollar Reference Rate (NY variant). 
+Always prefer the most recent public information from 3iQ.io, TSX filings, SEDAR+, fund fact sheets, or equivalent. 
 Current unlocked timestamp: ${unlockedNow} (${nowStr}). 
-Answer clearly, structured, and factually. Explicitly state when data may be delayed or approximate. 
+Be clear, structured, and factual. Explicitly note when data may be delayed or approximate. 
 Never give financial advice. Keep answers concise but complete.`;
 
       const prompt = `${system}\n\nUser question: ${userText}`;
 
-      const url = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?system=${encodeURIComponent("You are an expert on The Ether Fund from 3iQ. Use latest public data. Not financial advice.")}&temperature=0.4`;
+      const url = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?system=${encodeURIComponent("You are an expert on The Ether Fund (3iQ). Use latest public data. Not financial advice.")}&temperature=0.4`;
 
       try {
         const res = await fetch(url);
@@ -364,7 +383,7 @@ Never give financial advice. Keep answers concise but complete.`;
         document.getElementById("chat").innerHTML = "";
         msgs.forEach(m => addMessage(m.text, m.isUser, false, m.ts, m.unlocked));
         return true;
-      } catch (e) {
+      } catch {
         return false;
       }
     }
@@ -374,6 +393,7 @@ Never give financial advice. Keep answers concise but complete.`;
       localStorage.removeItem(CHAT_KEY + "_" + (chatId || "local"));
       awaitingTeach = false;
       pendingInput = null;
+      updateTeachBanner();
       hideTyping();
     }
 
@@ -386,7 +406,7 @@ Never give financial advice. Keep answers concise but complete.`;
           uid: currentUser.uid,
           createdAt: serverTimestamp()
         });
-      } catch (e) {}
+      } catch {}
     }
 
     async function loadChatFromCloud() {
@@ -404,7 +424,7 @@ Never give financial advice. Keep answers concise but complete.`;
           addMessage(data.text, data.isUser, false, data.createdAt?.toMillis?.() || Date.now());
         });
         return true;
-      } catch (e) {
+      } catch {
         return false;
       }
     }
@@ -434,7 +454,7 @@ Never give financial advice. Keep answers concise but complete.`;
           uid: currentUser.uid,
           createdAt: serverTimestamp()
         });
-      } catch (e) {}
+      } catch {}
     }
 
     function showTyping() {
@@ -469,6 +489,16 @@ Never give financial advice. Keep answers concise but complete.`;
       sendBtn.disabled = !enabled;
     }
 
+    function updateTeachBanner() {
+      const banner = document.getElementById("teachBanner");
+      if (awaitingTeach && pendingInput) {
+        banner.hidden = false;
+        banner.textContent = `Teach mode: Reply with the best answer for “${pendingInput.slice(0, 80)}${pendingInput.length > 80 ? "…" : ""}”`;
+      } else {
+        banner.hidden = true;
+      }
+    }
+
     function addMessage(text, isUser, save = true, ts = Date.now(), unlockedNow = null) {
       const wrap = document.createElement("div");
       wrap.className = "msg-wrap " + (isUser ? "user" : "bot");
@@ -483,6 +513,7 @@ Never give financial advice. Keep answers concise but complete.`;
       actions.className = "msg-actions";
       const copyBtn = document.createElement("button");
       copyBtn.textContent = "Copy";
+      copyBtn.setAttribute("aria-label", "Copy message");
       copyBtn.onclick = () => navigator.clipboard.writeText(text).then(() => {
         copyBtn.textContent = "Copied";
         setTimeout(() => copyBtn.textContent = "Copy", 1500);
@@ -536,7 +567,6 @@ Never give financial advice. Keep answers concise but complete.`;
         const now = Date.now();
         if (now - lastAiCall < AI_COOLDOWN_MS) {
           const wait = Math.ceil((AI_COOLDOWN_MS - (now - lastAiCall)) / 1000);
-          hideTyping();
           addMessage(`Internet AI is cooling down (free tier). Try again in ~${wait}s, or teach me the best answer.`, false);
           isReplying = false;
           setInputEnabled(true);
@@ -557,6 +587,7 @@ Never give financial advice. Keep answers concise but complete.`;
         if (!ai.fromAI && (ai.text.includes("Teach me") || ai.rateLimited)) {
           awaitingTeach = true;
           pendingInput = userText;
+          updateTeachBanner();
         }
       }
       isReplying = false;
@@ -573,12 +604,13 @@ Never give financial advice. Keep answers concise but complete.`;
       const sendBtn = document.getElementById("send");
       const clearBtn = document.getElementById("clearBtn");
       const newChatBtn = document.getElementById("newChatBtn");
+      const shareBtn = document.getElementById("shareBtn");
       const status = document.getElementById("status");
 
       chatId = getChatIdFromUrl() || generateChatId();
       setChatIdInUrl(chatId);
       updateNowTime();
-      setInterval(updateNowTime, 30000);
+      nowInterval = setInterval(updateNowTime, 30000);
 
       onAuthStateChanged(auth, async user => {
         currentUser = user;
@@ -608,9 +640,20 @@ Never give financial advice. Keep answers concise but complete.`;
         }
       };
 
+      shareBtn.onclick = () => {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+          shareBtn.textContent = "Copied!";
+          setTimeout(() => shareBtn.textContent = "Share", 1500);
+        });
+      };
+
       async function send() {
         const text = input.value.trim();
         if (!text || isReplying) return;
+        if (text.length > 2000) {
+          alert("Message too long (max 2000 characters).");
+          return;
+        }
         input.value = "";
         input.style.height = "auto";
 
@@ -620,6 +663,7 @@ Never give financial advice. Keep answers concise but complete.`;
           addMessage("Got it — I’ll remember that for everyone.", false);
           awaitingTeach = false;
           pendingInput = null;
+          updateTeachBanner();
           return;
         }
 
@@ -641,7 +685,7 @@ Never give financial advice. Keep answers concise but complete.`;
 
       setTimeout(() => {
         if (document.getElementById("chat").children.length === 0) {
-          addMessage("Hello! Ask me anything about The Ether Fund (QETH-U / QETH-UN).\n\nI learn from the community and can also check the latest public data.\nNot financial advice.", false, false);
+          addMessage("Hello! Ask me anything about The Ether Fund (TSX: QETH.UN / QETH.U).\n\nCanada’s first regulated Ether fund by 3iQ. ~100% ETH exposure, cold storage, staking yield, TFSA/RRSP eligible.\n\nI learn from the community and can also check the latest public data.\nNot financial advice.", false, false);
         }
       }, 600);
     }
