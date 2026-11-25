@@ -265,8 +265,9 @@
     let pendingInput = null;
     let chatId = null;
     let typingEl = null;
-    let lastAiCall = 0;
+    let lastAiCall = parseInt(localStorage.getItem("qeth_last_ai_call") || "0", 10);
     let nowInterval = null;
+    let cooldownInterval = null;
 
     const CHAT_KEY = "qeth_expert_chat";
     const BASE42 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEF";
@@ -325,6 +326,23 @@
       return best;
     }
 
+    function getRemainingCooldown() {
+      const remaining = AI_COOLDOWN_MS - (Date.now() - lastAiCall);
+      return Math.max(0, remaining);
+    }
+
+    function updateCooldownStatus() {
+      const status = document.getElementById("status");
+      if (!status) return;
+      const remaining = getRemainingCooldown();
+      if (remaining > 0) {
+        const secs = Math.ceil(remaining / 1000);
+        status.textContent = `AI cooling down · ${secs}s`;
+      } else if (currentUser) {
+        status.textContent = "Cloud sync active · AI ready";
+      }
+    }
+
     async function getInternetAIResponse(userText) {
       const unlockedNow = Date.now();
       const nowStr = new Date(unlockedNow).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
@@ -344,7 +362,9 @@ Never give financial advice. Keep answers concise but complete.`;
       try {
         const res = await fetch(url);
         if (res.status === 402) {
-          const retryAfter = res.headers.get("Retry-After") || "45";
+          const retryAfter = parseInt(res.headers.get("Retry-After") || "45", 10);
+          lastAiCall = Date.now();
+          localStorage.setItem("qeth_last_ai_call", String(lastAiCall));
           return {
             text: `Internet AI is rate-limited on the free tier (next free slot in ~${retryAfter}s). You can teach me the best answer instead, or try again shortly.`,
             unlockedNow,
@@ -355,6 +375,8 @@ Never give financial advice. Keep answers concise but complete.`;
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         let text = (await res.text()).trim();
         if (!text || text.length < 5) throw new Error("Empty response");
+        lastAiCall = Date.now();
+        localStorage.setItem("qeth_last_ai_call", String(lastAiCall));
         return { text, unlockedNow, fromAI: true };
       } catch (e) {
         return {
@@ -564,9 +586,9 @@ Never give financial advice. Keep answers concise but complete.`;
       if (response) {
         addMessage(response, false);
       } else {
-        const now = Date.now();
-        if (now - lastAiCall < AI_COOLDOWN_MS) {
-          const wait = Math.ceil((AI_COOLDOWN_MS - (now - lastAiCall)) / 1000);
+        const remaining = getRemainingCooldown();
+        if (remaining > 0) {
+          const wait = Math.ceil(remaining / 1000);
           addMessage(`Internet AI is cooling down (free tier). Try again in ~${wait}s, or teach me the best answer.`, false);
           isReplying = false;
           setInputEnabled(true);
@@ -576,7 +598,6 @@ Never give financial advice. Keep answers concise but complete.`;
         showTyping();
         const ai = await getInternetAIResponse(userText);
         hideTyping();
-        lastAiCall = Date.now();
         addMessage(ai.text, false, true, Date.now(), ai.unlockedNow);
 
         if (ai.fromAI && currentUser) {
@@ -592,6 +613,7 @@ Never give financial advice. Keep answers concise but complete.`;
       }
       isReplying = false;
       setInputEnabled(true);
+      updateCooldownStatus();
     }
 
     function updateNowTime() {
@@ -611,14 +633,16 @@ Never give financial advice. Keep answers concise but complete.`;
       setChatIdInUrl(chatId);
       updateNowTime();
       nowInterval = setInterval(updateNowTime, 30000);
+      cooldownInterval = setInterval(updateCooldownStatus, 1000);
+      updateCooldownStatus();
 
       onAuthStateChanged(auth, async user => {
         currentUser = user;
         if (user) {
-          status.textContent = "Cloud sync active";
           listenSharedMemory();
           const loadedCloud = await loadChatFromCloud();
           if (!loadedCloud) loadLocalChat();
+          updateCooldownStatus();
         } else {
           status.textContent = "Connecting to cloud…";
           signInAnonymously(auth).catch(() => {
