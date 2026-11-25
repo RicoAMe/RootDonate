@@ -59,7 +59,7 @@
   <header>
     <div>
       <strong>RootDonate <span class="badge">ETH</span></strong><br>
-      <small id="status">Ready • Sign in for shared memory</small><br>
+      <small id="status">Connecting…</small><br>
       <small id="nowTime" style="font-size:0.75rem;opacity:0.7;"></small>
     </div>
     <div class="header-actions">
@@ -122,7 +122,7 @@
       { input: "inception date", response: "The USD class (QETH.U) launched on 10 December 2020." },
       { input: "symbols", response: "You’ll see it listed as QETH.U for the USD version and QETH.UN for the CAD version, both on the TSX." },
       { input: "risk", response: "Because it tracks Ethereum, the fund is highly volatile. Past performance doesn’t guarantee future results. Always read the prospectus carefully before investing. This is not financial advice." },
-      { input: "price", response: "Prices move with Ethereum. Around 20 November 2026, QETH.U was trading near US$24.36 and QETH.UN near C$35.11, with NAV per unit a bit higher than the market prices. Check the TSX or 3iQ site for the latest." },
+      { input: "price", response: "Prices move with Ethereum. Check latest on TSX, 3iQ, or https://stocks.apple.com/symbol/QETH-U.TO. Recent data around Nov 2026 showed QETH.U near US$24–27." },
       { input: "who manages it", response: "It’s managed by 3iQ Corp., the Canadian firm that pioneered regulated crypto funds in the country." }
     ];
 
@@ -155,7 +155,7 @@
 
     async function getInternetAIResponse(userText){
       const unlockedNow=Date.now(),nowStr=new Date(unlockedNow).toLocaleString();
-      const prompt=`You are a helpful expert on The Ether Fund (QETH-U.TO / QETH-UN.TO) from 3iQ. Current unlocked Date.now() is ${unlockedNow} (${nowStr}). Answer the following question clearly and accurately. If you don't know exact latest numbers, say so and suggest checking the TSX or 3iQ website. Not financial advice.\n\nQuestion: ${userText}`;
+      const prompt=`You are a helpful expert on The Ether Fund (QETH-U.TO / QETH-UN.TO) from 3iQ. Current unlocked Date.now() is ${unlockedNow} (${nowStr}). Reference latest data from https://stocks.apple.com/symbol/QETH-U.TO and public sources (TSX / 3iQ / Yahoo). Answer clearly. Not financial advice.\n\nQuestion: ${userText}`;
       try{
         const res=await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`);
         if(!res.ok)throw new Error();
@@ -267,6 +267,8 @@
           signBtn.textContent="Sign in";
           clearSignInTime();
           status.textContent="Ready • Sign in for shared memory";
+          // Auto sign-in for continuous cloud sync
+          signInAnonymously(auth).catch(()=>{status.textContent="Auto sign-in failed – please refresh";});
         }
         loadLocalChat();
       });
@@ -313,7 +315,7 @@
 
       setTimeout(()=>{
         if(document.getElementById("chat").children.length===0){
-          addMessage("Hello! Ask me anything about The Ether Fund (QETH).\n\nSign in for shared memory.\nNot financial advice.",false,false);
+          addMessage("Hello! Ask me anything about The Ether Fund (QETH).\n\nCloud sync active when signed in.\nNot financial advice.",false,false);
         }
       },500);
     }
