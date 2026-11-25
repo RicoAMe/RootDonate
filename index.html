@@ -19,7 +19,7 @@
       --user: #22c55e;
       --bot: #1e293b;
       --radius: 18px;
-      --shadow: 0 4px 24px rgba(0,0,0,.25);
+      --shadow: 0 4px 24px rgba(0,0,0,.28);
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body {
@@ -52,7 +52,7 @@
       color: var(--accent);
       letter-spacing: -0.02em;
     }
-    header small { color: var(--muted); font-size: 0.8rem; }
+    header small { color: var(--muted); font-size: 0.8rem; display: block; }
     .header-actions { display: flex; gap: 6px; }
     button {
       background: #475569;
@@ -69,6 +69,7 @@
     button:hover { background: #64748b; transform: translateY(-1px); }
     button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
     #chat {
       flex: 1;
       overflow-y: auto;
@@ -168,6 +169,7 @@
       transition: background 0.2s;
     }
     #input:focus { background: var(--surface-3); }
+    #input:disabled { opacity: 0.6; }
     #send {
       background: var(--accent);
       color: #000;
@@ -183,7 +185,7 @@
       justify-content: center;
       flex-shrink: 0;
     }
-    #send:disabled, #input:disabled { opacity: 0.5; cursor: not-allowed; }
+    #send:disabled { opacity: 0.5; cursor: not-allowed; }
     .badge {
       display: inline-block;
       background: var(--eth);
@@ -204,9 +206,9 @@
 <body>
   <header>
     <div>
-      <strong>RootDonate <span class="badge">ETH</span></strong><br>
-      <small id="status">Connecting…</small><br>
-      <small id="nowTime" style="font-size:0.75rem;opacity:0.7;"></small>
+      <strong>RootDonate <span class="badge">ETH</span></strong>
+      <small id="status">Connecting…</small>
+      <small id="nowTime"></small>
     </div>
     <div class="header-actions">
       <button id="newChatBtn">New</button>
@@ -247,9 +249,11 @@
     let pendingInput = null;
     let chatId = null;
     let typingEl = null;
+    let lastAiCall = 0;
 
     const CHAT_KEY = "qeth_expert_chat";
     const BASE42 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEF";
+    const AI_COOLDOWN_MS = 48000; // Respect free tier ~45s limit
 
     function toBase42(num) {
       if (num === 0) return BASE42[0];
@@ -294,9 +298,9 @@
       for (const p of memory) {
         const target = normalize(p.input);
         let score = 0;
-        if (clean.includes(target) || target.includes(clean)) score += 5;
-        words.forEach(w => { if (target.includes(w)) score += 1; });
-        if (score > bestScore && score >= 2) {
+        if (clean.includes(target) || target.includes(clean)) score += 8;
+        words.forEach(w => { if (target.includes(w)) score += 2; });
+        if (score > bestScore && score >= 4) {
           bestScore = score;
           best = p.response;
         }
@@ -306,18 +310,37 @@
 
     async function getInternetAIResponse(userText) {
       const unlockedNow = Date.now();
-      const nowStr = new Date(unlockedNow).toLocaleString();
-      const prompt = `You are a helpful expert on The Ether Fund (QETH-U.TO / QETH-UN.TO) from 3iQ. Current unlocked Date.now() is ${unlockedNow} (${nowStr}). Reference latest data from https://stocks.apple.com/symbol/QETH-U.TO and public sources (TSX / 3iQ / Yahoo). Answer clearly. Not financial advice.\n\nQuestion: ${userText}`;
+      const nowStr = new Date(unlockedNow).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+
+      const system = `You are a precise, helpful expert on The Ether Fund (tickers QETH-U.TO / QETH-UN.TO) managed by 3iQ Corp. 
+Always reference the most recent publicly available information from official sources (3iQ website, TSX filings, fund profiles, Yahoo Finance, Apple Stocks, or equivalent). 
+Current unlocked timestamp: ${unlockedNow} (${nowStr}). 
+Answer clearly, structured, and factually. Explicitly state when data may be delayed or approximate. 
+Never give financial advice. Keep answers concise but complete.`;
+
+      const prompt = `${system}\n\nUser question: ${userText}`;
+
+      const url = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?system=${encodeURIComponent("You are an expert on The Ether Fund from 3iQ. Use latest public data. Not financial advice.")}&temperature=0.4`;
 
       try {
-        const res = await fetch(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`);
-        if (!res.ok) throw new Error();
-        let text = (await res.text()).trim() || "Sorry, the AI service returned an empty response.";
+        const res = await fetch(url);
+        if (res.status === 402) {
+          const retryAfter = res.headers.get("Retry-After") || "45";
+          return {
+            text: `Internet AI is rate-limited on the free tier (next free slot in ~${retryAfter}s). You can teach me the best answer instead, or try again shortly.`,
+            unlockedNow,
+            fromAI: false,
+            rateLimited: true
+          };
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        let text = (await res.text()).trim();
+        if (!text || text.length < 5) throw new Error("Empty response");
         return { text, unlockedNow, fromAI: true };
       } catch (e) {
         return {
-          text: "I don’t have a strong match for that yet and the internet AI is unavailable right now.\n\nTeach me the best reply and I’ll remember it for everyone going forward.",
-          unlockedNow: Date.now(),
+          text: "I don’t have a strong match yet and the internet AI is unavailable right now.\n\nTeach me the best reply and I’ll remember it for everyone going forward.",
+          unlockedNow,
           fromAI: false
         };
       }
@@ -335,12 +358,15 @@
 
     function loadLocalChat() {
       const saved = localStorage.getItem(CHAT_KEY + "_" + (chatId || "local"));
-      if (!saved) return;
+      if (!saved) return false;
       try {
         const msgs = JSON.parse(saved);
         document.getElementById("chat").innerHTML = "";
         msgs.forEach(m => addMessage(m.text, m.isUser, false, m.ts, m.unlocked));
-      } catch (e) {}
+        return true;
+      } catch (e) {
+        return false;
+      }
     }
 
     function clearLocalView() {
@@ -364,19 +390,23 @@
     }
 
     async function loadChatFromCloud() {
-      if (!chatId) return;
+      if (!chatId) return false;
       try {
         const snap = await getDocs(query(
           collection(db, "chats", chatId, "messages"),
           orderBy("createdAt", "asc"),
           limit(500)
         ));
+        if (snap.empty) return false;
         document.getElementById("chat").innerHTML = "";
         snap.forEach(d => {
           const data = d.data();
           addMessage(data.text, data.isUser, false, data.createdAt?.toMillis?.() || Date.now());
         });
-      } catch (e) {}
+        return true;
+      } catch (e) {
+        return false;
+      }
     }
 
     function listenSharedMemory() {
@@ -390,6 +420,7 @@
     async function saveSharedPair(input, response) {
       if (!currentUser) return;
       const trimmed = input.trim();
+      if (!trimmed || !response.trim()) return;
       try {
         const snap = await getDocs(query(
           collection(db, "shared_memory"),
@@ -429,6 +460,13 @@
         hour: "2-digit",
         minute: "2-digit"
       });
+    }
+
+    function setInputEnabled(enabled) {
+      const input = document.getElementById("input");
+      const sendBtn = document.getElementById("send");
+      input.disabled = !enabled;
+      sendBtn.disabled = !enabled;
     }
 
     function addMessage(text, isUser, save = true, ts = Date.now(), unlockedNow = null) {
@@ -485,8 +523,9 @@
     async function reply(userText) {
       if (isReplying) return;
       isReplying = true;
+      setInputEnabled(false);
       showTyping();
-      await new Promise(r => setTimeout(r, 400 + Math.random() * 600));
+      await new Promise(r => setTimeout(r, 350 + Math.random() * 500));
 
       const response = findBestResponse(userText);
       hideTyping();
@@ -494,9 +533,20 @@
       if (response) {
         addMessage(response, false);
       } else {
+        const now = Date.now();
+        if (now - lastAiCall < AI_COOLDOWN_MS) {
+          const wait = Math.ceil((AI_COOLDOWN_MS - (now - lastAiCall)) / 1000);
+          hideTyping();
+          addMessage(`Internet AI is cooling down (free tier). Try again in ~${wait}s, or teach me the best answer.`, false);
+          isReplying = false;
+          setInputEnabled(true);
+          return;
+        }
+
         showTyping();
         const ai = await getInternetAIResponse(userText);
         hideTyping();
+        lastAiCall = Date.now();
         addMessage(ai.text, false, true, Date.now(), ai.unlockedNow);
 
         if (ai.fromAI && currentUser) {
@@ -504,12 +554,13 @@
           addMessage("Known by heart — I’ll remember this for everyone next time.", false);
         }
 
-        if (ai.text.includes("Teach me the best reply")) {
+        if (!ai.fromAI && (ai.text.includes("Teach me") || ai.rateLimited)) {
           awaitingTeach = true;
           pendingInput = userText;
         }
       }
       isReplying = false;
+      setInputEnabled(true);
     }
 
     function updateNowTime() {
@@ -527,22 +578,22 @@
       chatId = getChatIdFromUrl() || generateChatId();
       setChatIdInUrl(chatId);
       updateNowTime();
-      setInterval(updateNowTime, 60000);
+      setInterval(updateNowTime, 30000);
 
-      // Silent anonymous auth for cloud sync
       onAuthStateChanged(auth, async user => {
         currentUser = user;
         if (user) {
           status.textContent = "Cloud sync active";
           listenSharedMemory();
-          await loadChatFromCloud();
+          const loadedCloud = await loadChatFromCloud();
+          if (!loadedCloud) loadLocalChat();
         } else {
           status.textContent = "Connecting to cloud…";
           signInAnonymously(auth).catch(() => {
             status.textContent = "Cloud connection failed – local only";
+            loadLocalChat();
           });
         }
-        loadLocalChat();
       });
 
       clearBtn.onclick = () => {
@@ -559,7 +610,7 @@
 
       async function send() {
         const text = input.value.trim();
-        if (!text) return;
+        if (!text || isReplying) return;
         input.value = "";
         input.style.height = "auto";
 
@@ -590,9 +641,9 @@
 
       setTimeout(() => {
         if (document.getElementById("chat").children.length === 0) {
-          addMessage("Hello! Ask me anything about The Ether Fund (QETH).\n\nCloud sync is active.\nNot financial advice.", false, false);
+          addMessage("Hello! Ask me anything about The Ether Fund (QETH-U / QETH-UN).\n\nI learn from the community and can also check the latest public data.\nNot financial advice.", false, false);
         }
-      }, 500);
+      }, 600);
     }
 
     setupUI();
