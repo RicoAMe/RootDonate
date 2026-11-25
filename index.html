@@ -232,7 +232,7 @@
   </header>
 
   <div id="teachBanner" class="teach-banner" hidden></div>
-  <div id="chat" role="log" aria-live="polite"></div>
+  <div id="chat" role="log" aria-live="polite" aria-relevant="additions"></div>
 
   <div class="input-bar">
     <textarea id="input" placeholder="Ask about The Ether Fund…" rows="1" aria-label="Message"></textarea>
@@ -270,10 +270,11 @@
     let cooldownInterval = null;
 
     const CHAT_KEY = "qeth_expert_chat";
-    const BASE42 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEF";
+    const BASE42 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".slice(0, 42); // exact 42 chars
     const AI_COOLDOWN_MS = 48000;
 
     function toBase42(num) {
+      if (!Number.isFinite(num) || num < 0) num = 0;
       if (num === 0) return BASE42[0];
       let s = "";
       while (num > 0) {
@@ -283,18 +284,23 @@
       return s;
     }
 
-    function getChatIdFromUrl() {
-      return new URLSearchParams(window.location.search).get("chat");
-    }
-
-    function setChatIdInUrl(id) {
-      const u = new URL(window.location);
-      u.searchParams.set("chat", id);
-      history.replaceState(null, "", u);
-    }
-
     function generateChatId() {
-      return toBase42(Math.floor(Math.random() * 1e15)).slice(0, 8) + toBase42(Date.now()).slice(-5);
+      const rand = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+      const timePart = toBase42(Date.now());
+      const randPart = toBase42(rand);
+      return (randPart + timePart).slice(0, 13); // short, unique, base42
+    }
+
+    function getChatIdFromUrl() {
+      return new URLSearchParams(window.location.search).get("chat") || null;
+    }
+
+    function setChatIdInUrl(id, replace = true) {
+      const u = new URL(window.location);
+      if (id) u.searchParams.set("chat", id);
+      else u.searchParams.delete("chat");
+      if (replace) history.replaceState({ chatId: id }, "", u);
+      else history.pushState({ chatId: id }, "", u);
     }
 
     function normalize(t) {
@@ -340,6 +346,8 @@
         status.textContent = `AI cooling down · ${secs}s`;
       } else if (currentUser) {
         status.textContent = "Cloud sync active · AI ready";
+      } else {
+        status.textContent = "Connecting…";
       }
     }
 
@@ -388,17 +396,19 @@ Never give financial advice. Keep answers concise but complete.`;
     }
 
     function saveLocalChat() {
+      if (!chatId) return;
       const msgs = Array.from(document.getElementById("chat").querySelectorAll(".msg-wrap:not(.typing)")).map(w => ({
         text: w.querySelector(".msg").textContent,
         isUser: w.classList.contains("user"),
         ts: w.dataset.ts || Date.now(),
         unlocked: w.dataset.unlocked || null
       }));
-      localStorage.setItem(CHAT_KEY + "_" + (chatId || "local"), JSON.stringify(msgs));
+      localStorage.setItem(CHAT_KEY + "_" + chatId, JSON.stringify(msgs));
     }
 
     function loadLocalChat() {
-      const saved = localStorage.getItem(CHAT_KEY + "_" + (chatId || "local"));
+      if (!chatId) return false;
+      const saved = localStorage.getItem(CHAT_KEY + "_" + chatId);
       if (!saved) return false;
       try {
         const msgs = JSON.parse(saved);
@@ -412,7 +422,7 @@ Never give financial advice. Keep answers concise but complete.`;
 
     function clearLocalView() {
       document.getElementById("chat").innerHTML = "";
-      localStorage.removeItem(CHAT_KEY + "_" + (chatId || "local"));
+      if (chatId) localStorage.removeItem(CHAT_KEY + "_" + chatId);
       awaitingTeach = false;
       pendingInput = null;
       updateTeachBanner();
@@ -428,7 +438,9 @@ Never give financial advice. Keep answers concise but complete.`;
           uid: currentUser.uid,
           createdAt: serverTimestamp()
         });
-      } catch {}
+      } catch (e) {
+        console.warn("Cloud save failed", e);
+      }
     }
 
     async function loadChatFromCloud() {
@@ -446,7 +458,8 @@ Never give financial advice. Keep answers concise but complete.`;
           addMessage(data.text, data.isUser, false, data.createdAt?.toMillis?.() || Date.now());
         });
         return true;
-      } catch {
+      } catch (e) {
+        console.warn("Cloud load failed", e);
         return false;
       }
     }
@@ -455,7 +468,8 @@ Never give financial advice. Keep answers concise but complete.`;
       if (unsubShared) unsubShared();
       unsubShared = onSnapshot(
         query(collection(db, "shared_memory"), orderBy("createdAt", "desc"), limit(1000)),
-        snap => { memory = snap.docs.map(d => d.data()).reverse(); }
+        snap => { memory = snap.docs.map(d => d.data()).reverse(); },
+        err => console.warn("Shared memory listener error", err)
       );
     }
 
@@ -476,7 +490,9 @@ Never give financial advice. Keep answers concise but complete.`;
           uid: currentUser.uid,
           createdAt: serverTimestamp()
         });
-      } catch {}
+      } catch (e) {
+        console.warn("Shared pair save failed", e);
+      }
     }
 
     function showTyping() {
@@ -621,33 +637,55 @@ Never give financial advice. Keep answers concise but complete.`;
       if (el) el.textContent = "Now: " + new Date().toLocaleString() + " · " + Date.now();
     }
 
+    async function loadChatForCurrentId() {
+      clearLocalView(); // reset view first
+      if (!chatId) return;
+      const loadedCloud = await loadChatFromCloud();
+      if (!loadedCloud) loadLocalChat();
+      if (document.getElementById("chat").children.length === 0) {
+        addMessage("Hello! Ask me anything about The Ether Fund (TSX: QETH.UN / QETH.U).\n\nCanada’s first regulated Ether fund by 3iQ. ~100% ETH exposure, cold storage, staking yield, TFSA/RRSP eligible.\n\nI learn from the community and can also check the latest public data.\nNot financial advice.", false, false);
+      }
+    }
+
     function setupUI() {
       const input = document.getElementById("input");
       const sendBtn = document.getElementById("send");
       const clearBtn = document.getElementById("clearBtn");
       const newChatBtn = document.getElementById("newChatBtn");
       const shareBtn = document.getElementById("shareBtn");
-      const status = document.getElementById("status");
 
       chatId = getChatIdFromUrl() || generateChatId();
-      setChatIdInUrl(chatId);
+      setChatIdInUrl(chatId, true);
+
       updateNowTime();
       nowInterval = setInterval(updateNowTime, 30000);
       cooldownInterval = setInterval(updateCooldownStatus, 1000);
       updateCooldownStatus();
 
+      // Handle browser back/forward (base42 URL refresh)
+      window.addEventListener("popstate", async (e) => {
+        const newId = getChatIdFromUrl();
+        if (newId && newId !== chatId) {
+          chatId = newId;
+          await loadChatForCurrentId();
+        } else if (!newId) {
+          chatId = generateChatId();
+          setChatIdInUrl(chatId, true);
+          await loadChatForCurrentId();
+        }
+      });
+
       onAuthStateChanged(auth, async user => {
         currentUser = user;
         if (user) {
           listenSharedMemory();
-          const loadedCloud = await loadChatFromCloud();
-          if (!loadedCloud) loadLocalChat();
+          await loadChatForCurrentId();
           updateCooldownStatus();
         } else {
-          status.textContent = "Connecting to cloud…";
+          document.getElementById("status").textContent = "Connecting to cloud…";
           signInAnonymously(auth).catch(() => {
-            status.textContent = "Cloud connection failed – local only";
-            loadLocalChat();
+            document.getElementById("status").textContent = "Cloud connection failed – local only";
+            loadChatForCurrentId();
           });
         }
       });
@@ -656,11 +694,11 @@ Never give financial advice. Keep answers concise but complete.`;
         if (confirm("Clear local view only?")) clearLocalView();
       };
 
-      newChatBtn.onclick = () => {
+      newChatBtn.onclick = async () => {
         if (confirm("Start a new chat?")) {
           chatId = generateChatId();
-          setChatIdInUrl(chatId);
-          clearLocalView();
+          setChatIdInUrl(chatId, false); // push so back works
+          await loadChatForCurrentId();
         }
       };
 
@@ -707,11 +745,7 @@ Never give financial advice. Keep answers concise but complete.`;
         input.style.height = Math.min(input.scrollHeight, 140) + "px";
       };
 
-      setTimeout(() => {
-        if (document.getElementById("chat").children.length === 0) {
-          addMessage("Hello! Ask me anything about The Ether Fund (TSX: QETH.UN / QETH.U).\n\nCanada’s first regulated Ether fund by 3iQ. ~100% ETH exposure, cold storage, staking yield, TFSA/RRSP eligible.\n\nI learn from the community and can also check the latest public data.\nNot financial advice.", false, false);
-        }
-      }, 600);
+      // Initial load handled in auth callback
     }
 
     setupUI();
