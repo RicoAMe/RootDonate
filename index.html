@@ -71,15 +71,6 @@
 
   <div id="chat"></div>
 
-  <div class="suggestions" id="suggestions">
-    <button data-q="What is QETH?">What is QETH?</button>
-    <button data-q="Management fee">Management fee</button>
-    <button data-q="Staking yield">Staking yield</button>
-    <button data-q="TFSA eligible?">TFSA eligible?</button>
-    <button data-q="Custody details">Custody</button>
-    <button data-q="Current price">Current price</button>
-  </div>
-
   <div class="input-bar">
     <textarea id="input" placeholder="Ask about The Ether Fund…" rows="1"></textarea>
     <button id="send">↑</button>
@@ -110,21 +101,6 @@
     const BASE42 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEF";
     const SIGNIN_TIME_KEY = "qeth_signin_time";
     const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-
-    const builtInKnowledge = [
-      { input: "what is qeth", response: "QETH-U.TO (and its CAD version QETH-UN.TO) is The Ether Fund from 3iQ. It’s Canada’s first regulated closed-end fund that gives you roughly 100% exposure to Ethereum. It’s listed on the Toronto Stock Exchange and is eligible for TFSAs, RRSPs, RRIFs, RESPs, RDSPs and DPSPs." },
-      { input: "what is the ether fund", response: "The Ether Fund is a closed-end fund managed by 3iQ that holds Ethereum. It tracks the price of ETH while also earning staking rewards. The management fee is 1.95% per year. The manager also takes a 25% staking service fee on the staking rewards earned." },
-      { input: "management fee", response: "The management fee is 1.95% annually." },
-      { input: "staking yield", response: "As of 19 November 2026, the trailing 30-day gross staking yield was approximately 3.12%. The fund stakes a portion of its Ethereum holdings and the net rewards (after the manager’s 25% staking service fee) flow into the NAV over time." },
-      { input: "is it eligible for tfsa", response: "Yes — The Ether Fund is fully eligible for TFSAs, RRSPs, RRIFs, RESPs, RDSPs and DPSPs." },
-      { input: "how much eth per unit", response: "As of mid-November 2026, each unit represented roughly 0.01625 ETH. The exact amount drifts slightly over time as staking rewards come in and the cash balance changes." },
-      { input: "custody", response: "The Ethereum is held in segregated cold storage. Custody is handled by Tetra Trust Company with Coinbase Custody Trust Company as sub-custodian." },
-      { input: "inception date", response: "The USD class (QETH.U) launched on 10 December 2020." },
-      { input: "symbols", response: "You’ll see it listed as QETH.U for the USD version and QETH.UN for the CAD version, both on the TSX." },
-      { input: "risk", response: "Because it tracks Ethereum, the fund is highly volatile. Past performance doesn’t guarantee future results. Always read the prospectus carefully before investing. This is not financial advice." },
-      { input: "price", response: "Prices move with Ethereum. Check latest on TSX, 3iQ, or https://stocks.apple.com/symbol/QETH-U.TO. Recent data around Nov 2026 showed QETH.U near US$24–27." },
-      { input: "who manages it", response: "It’s managed by 3iQ Corp., the Canadian firm that pioneered regulated crypto funds in the country." }
-    ];
 
     function toBase42(num){if(num===0)return BASE42[0];let s="";while(num>0){s=BASE42[num%42]+s;num=Math.floor(num/42);}return s;}
     function getChatIdFromUrl(){return new URLSearchParams(window.location.search).get("chat");}
