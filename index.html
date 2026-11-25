@@ -55,8 +55,8 @@
     header small { color: var(--muted); font-size: 0.8rem; }
     .header-actions { display: flex; gap: 6px; }
     button {
-      background: var(--accent);
-      color: #000;
+      background: #475569;
+      color: #fff;
       border: none;
       padding: 8px 14px;
       border-radius: 12px;
@@ -66,10 +66,8 @@
       font-size: 0.9rem;
       transition: all 0.15s;
     }
-    button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    button:hover { background: #64748b; transform: translateY(-1px); }
     button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    #clearBtn, #newChatBtn { background: #475569; color: #fff; }
-    #clearBtn:hover, #newChatBtn:hover { background: #64748b; }
     button:active { transform: scale(0.98); }
     #chat {
       flex: 1;
@@ -213,7 +211,6 @@
     <div class="header-actions">
       <button id="newChatBtn">New</button>
       <button id="clearBtn">Clear</button>
-      <button id="signBtn">Sign in</button>
     </div>
   </header>
 
@@ -226,7 +223,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, getDocs, limit, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -253,8 +250,6 @@
 
     const CHAT_KEY = "qeth_expert_chat";
     const BASE42 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEF";
-    const SIGNIN_TIME_KEY = "qeth_signin_time";
-    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
 
     function toBase42(num) {
       if (num === 0) return BASE42[0];
@@ -283,14 +278,6 @@
     function normalize(t) {
       return (t || "").trim().toLowerCase().replace(/[^\w\s]/g, "").replace(/\s+/g, " ");
     }
-
-    function recordSignInTime() { localStorage.setItem(SIGNIN_TIME_KEY, Date.now().toString()); }
-    function shouldAutoSignOut() {
-      const t = localStorage.getItem(SIGNIN_TIME_KEY);
-      if (!t) return false;
-      return Date.now() - Number(t) > ONE_DAY_MS;
-    }
-    function clearSignInTime() { localStorage.removeItem(SIGNIN_TIME_KEY); }
 
     function findBestResponse(input) {
       const clean = normalize(input);
@@ -533,7 +520,6 @@
     function setupUI() {
       const input = document.getElementById("input");
       const sendBtn = document.getElementById("send");
-      const signBtn = document.getElementById("signBtn");
       const clearBtn = document.getElementById("clearBtn");
       const newChatBtn = document.getElementById("newChatBtn");
       const status = document.getElementById("status");
@@ -543,41 +529,21 @@
       updateNowTime();
       setInterval(updateNowTime, 60000);
 
+      // Silent anonymous auth for cloud sync
       onAuthStateChanged(auth, async user => {
         currentUser = user;
         if (user) {
-          if (!localStorage.getItem(SIGNIN_TIME_KEY)) recordSignInTime();
-          if (shouldAutoSignOut()) {
-            await signOut(auth);
-            clearSignInTime();
-            status.textContent = "Signed out automatically after 1 day";
-            return;
-          }
-          signBtn.textContent = "Sign out";
-          status.textContent = "Signed in · Shared memory active";
+          status.textContent = "Cloud sync active";
           listenSharedMemory();
           await loadChatFromCloud();
         } else {
-          signBtn.textContent = "Sign in";
-          clearSignInTime();
-          status.textContent = "Ready • Sign in for shared memory";
+          status.textContent = "Connecting to cloud…";
           signInAnonymously(auth).catch(() => {
-            status.textContent = "Auto sign-in failed – please refresh";
+            status.textContent = "Cloud connection failed – local only";
           });
         }
         loadLocalChat();
       });
-
-      signBtn.onclick = () => {
-        if (currentUser) {
-          signOut(auth).then(() => clearSignInTime());
-        } else {
-          status.textContent = "Signing in…";
-          signInAnonymously(auth).catch(() => {
-            status.textContent = "Sign-in failed – please refresh";
-          });
-        }
-      };
 
       clearBtn.onclick = () => {
         if (confirm("Clear local view only?")) clearLocalView();
@@ -622,18 +588,9 @@
         input.style.height = Math.min(input.scrollHeight, 140) + "px";
       };
 
-      setInterval(() => {
-        if (currentUser && shouldAutoSignOut()) {
-          signOut(auth).then(() => {
-            clearSignInTime();
-            status.textContent = "Signed out automatically after 1 day";
-          });
-        }
-      }, 60 * 60 * 1000);
-
       setTimeout(() => {
         if (document.getElementById("chat").children.length === 0) {
-          addMessage("Hello! Ask me anything about The Ether Fund (QETH).\n\nCloud sync active when signed in.\nNot financial advice.", false, false);
+          addMessage("Hello! Ask me anything about The Ether Fund (QETH).\n\nCloud sync is active.\nNot financial advice.", false, false);
         }
       }, 500);
     }
