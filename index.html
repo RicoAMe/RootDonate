@@ -4,106 +4,74 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0b1220">
-  <title>cop_scanner_v3.1.9</title>
+  <title>VCPD Scanner v3.1.9</title>
+  <script type="text/javascript" src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"></script>
   <style>
     :root {
       --bg: #0b1220;
       --surface: rgba(21, 30, 46, 0.72);
       --surface-2: #1e293b;
-      --surface-3: #253044;
       --accent: #22c55e;
-      --accent-hover: #16a34a;
       --text: #f1f5f9;
       --muted: #94a3b8;
       --bot: rgba(30, 41, 59, 0.85);
       --border: rgba(51, 65, 85, 0.6);
       --radius: 20px;
-      --shadow: 0 8px 32px rgba(0, 0, 0, 0.32);
-      --glow: 0 0 24px rgba(34, 197, 94, 0.18);
       --red: #ef4444;
-      --amber: #f59e0b;
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body {
       margin: 0; height: 100%; background: var(--bg); color: var(--text);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-size: 16px; line-height: 1.5;
     }
     body {
       display: flex; flex-direction: column; height: 100dvh;
       padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-      position: relative; overflow: hidden;
     }
-    body::before {
-      content: ""; position: fixed; inset: 0;
-      background:
-        radial-gradient(ellipse 80% 50% at 15% 20%, rgba(34, 197, 94, 0.14), transparent 50%),
-        radial-gradient(ellipse 60% 70% at 85% 75%, rgba(98, 126, 234, 0.12), transparent 50%);
-      pointer-events: none; z-index: -1;
-      animation: drift 28s ease-in-out infinite alternate;
-    }
-    @keyframes drift { from { transform: scale(1) translate(0,0); } to { transform: scale(1.05) translate(-2%,2%); } }
     header {
       background: var(--surface); padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;
-      border-bottom: 1px solid var(--border); flex-shrink: 0; backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border); backdrop-filter: blur(16px); flex-shrink: 0;
     }
-    header strong { font-size: 1.15rem; color: var(--accent); letter-spacing: -0.03em; text-shadow: 0 0 12px rgba(34,197,94,0.4); }
-    header small { color: var(--muted); font-size: 0.75rem; display: block; margin-top: 2px; }
-    .header-actions { display: flex; gap: 6px; }
+    header strong { font-size: 1.15rem; color: var(--accent); }
+    .header-actions { display: flex; gap: 8px; align-items: center; }
+    #appleid-signin { width: 140px; height: 40px; }
     button {
-      background: rgba(71,85,105,0.7); color: #fff; border: 1px solid transparent; padding: 8px 14px;
-      border-radius: 12px; font-weight: 600; cursor: pointer; min-height: 40px; font-size: 0.9rem; transition: all 0.18s;
+      background: rgba(71,85,105,0.7); color: #fff; border: none; padding: 8px 14px;
+      border-radius: 12px; font-weight: 600; cursor: pointer; min-height: 40px;
     }
-    button:hover { background: rgba(100,116,139,0.85); transform: translateY(-1px); }
-    button:disabled { opacity: 0.45; cursor: not-allowed; }
-    #log {
-      flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px;
-    }
-    .entry {
-      padding: 12px 16px; border-radius: var(--radius); background: var(--bot); border: 1px solid var(--border);
-      font-size: 0.92rem; line-height: 1.45; animation: fadeIn 0.25s ease; white-space: pre-wrap;
-    }
-    .entry.scanner { border-left: 4px solid var(--accent); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    #log { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .entry { padding: 12px 16px; border-radius: var(--radius); background: var(--bot); border: 1px solid var(--border); white-space: pre-wrap; }
+    .entry.scanner { border-left: 4px solid var(--accent); font-family: ui-monospace, Menlo, monospace; }
     .entry.user { align-self: flex-end; background: linear-gradient(135deg, var(--accent), #16a34a); color: #000; max-width: 80%; }
     .entry.ai { border-left: 4px solid #627eea; }
     .entry.priority { border-left: 4px solid var(--red); }
-    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
-    .controls {
-      display: flex; gap: 8px; padding: 10px 14px; background: var(--surface); border-top: 1px solid var(--border);
-      flex-wrap: wrap; align-items: center; flex-shrink: 0;
+    .controls, .input-bar, .status-bar {
+      padding: 10px 14px; background: var(--surface); border-top: 1px solid var(--border); flex-shrink: 0;
     }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; }
     .controls button { flex: 1; min-width: 90px; }
-    .input-bar {
-      display: flex; gap: 10px; padding: 12px 14px; background: var(--surface); border-top: 1px solid var(--border);
-      align-items: flex-end; flex-shrink: 0;
-    }
+    #plate { flex: 2; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); }
+    .input-bar { display: flex; gap: 10px; align-items: flex-end; }
     #input {
-      flex: 1; padding: 12px 16px; border: 1px solid transparent; border-radius: 24px; background: var(--surface-2);
-      color: var(--text); font: inherit; resize: none; min-height: 48px; max-height: 120px; outline: none;
+      flex: 1; padding: 12px 16px; border-radius: 24px; background: var(--surface-2);
+      color: var(--text); border: 1px solid transparent; resize: none; min-height: 48px; max-height: 120px;
     }
-    #input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(34,197,94,0.15); }
-    #send {
-      background: var(--accent); color: #000; border: none; width: 48px; height: 48px; border-radius: 50%;
-      font-size: 1.3rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center;
-      box-shadow: var(--glow); flex-shrink: 0;
-    }
-    #send:disabled { opacity: 0.5; }
-    .status-bar {
-      display: flex; justify-content: space-between; padding: 6px 16px; background: rgba(15,23,42,0.85);
-      font-size: 0.75rem; color: var(--muted); border-top: 1px solid var(--border);
-    }
+    #send { background: var(--accent); color: #000; width: 48px; height: 48px; border-radius: 50%; font-size: 1.3rem; }
+    .status-bar { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--muted); }
     .wanted { color: var(--red); font-weight: bold; }
+    #userInfo { font-size: 0.85rem; color: var(--accent); }
   </style>
 </head>
 <body>
   <header>
     <div>
-      <strong>RootDonate <span style="font-size:0.65rem; background:#627eea; padding:2px 7px; border-radius:999px; margin-left:6px;">v3.1.9</span></strong>
+      <strong>VCPD Scanner <span style="font-size:0.65rem; background:#627eea; padding:2px 7px; border-radius:999px;">v3.1.9</span></strong>
       <small id="status">Channel 1 • Leonida Metro • AI Online</small>
     </div>
     <div class="header-actions">
-      <button id="muteBtn">Mute Scanner</button>
-      <button id="clearBtn">Clear</button>
+      <span id="userInfo"></span>
+      <div id="appleid-signin" data-color="black" data-border="true" data-type="sign in" data-border-radius="12"></div>
+      <button id="demoSignIn">Demo Sign-In</button>
     </div>
   </header>
 
@@ -118,7 +86,7 @@
   <div class="controls">
     <button id="scanBtn">Scan</button>
     <button id="priorityBtn">Priority</button>
-    <input type="text" id="plate" placeholder="Plate lookup…" maxlength="8" style="flex:2; padding:10px 12px; border-radius:12px; border:1px solid var(--border); background:var(--surface-2); color:var(--text);">
+    <input type="text" id="plate" placeholder="Plate lookup…" maxlength="8" autocomplete="off" autocapitalize="characters">
     <button id="lookupBtn">Lookup</button>
   </div>
 
@@ -135,18 +103,61 @@
     const aiStatus = document.getElementById("aiStatus");
     const wantedEl = document.getElementById("wanted");
     const unitsEl = document.getElementById("units");
+    const plateInput = document.getElementById("plate");
+    const userInfo = document.getElementById("userInfo");
 
     let muted = false;
     let wanted = 0;
     let isAI = false;
+    let currentUser = null;
 
+    // ====== Apple Sign In Setup ======
+    AppleID.auth.init({
+      clientId: "uk.co.donateroot.www",
+      scope: "name email",
+      redirectURI: "https://yourdomain.com/callback",  // ← Replace with your registered Return URL
+      state: "vcpd-state",
+      usePopup: true
+    });
+
+    document.addEventListener("AppleIDSignInOnSuccess", (event) => {
+      const data = event.detail.data || event.detail;
+      currentUser = {
+        name: data.user?.name?.firstName || "Apple User",
+        email: data.user?.email || "private relay"
+      };
+      updateUserUI();
+      addEntry(`Signed in with Apple as ${currentUser.name}`, "scanner");
+    });
+
+    document.addEventListener("AppleIDSignInOnFailure", (event) => {
+      addEntry("Apple Sign-In failed or cancelled.", "priority");
+      console.error(event.detail);
+    });
+
+    // Demo mode
+    document.getElementById("demoSignIn").onclick = () => {
+      currentUser = { name: "Demo Officer", email: "demo@vcpd.leonida" };
+      updateUserUI();
+      addEntry("Demo Sign-In successful — welcome, Demo Officer.", "scanner");
+    };
+
+    function updateUserUI() {
+      if (currentUser) {
+        userInfo.textContent = `👤 ${currentUser.name}`;
+        document.getElementById("demoSignIn").style.display = "none";
+        document.getElementById("appleid-signin").style.display = "none";
+      }
+    }
+
+    // ====== Scanner + Internet AI ======
     const chatter = [
       { type: "scanner", text: "Dispatch: Unit 4-Adam-12, respond to disturbance at Ocean Drive, Vice City Beach." },
       { type: "scanner", text: "Air Support: Suspicious black Blista Compact heading north on Port Gellhorn Highway." },
       { type: "priority", text: "Code 3: Shots fired near Ambrosia. Multiple suspects fleeing. All units respond." },
       { type: "scanner", text: "Traffic: Speed enforcement active on the bridge into Leonida City." },
       { type: "scanner", text: "BOLO: Stolen yellow Sanchez last seen near the docks. Occupant armed." },
-      { type: "priority", text: "Officer down! 10-99 at Grassrivers. Backup needed immediately!" },
+      { type: "priority", text: "Officer down! 10-99 at Grass Rivers. Backup needed immediately!" },
       { type: "scanner", text: "Unit 7-Boy-3: Suspect in custody, requesting transport." },
       { type: "scanner", text: "High-speed pursuit on the freeway. Black Dominator, plates unknown." },
       { type: "priority", text: "Armed robbery in progress at the 24/7 on Main Street. Units en route." }
@@ -185,12 +196,12 @@
       aiStatus.textContent = "AI thinking…";
       addEntry(question, "user");
 
+      const userContext = currentUser ? `The user is signed in as ${currentUser.name}. ` : "";
       const now = Date.now();
-      const system = `You are a helpful AI assistant integrated into a GTA VI Vice City Police Department (VCPD) scanner system. 
-You can answer questions about GTA VI lore, Leonida/Vice City locations, police procedures, vehicle info, or any general topic. 
-Keep answers clear, useful, and in character when relevant. 
+      const system = `You are a helpful AI assistant integrated into a GTA VI Vice City Police Department (VCPD) scanner system.
+${userContext}You can answer questions about GTA VI lore, Leonida/Vice City locations, police procedures, vehicle info, or any general topic.
+Keep answers clear, useful, and in character when relevant.
 Current timestamp (ms): ${now}
-Current local time: ${new Date(now).toLocaleString()}
 Never give real-world illegal advice.`;
 
       const url = `https://text.pollinations.ai/${encodeURIComponent(system + "\n\nUser: " + question)}?temperature=0.7&seed=${now}`;
@@ -203,7 +214,7 @@ Never give real-world illegal advice.`;
         addEntry(text, "ai");
         aiStatus.textContent = "AI Ready";
       } catch (e) {
-        addEntry("AI is currently unavailable. Try again in a moment or use the scanner controls.", "ai");
+        addEntry("AI is currently unavailable. Try again in a moment.", "ai");
         aiStatus.textContent = "AI Offline";
       }
 
@@ -244,34 +255,22 @@ Never give real-world illegal advice.`;
     };
 
     document.getElementById("lookupBtn").onclick = () => {
-      const p = document.getElementById("plate").value.trim().toUpperCase();
+      const p = plateInput.value.trim().toUpperCase();
       if (!p) return;
       const result = plates[p] || "No records found";
       addEntry(`Plate ${p}: ${result}`, "scanner");
-      document.getElementById("plate").value = "";
+      plateInput.value = "";
     };
 
-    document.getElementById("muteBtn").onclick = e => {
-      muted = !muted;
-      e.target.textContent = muted ? "Unmute Scanner" : "Mute Scanner";
-    };
-
-    document.getElementById("clearBtn").onclick = () => {
-      log.innerHTML = "";
-      addEntry("Log cleared. Scanner + AI ready.", "scanner");
-    };
-
-    // Auto scanner feed
+    // Auto scanner
     setInterval(() => {
       if (!muted && Math.random() > 0.7) randomChatter();
       unitsEl.textContent = `Units: ${8 + Math.floor(Math.random() * 10)}`;
     }, 5000);
 
-    // Startup
-    const bootTime = Date.now();
-    addEntry(`VCPD Scanner + AI v3.1.9 online. Boot timestamp: ${bootTime}`, "scanner");
-    addEntry("Type any question below to talk to the Internet AI Assistant.", "ai");
-    addEntry("Scanner traffic will continue in the background.", "scanner");
+    // Boot
+    addEntry("VCPD Scanner + Internet AI online.", "scanner");
+    addEntry("Sign in with Apple (or use Demo Sign-In) to personalize the AI.", "ai");
   </script>
 </body>
 </html>
