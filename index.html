@@ -110,13 +110,13 @@
     let isAI = false;
     let currentUser = null;
 
-    // ====== Apple Sign In Setup ======
+    // ====== Apple Sign In Setup (non-popup) ======
     AppleID.auth.init({
       clientId: "uk.co.donateroot.www",
       scope: "name email",
       redirectURI: "https://www.rootdonate.co.uk",
       state: "vcpd-state",
-      usePopup: true
+      usePopup: false
     });
 
     document.addEventListener("AppleIDSignInOnSuccess", (event) => {
