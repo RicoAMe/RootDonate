@@ -132,4 +132,137 @@
     document.addEventListener("AppleIDSignInOnFailure", (event) => {
       const err = event.detail?.error || event.detail || "Unknown error";
       addEntry(`Apple Sign-In failed: ${err}`, "priority");
-      console.error("Apple Sign-In error:", event.
+      console.error("Apple Sign-In error:", event.detail);
+    });
+
+    function updateUserUI() {
+      if (currentUser) {
+        userInfo.textContent = `👤 ${currentUser.name}`;
+        document.getElementById("appleid-signin").style.display = "none";
+      }
+    }
+
+    // ====== Scanner + Internet AI ======
+    const chatter = [
+      { type: "scanner", text: "Dispatch: Unit 4-Adam-12, respond to disturbance at Ocean Drive, Vice City Beach." },
+      { type: "scanner", text: "Air Support: Suspicious black Blista Compact heading north on Port Gellhorn Highway." },
+      { type: "priority", text: "Code 3: Shots fired near Ambrosia. Multiple suspects fleeing. All units respond." },
+      { type: "scanner", text: "Traffic: Speed enforcement active on the bridge into Leonida City." },
+      { type: "scanner", text: "BOLO: Stolen yellow Sanchez last seen near the docks. Occupant armed." },
+      { type: "priority", text: "Officer down! 10-99 at Grass Rivers. Backup needed immediately!" },
+      { type: "scanner", text: "Unit 7-Boy-3: Suspect in custody, requesting transport." },
+      { type: "scanner", text: "High-speed pursuit on the freeway. Black Dominator, plates unknown." },
+      { type: "priority", text: "Armed robbery in progress at the 24/7 on Main Street. Units en route." }
+    ];
+
+    const plates = {
+      "VC1234": "Stolen — Black Dominator, linked to recent heist",
+      "LEON01": "Registered to local resident — no flags",
+      "GTA666": "Wanted — multiple felonies, approach with caution",
+      "VCPD1": "Police vehicle — do not stop",
+      "AMBRO": "Rental — last seen near Ambrosia resort"
+    };
+
+    function addEntry(text, type = "scanner") {
+      const div = document.createElement("div");
+      div.className = `entry ${type}`;
+      div.textContent = text;
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function randomChatter() {
+      if (muted) return;
+      const entry = chatter[Math.floor(Math.random() * chatter.length)];
+      addEntry(entry.text, entry.type === "priority" ? "priority" : "scanner");
+      if (entry.type === "priority") {
+        wanted = Math.min(5, wanted + 1);
+        wantedEl.textContent = wanted;
+      }
+    }
+
+    async function askAI(question) {
+      if (isAI) return;
+      isAI = true;
+      sendBtn.disabled = true;
+      aiStatus.textContent = "AI thinking…";
+      addEntry(question, "user");
+
+      const userContext = currentUser ? `The user is signed in as ${currentUser.name}. ` : "";
+      const now = Date.now();
+      const system = `You are a helpful AI assistant integrated into a GTA VI Vice City Police Department (VCPD) scanner system.
+${userContext}You can answer questions about GTA VI lore, Leonida/Vice City locations, police procedures, vehicle info, or any general topic.
+Keep answers clear, useful, and in character when relevant.
+Current timestamp (ms): ${now}
+Never give real-world illegal advice.`;
+
+      const url = `https://text.pollinations.ai/${encodeURIComponent(system + "\n\nUser: " + question)}?temperature=0.7&seed=${now}`;
+
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        let text = (await res.text()).trim();
+        if (!text || text.length < 3) throw new Error("Empty");
+        addEntry(text, "ai");
+        aiStatus.textContent = "AI Ready";
+      } catch (e) {
+        addEntry("AI is currently unavailable. Try again in a moment.", "ai");
+        aiStatus.textContent = "AI Offline";
+      }
+
+      isAI = false;
+      sendBtn.disabled = false;
+      input.focus();
+    }
+
+    function send() {
+      const text = input.value.trim();
+      if (!text || isAI) return;
+      input.value = "";
+      input.style.height = "auto";
+      askAI(text);
+    }
+
+    sendBtn.onclick = send;
+    input.onkeydown = e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } };
+    input.oninput = () => {
+      input.style.height = "auto";
+      input.style.height = Math.min(input.scrollHeight, 120) + "px";
+    };
+
+    document.getElementById("scanBtn").onclick = () => {
+      statusEl.textContent = "Scanning…";
+      setTimeout(() => {
+        statusEl.textContent = "Channel 1 • Leonida Metro • AI Online";
+        randomChatter();
+      }, 600);
+    };
+
+    document.getElementById("priorityBtn").onclick = () => {
+      const pri = chatter.filter(c => c.type === "priority");
+      const entry = pri[Math.floor(Math.random() * pri.length)];
+      addEntry(entry.text, "priority");
+      wanted = Math.min(5, wanted + 1);
+      wantedEl.textContent = wanted;
+    };
+
+    document.getElementById("lookupBtn").onclick = () => {
+      const p = plateInput.value.trim().toUpperCase();
+      if (!p) return;
+      const result = plates[p] || "No records found";
+      addEntry(`Plate ${p}: ${result}`, "scanner");
+      plateInput.value = "";
+    };
+
+    // Auto scanner
+    setInterval(() => {
+      if (!muted && Math.random() > 0.7) randomChatter();
+      unitsEl.textContent = `Units: ${8 + Math.floor(Math.random() * 10)}`;
+    }, 5000);
+
+    // Boot
+    addEntry("RootDonate Scanner + Internet AI online.", "scanner");
+    addEntry("Sign in with Apple to personalize the AI.", "ai");
+  </script>
+</body>
+</html>
