@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0b1220">
-  <title>RootDonate</title>
+  <title>cop_scanner_v3.1.9</title>
   <style>
     :root {
       --bg: #0b1220;
@@ -98,7 +98,7 @@
 <body>
   <header>
     <div>
-      <strong>RootDonate<span style="font-size:0.65rem; background:#627eea; padding:2px 7px; border-radius:999px; margin-left:6px;">v3.1.9</span></strong>
+      <strong>RootDonate <span style="font-size:0.65rem; background:#627eea; padding:2px 7px; border-radius:999px; margin-left:6px;">v3.1.9</span></strong>
       <small id="status">Channel 1 • Leonida Metro • AI Online</small>
     </div>
     <div class="header-actions">
@@ -185,12 +185,15 @@
       aiStatus.textContent = "AI thinking…";
       addEntry(question, "user");
 
+      const now = Date.now();
       const system = `You are a helpful AI assistant integrated into a GTA VI Vice City Police Department (VCPD) scanner system. 
 You can answer questions about GTA VI lore, Leonida/Vice City locations, police procedures, vehicle info, or any general topic. 
-Keep answers clear, useful, and in character when relevant. Current time: ${new Date().toLocaleString()}. 
+Keep answers clear, useful, and in character when relevant. 
+Current timestamp (ms): ${now}
+Current local time: ${new Date(now).toLocaleString()}
 Never give real-world illegal advice.`;
 
-      const url = `https://text.pollinations.ai/${encodeURIComponent(system + "\n\nUser: " + question)}?temperature=0.7`;
+      const url = `https://text.pollinations.ai/${encodeURIComponent(system + "\n\nUser: " + question)}?temperature=0.7&seed=${now}`;
 
       try {
         const res = await fetch(url);
@@ -265,7 +268,8 @@ Never give real-world illegal advice.`;
     }, 5000);
 
     // Startup
-    addEntry("VCPD Scanner + AI v3.1.9 online.", "scanner");
+    const bootTime = Date.now();
+    addEntry(`VCPD Scanner + AI v3.1.9 online. Boot timestamp: ${bootTime}`, "scanner");
     addEntry("Type any question below to talk to the Internet AI Assistant.", "ai");
     addEntry("Scanner traffic will continue in the background.", "scanner");
   </script>
