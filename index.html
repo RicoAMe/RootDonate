@@ -71,7 +71,6 @@
     <div class="header-actions">
       <span id="userInfo"></span>
       <div id="appleid-signin" data-color="black" data-border="true" data-type="sign in" data-border-radius="12"></div>
-      <button id="demoSignIn">Demo Sign-In</button>
     </div>
   </header>
 
@@ -131,21 +130,14 @@
     });
 
     document.addEventListener("AppleIDSignInOnFailure", (event) => {
-      addEntry("Apple Sign-In failed or cancelled.", "priority");
-      console.error(event.detail);
+      const err = event.detail?.error || event.detail || "Unknown error";
+      addEntry(`Apple Sign-In failed: ${err}`, "priority");
+      console.error("Apple Sign-In error:", event.detail);
     });
-
-    // Demo mode
-    document.getElementById("demoSignIn").onclick = () => {
-      currentUser = { name: "Demo Officer", email: "demo@vcpd.leonida" };
-      updateUserUI();
-      addEntry("Demo Sign-In successful — welcome, Demo Officer.", "scanner");
-    };
 
     function updateUserUI() {
       if (currentUser) {
         userInfo.textContent = `👤 ${currentUser.name}`;
-        document.getElementById("demoSignIn").style.display = "none";
         document.getElementById("appleid-signin").style.display = "none";
       }
     }
@@ -269,8 +261,8 @@ Never give real-world illegal advice.`;
     }, 5000);
 
     // Boot
-    addEntry("VCPD Scanner + Internet AI online.", "scanner");
-    addEntry("Sign in with Apple (or use Demo Sign-In) to personalize the AI.", "ai");
+    addEntry("RootDonate Scanner + Internet AI online.", "scanner");
+    addEntry("Sign in with Apple to personalize the AI.", "ai");
   </script>
 </body>
 </html>
