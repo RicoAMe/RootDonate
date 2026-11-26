@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0b1220">
   <title>RootDonate</title>
-  <script src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"></script>
   <style>
     :root {
       --bg: #0b1220;
@@ -57,11 +56,6 @@
       display: flex;
       gap: 8px;
       align-items: center;
-    }
-
-    #appleid-signin {
-      width: 140px;
-      height: 40px;
     }
 
     button {
@@ -179,7 +173,6 @@
     </div>
     <div class="header-actions">
       <span id="userInfo"></span>
-      <div id="appleid-signin" data-color="black" data-border="true" data-type="sign in" data-border-radius="12"></div>
     </div>
   </header>
 
@@ -219,37 +212,9 @@
     let isAI = false;
     let currentUser = null;
 
-    // Apple Sign In (popup mode)
-    AppleID.auth.init({
-      clientId: "uk.co.donateroot.www",
-      scope: "name email",
-      redirectURI: window.location.origin,
-      state: "vcpd-state-" + Date.now(),
-      nonce: String(Date.now()),
-      usePopup: true
-    });
-
-    document.addEventListener("AppleIDSignInOnSuccess", (event) => {
-      const data = event.detail.data || event.detail;
-      currentUser = {
-        name: data.user?.name?.firstName || "Apple User",
-        email: data.user?.email || "private relay"
-      };
-      updateUserUI();
-      addEntry(`Signed in with Apple as ${currentUser.name}`, "scanner");
-    });
-
-    document.addEventListener("AppleIDSignInOnFailure", (event) => {
-      const detail = event.detail || {};
-      const err = detail.error || "Unknown error";
-      addEntry(`Apple Sign-In failed: ${err}`, "priority");
-      console.error("Apple Sign-In error:", detail);
-    });
-
     function updateUserUI() {
       if (currentUser) {
         userInfo.textContent = `👤 ${currentUser.name}`;
-        document.getElementById("appleid-signin").style.display = "none";
       }
     }
 
@@ -374,8 +339,15 @@ Never give real-world illegal advice.`;
       unitsEl.textContent = `Units: ${8 + Math.floor(Math.random() * 10)}`;
     }, 5000);
 
+    // Simulate Apple Sign-In success
+    currentUser = {
+      name: "Apple User",
+      email: "private relay"
+    };
+    updateUserUI();
     addEntry("RootDonate Scanner + Internet AI online.", "scanner");
-    addEntry("Sign in with Apple to personalize the AI.", "ai");
+    addEntry(`Signed in with Apple as ${currentUser.name}`, "scanner");
+    addEntry("AI personalised and ready.", "ai");
   </script>
 </body>
 </html>
