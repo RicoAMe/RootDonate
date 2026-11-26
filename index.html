@@ -386,18 +386,14 @@ Never give real-world illegal advice.`;
       plateInput.value = "";
     };
 
-    clearBtn.onclick = async () => {
-      if (!currentUser || !confirm("Clear log from device and cloud?")) return;
+    // Clear only the local log — does NOT touch the cloud
+    clearBtn.onclick = () => {
+      if (!currentUser || !confirm("Clear the log from this device only? (Cloud data will be kept)")) return;
       log.innerHTML = "";
       logEntries = [];
       wanted = 0;
       wantedEl.textContent = "0";
-      try {
-        await db.ref(`users/${currentUser.uid}/data`).remove();
-        addEntry("Log cleared from device and cloud.", "ai");
-      } catch (e) {
-        addEntry("Cleared locally. Cloud clear failed.", "ai");
-      }
+      addEntry("Log cleared locally. Cloud data remains intact.", "ai", false); // false = do not save this message
     };
 
     setInterval(() => {
