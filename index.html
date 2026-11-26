@@ -207,6 +207,8 @@
       margin: 0 16px 8px;
       text-align: center;
     }
+    .teach-actions { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
+    .teach-actions button { padding: 6px 12px; font-size: 0.8rem; min-height: 0; }
     @media (min-width: 600px) { .msg-wrap { max-width: 72%; } }
     @media (max-width: 480px) {
       header { padding: 10px 12px; }
@@ -231,7 +233,14 @@
     </div>
   </header>
 
-  <div id="teachBanner" class="teach-banner" hidden></div>
+  <div id="teachBanner" class="teach-banner" hidden>
+    <div id="teachText"></div>
+    <div class="teach-actions">
+      <button id="savePersonal">Save Personal</button>
+      <button id="saveBoth">Save Personal + Global</button>
+      <button id="cancelTeach">Cancel</button>
+    </div>
+  </div>
   <div id="chat" role="log" aria-live="polite" aria-relevant="additions"></div>
 
   <div class="input-bar">
@@ -258,8 +267,10 @@
     const db = getFirestore(app);
 
     let currentUser = null;
-    let memory = [];
-    let unsubShared = null;
+    let personalMemory = [];
+    let globalMemory = [];
+    let unsubPersonal = null;
+    let unsubGlobal = null;
     let isReplying = false;
     let awaitingTeach = false;
     let pendingInput = null;
@@ -270,7 +281,7 @@
     let cooldownInterval = null;
 
     const CHAT_KEY = "qeth_expert_chat";
-    const BASE42 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".slice(0, 42); // exact 42 chars
+    const BASE42 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".slice(0, 42);
     const AI_COOLDOWN_MS = 48000;
 
     function toBase42(num) {
@@ -288,7 +299,7 @@
       const rand = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
       const timePart = toBase42(Date.now());
       const randPart = toBase42(rand);
-      return (randPart + timePart).slice(0, 13); // short, unique, base42
+      return (randPart + timePart).slice(0, 13);
     }
 
     function getChatIdFromUrl() {
@@ -311,7 +322,11 @@
       const clean = normalize(input);
       if (!clean) return null;
 
-      for (const p of memory) {
+      // Prefer personal memory first
+      for (const p of personalMemory) {
+        if (normalize(p.input) === clean) return p.response;
+      }
+      for (const p of globalMemory) {
         if (normalize(p.input) === clean) return p.response;
       }
 
@@ -319,16 +334,21 @@
       let bestScore = 0;
       const words = clean.split(" ").filter(w => w.length > 2);
 
-      for (const p of memory) {
-        const target = normalize(p.input);
-        let score = 0;
-        if (clean.includes(target) || target.includes(clean)) score += 8;
-        words.forEach(w => { if (target.includes(w)) score += 2; });
-        if (score > bestScore && score >= 4) {
-          bestScore = score;
-          best = p.response;
+      const check = (list) => {
+        for (const p of list) {
+          const target = normalize(p.input);
+          let score = 0;
+          if (clean.includes(target) || target.includes(clean)) score += 8;
+          words.forEach(w => { if (target.includes(w)) score += 2; });
+          if (score > bestScore && score >= 4) {
+            bestScore = score;
+            best = p.response;
+          }
         }
-      }
+      };
+
+      check(personalMemory);
+      if (!best) check(globalMemory);
       return best;
     }
 
@@ -345,7 +365,7 @@
         const secs = Math.ceil(remaining / 1000);
         status.textContent = `AI cooling down · ${secs}s`;
       } else if (currentUser) {
-        status.textContent = "Cloud sync active · AI ready";
+        status.textContent = "Cloud sync · Personal + Global · AI ready";
       } else {
         status.textContent = "Connecting…";
       }
@@ -388,7 +408,7 @@ Never give financial advice. Keep answers concise but complete.`;
         return { text, unlockedNow, fromAI: true };
       } catch (e) {
         return {
-          text: "I don’t have a strong match yet and the internet AI is unavailable right now.\n\nTeach me the best reply and I’ll remember it for everyone going forward.",
+          text: "I don’t have a strong match yet and the internet AI is unavailable right now.\n\nTeach me the best reply and I’ll remember it.",
           unlockedNow,
           fromAI: false
         };
@@ -464,34 +484,61 @@ Never give financial advice. Keep answers concise but complete.`;
       }
     }
 
-    function listenSharedMemory() {
-      if (unsubShared) unsubShared();
-      unsubShared = onSnapshot(
+    function listenMemories() {
+      if (unsubPersonal) unsubPersonal();
+      if (unsubGlobal) unsubGlobal();
+      if (!currentUser) return;
+
+      // Personal memory
+      unsubPersonal = onSnapshot(
+        query(collection(db, "users", currentUser.uid, "memory"), orderBy("createdAt", "desc"), limit(500)),
+        snap => { personalMemory = snap.docs.map(d => d.data()).reverse(); },
+        err => console.warn("Personal memory error", err)
+      );
+
+      // Global memory
+      unsubGlobal = onSnapshot(
         query(collection(db, "shared_memory"), orderBy("createdAt", "desc"), limit(1000)),
-        snap => { memory = snap.docs.map(d => d.data()).reverse(); },
-        err => console.warn("Shared memory listener error", err)
+        snap => { globalMemory = snap.docs.map(d => d.data()).reverse(); },
+        err => console.warn("Global memory error", err)
       );
     }
 
-    async function saveSharedPair(input, response) {
+    async function saveMemoryPair(input, response, toGlobal = false) {
       if (!currentUser) return;
       const trimmed = input.trim();
       if (!trimmed || !response.trim()) return;
+
       try {
-        const snap = await getDocs(query(
-          collection(db, "shared_memory"),
-          where("input", "==", trimmed),
-          limit(1)
-        ));
-        if (!snap.empty) return;
-        await addDoc(collection(db, "shared_memory"), {
-          input: trimmed,
-          response: response.trim(),
-          uid: currentUser.uid,
-          createdAt: serverTimestamp()
-        });
+        // Always save personal
+        const personalRef = collection(db, "users", currentUser.uid, "memory");
+        const existing = await getDocs(query(personalRef, where("input", "==", trimmed), limit(1)));
+        if (existing.empty) {
+          await addDoc(personalRef, {
+            input: trimmed,
+            response: response.trim(),
+            createdAt: serverTimestamp()
+          });
+        }
+
+        // Optionally also save global
+        if (toGlobal) {
+          const globalSnap = await getDocs(query(
+            collection(db, "shared_memory"),
+            where("input", "==", trimmed),
+            limit(1)
+          ));
+          if (globalSnap.empty) {
+            await addDoc(collection(db, "shared_memory"), {
+              input: trimmed,
+              response: response.trim(),
+              uid: currentUser.uid,
+              createdAt: serverTimestamp()
+            });
+          }
+        }
       } catch (e) {
-        console.warn("Shared pair save failed", e);
+        console.warn("Memory save failed", e);
       }
     }
 
@@ -529,9 +576,10 @@ Never give financial advice. Keep answers concise but complete.`;
 
     function updateTeachBanner() {
       const banner = document.getElementById("teachBanner");
+      const textEl = document.getElementById("teachText");
       if (awaitingTeach && pendingInput) {
         banner.hidden = false;
-        banner.textContent = `Teach mode: Reply with the best answer for “${pendingInput.slice(0, 80)}${pendingInput.length > 80 ? "…" : ""}”`;
+        textEl.textContent = `Teach mode: Best answer for “${pendingInput.slice(0, 80)}${pendingInput.length > 80 ? "…" : ""}”`;
       } else {
         banner.hidden = true;
       }
@@ -617,8 +665,8 @@ Never give financial advice. Keep answers concise but complete.`;
         addMessage(ai.text, false, true, Date.now(), ai.unlockedNow);
 
         if (ai.fromAI && currentUser) {
-          await saveSharedPair(userText, ai.text);
-          addMessage("Known by heart — I’ll remember this for everyone next time.", false);
+          await saveMemoryPair(userText, ai.text, true); // AI answers go to both by default
+          addMessage("Saved to personal + global memory.", false);
         }
 
         if (!ai.fromAI && (ai.text.includes("Teach me") || ai.rateLimited)) {
@@ -638,12 +686,12 @@ Never give financial advice. Keep answers concise but complete.`;
     }
 
     async function loadChatForCurrentId() {
-      clearLocalView(); // reset view first
+      clearLocalView();
       if (!chatId) return;
       const loadedCloud = await loadChatFromCloud();
       if (!loadedCloud) loadLocalChat();
       if (document.getElementById("chat").children.length === 0) {
-        addMessage("Hello! Ask me anything about The Ether Fund (TSX: QETH.UN / QETH.U).\n\nCanada’s first regulated Ether fund by 3iQ. ~100% ETH exposure, cold storage, staking yield, TFSA/RRSP eligible.\n\nI learn from the community and can also check the latest public data.\nNot financial advice.", false, false);
+        addMessage("Hello! Ask me anything about The Ether Fund (TSX: QETH.UN / QETH.U).\n\nCanada’s first regulated Ether fund by 3iQ. ~100% ETH exposure, cold storage, staking yield, TFSA/RRSP eligible.\n\nI remember personal answers and shared community knowledge.\nNot financial advice.", false, false);
       }
     }
 
@@ -653,6 +701,9 @@ Never give financial advice. Keep answers concise but complete.`;
       const clearBtn = document.getElementById("clearBtn");
       const newChatBtn = document.getElementById("newChatBtn");
       const shareBtn = document.getElementById("shareBtn");
+      const savePersonalBtn = document.getElementById("savePersonal");
+      const saveBothBtn = document.getElementById("saveBoth");
+      const cancelTeachBtn = document.getElementById("cancelTeach");
 
       chatId = getChatIdFromUrl() || generateChatId();
       setChatIdInUrl(chatId, true);
@@ -662,7 +713,6 @@ Never give financial advice. Keep answers concise but complete.`;
       cooldownInterval = setInterval(updateCooldownStatus, 1000);
       updateCooldownStatus();
 
-      // Handle browser back/forward (base42 URL refresh)
       window.addEventListener("popstate", async (e) => {
         const newId = getChatIdFromUrl();
         if (newId && newId !== chatId) {
@@ -678,7 +728,7 @@ Never give financial advice. Keep answers concise but complete.`;
       onAuthStateChanged(auth, async user => {
         currentUser = user;
         if (user) {
-          listenSharedMemory();
+          listenMemories();
           await loadChatForCurrentId();
           updateCooldownStatus();
         } else {
@@ -697,7 +747,7 @@ Never give financial advice. Keep answers concise but complete.`;
       newChatBtn.onclick = async () => {
         if (confirm("Start a new chat?")) {
           chatId = generateChatId();
-          setChatIdInUrl(chatId, false); // push so back works
+          setChatIdInUrl(chatId, false);
           await loadChatForCurrentId();
         }
       };
@@ -707,6 +757,36 @@ Never give financial advice. Keep answers concise but complete.`;
           shareBtn.textContent = "Copied!";
           setTimeout(() => shareBtn.textContent = "Share", 1500);
         });
+      };
+
+      savePersonalBtn.onclick = async () => {
+        const text = input.value.trim();
+        if (!text || !pendingInput) return;
+        addMessage(text, true);
+        await saveMemoryPair(pendingInput, text, false);
+        addMessage("Saved to your personal memory only.", false);
+        input.value = "";
+        awaitingTeach = false;
+        pendingInput = null;
+        updateTeachBanner();
+      };
+
+      saveBothBtn.onclick = async () => {
+        const text = input.value.trim();
+        if (!text || !pendingInput) return;
+        addMessage(text, true);
+        await saveMemoryPair(pendingInput, text, true);
+        addMessage("Saved to personal + global memory.", false);
+        input.value = "";
+        awaitingTeach = false;
+        pendingInput = null;
+        updateTeachBanner();
+      };
+
+      cancelTeachBtn.onclick = () => {
+        awaitingTeach = false;
+        pendingInput = null;
+        updateTeachBanner();
       };
 
       async function send() {
@@ -720,9 +800,10 @@ Never give financial advice. Keep answers concise but complete.`;
         input.style.height = "auto";
 
         if (awaitingTeach && pendingInput) {
+          // Teach buttons handle saving; just ignore normal send or treat as personal
           addMessage(text, true);
-          await saveSharedPair(pendingInput, text);
-          addMessage("Got it — I’ll remember that for everyone.", false);
+          await saveMemoryPair(pendingInput, text, false);
+          addMessage("Saved to your personal memory.", false);
           awaitingTeach = false;
           pendingInput = null;
           updateTeachBanner();
@@ -744,8 +825,6 @@ Never give financial advice. Keep answers concise but complete.`;
         input.style.height = "auto";
         input.style.height = Math.min(input.scrollHeight, 140) + "px";
       };
-
-      // Initial load handled in auth callback
     }
 
     setupUI();
