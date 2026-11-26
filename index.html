@@ -325,12 +325,21 @@
     let chatId = null;
     let typingEl = null;
     let lastAiCall = parseInt(localStorage.getItem("qeth_last_ai_call") || "0", 10);
+    let lastAiDay = localStorage.getItem("qeth_last_ai_day") || "";
     let nowInterval = null;
     let cooldownInterval = null;
 
     const CHAT_KEY = "qeth_expert_chat";
     const BASE42 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".slice(0, 42);
     const AI_COOLDOWN_MS = 48000;
+
+    function todayKey() {
+      return new Date().toDateString();
+    }
+
+    function isNewDay() {
+      return lastAiDay !== todayKey();
+    }
 
     function toBase42(num) {
       if (!Number.isFinite(num) || num < 0) num = 0;
@@ -400,8 +409,16 @@
     }
 
     function getRemainingCooldown() {
+      if (isNewDay()) return 0;
       const remaining = AI_COOLDOWN_MS - (Date.now() - lastAiCall);
       return Math.max(0, remaining);
+    }
+
+    function markAiUsed() {
+      lastAiCall = Date.now();
+      lastAiDay = todayKey();
+      localStorage.setItem("qeth_last_ai_call", String(lastAiCall));
+      localStorage.setItem("qeth_last_ai_day", lastAiDay);
     }
 
     function updateCooldownStatus() {
@@ -412,7 +429,7 @@
         const secs = Math.ceil(remaining / 1000);
         status.textContent = `AI cooling down · ${secs}s`;
       } else if (currentUser) {
-        status.textContent = "Cloud sync · Personal + Global · AI ready";
+        status.textContent = "Cloud sync · Personal + Global · AI ready daily";
       } else {
         status.textContent = "Connecting…";
       }
@@ -438,8 +455,7 @@ Never give financial advice. Keep answers concise but complete.`;
         const res = await fetch(url);
         if (res.status === 402) {
           const retryAfter = parseInt(res.headers.get("Retry-After") || "45", 10);
-          lastAiCall = Date.now();
-          localStorage.setItem("qeth_last_ai_call", String(lastAiCall));
+          markAiUsed();
           return {
             text: `Internet AI is rate-limited on the free tier (next free slot in ~${retryAfter}s). You can teach me the best answer instead, or try again shortly.`,
             unlockedNow,
@@ -450,8 +466,7 @@ Never give financial advice. Keep answers concise but complete.`;
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         let text = (await res.text()).trim();
         if (!text || text.length < 5) throw new Error("Empty response");
-        lastAiCall = Date.now();
-        localStorage.setItem("qeth_last_ai_call", String(lastAiCall));
+        markAiUsed();
         return { text, unlockedNow, fromAI: true };
       } catch (e) {
         return {
