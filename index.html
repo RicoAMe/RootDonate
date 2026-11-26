@@ -49,21 +49,45 @@
       height: 100%; gap: 16px; padding: 20px; text-align: center;
     }
     #authScreen button { min-width: 220px; }
-    #authError { color: var(--red); min-height: 1.2em; }
+    #authError { color: var(--red); min-height: 1.2em; font-size: 0.9rem; }
     .auth-form { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 320px; }
     .auth-form input { padding: 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); }
+    .consent { display: flex; align-items: flex-start; gap: 8px; font-size: 0.8rem; text-align: left; color: var(--muted); }
+    .consent input { margin-top: 3px; }
+    .auth-toggle { font-size: 0.85rem; margin-top: 8px; }
+    .auth-toggle a { color: var(--accent); cursor: pointer; text-decoration: underline; }
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+    .modal-content { background: var(--surface-2); border-radius: 16px; padding: 20px; max-width: 500px; max-height: 80vh; overflow-y: auto; text-align: left; font-size: 0.9rem; line-height: 1.5; }
+    .modal-content h3 { margin-top: 0; color: var(--accent); }
+    .close-modal { float: right; background: none; border: none; color: var(--text); font-size: 1.4rem; cursor: pointer; }
   </style>
 </head>
 <body>
   <div id="authScreen">
     <h2>RootDonate</h2>
-    <p>Sign in to access the scanner</p>
+    <p id="authTitle">Sign in to access the scanner</p>
     <div id="authError"></div>
     <button id="googleBtn">Continue with Google</button>
     <div class="auth-form">
       <input type="email" id="email" placeholder="Email" autocomplete="email">
       <input type="password" id="password" placeholder="Password" autocomplete="current-password">
+      <input type="password" id="confirmPassword" placeholder="Confirm password" autocomplete="new-password" style="display:none;">
+      <label class="consent" id="consentLabel" style="display:none;">
+        <input type="checkbox" id="consentCheck">
+        I agree to the <a href="#" id="privacyLink">Privacy Policy</a> and <a href="#" id="termsLink">Terms of Service</a>
+      </label>
       <button id="emailBtn">Sign in with Email</button>
+    </div>
+    <div class="auth-toggle">
+      <span id="toggleText">Don't have an account?</span> <a id="toggleMode">Sign up</a>
+    </div>
+  </div>
+
+  <!-- Privacy / Terms Modal -->
+  <div class="modal" id="legalModal">
+    <div class="modal-content">
+      <button class="close-modal" id="closeModal">×</button>
+      <div id="legalContent"></div>
     </div>
   </div>
 
@@ -101,8 +125,6 @@
   </div>
 
   <script>
-    // ────────────────────────────────────────────────
-    // REPLACE WITH YOUR FIREBASE CONFIG
     const firebaseConfig = {
       apiKey: "AIzaSyBvcCBsPiMxS7G2evPjM7sANp-zSy_RkKM",
       authDomain: "rootdonate-61e61.firebaseapp.com",
@@ -113,7 +135,6 @@
       appId: "1:754240963907:web:5417c2763d8f02108bdbf6",
       measurementId: "G-0SC5R5ELT1"
     };
-    // ────────────────────────────────────────────────
 
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
@@ -121,10 +142,16 @@
     const authScreen = document.getElementById("authScreen");
     const app = document.getElementById("app");
     const authError = document.getElementById("authError");
+    const authTitle = document.getElementById("authTitle");
     const googleBtn = document.getElementById("googleBtn");
     const emailBtn = document.getElementById("emailBtn");
     const emailInput = document.getElementById("email");
     const passwordInput = document.getElementById("password");
+    const confirmPasswordInput = document.getElementById("confirmPassword");
+    const consentLabel = document.getElementById("consentLabel");
+    const consentCheck = document.getElementById("consentCheck");
+    const toggleMode = document.getElementById("toggleMode");
+    const toggleText = document.getElementById("toggleText");
 
     const signOutBtn = document.getElementById("signOutBtn");
     const userInfo = document.getElementById("userInfo");
@@ -137,14 +164,76 @@
     const unitsEl = document.getElementById("units");
     const plateInput = document.getElementById("plate");
 
+    const legalModal = document.getElementById("legalModal");
+    const legalContent = document.getElementById("legalContent");
+    const closeModal = document.getElementById("closeModal");
+
+    let isSignUp = false;
     let muted = false;
     let wanted = 0;
     let isAI = false;
     let isSignedIn = false;
 
+    const privacyPolicy = `
+      <h3>Privacy Policy</h3>
+      <p><strong>Data Controller:</strong> RootDonate</p>
+      <p>We collect the following personal data solely for authentication and providing the service:</p>
+      <ul>
+        <li>Email address</li>
+        <li>Display name (if provided via Google)</li>
+        <li>Authentication tokens (handled by Firebase Authentication)</li>
+      </ul>
+      <p>Data is processed by Google Firebase (Google Cloud) under their data processing terms. We do not sell your data. You can request deletion of your account at any time by contacting us or using account deletion features (coming soon).</p>
+      <p>By creating an account you consent to this processing under GDPR Article 6(1)(b) (contract) and Article 6(1)(a) (consent).</p>
+    `;
+
+    const termsOfService = `
+      <h3>Terms of Service</h3>
+      <p>This is a demo application themed around fictional GTA VI content. No real-world law enforcement functionality is provided.</p>
+      <p>You must be 16+ to use this service. By using the app you agree not to misuse it and accept that we may terminate access for violations.</p>
+    `;
+
     function showError(msg) {
       authError.textContent = msg || "";
     }
+
+    function setMode(signUp) {
+      isSignUp = signUp;
+      if (signUp) {
+        authTitle.textContent = "Create an account";
+        emailBtn.textContent = "Create Account";
+        confirmPasswordInput.style.display = "block";
+        consentLabel.style.display = "flex";
+        toggleText.textContent = "Already have an account?";
+        toggleMode.textContent = "Sign in";
+        passwordInput.autocomplete = "new-password";
+      } else {
+        authTitle.textContent = "Sign in to access the scanner";
+        emailBtn.textContent = "Sign in with Email";
+        confirmPasswordInput.style.display = "none";
+        consentLabel.style.display = "none";
+        toggleText.textContent = "Don't have an account?";
+        toggleMode.textContent = "Sign up";
+        passwordInput.autocomplete = "current-password";
+      }
+      showError("");
+      consentCheck.checked = false;
+    }
+
+    toggleMode.onclick = () => setMode(!isSignUp);
+
+    document.getElementById("privacyLink").onclick = (e) => {
+      e.preventDefault();
+      legalContent.innerHTML = privacyPolicy;
+      legalModal.style.display = "flex";
+    };
+    document.getElementById("termsLink").onclick = (e) => {
+      e.preventDefault();
+      legalContent.innerHTML = termsOfService;
+      legalModal.style.display = "flex";
+    };
+    closeModal.onclick = () => legalModal.style.display = "none";
+    legalModal.onclick = (e) => { if (e.target === legalModal) legalModal.style.display = "none"; };
 
     googleBtn.onclick = async () => {
       showError("");
@@ -161,17 +250,20 @@
       const email = emailInput.value.trim();
       const password = passwordInput.value;
       if (!email || !password) return showError("Email and password required");
-      try {
-        await auth.signInWithEmailAndPassword(email, password);
-      } catch (err) {
-        // Auto-create account on first use
-        if (err.code === "auth/user-not-found") {
-          try {
-            await auth.createUserWithEmailAndPassword(email, password);
-          } catch (e) {
-            showError(e.message || "Could not create account");
-          }
-        } else {
+
+      if (isSignUp) {
+        if (password !== confirmPasswordInput.value) return showError("Passwords do not match");
+        if (!consentCheck.checked) return showError("You must agree to the Privacy Policy and Terms");
+        try {
+          await auth.createUserWithEmailAndPassword(email, password);
+          localStorage.setItem("gdprConsent", Date.now().toString());
+        } catch (err) {
+          showError(err.message || "Could not create account");
+        }
+      } else {
+        try {
+          await auth.signInWithEmailAndPassword(email, password);
+        } catch (err) {
           showError(err.message || "Sign-in failed");
         }
       }
@@ -184,7 +276,7 @@
         isSignedIn = true;
         authScreen.style.display = "none";
         app.style.display = "flex";
-        const name = user.displayName || user.email || (user.isAnonymous ? "Anonymous" : "User");
+        const name = user.displayName || user.email || "User";
         userInfo.textContent = `👤 ${name}`;
         if (log.children.length === 0) {
           addEntry("RootDonate Scanner + Internet AI online.", "scanner");
@@ -196,9 +288,11 @@
         app.style.display = "none";
         userInfo.textContent = "";
         log.innerHTML = "";
+        setMode(false);
       }
     });
 
+    // Rest of your original scanner / AI code (unchanged)
     const chatter = [
       { type: "scanner", text: "Dispatch: Unit 4-Adam-12, respond to disturbance at Ocean Drive, Vice City Beach." },
       { type: "scanner", text: "Air Support: Suspicious black Blista Compact heading north on Port Gellhorn Highway." },
