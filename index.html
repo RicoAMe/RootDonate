@@ -8,7 +8,7 @@
   <style>
     :root {
       --bg: #0b1220;
-      --surface: #151e2e;
+      --surface: rgba(21, 30, 46, 0.72);
       --surface-2: #1e293b;
       --surface-3: #253044;
       --accent: #22c55e;
@@ -17,10 +17,11 @@
       --text: #f1f5f9;
       --muted: #94a3b8;
       --user: #22c55e;
-      --bot: #1e293b;
-      --border: #334155;
-      --radius: 18px;
-      --shadow: 0 4px 24px rgba(0,0,0,.28);
+      --bot: rgba(30, 41, 59, 0.85);
+      --border: rgba(51, 65, 85, 0.6);
+      --radius: 20px;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.32);
+      --glow: 0 0 24px rgba(34, 197, 94, 0.18);
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     html, body {
@@ -30,81 +31,115 @@
       color: var(--text);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       font-size: 16px;
-      line-height: 1.45;
+      line-height: 1.5;
     }
     body {
       display: flex;
       flex-direction: column;
       height: 100dvh;
       padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      position: relative;
+      overflow: hidden;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 15% 20%, rgba(34, 197, 94, 0.14), transparent 50%),
+        radial-gradient(ellipse 60% 70% at 85% 75%, rgba(98, 126, 234, 0.12), transparent 50%),
+        radial-gradient(ellipse 50% 40% at 50% 90%, rgba(34, 197, 94, 0.08), transparent 40%);
+      pointer-events: none;
+      z-index: -1;
+      animation: drift 28s ease-in-out infinite alternate;
+    }
+    @keyframes drift {
+      from { transform: scale(1) translate(0, 0); }
+      to { transform: scale(1.05) translate(-2%, 2%); }
     }
     header {
       background: var(--surface);
-      padding: 12px 16px;
+      padding: 14px 18px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
-      backdrop-filter: blur(12px);
+      backdrop-filter: blur(16px) saturate(1.4);
+      -webkit-backdrop-filter: blur(16px) saturate(1.4);
+      position: relative;
+      z-index: 2;
     }
     header strong {
-      font-size: 1.15rem;
+      font-size: 1.2rem;
       color: var(--accent);
-      letter-spacing: -0.02em;
+      letter-spacing: -0.03em;
+      text-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
     }
-    header small { color: var(--muted); font-size: 0.8rem; display: block; }
+    header small { color: var(--muted); font-size: 0.78rem; display: block; margin-top: 1px; }
     .header-actions { display: flex; gap: 6px; }
     button {
-      background: #475569;
+      background: rgba(71, 85, 105, 0.7);
       color: #fff;
-      border: none;
+      border: 1px solid transparent;
       padding: 8px 14px;
       border-radius: 12px;
       font-weight: 600;
       cursor: pointer;
       min-height: 40px;
       font-size: 0.9rem;
-      transition: all 0.15s;
+      transition: all 0.18s ease;
+      backdrop-filter: blur(8px);
     }
-    button:hover { background: #64748b; transform: translateY(-1px); }
+    button:hover { background: rgba(100, 116, 139, 0.85); transform: translateY(-1px); }
     button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     button:active { transform: scale(0.98); }
     button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
     #chat {
       flex: 1;
       overflow-y: auto;
-      padding: 16px;
+      padding: 18px 16px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 14px;
       scroll-behavior: smooth;
-      background: linear-gradient(180deg, transparent, rgba(15,23,42,.4));
+      position: relative;
+      z-index: 1;
     }
-    .msg-wrap { max-width: 85%; display: flex; flex-direction: column; animation: fadeIn 0.25s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .msg-wrap { max-width: 85%; display: flex; flex-direction: column; animation: fadeIn 0.28s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
     .user { align-self: flex-end; }
     .bot { align-self: flex-start; }
     .msg {
-      padding: 12px 16px;
+      padding: 13px 16px;
       border-radius: var(--radius);
       white-space: pre-wrap;
       word-break: break-word;
       line-height: 1.45;
       position: relative;
       box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
     }
-    .user .msg { background: var(--user); color: #000; border-bottom-right-radius: 6px; }
-    .bot .msg { background: var(--bot); border-bottom-left-radius: 6px; border: 1px solid var(--border); }
-    .timestamp { font-size: 0.7rem; color: var(--muted); margin-top: 4px; padding: 0 4px; opacity: 0.8; }
+    .user .msg {
+      background: linear-gradient(135deg, var(--user), #16a34a);
+      color: #000;
+      border-bottom-right-radius: 6px;
+      box-shadow: var(--shadow), var(--glow);
+    }
+    .bot .msg {
+      background: var(--bot);
+      border-bottom-left-radius: 6px;
+      border: 1px solid var(--border);
+    }
+    .timestamp { font-size: 0.68rem; color: var(--muted); margin-top: 5px; padding: 0 4px; opacity: 0.75; }
     .user .timestamp { text-align: right; }
     .unlocked-now {
       margin-top: 10px;
       padding: 8px 10px;
-      background: rgba(34,197,94,.12);
+      background: rgba(34, 197, 94, 0.12);
       border: 1px solid var(--accent);
       border-radius: 10px;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     }
     .unlocked-now button {
@@ -119,7 +154,7 @@
     .msg-wrap:hover .msg-actions,
     .msg-wrap:focus-within .msg-actions { opacity: 1; }
     .msg-actions button {
-      background: rgba(0,0,0,.35);
+      background: rgba(0, 0, 0, 0.4);
       color: #fff;
       padding: 4px 8px;
       font-size: 0.75rem;
@@ -129,8 +164,8 @@
     .typing {
       align-self: flex-start;
       display: flex;
-      gap: 4px;
-      padding: 12px 16px;
+      gap: 5px;
+      padding: 14px 16px;
       background: var(--bot);
       border-radius: var(--radius);
       border: 1px solid var(--border);
@@ -148,74 +183,87 @@
     @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
     .input-bar {
       display: flex;
-      gap: 8px;
-      padding: 12px;
+      gap: 10px;
+      padding: 12px 14px;
       background: var(--surface);
       border-top: 1px solid var(--border);
       flex-shrink: 0;
       align-items: flex-end;
+      backdrop-filter: blur(16px) saturate(1.3);
+      -webkit-backdrop-filter: blur(16px) saturate(1.3);
+      position: relative;
+      z-index: 2;
     }
     #input {
       flex: 1;
-      padding: 12px 16px;
-      border: none;
-      border-radius: 22px;
+      padding: 13px 18px;
+      border: 1px solid transparent;
+      border-radius: 24px;
       background: var(--surface-2);
       color: var(--text);
       font: inherit;
       resize: none;
-      min-height: 48px;
+      min-height: 50px;
       max-height: 140px;
       outline: none;
-      transition: background 0.2s;
+      transition: all 0.2s;
     }
-    #input:focus { background: var(--surface-3); }
+    #input:focus {
+      background: var(--surface-3);
+      border-color: rgba(34, 197, 94, 0.4);
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+    }
     #input:disabled { opacity: 0.6; }
     #send {
       background: var(--accent);
       color: #000;
       border: none;
-      width: 48px;
-      height: 48px;
+      width: 50px;
+      height: 50px;
       border-radius: 50%;
-      font-size: 1.3rem;
+      font-size: 1.35rem;
       font-weight: 700;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      box-shadow: var(--glow);
+      transition: all 0.18s;
     }
-    #send:disabled { opacity: 0.5; cursor: not-allowed; }
+    #send:hover { transform: scale(1.05); background: var(--accent-hover); }
+    #send:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     .badge {
       display: inline-block;
       background: var(--eth);
       color: white;
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       padding: 2px 8px;
       border-radius: 999px;
       margin-left: 6px;
       vertical-align: middle;
+      font-weight: 600;
     }
     .teach-banner {
-      background: rgba(98,126,234,.15);
+      background: rgba(98, 126, 234, 0.18);
       border: 1px solid var(--eth);
       color: #c7d2fe;
-      padding: 8px 12px;
-      border-radius: 10px;
+      padding: 10px 14px;
+      border-radius: 12px;
       font-size: 0.85rem;
       margin: 0 16px 8px;
       text-align: center;
+      backdrop-filter: blur(10px);
     }
-    .teach-actions { display: flex; gap: 8px; justify-content: center; margin-top: 8px; }
+    .teach-actions { display: flex; gap: 8px; justify-content: center; margin-top: 10px; flex-wrap: wrap; }
     .teach-actions button { padding: 6px 12px; font-size: 0.8rem; min-height: 0; }
     @media (min-width: 600px) { .msg-wrap { max-width: 72%; } }
     @media (max-width: 480px) {
-      header { padding: 10px 12px; }
+      header { padding: 12px 14px; }
       .header-actions button { padding: 6px 10px; font-size: 0.8rem; }
     }
     @media (prefers-reduced-motion: reduce) {
-      * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+      *, body::before { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
     }
   </style>
 </head>
@@ -322,7 +370,6 @@
       const clean = normalize(input);
       if (!clean) return null;
 
-      // Prefer personal memory first
       for (const p of personalMemory) {
         if (normalize(p.input) === clean) return p.response;
       }
@@ -376,7 +423,7 @@
       const nowStr = new Date(unlockedNow).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 
       const system = `You are a precise expert on The Ether Fund (TSX: QETH.UN / QETH.U), a closed-end fund managed by 3iQ Corp. 
-It is Canada’s first regulated Ether fund, provides ~100% ETH exposure (with small cash balance possible), holds ETH in cold storage, and stakes for yield. 
+It is Canada's first regulated Ether fund, provides ~100% ETH exposure (with small cash balance possible), holds ETH in cold storage, and stakes for yield. 
 Eligible for TFSA/RRSP etc. Management fee ~1.95%. Benchmark is CME CF Ether-Dollar Reference Rate (NY variant). 
 Always prefer the most recent public information from 3iQ.io, TSX filings, SEDAR+, fund fact sheets, or equivalent. 
 Current unlocked timestamp: ${unlockedNow} (${nowStr}). 
@@ -408,7 +455,7 @@ Never give financial advice. Keep answers concise but complete.`;
         return { text, unlockedNow, fromAI: true };
       } catch (e) {
         return {
-          text: "I don’t have a strong match yet and the internet AI is unavailable right now.\n\nTeach me the best reply and I’ll remember it.",
+          text: "I don't have a strong match yet and the internet AI is unavailable right now.\n\nTeach me the best reply and I'll remember it.",
           unlockedNow,
           fromAI: false
         };
@@ -489,14 +536,12 @@ Never give financial advice. Keep answers concise but complete.`;
       if (unsubGlobal) unsubGlobal();
       if (!currentUser) return;
 
-      // Personal memory
       unsubPersonal = onSnapshot(
         query(collection(db, "users", currentUser.uid, "memory"), orderBy("createdAt", "desc"), limit(500)),
         snap => { personalMemory = snap.docs.map(d => d.data()).reverse(); },
         err => console.warn("Personal memory error", err)
       );
 
-      // Global memory
       unsubGlobal = onSnapshot(
         query(collection(db, "shared_memory"), orderBy("createdAt", "desc"), limit(1000)),
         snap => { globalMemory = snap.docs.map(d => d.data()).reverse(); },
@@ -510,7 +555,6 @@ Never give financial advice. Keep answers concise but complete.`;
       if (!trimmed || !response.trim()) return;
 
       try {
-        // Always save personal
         const personalRef = collection(db, "users", currentUser.uid, "memory");
         const existing = await getDocs(query(personalRef, where("input", "==", trimmed), limit(1)));
         if (existing.empty) {
@@ -521,7 +565,6 @@ Never give financial advice. Keep answers concise but complete.`;
           });
         }
 
-        // Optionally also save global
         if (toGlobal) {
           const globalSnap = await getDocs(query(
             collection(db, "shared_memory"),
@@ -665,7 +708,7 @@ Never give financial advice. Keep answers concise but complete.`;
         addMessage(ai.text, false, true, Date.now(), ai.unlockedNow);
 
         if (ai.fromAI && currentUser) {
-          await saveMemoryPair(userText, ai.text, true); // AI answers go to both by default
+          await saveMemoryPair(userText, ai.text, true);
           addMessage("Saved to personal + global memory.", false);
         }
 
@@ -691,7 +734,7 @@ Never give financial advice. Keep answers concise but complete.`;
       const loadedCloud = await loadChatFromCloud();
       if (!loadedCloud) loadLocalChat();
       if (document.getElementById("chat").children.length === 0) {
-        addMessage("Hello! Ask me anything about The Ether Fund (TSX: QETH.UN / QETH.U).\n\nCanada’s first regulated Ether fund by 3iQ. ~100% ETH exposure, cold storage, staking yield, TFSA/RRSP eligible.\n\nI remember personal answers and shared community knowledge.\nNot financial advice.", false, false);
+        addMessage("Hello! Ask me anything about The Ether Fund (TSX: QETH.UN / QETH.U).\n\nCanada's first regulated Ether fund by 3iQ. ~100% ETH exposure, cold storage, staking yield, TFSA/RRSP eligible.\n\nI remember personal answers and shared community knowledge.\nNot financial advice.", false, false);
       }
     }
 
@@ -800,7 +843,6 @@ Never give financial advice. Keep answers concise but complete.`;
         input.style.height = "auto";
 
         if (awaitingTeach && pendingInput) {
-          // Teach buttons handle saving; just ignore normal send or treat as personal
           addMessage(text, true);
           await saveMemoryPair(pendingInput, text, false);
           addMessage("Saved to your personal memory.", false);
