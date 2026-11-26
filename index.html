@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0b1220">
   <title>RootDonate</title>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <style>
     :root {
       --bg: #0b1220;
@@ -18,149 +20,27 @@
       --radius: 20px;
       --red: #ef4444;
     }
-
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-    html, body {
-      margin: 0;
-      height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
-
-    body {
-      display: flex;
-      flex-direction: column;
-      height: 100dvh;
-      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-    }
-
-    header {
-      background: var(--surface);
-      padding: 14px 18px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-      backdrop-filter: blur(16px);
-      flex-shrink: 0;
-    }
-
-    header strong {
-      font-size: 1.15rem;
-      color: var(--accent);
-    }
-
-    .header-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    button {
-      background: rgba(71, 85, 105, 0.7);
-      color: #fff;
-      border: none;
-      padding: 8px 14px;
-      border-radius: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      min-height: 40px;
-    }
-
-    #log {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .entry {
-      padding: 12px 16px;
-      border-radius: var(--radius);
-      background: var(--bot);
-      border: 1px solid var(--border);
-      white-space: pre-wrap;
-    }
-
-    .entry.scanner {
-      border-left: 4px solid var(--accent);
-      font-family: ui-monospace, Menlo, monospace;
-    }
-
-    .entry.user {
-      align-self: flex-end;
-      background: linear-gradient(135deg, var(--accent), #16a34a);
-      color: #000;
-      max-width: 80%;
-    }
-
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { display: flex; flex-direction: column; height: 100dvh; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+    header { background: var(--surface); padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); backdrop-filter: blur(16px); flex-shrink: 0; }
+    header strong { font-size: 1.15rem; color: var(--accent); }
+    .header-actions { display: flex; gap: 8px; align-items: center; }
+    button { background: rgba(71, 85, 105, 0.7); color: #fff; border: none; padding: 8px 14px; border-radius: 12px; font-weight: 600; cursor: pointer; min-height: 40px; }
+    #log { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .entry { padding: 12px 16px; border-radius: var(--radius); background: var(--bot); border: 1px solid var(--border); white-space: pre-wrap; }
+    .entry.scanner { border-left: 4px solid var(--accent); font-family: ui-monospace, Menlo, monospace; }
+    .entry.user { align-self: flex-end; background: linear-gradient(135deg, var(--accent), #16a34a); color: #000; max-width: 80%; }
     .entry.ai { border-left: 4px solid #627eea; }
     .entry.priority { border-left: 4px solid var(--red); }
-
-    .controls,
-    .input-bar,
-    .status-bar {
-      padding: 10px 14px;
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-
-    .controls {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
+    .controls, .input-bar, .status-bar { padding: 10px 14px; background: var(--surface); border-top: 1px solid var(--border); flex-shrink: 0; }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; }
     .controls button { flex: 1; min-width: 90px; }
-
-    #plate {
-      flex: 2;
-      padding: 10px 12px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: var(--surface-2);
-      color: var(--text);
-    }
-
-    .input-bar {
-      display: flex;
-      gap: 10px;
-      align-items: flex-end;
-    }
-
-    #input {
-      flex: 1;
-      padding: 12px 16px;
-      border-radius: 24px;
-      background: var(--surface-2);
-      color: var(--text);
-      border: 1px solid transparent;
-      resize: none;
-      min-height: 48px;
-      max-height: 120px;
-    }
-
-    #send {
-      background: var(--accent);
-      color: #000;
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      font-size: 1.3rem;
-    }
-
-    .status-bar {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.75rem;
-      color: var(--muted);
-    }
-
+    #plate { flex: 2; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text); }
+    .input-bar { display: flex; gap: 10px; align-items: flex-end; }
+    #input { flex: 1; padding: 12px 16px; border-radius: 24px; background: var(--surface-2); color: var(--text); border: 1px solid transparent; resize: none; min-height: 48px; max-height: 120px; }
+    #send { background: var(--accent); color: #000; width: 48px; height: 48px; border-radius: 50%; font-size: 1.3rem; }
+    .status-bar { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--muted); }
     .wanted { color: var(--red); font-weight: bold; }
     #userInfo { font-size: 0.85rem; color: var(--accent); }
   </style>
@@ -173,6 +53,7 @@
     </div>
     <div class="header-actions">
       <span id="userInfo"></span>
+      <button id="signOutBtn" style="display:none;">Sign out</button>
     </div>
   </header>
 
@@ -197,6 +78,23 @@
   </div>
 
   <script>
+    // ────────────────────────────────────────────────
+    // REPLACE WITH YOUR FIREBASE CONFIG
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    // ────────────────────────────────────────────────
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    const signOutBtn = document.getElementById("signOutBtn");
+    const userInfo = document.getElementById("userInfo");
     const log = document.getElementById("log");
     const input = document.getElementById("input");
     const sendBtn = document.getElementById("send");
@@ -205,18 +103,32 @@
     const wantedEl = document.getElementById("wanted");
     const unitsEl = document.getElementById("units");
     const plateInput = document.getElementById("plate");
-    const userInfo = document.getElementById("userInfo");
 
     let muted = false;
     let wanted = 0;
     let isAI = false;
-    let currentUser = null;
+    let isSignedIn = false;
 
-    function updateUserUI() {
-      if (currentUser) {
-        userInfo.textContent = `👤 ${currentUser.name}`;
+    // Sign in anonymously on load
+    auth.signInAnonymously().catch(err => {
+      console.error(err);
+      addEntry("Anonymous sign-in failed: " + (err.message || err), "priority");
+    });
+
+    signOutBtn.onclick = () => auth.signOut();
+
+    auth.onAuthStateChanged(user => {
+      if (user && user.isAnonymous) {
+        isSignedIn = true;
+        userInfo.textContent = "👤 Anonymous";
+        signOutBtn.style.display = "inline-block";
+        addEntry("Signed in anonymously", "scanner");
+      } else {
+        isSignedIn = false;
+        userInfo.textContent = "";
+        signOutBtn.style.display = "none";
       }
-    }
+    });
 
     const chatter = [
       { type: "scanner", text: "Dispatch: Unit 4-Adam-12, respond to disturbance at Ocean Drive, Vice City Beach." },
@@ -263,7 +175,7 @@
       aiStatus.textContent = "AI thinking…";
       addEntry(question, "user");
 
-      const userContext = currentUser ? `The user is signed in as ${currentUser.name}. ` : "";
+      const userContext = isSignedIn ? "The user is signed in anonymously. " : "";
       const now = Date.now();
       const system = `You are a helpful AI assistant integrated into a GTA VI Vice City Police Department (VCPD) scanner system.
 ${userContext}You can answer questions about GTA VI lore, Leonida/Vice City locations, police procedures, vehicle info, or any general topic.
@@ -299,16 +211,8 @@ Never give real-world illegal advice.`;
     }
 
     sendBtn.onclick = send;
-    input.onkeydown = e => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        send();
-      }
-    };
-    input.oninput = () => {
-      input.style.height = "auto";
-      input.style.height = Math.min(input.scrollHeight, 120) + "px";
-    };
+    input.onkeydown = e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } };
+    input.oninput = () => { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 120) + "px"; };
 
     document.getElementById("scanBtn").onclick = () => {
       statusEl.textContent = "Scanning…";
@@ -339,15 +243,8 @@ Never give real-world illegal advice.`;
       unitsEl.textContent = `Units: ${8 + Math.floor(Math.random() * 10)}`;
     }, 5000);
 
-    // Simulate Apple Sign-In success
-    currentUser = {
-      name: "Apple User",
-      email: "private relay"
-    };
-    updateUserUI();
     addEntry("RootDonate Scanner + Internet AI online.", "scanner");
-    addEntry(`Signed in with Apple as ${currentUser.name}`, "scanner");
-    addEntry("AI personalised and ready.", "ai");
+    addEntry("Anonymous session active.", "ai");
   </script>
 </body>
 </html>
