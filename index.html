@@ -143,13 +143,18 @@
     let logEntries = [];
     let chatHistory = [];
 
-    function showError(msg) { authError.textContent = msg || ""; }
+    function showError(msg) {
+      authError.textContent = msg || "";
+    }
 
     googleBtn.onclick = async () => {
       showError("");
       const provider = new firebase.auth.GoogleAuthProvider();
-      try { await auth.signInWithPopup(provider); }
-      catch (err) { showError(err.message || "Google sign-in failed"); }
+      try {
+        await auth.signInWithPopup(provider);
+      } catch (err) {
+        showError(err.message || "Google sign-in failed");
+      }
     };
 
     signOutBtn.onclick = () => auth.signOut();
@@ -166,9 +171,13 @@
             log.innerHTML = "";
             data.log.forEach(e => addEntry(e.text, e.type, false));
           }
-          if (Array.isArray(data.chatHistory)) chatHistory = data.chatHistory.slice(-8);
+          if (Array.isArray(data.chatHistory)) {
+            chatHistory = data.chatHistory.slice(-8);
+          }
         }
-      } catch (e) { console.warn("Cloud load failed", e); }
+      } catch (e) {
+        console.warn("Cloud load failed", e);
+      }
     }
 
     async function saveToCloud() {
@@ -180,7 +189,9 @@
           chatHistory: chatHistory.slice(-10),
           updated: Date.now()
         });
-      } catch (e) { console.warn("Cloud save failed", e); }
+      } catch (e) {
+        console.warn("Cloud save failed", e);
+      }
     }
 
     auth.onAuthStateChanged(async user => {
@@ -339,8 +350,16 @@ Current time: ${new Date().toLocaleString()}`;
     }
 
     sendBtn.onclick = send;
-    input.onkeydown = e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } };
-    input.oninput = () => { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 120) + "px"; };
+    input.onkeydown = e => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        send();
+      }
+    };
+    input.oninput = () => {
+      input.style.height = "auto";
+      input.style.height = Math.min(input.scrollHeight, 120) + "px";
+    };
 
     document.getElementById("scanBtn").onclick = () => generateScanner("scanner");
     document.getElementById("priorityBtn").onclick = () => generateScanner("priority");
@@ -354,18 +373,28 @@ Current time: ${new Date().toLocaleString()}`;
       plateInput.value = "";
     };
 
-    clearBtn.onclick = () => {
-      if (!currentUser || !confirm("Clear the log from this device only? (Cloud data will be kept)")) return;
+    clearBtn.onclick = async () => {
+      if (!currentUser || !confirm("Clear the entire log and cloud data? This cannot be undone.")) return;
+
       log.innerHTML = "";
       logEntries = [];
       chatHistory = [];
       wanted = 0;
       wantedEl.textContent = "0";
-      addEntry("Log cleared locally. Cloud data remains intact.", "ai", false);
+
+      try {
+        await db.ref(`users/${currentUser.uid}/data`).remove();
+      } catch (e) {
+        console.warn("Cloud clear failed", e);
+      }
+
+      addEntry("Log and cloud data cleared.", "ai", false);
     };
 
     setInterval(() => {
-      if (currentUser) unitsEl.textContent = `Units: ${8 + Math.floor(Math.random() * 10)}`;
+      if (currentUser) {
+        unitsEl.textContent = `Units: ${8 + Math.floor(Math.random() * 10)}`;
+      }
     }, 5000);
   </script>
 </body>
