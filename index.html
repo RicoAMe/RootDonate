@@ -192,7 +192,7 @@
         await loadFromCloud(user.uid);
         if (log.children.length === 0) {
           addEntry("RootDonate Scanner online. Cloud storage active.", "scanner");
-          addEntry("Signed in. Gemini AI ready — ask me anything about Leonida or the streets.", "ai");
+          addEntry("Signed in. Gemini AI ready — generate scanner traffic or ask anything about Leonida.", "ai");
         }
       } else {
         currentUser = null;
@@ -207,18 +207,6 @@
         showError("");
       }
     });
-
-    const chatter = [
-      { type: "scanner", text: "Dispatch: Unit 4-Adam-12, respond to disturbance at Ocean Drive, Vice City Beach." },
-      { type: "scanner", text: "Air Support: Suspicious black Blista Compact heading north on Port Gellhorn Highway." },
-      { type: "priority", text: "Code 3: Shots fired near Ambrosia. Multiple suspects fleeing. All units respond." },
-      { type: "scanner", text: "Traffic: Speed enforcement active on the bridge into Leonida City." },
-      { type: "scanner", text: "BOLO: Stolen yellow Sanchez last seen near the docks. Occupant armed." },
-      { type: "priority", text: "Officer down! 10-99 at Grass Rivers. Backup needed immediately!" },
-      { type: "scanner", text: "Unit 7-Boy-3: Suspect in custody, requesting transport." },
-      { type: "scanner", text: "High-speed pursuit on the freeway. Black Dominator, plates unknown." },
-      { type: "priority", text: "Armed robbery in progress at the 24/7 on Main Street. Units en route." }
-    ];
 
     const plates = {
       "VC1234": "Stolen — Black Dominator, linked to recent heist",
@@ -239,30 +227,17 @@
       if (shouldSave) saveToCloud();
     }
 
-    function randomChatter() {
-      if (!currentUser) return;
-      const entry = chatter[Math.floor(Math.random() * chatter.length)];
-      addEntry(entry.text, entry.type === "priority" ? "priority" : "scanner");
-      if (entry.type === "priority") {
-        wanted = Math.min(5, wanted + 1);
-        wantedEl.textContent = wanted;
-      }
-      return entry;
-    }
-
-    async function askAI(question, isScanComment = false) {
+    async function generateScanner(type = "scanner") {
       if (isAI || !currentUser) return;
       isAI = true;
-      if (!isScanComment) sendBtn.disabled = true;
-      aiStatus.textContent = "AI thinking…";
-      if (!isScanComment) addEntry(question, "user");
+      aiStatus.textContent = "Generating…";
+      statusEl.textContent = type === "priority" ? "Priority traffic…" : "Scanning…";
 
-      const system = `You are a sharp, slightly cynical VCPD dispatcher AI integrated into the RootDonate scanner.
-You know GTA VI / Leonida / Vice City lore, radio codes, vehicle models, and street life.
-Be concise, useful, and stay in character when it fits. Never give real-world illegal advice.
-Current time: ${new Date().toLocaleString()}`;
+      const prompt = type === "priority"
+        ? "Generate one short realistic VCPD priority radio dispatch message (1-2 sentences max) for Leonida/Vice City. Make it urgent (shots fired, officer down, robbery in progress, etc). Cynical tone. No extra commentary."
+        : "Generate one short realistic VCPD radio scanner message (1-2 sentences max) for Leonida/Vice City. Routine traffic, BOLO, pursuit, traffic stop, etc. Cynical dispatcher style. No extra commentary.";
 
-      const fullPrompt = `${system}\n\nUser: ${question}`;
+      const system = `You are a sharp, slightly cynical VCPD dispatcher AI. Know GTA VI / Leonida / Vice City lore. Stay in character. Output ONLY the radio message, nothing else.`;
 
       let attempt = 0;
       const maxAttempts = 3;
@@ -271,7 +246,59 @@ Current time: ${new Date().toLocaleString()}`;
       while (attempt < maxAttempts && !success) {
         attempt++;
         try {
-          const response = await puter.ai.chat(fullPrompt, {
+          const response = await puter.ai.chat(`${system}\n\n${prompt}`, {
+            model: "gemini-3.8-flash"
+          });
+
+          let text = (response?.message?.content || response?.text || String(response || "")).trim();
+          if (!text || text.length < 2) throw new Error("Empty response");
+
+          text = text.replace(/^["']|["']$/g, "").replace(/^Assistant:\s*/i, "").replace(/^AI:\s*/i, "").trim();
+
+          addEntry(text, type);
+          if (type === "priority") {
+            wanted = Math.min(5, wanted + 1);
+            wantedEl.textContent = wanted;
+          }
+          success = true;
+          aiStatus.textContent = "AI Ready";
+        } catch (e) {
+          console.warn(`AI attempt ${attempt} failed:`, e);
+          if (attempt === maxAttempts) {
+            addEntry("Radio traffic unavailable. Try again.", type);
+            aiStatus.textContent = "AI Offline";
+          } else {
+            aiStatus.textContent = `Retry ${attempt}…`;
+            await new Promise(r => setTimeout(r, 1000 * attempt));
+          }
+        }
+      }
+
+      isAI = false;
+      statusEl.textContent = "Channel 1 • Leonida Metro • Cloud Sync";
+      saveToCloud();
+    }
+
+    async function askAI(question) {
+      if (isAI || !currentUser) return;
+      isAI = true;
+      sendBtn.disabled = true;
+      aiStatus.textContent = "AI thinking…";
+      addEntry(question, "user");
+
+      const system = `You are a sharp, slightly cynical VCPD dispatcher AI integrated into the RootDonate scanner.
+You know GTA VI / Leonida / Vice City lore, radio codes, vehicle models, and street life.
+Be concise, useful, and stay in character when it fits. Never give real-world illegal advice.
+Current time: ${new Date().toLocaleString()}`;
+
+      let attempt = 0;
+      const maxAttempts = 3;
+      let success = false;
+
+      while (attempt < maxAttempts && !success) {
+        attempt++;
+        try {
+          const response = await puter.ai.chat(`${system}\n\nUser: ${question}`, {
             model: "gemini-3.8-flash"
           });
 
@@ -281,10 +308,8 @@ Current time: ${new Date().toLocaleString()}`;
           text = text.replace(/^Assistant:\s*/i, "").replace(/^AI:\s*/i, "").trim();
 
           addEntry(text, "ai");
-          if (!isScanComment) {
-            chatHistory.push({ role: "user", content: question }, { role: "assistant", content: text });
-            if (chatHistory.length > 12) chatHistory = chatHistory.slice(-12);
-          }
+          chatHistory.push({ role: "user", content: question }, { role: "assistant", content: text });
+          if (chatHistory.length > 12) chatHistory = chatHistory.slice(-12);
           aiStatus.textContent = "AI Ready";
           success = true;
         } catch (e) {
@@ -300,10 +325,8 @@ Current time: ${new Date().toLocaleString()}`;
       }
 
       isAI = false;
-      if (!isScanComment) {
-        sendBtn.disabled = false;
-        input.focus();
-      }
+      sendBtn.disabled = false;
+      input.focus();
       saveToCloud();
     }
 
@@ -319,28 +342,8 @@ Current time: ${new Date().toLocaleString()}`;
     input.onkeydown = e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } };
     input.oninput = () => { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 120) + "px"; };
 
-    document.getElementById("scanBtn").onclick = async () => {
-      if (!currentUser) return;
-      statusEl.textContent = "Scanning…";
-      const entry = randomChatter();
-      setTimeout(() => {
-        statusEl.textContent = "Channel 1 • Leonida Metro • Cloud Sync";
-      }, 600);
-      // Ask Gemini for a short dispatch comment on the scan
-      if (entry) {
-        const prompt = `Give a very short (1-2 sentences) cynical VCPD dispatcher comment on this radio traffic: "${entry.text}"`;
-        await askAI(prompt, true);
-      }
-    };
-
-    document.getElementById("priorityBtn").onclick = () => {
-      if (!currentUser) return;
-      const pri = chatter.filter(c => c.type === "priority");
-      const entry = pri[Math.floor(Math.random() * pri.length)];
-      addEntry(entry.text, "priority");
-      wanted = Math.min(5, wanted + 1);
-      wantedEl.textContent = wanted;
-    };
+    document.getElementById("scanBtn").onclick = () => generateScanner("scanner");
+    document.getElementById("priorityBtn").onclick = () => generateScanner("priority");
 
     document.getElementById("lookupBtn").onclick = () => {
       if (!currentUser) return;
@@ -362,7 +365,6 @@ Current time: ${new Date().toLocaleString()}`;
     };
 
     setInterval(() => {
-      if (currentUser && Math.random() > 0.72) randomChatter();
       if (currentUser) unitsEl.textContent = `Units: ${8 + Math.floor(Math.random() * 10)}`;
     }, 5000);
   </script>
