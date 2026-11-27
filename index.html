@@ -140,7 +140,7 @@
     let isAI = false;
     let currentUser = null;
     let logEntries = [];
-    let chatHistory = []; // simple memory for the AI
+    let chatHistory = [];
 
     function showError(msg) { authError.textContent = msg || ""; }
 
@@ -255,7 +255,6 @@
       aiStatus.textContent = "AI thinking…";
       addEntry(question, "user");
 
-      // Build short context from recent chat
       const historyText = chatHistory.slice(-6).map(m => `${m.role}: ${m.content}`).join("\n");
       const system = `You are a sharp, slightly cynical VCPD dispatcher AI integrated into the RootDonate scanner.
 You know GTA VI / Leonida / Vice City lore, radio codes, vehicle models, and street life.
@@ -264,6 +263,7 @@ Current time: ${new Date().toLocaleString()}`;
 
       const fullPrompt = `${system}\n\nRecent context:\n${historyText}\n\nUser: ${question}`;
 
+      // Free Pollinations classic text endpoint (no key required)
       const url = `https://text.pollinations.ai/${encodeURIComponent(fullPrompt)}?temperature=0.75&seed=${Date.now()}`;
 
       let attempt = 0;
@@ -278,7 +278,6 @@ Current time: ${new Date().toLocaleString()}`;
           let text = (await res.text()).trim();
           if (!text || text.length < 4) throw new Error("Empty or short response");
 
-          // Clean common AI fluff
           text = text.replace(/^Assistant:\s*/i, "").replace(/^AI:\s*/i, "").trim();
 
           addEntry(text, "ai");
