@@ -11,6 +11,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="https://js.puter.com/v2/"></script>
   <style>
     :root {
       --bg: #070b14;
@@ -72,7 +73,7 @@
   <div id="app">
     <header>
       <div>
-        <strong>RootDonate<span class="badge">v3.3</span></strong>
+        <strong>RootDonate<span class="badge">v3.5 Gemini</span></strong>
         <small id="status" style="display:block; color:var(--muted); font-size:0.75rem; margin-top:2px;">Channel 1 • Leonida Metro • Cloud Sync</small>
       </div>
       <div class="header-actions">
@@ -191,7 +192,7 @@
         await loadFromCloud(user.uid);
         if (log.children.length === 0) {
           addEntry("RootDonate Scanner online. Cloud storage active.", "scanner");
-          addEntry("Signed in. AI ready — ask me anything about Leonida or the streets.", "ai");
+          addEntry("Signed in. Gemini AI ready — ask me anything about Leonida or the streets.", "ai");
         }
       } else {
         currentUser = null;
@@ -246,25 +247,22 @@
         wanted = Math.min(5, wanted + 1);
         wantedEl.textContent = wanted;
       }
+      return entry;
     }
 
-    async function askAI(question) {
+    async function askAI(question, isScanComment = false) {
       if (isAI || !currentUser) return;
       isAI = true;
-      sendBtn.disabled = true;
+      if (!isScanComment) sendBtn.disabled = true;
       aiStatus.textContent = "AI thinking…";
-      addEntry(question, "user");
+      if (!isScanComment) addEntry(question, "user");
 
-      const historyText = chatHistory.slice(-6).map(m => `${m.role}: ${m.content}`).join("\n");
       const system = `You are a sharp, slightly cynical VCPD dispatcher AI integrated into the RootDonate scanner.
 You know GTA VI / Leonida / Vice City lore, radio codes, vehicle models, and street life.
 Be concise, useful, and stay in character when it fits. Never give real-world illegal advice.
 Current time: ${new Date().toLocaleString()}`;
 
-      const fullPrompt = `${system}\n\nRecent context:\n${historyText}\n\nUser: ${question}`;
-
-      // Free Pollinations classic text endpoint (no key required)
-      const url = `https://text.pollinations.ai/${encodeURIComponent(fullPrompt)}?temperature=0.75&seed=${Date.now()}`;
+      const fullPrompt = `${system}\n\nUser: ${question}`;
 
       let attempt = 0;
       const maxAttempts = 3;
@@ -273,16 +271,20 @@ Current time: ${new Date().toLocaleString()}`;
       while (attempt < maxAttempts && !success) {
         attempt++;
         try {
-          const res = await fetch(url);
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          let text = (await res.text()).trim();
-          if (!text || text.length < 4) throw new Error("Empty or short response");
+          const response = await puter.ai.chat(fullPrompt, {
+            model: "gemini-3.8-flash"
+          });
+
+          let text = (response?.message?.content || response?.text || String(response || "")).trim();
+          if (!text || text.length < 2) throw new Error("Empty response");
 
           text = text.replace(/^Assistant:\s*/i, "").replace(/^AI:\s*/i, "").trim();
 
           addEntry(text, "ai");
-          chatHistory.push({ role: "user", content: question }, { role: "assistant", content: text });
-          if (chatHistory.length > 12) chatHistory = chatHistory.slice(-12);
+          if (!isScanComment) {
+            chatHistory.push({ role: "user", content: question }, { role: "assistant", content: text });
+            if (chatHistory.length > 12) chatHistory = chatHistory.slice(-12);
+          }
           aiStatus.textContent = "AI Ready";
           success = true;
         } catch (e) {
@@ -298,8 +300,10 @@ Current time: ${new Date().toLocaleString()}`;
       }
 
       isAI = false;
-      sendBtn.disabled = false;
-      input.focus();
+      if (!isScanComment) {
+        sendBtn.disabled = false;
+        input.focus();
+      }
       saveToCloud();
     }
 
@@ -315,13 +319,18 @@ Current time: ${new Date().toLocaleString()}`;
     input.onkeydown = e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } };
     input.oninput = () => { input.style.height = "auto"; input.style.height = Math.min(input.scrollHeight, 120) + "px"; };
 
-    document.getElementById("scanBtn").onclick = () => {
+    document.getElementById("scanBtn").onclick = async () => {
       if (!currentUser) return;
       statusEl.textContent = "Scanning…";
+      const entry = randomChatter();
       setTimeout(() => {
         statusEl.textContent = "Channel 1 • Leonida Metro • Cloud Sync";
-        randomChatter();
       }, 600);
+      // Ask Gemini for a short dispatch comment on the scan
+      if (entry) {
+        const prompt = `Give a very short (1-2 sentences) cynical VCPD dispatcher comment on this radio traffic: "${entry.text}"`;
+        await askAI(prompt, true);
+      }
     };
 
     document.getElementById("priorityBtn").onclick = () => {
