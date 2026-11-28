@@ -10,20 +10,149 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="https://js.puter.com/v2/"></script>
   <style>
-    #app, #authScreen { max-width: 960px; margin: 0 auto; padding: 20px; }
-    #log { min-height: 300px; max-height: 50vh; overflow-y: auto; border: 1px solid #b1b4b6; padding: 15px; background: #f3f2f1; margin: 20px 0; }
-    .entry { margin-bottom: 15px; padding: 10px; background: #fff; border-left: 5px solid #1d70b8; }
-    .entry.user { border-left-color: #00703c; background: #e8f5e9; }
-    .entry.ai { border-left-color: #1d70b8; }
-    .entry.priority { border-left-color: #d4351c; background: #fef7f7; }
-    .entry.scanner { font-family: ui-monospace, Menlo, monospace; font-size: 0.9em; }
-    .status-bar { display: flex; gap: 20px; margin: 15px 0; font-size: 16px; }
-    .controls { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; align-items: flex-end; }
+    :root {
+      --dwp-blue: #1d70b8;
+      --dwp-blue-dark: #003078;
+      --dwp-black: #0b0c0c;
+      --dwp-light: #f3f2f1;
+      --dwp-white: #ffffff;
+      --dwp-red: #d4351c;
+      --dwp-green: #00703c;
+    }
+
+    body {
+      background: linear-gradient(135deg, #f8f8f8 0%, #e8eef5 50%, #f3f2f1 100%);
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Abstract geometric background */
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      border-radius: 50%;
+      z-index: -1;
+      opacity: 0.12;
+      pointer-events: none;
+    }
+    body::before {
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle, var(--dwp-blue) 0%, transparent 70%);
+      top: -180px;
+      right: -140px;
+    }
+    body::after {
+      width: 380px;
+      height: 380px;
+      background: radial-gradient(circle, var(--dwp-blue-dark) 0%, transparent 70%);
+      bottom: -120px;
+      left: -100px;
+    }
+
+    #app, #authScreen {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+      position: relative;
+      z-index: 1;
+    }
+
+    #authScreen {
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      padding: 32px 24px;
+      box-shadow: 0 8px 32px rgba(11,12,12,0.08);
+      margin-top: 40px;
+    }
+
+    header.govuk-header {
+      background: var(--dwp-black);
+      border-bottom: 4px solid var(--dwp-blue);
+      margin-bottom: 24px;
+      border-radius: 0 0 8px 8px;
+    }
+
+    #log {
+      min-height: 280px;
+      max-height: 48vh;
+      overflow-y: auto;
+      border: 1px solid #b1b4b6;
+      border-radius: 10px;
+      padding: 16px;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(4px);
+      margin: 16px 0 20px;
+      box-shadow: 0 4px 16px rgba(11,12,12,0.06);
+    }
+
+    .entry {
+      margin-bottom: 12px;
+      padding: 12px 14px;
+      background: #fff;
+      border-left: 4px solid var(--dwp-blue);
+      border-radius: 6px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      transition: transform 0.15s ease;
+    }
+    .entry:hover { transform: translateX(2px); }
+    .entry.user { border-left-color: var(--dwp-green); background: #e8f5e9; }
+    .entry.ai { border-left-color: var(--dwp-blue); }
+    .entry.priority { border-left-color: var(--dwp-red); background: #fef7f7; }
+    .entry.scanner { font-family: ui-monospace, Menlo, monospace; font-size: 0.92em; }
+
+    .status-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin: 12px 0;
+      font-size: 15px;
+      align-items: center;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 12px 0;
+      align-items: flex-end;
+    }
     .controls .govuk-button { margin-bottom: 0; }
-    .input-bar { display: flex; gap: 10px; align-items: flex-end; margin-top: 15px; }
+
+    .input-bar {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      margin-top: 12px;
+    }
     #input { flex: 1; }
-    .skip-link { position: absolute; top: -40px; left: 0; background: #0b0c0c; color: #fff; padding: 8px; z-index: 100; }
+
+    .skip-link {
+      position: absolute;
+      top: -40px;
+      left: 0;
+      background: var(--dwp-black);
+      color: #fff;
+      padding: 8px;
+      z-index: 100;
+    }
     .skip-link:focus { top: 0; }
+
+    .govuk-button {
+      border-radius: 4px;
+    }
+    .govuk-input, .govuk-textarea {
+      border-radius: 4px;
+    }
+
+    @media (max-width: 640px) {
+      #log { max-height: 42vh; }
+      .controls { flex-direction: column; align-items: stretch; }
+      .input-bar { flex-direction: column; }
+    }
   </style>
 </head>
 <body class="govuk-template__body">
@@ -220,7 +349,10 @@
       if (isAI || !currentUser) return;
       isAI = true;
       aiStatus.textContent = "Generating…";
-      statusEl.textContent = type === "priority" ? "Priority traffic…" : "Scanning…";
+      // statusEl is referenced but not always present in original – safe optional
+      if (typeof statusEl !== "undefined" && statusEl) {
+        statusEl.textContent = type === "priority" ? "Priority traffic…" : "Scanning…";
+      }
 
       const prompt = type === "priority"
         ? "Generate one short realistic VCPD priority radio dispatch message (1-2 sentences max) for Leonida/Vice City. Make it urgent (shots fired, officer down, robbery in progress, etc). Cynical tone. No extra commentary."
@@ -264,7 +396,9 @@
       }
 
       isAI = false;
-      statusEl.textContent = "Channel 1 • Leonida Metro • Cloud Sync";
+      if (typeof statusEl !== "undefined" && statusEl) {
+        statusEl.textContent = "Channel 1 • Leonida Metro • Cloud Sync";
+      }
       saveToCloud();
     }
 
