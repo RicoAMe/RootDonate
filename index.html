@@ -8,7 +8,6 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
-  <script src="https://js.puter.com/v2/"></script>
   <style>
     :root {
       --dwp-blue: #1d70b8;
@@ -27,7 +26,6 @@
       overflow-x: hidden;
     }
 
-    /* Abstract geometric background */
     body::before,
     body::after {
       content: "";
@@ -61,7 +59,7 @@
     }
 
     #authScreen {
-      background: rgba(255,255,255,0.92);
+      background: rgba(255,255,255,0.94);
       backdrop-filter: blur(8px);
       border-radius: 12px;
       padding: 32px 24px;
@@ -122,14 +120,6 @@
     }
     .controls .govuk-button { margin-bottom: 0; }
 
-    .input-bar {
-      display: flex;
-      gap: 10px;
-      align-items: flex-end;
-      margin-top: 12px;
-    }
-    #input { flex: 1; }
-
     .skip-link {
       position: absolute;
       top: -40px;
@@ -141,17 +131,27 @@
     }
     .skip-link:focus { top: 0; }
 
-    .govuk-button {
+    .govuk-button, .govuk-input, .govuk-textarea {
       border-radius: 4px;
     }
-    .govuk-input, .govuk-textarea {
-      border-radius: 4px;
+
+    .auth-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+    .auth-tabs button { flex: 1; }
+    .auth-form { display: none; }
+    .auth-form.active { display: block; }
+
+    .support-link {
+      text-align: center;
+      margin-top: 24px;
     }
 
     @media (max-width: 640px) {
       #log { max-height: 42vh; }
       .controls { flex-direction: column; align-items: stretch; }
-      .input-bar { flex-direction: column; }
     }
   </style>
 </head>
@@ -160,9 +160,47 @@
 
   <div id="authScreen">
     <h1 class="govuk-heading-l">RootDonate Scanner</h1>
-    <p class="govuk-body">Sign in to access the scanner</p>
+    <p class="govuk-body">Sign in or create an account to access the scanner</p>
+
+    <div class="auth-tabs">
+      <button type="button" id="showSignIn" class="govuk-button govuk-button--secondary">Sign In</button>
+      <button type="button" id="showSignUp" class="govuk-button govuk-button--secondary">Sign Up</button>
+    </div>
+
     <div id="authError" class="govuk-error-message" role="alert" aria-live="assertive"></div>
-    <button id="googleBtn" class="govuk-button" type="button" data-module="govuk-button">Continue with Google</button>
+
+    <form id="signInForm" class="auth-form active">
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="signInEmail">Email</label>
+        <input class="govuk-input" id="signInEmail" type="email" required autocomplete="email">
+      </div>
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="signInPassword">Password</label>
+        <input class="govuk-input" id="signInPassword" type="password" required autocomplete="current-password">
+      </div>
+      <button class="govuk-button" type="submit">Sign in</button>
+      <button type="button" id="resetBtn" class="govuk-button govuk-button--secondary" style="margin-left:8px;">Forgot password?</button>
+    </form>
+
+    <form id="signUpForm" class="auth-form">
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="signUpEmail">Email</label>
+        <input class="govuk-input" id="signUpEmail" type="email" required autocomplete="email">
+      </div>
+      <div class="govuk-form-group">
+        <label class="govuk-label" for="signUpPassword">Password</label>
+        <input class="govuk-input" id="signUpPassword" type="password" required minlength="6" autocomplete="new-password">
+      </div>
+      <button class="govuk-button" type="submit">Create account</button>
+    </form>
+
+    <hr class="govuk-section-break govuk-section-break--l govuk-section-break--visible">
+
+    <button id="googleBtn" class="govuk-button govuk-button--secondary" type="button" style="width:100%;">Continue with Google</button>
+
+    <div class="support-link">
+      <a href="https://monzo.me/iandreme" target="_blank" rel="noopener" class="govuk-link">Support via Monzo</a>
+    </div>
   </div>
 
   <div id="app" style="display:none;">
@@ -184,26 +222,19 @@
       <div class="status-bar" aria-live="polite" aria-atomic="true">
         <span>Wanted: <strong id="wanted" class="govuk-tag govuk-tag--red">0</strong></span>
         <span id="units">Units: 12</span>
-        <span id="aiStatus" class="govuk-tag">AI Ready</span>
+        <span class="govuk-tag">Local Scanner</span>
       </div>
 
       <div class="controls">
-        <button id="scanBtn" class="govuk-button" type="button" data-module="govuk-button">Scan</button>
-        <button id="priorityBtn" class="govuk-button govuk-button--warning" type="button" data-module="govuk-button">Priority</button>
+        <button id="scanBtn" class="govuk-button" type="button">Scan</button>
+        <button id="priorityBtn" class="govuk-button govuk-button--warning" type="button">Priority</button>
         <div class="govuk-form-group" style="margin-bottom:0; flex:1; min-width:200px;">
           <label class="govuk-label" for="plate">Plate lookup</label>
           <input class="govuk-input" id="plate" type="text" placeholder="Plate lookup…" maxlength="8" autocomplete="off" autocapitalize="characters">
         </div>
-        <button id="lookupBtn" class="govuk-button govuk-button--secondary" type="button" data-module="govuk-button">Lookup</button>
-        <button id="clearBtn" class="govuk-button govuk-button--warning" type="button" data-module="govuk-button">Clear Log</button>
-      </div>
-
-      <div class="input-bar">
-        <div class="govuk-form-group" style="margin-bottom:0; flex:1;">
-          <label class="govuk-label" for="input">Ask the AI anything</label>
-          <textarea class="govuk-textarea" id="input" rows="2" placeholder="Ask the AI anything..."></textarea>
-        </div>
-        <button id="send" class="govuk-button" type="button" data-module="govuk-button" aria-label="Send message">Send</button>
+        <button id="lookupBtn" class="govuk-button govuk-button--secondary" type="button">Lookup</button>
+        <button id="clearBtn" class="govuk-button govuk-button--warning" type="button">Clear Log</button>
+        <a href="https://monzo.me/iandreme" target="_blank" rel="noopener" class="govuk-button govuk-button--secondary" style="text-decoration:none;">Donate</a>
       </div>
     </div>
   </div>
@@ -232,24 +263,100 @@
     const signOutBtn = document.getElementById("signOutBtn");
     const userInfo = document.getElementById("userInfo");
     const log = document.getElementById("log");
-    const input = document.getElementById("input");
-    const sendBtn = document.getElementById("send");
-    const statusEl = document.getElementById("status");
-    const aiStatus = document.getElementById("aiStatus");
     const wantedEl = document.getElementById("wanted");
     const unitsEl = document.getElementById("units");
     const plateInput = document.getElementById("plate");
     const clearBtn = document.getElementById("clearBtn");
 
+    const signInForm = document.getElementById("signInForm");
+    const signUpForm = document.getElementById("signUpForm");
+    const showSignIn = document.getElementById("showSignIn");
+    const showSignUp = document.getElementById("showSignUp");
+    const resetBtn = document.getElementById("resetBtn");
+
     let wanted = 0;
-    let isAI = false;
     let currentUser = null;
     let logEntries = [];
-    let chatHistory = [];
+
+    const routineMessages = [
+      "Unit 12, traffic stop on Portola Drive. Blue Comet, plates check clean.",
+      "BOLO: Silver Dominator last seen heading north on Ocean Drive. Possible stolen.",
+      "Dispatch, 10-20 at the marina. Crowd gathering, no further assistance required.",
+      "Unit 7 requesting backup near Ambrosia. Routine disturbance, subjects compliant.",
+      "All units, be advised of roadworks on Vice City Beach. Expect delays.",
+      "Unit 4, vehicle check on black Gauntlet. Owner on scene, no flags.",
+      "10-45 at the strip club. Noise complaint only, units can clear.",
+      "Patrol 9, suspicious vehicle parked outside the bank. Checking now."
+    ];
+
+    const priorityMessages = [
+      "Priority! Shots fired at the docks. Multiple units respond. Suspects armed.",
+      "Officer down near the industrial district. All available units code 3.",
+      "Armed robbery in progress at the jewellery store on Ocean Drive. Hostage situation.",
+      "Pursuit in progress. Black Dominator, high speed through downtown. Spike strips authorised.",
+      "10-99 officer needs immediate assistance. Ambush reported near the airport.",
+      "Explosion reported at the construction site. Possible IED. Evacuate the area."
+    ];
+
+    const plates = {
+      "VC1234": "Stolen — Black Dominator, linked to recent heist",
+      "LEON01": "Registered to local resident — no flags",
+      "GTA666": "Wanted — multiple felonies, approach with caution",
+      "VCPD1": "Police vehicle — do not stop",
+      "AMBRO": "Rental — last seen near Ambrosia resort"
+    };
 
     function showError(msg) {
       authError.textContent = msg || "";
     }
+
+    function showForm(form) {
+      signInForm.classList.remove("active");
+      signUpForm.classList.remove("active");
+      form.classList.add("active");
+      showError("");
+    }
+
+    showSignIn.onclick = () => showForm(signInForm);
+    showSignUp.onclick = () => showForm(signUpForm);
+
+    signInForm.onsubmit = async (e) => {
+      e.preventDefault();
+      showError("");
+      const email = document.getElementById("signInEmail").value.trim();
+      const password = document.getElementById("signInPassword").value;
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+      } catch (err) {
+        showError(err.message || "Sign in failed");
+      }
+    };
+
+    signUpForm.onsubmit = async (e) => {
+      e.preventDefault();
+      showError("");
+      const email = document.getElementById("signUpEmail").value.trim();
+      const password = document.getElementById("signUpPassword").value;
+      try {
+        await auth.createUserWithEmailAndPassword(email, password);
+      } catch (err) {
+        showError(err.message || "Sign up failed");
+      }
+    };
+
+    resetBtn.onclick = async () => {
+      const email = document.getElementById("signInEmail").value.trim();
+      if (!email) {
+        showError("Enter your email first");
+        return;
+      }
+      try {
+        await auth.sendPasswordResetEmail(email);
+        showError("Password reset email sent (check spam)");
+      } catch (err) {
+        showError(err.message || "Could not send reset email");
+      }
+    };
 
     googleBtn.onclick = async () => {
       showError("");
@@ -275,9 +382,6 @@
             log.innerHTML = "";
             data.log.forEach(e => addEntry(e.text, e.type, false));
           }
-          if (Array.isArray(data.chatHistory)) {
-            chatHistory = data.chatHistory.slice(-8);
-          }
         }
       } catch (e) {
         console.warn("Cloud load failed", e);
@@ -290,7 +394,6 @@
         await db.ref(`users/${currentUser.uid}/data`).set({
           wanted,
           log: logEntries.slice(-100),
-          chatHistory: chatHistory.slice(-10),
           updated: Date.now()
         });
       } catch (e) {
@@ -306,8 +409,7 @@
         userInfo.textContent = `👤 ${user.displayName || user.email || "User"}`;
         await loadFromCloud(user.uid);
         if (log.children.length === 0) {
-          addEntry("RootDonate Scanner online. Cloud storage active.", "scanner");
-          addEntry("Signed in. Gemini AI ready — generate scanner traffic or ask anything about Leonida.", "ai");
+          addEntry("RootDonate Scanner online. Local traffic active.", "scanner");
         }
       } else {
         currentUser = null;
@@ -316,28 +418,17 @@
         userInfo.textContent = "";
         log.innerHTML = "";
         logEntries = [];
-        chatHistory = [];
         wanted = 0;
         wantedEl.textContent = "0";
         showError("");
       }
     });
 
-    const plates = {
-      "VC1234": "Stolen — Black Dominator, linked to recent heist",
-      "LEON01": "Registered to local resident — no flags",
-      "GTA666": "Wanted — multiple felonies, approach with caution",
-      "VCPD1": "Police vehicle — do not stop",
-      "AMBRO": "Rental — last seen near Ambrosia resort"
-    };
-
     function addEntry(text, type = "scanner", shouldSave = true) {
       const div = document.createElement("div");
       div.className = `entry ${type}`;
       div.textContent = text;
-      if (type === "priority") {
-        div.setAttribute("role", "alert");
-      }
+      if (type === "priority") div.setAttribute("role", "alert");
       log.appendChild(div);
       log.scrollTop = log.scrollHeight;
       logEntries.push({ text, type, ts: Date.now() });
@@ -345,136 +436,22 @@
       if (shouldSave) saveToCloud();
     }
 
-    async function generateScanner(type = "scanner") {
-      if (isAI || !currentUser) return;
-      isAI = true;
-      aiStatus.textContent = "Generating…";
-      // statusEl is referenced but not always present in original – safe optional
-      if (typeof statusEl !== "undefined" && statusEl) {
-        statusEl.textContent = type === "priority" ? "Priority traffic…" : "Scanning…";
-      }
-
-      const prompt = type === "priority"
-        ? "Generate one short realistic VCPD priority radio dispatch message (1-2 sentences max) for Leonida/Vice City. Make it urgent (shots fired, officer down, robbery in progress, etc). Cynical tone. No extra commentary."
-        : "Generate one short realistic VCPD radio scanner message (1-2 sentences max) for Leonida/Vice City. Routine traffic, BOLO, pursuit, traffic stop, etc. Cynical dispatcher style. No extra commentary.";
-
-      const system = `You are a sharp, slightly cynical VCPD dispatcher AI. Know GTA VI / Leonida / Vice City lore. Stay in character. Output ONLY the radio message, nothing else.`;
-
-      let attempt = 0;
-      const maxAttempts = 3;
-      let success = false;
-
-      while (attempt < maxAttempts && !success) {
-        attempt++;
-        try {
-          const response = await puter.ai.chat(`${system}\n\n${prompt}`, {
-            model: "gemini-3.8-flash"
-          });
-
-          let text = (response?.message?.content || response?.text || String(response || "")).trim();
-          if (!text || text.length < 2) throw new Error("Empty response");
-
-          text = text.replace(/^["']|["']$/g, "").replace(/^Assistant:\s*/i, "").replace(/^AI:\s*/i, "").trim();
-
-          addEntry(text, type);
-          if (type === "priority") {
-            wanted = Math.min(5, wanted + 1);
-            wantedEl.textContent = wanted;
-          }
-          success = true;
-          aiStatus.textContent = "AI Ready";
-        } catch (e) {
-          console.warn(`AI attempt ${attempt} failed:`, e);
-          if (attempt === maxAttempts) {
-            addEntry("Radio traffic unavailable. Try again.", type);
-            aiStatus.textContent = "AI Offline";
-          } else {
-            aiStatus.textContent = `Retry ${attempt}…`;
-            await new Promise(r => setTimeout(r, 1000 * attempt));
-          }
-        }
-      }
-
-      isAI = false;
-      if (typeof statusEl !== "undefined" && statusEl) {
-        statusEl.textContent = "Channel 1 • Leonida Metro • Cloud Sync";
-      }
-      saveToCloud();
+    function randomFrom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
     }
 
-    async function askAI(question) {
-      if (isAI || !currentUser) return;
-      isAI = true;
-      sendBtn.disabled = true;
-      aiStatus.textContent = "AI thinking…";
-      addEntry(question, "user");
-
-      const system = `You are a sharp, slightly cynical VCPD dispatcher AI integrated into the RootDonate scanner.
-You know GTA VI / Leonida / Vice City lore, radio codes, vehicle models, and street life.
-Be concise, useful, and stay in character when it fits. Never give real-world illegal advice.
-Current time: ${new Date().toLocaleString()}`;
-
-      let attempt = 0;
-      const maxAttempts = 3;
-      let success = false;
-
-      while (attempt < maxAttempts && !success) {
-        attempt++;
-        try {
-          const response = await puter.ai.chat(`${system}\n\nUser: ${question}`, {
-            model: "gemini-3.8-flash"
-          });
-
-          let text = (response?.message?.content || response?.text || String(response || "")).trim();
-          if (!text || text.length < 2) throw new Error("Empty response");
-
-          text = text.replace(/^Assistant:\s*/i, "").replace(/^AI:\s*/i, "").trim();
-
-          addEntry(text, "ai");
-          chatHistory.push({ role: "user", content: question }, { role: "assistant", content: text });
-          if (chatHistory.length > 12) chatHistory = chatHistory.slice(-12);
-          aiStatus.textContent = "AI Ready";
-          success = true;
-        } catch (e) {
-          console.warn(`AI attempt ${attempt} failed:`, e);
-          if (attempt === maxAttempts) {
-            addEntry("AI radio is down right now. Try again in a minute.", "ai");
-            aiStatus.textContent = "AI Offline";
-          } else {
-            aiStatus.textContent = `AI retry ${attempt}…`;
-            await new Promise(r => setTimeout(r, 1200 * attempt));
-          }
-        }
-      }
-
-      isAI = false;
-      sendBtn.disabled = false;
-      input.focus();
-      saveToCloud();
-    }
-
-    function send() {
-      const text = input.value.trim();
-      if (!text || isAI || !currentUser) return;
-      input.value = "";
-      input.style.height = "auto";
-      askAI(text);
-    }
-
-    sendBtn.onclick = send;
-    input.onkeydown = e => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        send();
-      }
-    };
-    input.oninput = () => {
-      input.style.height = "auto";
-      input.style.height = Math.min(input.scrollHeight, 120) + "px";
+    document.getElementById("scanBtn").onclick = () => {
+      if (!currentUser) return;
+      addEntry(randomFrom(routineMessages), "scanner");
     };
 
-    document.getElementById("scanBtn").onclick = () => generateScanner("scanner");
-    document.getElementById("priorityBtn").onclick = () => generateScanner("priority");
+    document.getElementById("priorityBtn").onclick = () => {
+      if (!currentUser) return;
+      addEntry(randomFrom(priorityMessages), "priority");
+      wanted = Math.min(5, wanted + 1);
+      wantedEl.textContent = wanted;
+      saveToCloud();
+    };
 
     document.getElementById("lookupBtn").onclick = () => {
       if (!currentUser) return;
@@ -487,20 +464,16 @@ Current time: ${new Date().toLocaleString()}`;
 
     clearBtn.onclick = async () => {
       if (!currentUser || !confirm("Clear the entire log and cloud data? This cannot be undone.")) return;
-
       log.innerHTML = "";
       logEntries = [];
-      chatHistory = [];
       wanted = 0;
       wantedEl.textContent = "0";
-
       try {
         await db.ref(`users/${currentUser.uid}/data`).remove();
       } catch (e) {
         console.warn("Cloud clear failed", e);
       }
-
-      addEntry("Log and cloud data cleared.", "ai", false);
+      addEntry("Log and cloud data cleared.", "scanner", false);
     };
 
     setInterval(() => {
