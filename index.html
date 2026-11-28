@@ -222,7 +222,8 @@
       <div class="status-bar" aria-live="polite" aria-atomic="true">
         <span>Wanted: <strong id="wanted" class="govuk-tag govuk-tag--red">0</strong></span>
         <span id="units">Units: 12</span>
-        <span class="govuk-tag">Local Scanner</span>
+        <span class="govuk-tag">AI Scanner</span>
+        <span id="aiStatus" class="govuk-tag govuk-tag--grey">Ready</span>
       </div>
 
       <div class="controls">
@@ -267,6 +268,7 @@
     const unitsEl = document.getElementById("units");
     const plateInput = document.getElementById("plate");
     const clearBtn = document.getElementById("clearBtn");
+    const aiStatus = document.getElementById("aiStatus");
 
     const signInForm = document.getElementById("signInForm");
     const signUpForm = document.getElementById("signUpForm");
@@ -277,6 +279,7 @@
     let wanted = 0;
     let currentUser = null;
     let logEntries = [];
+    let generating = false;
 
     const routineMessages = [
       "Unit 12, traffic stop on Portola Drive. Blue Comet, plates check clean.",
@@ -409,7 +412,7 @@
         userInfo.textContent = `👤 ${user.displayName || user.email || "User"}`;
         await loadFromCloud(user.uid);
         if (log.children.length === 0) {
-          addEntry("RootDonate Scanner online. Local traffic active.", "scanner");
+          addEntry("RootDonate Scanner online. AI traffic active.", "scanner");
         }
       } else {
         currentUser = null;
@@ -440,17 +443,69 @@
       return arr[Math.floor(Math.random() * arr.length)];
     }
 
-    document.getElementById("scanBtn").onclick = () => {
-      if (!currentUser) return;
-      addEntry(randomFrom(routineMessages), "scanner");
+    async function generateAIMessage(isPriority = false) {
+      if (generating) return null;
+      generating = true;
+      aiStatus.textContent = "Generating…";
+      aiStatus.className = "govuk-tag govuk-tag--yellow";
+
+      const prompt = isPriority
+        ? "Generate one short realistic police radio priority emergency message (1-2 sentences max) in the style of GTA Vice City scanner. Use locations like Ocean Drive, the docks, airport, Ambrosia, industrial district. Make it urgent. Include 10-codes if it fits. Output ONLY the radio message text."
+        : "Generate one short realistic police radio routine dispatch message (1-2 sentences max) in the style of GTA Vice City scanner. Use locations like Portola Drive, Ocean Drive, the marina, Vice City Beach, Ambrosia. Keep it routine (traffic stop, patrol, BOLO, noise complaint, etc.). Output ONLY the radio message text.";
+
+      try {
+        const response = await fetch("https://flm.stonech.at/v1/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: [
+              { role: "system", content: "You are a GTA Vice City police scanner radio dispatcher. Respond with only the radio message text, nothing else. No quotes, no explanations." },
+              { role: "user", content: prompt }
+            ],
+            max_tokens: 80,
+            temperature: 0.85
+          })
+        });
+
+        if (!response.ok) throw new Error("API " + response.status);
+        const data = await response.json();
+        const text = (data.choices?.[0]?.message?.content || "").trim();
+        if (!text) throw new Error("Empty response");
+
+        aiStatus.textContent = "AI";
+        aiStatus.className = "govuk-tag govuk-tag--green";
+        return text;
+      } catch (err) {
+        console.warn("AI failed, falling back", err);
+        aiStatus.textContent = "Fallback";
+        aiStatus.className = "govuk-tag govuk-tag--red";
+        return isPriority ? randomFrom(priorityMessages) : randomFrom(routineMessages);
+      } finally {
+        generating = false;
+        setTimeout(() => {
+          if (!generating) {
+            aiStatus.textContent = "Ready";
+            aiStatus.className = "govuk-tag govuk-tag--grey";
+          }
+        }, 1500);
+      }
+    }
+
+    document.getElementById("scanBtn").onclick = async () => {
+      if (!currentUser || generating) return;
+      const msg = await generateAIMessage(false);
+      if (msg) addEntry(msg, "scanner");
     };
 
-    document.getElementById("priorityBtn").onclick = () => {
-      if (!currentUser) return;
-      addEntry(randomFrom(priorityMessages), "priority");
-      wanted = Math.min(5, wanted + 1);
-      wantedEl.textContent = wanted;
-      saveToCloud();
+    document.getElementById("priorityBtn").onclick = async () => {
+      if (!currentUser || generating) return;
+      const msg = await generateAIMessage(true);
+      if (msg) {
+        addEntry(msg, "priority");
+        wanted = Math.min(5, wanted + 1);
+        wantedEl.textContent = wanted;
+        saveToCloud();
+      }
     };
 
     document.getElementById("lookupBtn").onclick = () => {
